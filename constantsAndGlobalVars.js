@@ -17,7 +17,6 @@ export const GAME_CANVAS_HEIGHT = 720;
 export const GAME_ASPECT_RATIO = GAME_CANVAS_WIDTH / GAME_CANVAS_HEIGHT;
 
 export const MENU_STATE = "menuState";
-export const GAME_VISIBLE_PAUSED = "gameVisiblePaused";
 export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
 
 //GLOBAL VARIABLES
@@ -45,13 +44,17 @@ export function setElements() {
     loadSaveGameStringTextArea: document.getElementById("loadSaveGameStringTextArea"),
     loadStringButton: document.getElementById("loadStringButton"),
     textAreaLabel: document.getElementById("textAreaLabel"),
-    returnToMenuButton: document.getElementById("returnToMenu"),
-    pauseResumeGameButton: document.getElementById("pauseResumeButton"),
     gameArea: document.getElementById("gameArea"),
-    gameSurface: document.getElementById("gameSurface"),
-    buttonRow: document.getElementById("buttonRow"),
-    counterLabel: document.getElementById("counterLabel"),
-    counterValue: document.getElementById("counterValue"),
+    desktopViewport: document.getElementById("desktopViewport"),
+    deskParallax: document.getElementById("deskParallax"),
+    deskWorld: document.getElementById("deskWorld"),
+    zoomReadout: document.getElementById("zoomReadout"),
+    evidenceLabel: document.getElementById("evidenceLabel"),
+    settingsToggle: document.getElementById("settingsToggle"),
+    settingsItems: document.getElementById("settingsItems"),
+    settingsItemOne: document.getElementById("settingsItemOne"),
+    settingsItemTwo: document.getElementById("settingsItemTwo"),
+    settingsItemThree: document.getElementById("settingsItemThree"),
     btnEnglish: document.getElementById("btnEnglish"),
     btnSpanish: document.getElementById("btnSpanish"),
     btnFrench: document.getElementById("btnFrench"),
@@ -153,10 +156,6 @@ export function getAudioMuted() {
 
 export function getMenuState() {
   return MENU_STATE;
-}
-
-export function getGameVisiblePaused() {
-  return GAME_VISIBLE_PAUSED;
 }
 
 export function getGameVisibleActive() {

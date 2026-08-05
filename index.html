@@ -39,15 +39,36 @@
 
         <!-- Active Game UI (HTML Layout, no canvas) -->
         <div id="gameArea" class="game-area d-none">
-            <div id="buttonRow" class="top-controls d-flex">
-                <button id="pauseResumeButton" class="btn btn-warning">Pause</button>
-                <button id="returnToMenu" class="btn btn-secondary">Menu</button>
+            <div id="desktopViewport" class="desktop-viewport" aria-label="Investigation desktop viewport">
+                <div id="deskParallax" class="desk-parallax"></div>
+
+                <div id="deskWorld" class="desk-world" aria-label="Investigation workspace">
+                    <div id="bookOne" class="desk-book book-one">Witness Notes</div>
+                    <div id="bookTwo" class="desk-book book-two">Case Timeline</div>
+                    <div id="bookThree" class="desk-book book-three">Suspect Profiles</div>
+
+                    <div id="evidenceFolder" class="evidence-folder" aria-label="Evidence folder">
+                        <div class="folder-tab"></div>
+                        <div class="folder-body">
+                            <div class="paper-stack paper-back"></div>
+                            <div class="paper-stack paper-mid"></div>
+                            <div class="paper-stack paper-front"></div>
+                            <div id="evidenceLabel" class="evidence-label">EVIDENCE</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="zoomReadout" class="zoom-readout">Zoom 3/5</div>
             </div>
 
-            <div id="gameSurface" class="game-surface">
-                <div class="status-panel">
-                    <div id="counterLabel" class="counter-label">Counter</div>
-                    <div id="counterValue" class="counter-value">0</div>
+            <div id="floatingSettings" class="floating-settings" aria-label="Settings menu">
+                <button id="settingsToggle" class="settings-toggle" aria-expanded="false" aria-controls="settingsItems">
+                    <span class="settings-cog">⚙</span>
+                </button>
+                <div id="settingsItems" class="settings-items d-none">
+                    <button id="settingsItemOne" class="settings-item">Placeholder A</button>
+                    <button id="settingsItemTwo" class="settings-item">Placeholder B</button>
+                    <button id="settingsItemThree" class="settings-item">Placeholder C</button>
                 </div>
             </div>
         </div>

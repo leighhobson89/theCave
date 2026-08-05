@@ -6,8 +6,6 @@ import {
   setBeginGameStatus,
   getGameInProgress,
   setGameInProgress,
-  getGameVisiblePaused,
-  getBeginGameStatus,
   getGameVisibleActive,
   getMenuState,
   getLanguageSelected,
@@ -51,18 +49,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     startGame(false);
   });
 
-  getElements().returnToMenuButton.addEventListener("click", () => {
-    setGameState(getMenuState());
-  });
-
-  getElements().pauseResumeGameButton.addEventListener("click", () => {
-    if (gameState === getGameVisibleActive()) {
-      setGameState(getGameVisiblePaused());
-      return;
-    }
-
-    if (gameState === getGameVisiblePaused()) {
-      setGameState(getGameVisibleActive());
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && gameState === getGameVisibleActive()) {
+      setGameState(getMenuState());
     }
   });
 
@@ -152,25 +141,21 @@ async function setElementsLanguageText() {
     "loadButton",
     getLanguage()
   )}`;
-  getElements().counterLabel.innerHTML = `${localize(
-    "counterLabel",
+  getElements().zoomReadout.innerHTML = `${localize(
+    "zoomLabel",
+    getLanguage()
+  )} 3/5`;
+  getElements().evidenceLabel.innerHTML = `${localize("evidence", getLanguage())}`;
+  getElements().settingsItemOne.innerHTML = `${localize(
+    "placeholderA",
     getLanguage()
   )}`;
-
-  if (gameState === getGameVisiblePaused()) {
-    getElements().pauseResumeGameButton.innerHTML = `${localize(
-      "resume",
-      getLanguage()
-    )}`;
-  } else {
-    getElements().pauseResumeGameButton.innerHTML = `${localize(
-      "pause",
-      getLanguage()
-    )}`;
-  }
-
-  getElements().returnToMenuButton.innerHTML = `${localize(
-    "menuTitle",
+  getElements().settingsItemTwo.innerHTML = `${localize(
+    "placeholderB",
+    getLanguage()
+  )}`;
+  getElements().settingsItemThree.innerHTML = `${localize(
+    "placeholderC",
     getLanguage()
   )}`;
 }

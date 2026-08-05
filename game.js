@@ -2,7 +2,6 @@ import { localize } from "./localization.js";
 import {
   setGameStateVariable,
   getMenuState,
-  getGameVisiblePaused,
   getGameVisibleActive,
   getElements,
   getLanguage,
@@ -12,52 +11,179 @@ import {
 
 //--------------------------------------------------------------------------------------------------------
 
-let counterValue = 0;
-let counterIntervalId = null;
+const ZOOM_LEVELS = [0.65, 0.85, 1, 1.2, 1.45];
+const WORLD_WIDTH = 2600;
+const WORLD_HEIGHT = 1800;
+const PARALLAX_FACTOR = 0.4;
 
-function updateCounterUI() {
-  if (getElements().counterValue) {
-    getElements().counterValue.textContent = String(counterValue);
+let desktopInitialized = false;
+let currentZoomIndex = 2;
+let panX = 0;
+let panY = 0;
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let dragOriginPanX = 0;
+let dragOriginPanY = 0;
+
+function getViewportRect() {
+  if (!getElements().desktopViewport) {
+    return { width: 0, height: 0 };
   }
+
+  return getElements().desktopViewport.getBoundingClientRect();
 }
 
-function ensureCounterLoop() {
-  if (counterIntervalId !== null) {
+function clampPan() {
+  const rect = getViewportRect();
+  const zoom = ZOOM_LEVELS[currentZoomIndex];
+  const scaledWidth = WORLD_WIDTH * zoom;
+  const scaledHeight = WORLD_HEIGHT * zoom;
+
+  const minPanX = Math.min(0, rect.width - scaledWidth);
+  const minPanY = Math.min(0, rect.height - scaledHeight);
+  const maxPanX = 0;
+  const maxPanY = 0;
+
+  panX = Math.min(maxPanX, Math.max(minPanX, panX));
+  panY = Math.min(maxPanY, Math.max(minPanY, panY));
+}
+
+function updateZoomReadout() {
+  if (!getElements().zoomReadout) {
     return;
   }
 
-  counterIntervalId = window.setInterval(() => {
-    if (gameState !== getGameVisibleActive()) {
-      return;
-    }
-
-    counterValue += 1;
-    updateCounterUI();
-  }, 1000);
+  getElements().zoomReadout.textContent = `${localize("zoomLabel", getLanguage())} ${currentZoomIndex + 1}/5`;
 }
 
-function updatePauseResumeButtonLabel() {
-  if (!getElements().pauseResumeGameButton) {
+function applyDesktopTransform() {
+  if (!getElements().deskWorld || !getElements().deskParallax) {
     return;
   }
 
-  const key = gameState === getGameVisiblePaused() ? "resume" : "pause";
-  getElements().pauseResumeGameButton.innerHTML = `${localize(key, getLanguage())}`;
+  const zoom = ZOOM_LEVELS[currentZoomIndex];
+  clampPan();
+
+  getElements().deskWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  getElements().deskParallax.style.transform = `translate(${panX * PARALLAX_FACTOR}px, ${panY * PARALLAX_FACTOR}px) scale(${0.95 + zoom * 0.06})`;
+  updateZoomReadout();
 }
 
-export function startGame(resetCounter = false) {
-  if (resetCounter) {
-    counterValue = 0;
-    updateCounterUI();
+function focusWorldAtCenter() {
+  const rect = getViewportRect();
+  const zoom = ZOOM_LEVELS[currentZoomIndex];
+  const scaledWidth = WORLD_WIDTH * zoom;
+  const scaledHeight = WORLD_HEIGHT * zoom;
+
+  panX = (rect.width - scaledWidth) / 2;
+  panY = (rect.height - scaledHeight) / 2;
+  clampPan();
+}
+
+function handleWheelZoom(event) {
+  event.preventDefault();
+
+  const previousZoom = ZOOM_LEVELS[currentZoomIndex];
+  if (event.deltaY > 0) {
+    currentZoomIndex = Math.max(0, currentZoomIndex - 1);
+  } else {
+    currentZoomIndex = Math.min(ZOOM_LEVELS.length - 1, currentZoomIndex + 1);
   }
 
-  ensureCounterLoop();
-  gameLoop();
+  if (ZOOM_LEVELS[currentZoomIndex] === previousZoom) {
+    return;
+  }
+
+  const rect = getViewportRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+
+  const worldX = (cx - panX) / previousZoom;
+  const worldY = (cy - panY) / previousZoom;
+  const nextZoom = ZOOM_LEVELS[currentZoomIndex];
+
+  panX = cx - worldX * nextZoom;
+  panY = cy - worldY * nextZoom;
+  applyDesktopTransform();
+}
+
+function handlePointerDown(event) {
+  if (event.button !== 0) {
+    return;
+  }
+
+  isDragging = true;
+  dragStartX = event.clientX;
+  dragStartY = event.clientY;
+  dragOriginPanX = panX;
+  dragOriginPanY = panY;
+
+  if (getElements().desktopViewport) {
+    getElements().desktopViewport.classList.add("is-dragging");
+  }
+}
+
+function handlePointerMove(event) {
+  if (!isDragging) {
+    return;
+  }
+
+  const deltaX = event.clientX - dragStartX;
+  const deltaY = event.clientY - dragStartY;
+  panX = dragOriginPanX + deltaX;
+  panY = dragOriginPanY + deltaY;
+  applyDesktopTransform();
+}
+
+function handlePointerUp() {
+  isDragging = false;
+  if (getElements().desktopViewport) {
+    getElements().desktopViewport.classList.remove("is-dragging");
+  }
+}
+
+function toggleSettingsMenu() {
+  if (!getElements().settingsItems || !getElements().settingsToggle) {
+    return;
+  }
+
+  const willExpand = getElements().settingsItems.classList.contains("d-none");
+  getElements().settingsItems.classList.toggle("d-none", !willExpand);
+  getElements().settingsToggle.setAttribute("aria-expanded", String(willExpand));
+}
+
+function initializeDesktopInteractions() {
+  if (desktopInitialized || !getElements().desktopViewport) {
+    return;
+  }
+
+  getElements().desktopViewport.addEventListener("wheel", handleWheelZoom, { passive: false });
+  getElements().desktopViewport.addEventListener("pointerdown", handlePointerDown);
+  window.addEventListener("pointermove", handlePointerMove);
+  window.addEventListener("pointerup", handlePointerUp);
+  window.addEventListener("resize", applyDesktopTransform);
+
+  if (getElements().settingsToggle) {
+    getElements().settingsToggle.addEventListener("click", toggleSettingsMenu);
+  }
+
+  desktopInitialized = true;
+}
+
+export function startGame(resetView = false) {
+  initializeDesktopInteractions();
+
+  if (resetView) {
+    currentZoomIndex = 2;
+    focusWorldAtCenter();
+  }
+
+  applyDesktopTransform();
 }
 
 export function gameLoop() {
-  updateCounterUI();
-  updatePauseResumeButtonLabel();
+  applyDesktopTransform();
 }
 
 export function setGameState(newState) {
@@ -116,27 +242,13 @@ export function setGameState(newState) {
         )}`;
       }
       break;
-    case getGameVisiblePaused():
-      getElements().menu.classList.remove("d-flex");
-      getElements().menu.classList.add("d-none");
-      getElements().gameArea.classList.remove("d-none");
-      getElements().gameArea.classList.add("d-flex");
-      getElements().returnToMenuButton.innerHTML = `${localize(
-        "menuTitle",
-        getLanguage()
-      )}`;
-      break;
     case getGameVisibleActive():
       getElements().menu.classList.remove("d-flex");
       getElements().menu.classList.add("d-none");
       getElements().gameArea.classList.remove("d-none");
       getElements().gameArea.classList.add("d-flex");
-      getElements().returnToMenuButton.innerHTML = `${localize(
-        "menuTitle",
-        getLanguage()
-      )}`;
       break;
   }
 
-  updatePauseResumeButtonLabel();
+  updateZoomReadout();
 }
