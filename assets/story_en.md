@@ -21,7 +21,7 @@ The man smiled warmly and stopped to speak to them. "You two look as though you'
 
 "You are a little late!" shouted their mother Diane as they arrived back, just as the sun was setting, but smiled, happy to see them. "Your food is almost ready!" "What have you been doing, where have you been?" The boys answered that they had spent the day exploring new paths through the forest. That evening, in their bedroom, the two brothers quietly made plans to return to the cave the following morning, and they went to sleep...
 
-"Mother! Father! Help!" screamed Andrew as he stumbled into the farmyard. John and Diane rushed from the farmhouse, followed a few seconds later by Tony and Simon coming out of the barn. "What the hell!" grunted John. "Oh my God!" screamed Diane. They ran as fast as they could to where Andrew had collapsed in the yard. He was exhausted and trembling. 
+"Mother! Father! Help!" screamed Andrew as he stumbled into the farmyard. John and Diane rushed from the farmhouse, followed a few seconds later by Simon coming out of the barn. "What the hell!" grunted John. "Oh my God!" screamed Diane. They ran as fast as they could to where Andrew had collapsed in the yard. He was exhausted and trembling. 
 
 His face was covered in deep scratches, his clothes were torn, blood ran down one leg from a long cut, and his left hand had been nearly severed. He could barely catch his breath. "Arnie..." he gasped. His parents stared at him in horror. "Arnie is gone!" "What??" "Gone, I dont know!" screeched Andrew. "What happened? Where were you? Oh my God, Andrew, tell me now what happened! John, go and get a bandage and some clean water!" Everyone gathered around Andrew in the farmyard to listen to his account...
 
@@ -50,6 +50,8 @@ I said, 'We'll need a torch after all.' and we went about lighting one, and plan
 Diane could not believe her ears, and John was surprised too, perhaps at how little they knew their son, or not believing how their sons aged just twelve and nine would go off and do all this without saying a word.
 
 Andrew was looking horrified as he explained "The opening was roughly ten feet across. The back wall of the cave stood behind it, with the hole itself between us and the wall. The torchlight shone down a couple of feet but below this was just pitch black and we could not see the bottom...
+
+At that moment Tony hurried over from the direction of the outbuildings. Visibly confused by the noise and commotion, he joined the others around Andrew, staring in horror at the boy's injuries.
 
 Suddenly, Andrew sighed and slipped out of consciousness.
 
