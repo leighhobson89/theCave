@@ -165,12 +165,24 @@ async function setElementsLanguageText() {
     "zoomLabel",
     getLanguage()
   )} 3/5`;
-  getElements().bookOne.innerHTML = `${localize("backgroundStory", getLanguage())}`;
-  getElements().storyWindowTitle.innerHTML = `${localize(
-    "backgroundStory",
-    getLanguage()
-  )}`;
-  getElements().evidenceLabel.innerHTML = `${localize("evidence", getLanguage())}`;
+getElements().backgroundFolderLabel.textContent = localize(
+  "backgroundStory",
+  getLanguage(),
+);
+
+getElements().reportsFolderLabel.textContent = localize(
+  "reports",
+  getLanguage(),
+);
+
+getElements().photosFolderLabel.textContent = localize("photos", getLanguage());
+
+getElements().storyWindowTitle.textContent = localize(
+  "backgroundStory",
+  getLanguage(),
+);
+
+getElements().evidenceLabel.textContent = localize("evidence", getLanguage());
   getElements().musicVolumeLabel.innerHTML = `${localize(
     "musicVolume",
     getLanguage()
@@ -248,7 +260,7 @@ function refreshMuteButtonLabel() {
 
 function initializeStoryWindowControls() {
   if (
-    !getElements().bookOne ||
+    !getElements().backgroundFolder ||
     !getElements().storyWindow ||
     !getElements().storyWindowHeader ||
     !getElements().storyWindowResizeHandle ||
@@ -264,7 +276,7 @@ function initializeStoryWindowControls() {
     scrollContainerElement: getElements().storyDocumentContent,
   });
 
-  getElements().bookOne.addEventListener("click", () => {
+  getElements().backgroundFolder.addEventListener("click", () => {
     openStoryWindow(false, false);
   });
 
