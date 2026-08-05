@@ -37,12 +37,13 @@
             <button id="saveGame" class="btn disabled">Save Game Placeholder</button>
         </div>
 
-        <!-- Active Game UI (HTML Layout, no canvas) -->
         <div id="gameArea" class="game-area d-none">
             <div id="desktopViewport" class="desktop-viewport" aria-label="Investigation desktop viewport">
                 <div id="deskParallax" class="desk-parallax"></div>
 
                 <div id="deskWorld" class="desk-world" aria-label="Investigation workspace">
+                    <div id="deskTable" class="desk-table" aria-hidden="true"></div>
+
                     <div id="bookOne" class="desk-book book-one">Witness Notes</div>
                     <div id="bookTwo" class="desk-book book-two">Case Timeline</div>
                     <div id="bookThree" class="desk-book book-three">Suspect Profiles</div>
@@ -66,9 +67,17 @@
                     <span class="settings-cog">⚙</span>
                 </button>
                 <div id="settingsItems" class="settings-items d-none">
-                    <button id="settingsItemOne" class="settings-item">Placeholder A</button>
-                    <button id="settingsItemTwo" class="settings-item">Placeholder B</button>
-                    <button id="settingsItemThree" class="settings-item">Placeholder C</button>
+                    <button id="muteToggleButton" class="settings-item settings-toggle-item">Mute: Off</button>
+                    <div class="settings-item settings-slider-row">
+                        <label id="musicVolumeLabel" for="musicVolumeSlider">Music Volume</label>
+                        <input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="70">
+                        <span id="musicVolumeValue" class="settings-value">70%</span>
+                    </div>
+                    <div class="settings-item settings-slider-row">
+                        <label id="sfxVolumeLabel" for="sfxVolumeSlider">SFX Volume</label>
+                        <input id="sfxVolumeSlider" type="range" min="0" max="100" step="1" value="85">
+                        <span id="sfxVolumeValue" class="settings-value">85%</span>
+                    </div>
                 </div>
             </div>
         </div>

@@ -172,10 +172,21 @@ button.disabled {
     top: -350px;
     transform-origin: top left;
     background:
-        radial-gradient(ellipse at center top, rgba(96, 126, 170, 0.09), rgba(8, 10, 14, 0.5) 58%, rgba(5, 6, 8, 0.9) 100%),
-        repeating-linear-gradient(168deg, rgba(22, 32, 46, 0.15) 0px, rgba(22, 32, 46, 0.15) 2px, transparent 2px, transparent 34px);
-    filter: blur(2px);
-    opacity: 0.9;
+        radial-gradient(circle at 12% 16%, rgba(255, 236, 196, 0.1), transparent 34%),
+        radial-gradient(circle at 83% 78%, rgba(102, 72, 40, 0.18), transparent 50%),
+        repeating-linear-gradient(0deg,
+            rgba(200, 163, 118, 0.28) 0px,
+            rgba(200, 163, 118, 0.28) 2px,
+            rgba(176, 136, 92, 0.24) 2px,
+            rgba(176, 136, 92, 0.24) 94px),
+        repeating-linear-gradient(90deg,
+            rgba(198, 158, 112, 0.3) 0px,
+            rgba(198, 158, 112, 0.3) 2px,
+            rgba(166, 126, 84, 0.26) 2px,
+            rgba(166, 126, 84, 0.26) 94px),
+        linear-gradient(180deg, #9a7857 0%, #73583f 62%, #4d3b2b 100%);
+    filter: none;
+    opacity: 1;
 }
 
 .desk-world {
@@ -185,29 +196,31 @@ button.disabled {
     left: 0;
     top: 0;
     transform-origin: top left;
-    border-radius: 26px;
-    border: 2px solid rgba(236, 220, 188, 0.2);
-    background:
-        radial-gradient(circle at 12% 10%, rgba(255, 210, 125, 0.18), transparent 42%),
-        radial-gradient(circle at 86% 76%, rgba(92, 140, 175, 0.15), transparent 48%),
-        linear-gradient(165deg, #4a3a2c 0%, #3f3228 22%, #342a23 52%, #241d17 100%);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 249, 226, 0.28),
-        inset 0 -30px 90px rgba(0, 0, 0, 0.45),
-        0 35px 80px rgba(0, 0, 0, 0.55);
+    border-radius: 30px;
+    background: transparent;
+    box-shadow: none;
+    isolation: isolate;
 }
 
-.desk-world::before {
-    content: "";
+.desk-table {
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
+    inset: 190px 240px;
+    border-radius: 28px;
     background:
+        linear-gradient(170deg, rgba(57, 69, 79, 0.7), rgba(29, 37, 46, 0.66) 45%, rgba(13, 19, 27, 0.72) 100%),
+        radial-gradient(circle at 18% 14%, rgba(235, 246, 255, 0.1), transparent 40%),
         repeating-linear-gradient(45deg,
-            rgba(255, 255, 255, 0.02) 0px,
-            rgba(255, 255, 255, 0.02) 2px,
+            rgba(255, 255, 255, 0.025) 0px,
+            rgba(255, 255, 255, 0.025) 2px,
             transparent 2px,
-            transparent 16px);
+            transparent 18px);
+    border: 1px solid rgba(214, 226, 238, 0.2);
+    box-shadow:
+        inset 0 0 0 1px rgba(221, 231, 242, 0.08),
+        inset 0 -55px 110px rgba(4, 8, 14, 0.52),
+        0 26px 52px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px) saturate(85%);
+    z-index: 1;
 }
 
 .desk-book {
@@ -227,6 +240,7 @@ button.disabled {
     box-shadow:
         0 12px 20px rgba(0, 0, 0, 0.38),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    z-index: 2;
 }
 
 .book-one {
@@ -254,6 +268,7 @@ button.disabled {
     width: 440px;
     height: 270px;
     transform: rotate(-2deg);
+    z-index: 2;
 }
 
 .folder-tab {
@@ -332,7 +347,7 @@ button.disabled {
 .floating-settings {
     position: absolute;
     right: 1rem;
-    bottom: 1rem;
+    top: 1rem;
     z-index: 30;
     display: flex;
     flex-direction: column;
@@ -380,6 +395,42 @@ button.disabled {
     backdrop-filter: blur(5px);
 }
 
+.settings-toggle-item {
+    text-align: center;
+    font-weight: 600;
+}
+
+.settings-slider-row {
+    min-width: 240px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "label value"
+        "slider slider";
+    align-items: center;
+    gap: 0.3rem 0.5rem;
+}
+
+.settings-slider-row label {
+    grid-area: label;
+    margin: 0;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(224, 234, 255, 0.86);
+}
+
+.settings-slider-row input[type="range"] {
+    grid-area: slider;
+    width: 100%;
+}
+
+.settings-value {
+    grid-area: value;
+    font-size: 0.8rem;
+    color: rgba(222, 232, 252, 0.84);
+}
+
 .save-load-popup-container {
     position: fixed;
     top: 50%;
@@ -416,6 +467,10 @@ button.disabled {
 
     .settings-item {
         min-width: 150px;
+    }
+
+    .settings-slider-row {
+        min-width: 200px;
     }
 
     .save-load-popup-container {

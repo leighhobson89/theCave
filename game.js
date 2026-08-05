@@ -1,4 +1,5 @@
 import { localize } from "./localization.js";
+import { audioManager } from "./audioManager.js";
 import {
   setGameStateVariable,
   getMenuState,
@@ -14,7 +15,7 @@ import {
 const ZOOM_LEVELS = [0.65, 0.85, 1, 1.2, 1.45];
 const WORLD_WIDTH = 2600;
 const WORLD_HEIGHT = 1800;
-const PARALLAX_FACTOR = 0.4;
+const PARALLAX_FACTOR = 0.1;
 
 let desktopInitialized = false;
 let currentZoomIndex = 2;
@@ -25,6 +26,7 @@ let dragStartX = 0;
 let dragStartY = 0;
 let dragOriginPanX = 0;
 let dragOriginPanY = 0;
+let desktopObjectAudioBound = false;
 
 function getViewportRect() {
   if (!getElements().desktopViewport) {
@@ -66,7 +68,7 @@ function applyDesktopTransform() {
   clampPan();
 
   getElements().deskWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-  getElements().deskParallax.style.transform = `translate(${panX * PARALLAX_FACTOR}px, ${panY * PARALLAX_FACTOR}px) scale(${0.95 + zoom * 0.06})`;
+  getElements().deskParallax.style.transform = `translate(${panX * PARALLAX_FACTOR}px, ${panY * PARALLAX_FACTOR}px) scale(${0.9 + zoom * 0.03})`;
   updateZoomReadout();
 }
 
@@ -82,6 +84,7 @@ function focusWorldAtCenter() {
 }
 
 function handleWheelZoom(event) {
+  audioManager.onUserGesture();
   event.preventDefault();
 
   const previousZoom = ZOOM_LEVELS[currentZoomIndex];
@@ -112,6 +115,8 @@ function handlePointerDown(event) {
   if (event.button !== 0) {
     return;
   }
+
+  audioManager.onUserGesture();
 
   isDragging = true;
   dragStartX = event.clientX;
@@ -151,6 +156,25 @@ function toggleSettingsMenu() {
   const willExpand = getElements().settingsItems.classList.contains("d-none");
   getElements().settingsItems.classList.toggle("d-none", !willExpand);
   getElements().settingsToggle.setAttribute("aria-expanded", String(willExpand));
+  audioManager.playSfx("clickSwitch");
+}
+
+function bindDesktopObjectAudio() {
+  if (desktopObjectAudioBound) {
+    return;
+  }
+
+  const selectors = [".desk-book", "#evidenceFolder"];
+  selectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((element) => {
+      element.addEventListener("click", () => {
+        audioManager.onUserGesture();
+        audioManager.playSfx("clickButton");
+      });
+    });
+  });
+
+  desktopObjectAudioBound = true;
 }
 
 function initializeDesktopInteractions() {
@@ -167,6 +191,8 @@ function initializeDesktopInteractions() {
   if (getElements().settingsToggle) {
     getElements().settingsToggle.addEventListener("click", toggleSettingsMenu);
   }
+
+  bindDesktopObjectAudio();
 
   desktopInitialized = true;
 }
