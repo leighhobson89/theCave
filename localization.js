@@ -20,11 +20,16 @@ async function fetchLocalization() {
 export async function initLocalization(language) {
     const localization = await fetchLocalization();
     setLocalization(localization);
-    setLanguage(getLanguage());
+    setLanguage(language);
 }
 
 function localize(key, language) {
-    const localizedString = getLocalization()[language][key];
+    const localization = getLocalization();
+    if (!localization || !localization[language]) {
+        return key;
+    }
+
+    const localizedString = localization[language][key];
     if (!localizedString) return key;
 
     if (localizedString.includes('${')) {

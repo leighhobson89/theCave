@@ -16,7 +16,7 @@ export function saveGame(isManualSave) {
         document.getElementById('copyButtonSavePopup').classList.remove('d-none');
         document.getElementById('loadStringButton').classList.add('d-none');
         getElements().saveLoadPopup.classList.remove('d-none');
-        //document.getElementById('overlay').classList.remove('d-none');
+        document.getElementById('overlay').classList.remove('d-none');
 
         const reader = new FileReader();
         reader.onload = function(event) {
@@ -39,7 +39,6 @@ export function saveGame(isManualSave) {
         a.remove();
     }
 }
-
 
 function getCurrentTimestamp() {
     const now = new Date();

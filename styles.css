@@ -3,11 +3,17 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background-color: black;
+    background: radial-gradient(circle at top left, #1f2937 0%, #111827 40%, #030712 100%);
     color: white;
     overflow: hidden;
     height: 100%;
     width: 100%;
+}
+
+.app-shell {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
 }
 
 #menu {
@@ -17,11 +23,17 @@ body {
     justify-content: center;
     height: 100vh;
     width: 100vw;
-    background-color: #333;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.96));
     color: #fff;
     text-align: center;
     top: 0;
     left: 0;
+}
+
+#languageContainer {
+    max-width: 900px;
+    justify-content: center !important;
 }
 
 button {
@@ -115,52 +127,70 @@ button.disabled {
     justify-content: center;
 }
 
-#canvasContainer {
+.game-area {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     width: 100vw;
     height: 100vh;
     position: relative;
-    background-color: black;
+    padding: 1rem;
+    gap: 1rem;
+    background: linear-gradient(160deg, #0f172a 0%, #111827 65%, #0b1020 100%);
     overflow: hidden;
 }
 
-#buttonRow {
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin: 0;
-    padding: 0;
+.top-controls {
+    width: min(1100px, 100%);
     display: flex;
     justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
 }
 
-#buttonRow button {
-    width: 50px;
-    height: 30px;
-    margin: 0;
-    padding: 0;
-    border-radius: 0;
-    border: none;
+.top-controls button {
+    min-width: 110px;
+}
+
+.game-surface {
+    width: min(1100px, 100%);
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background:
+        radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.13), transparent 45%),
+        radial-gradient(circle at 80% 85%, rgba(34, 197, 94, 0.12), transparent 50%),
+        rgba(0, 0, 0, 0.32);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+.status-panel {
+    min-width: 240px;
     text-align: center;
-    white-space: nowrap;
-    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
 }
 
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
+.counter-label {
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #a5b4fc;
 }
 
-.disabled {
-    background-color: #6c757d;
-    color: #ccc;
-    pointer-events: none;
+.counter-value {
+    font-size: clamp(2rem, 6vw, 4.2rem);
+    line-height: 1;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-top: 0.4rem;
 }
 
 .save-load-popup-container {
@@ -179,6 +209,33 @@ canvas {
     display: flex;
     flex-direction: column;
     height: 50%;
+}
+
+@media (max-width: 768px) {
+    #menu button {
+        width: 100%;
+        max-width: 320px;
+        font-size: 16px;
+    }
+
+    .top-controls {
+        justify-content: stretch;
+    }
+
+    .top-controls button {
+        flex: 1;
+    }
+
+    .save-load-popup-container {
+        width: 92%;
+        height: 62%;
+    }
+}
+
+.disabled {
+    background-color: #6c757d;
+    color: #ccc;
+    pointer-events: none;
 }
 
 .save-load-header-container {

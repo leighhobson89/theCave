@@ -1,7 +1,5 @@
 import {
   gameState,
-  getLanguageChangedFlag,
-  setLanguageChangedFlag,
   getLanguage,
   setElements,
   getElements,
@@ -16,7 +14,7 @@ import {
   setLanguageSelected,
   setLanguage,
 } from "./constantsAndGlobalVars.js";
-import { setGameState, startGame, gameLoop } from "./game.js";
+import { setGameState, startGame } from "./game.js";
 import { initLocalization, localize } from "./localization.js";
 import {
   loadGameOption,
@@ -43,53 +41,53 @@ document.addEventListener("DOMContentLoaded", async () => {
       "btn-primary"
     );
     setGameState(getGameVisibleActive());
-    try {
-      requestCanvasFullscreen();
-    } catch (err) {
-      console.warn("Fullscreen request failed or was canceled:", err);
-    }
-    startGame();
+    startGame(true);
   });
 
   getElements().resumeGameMenuButton.addEventListener("click", () => {
     if (gameState === getMenuState()) {
       setGameState(getGameVisibleActive());
     }
-    try {
-      requestCanvasFullscreen();
-    } catch (err) {
-      console.warn("Fullscreen request failed or was canceled:", err);
-    }
-    gameLoop();
+    startGame(false);
   });
 
   getElements().returnToMenuButton.addEventListener("click", () => {
     setGameState(getMenuState());
-    exitFullscreen();
   });
 
-  getElements().btnEnglish.addEventListener("click", () => {
-    handleLanguageChange("en");
+  getElements().pauseResumeGameButton.addEventListener("click", () => {
+    if (gameState === getGameVisibleActive()) {
+      setGameState(getGameVisiblePaused());
+      return;
+    }
+
+    if (gameState === getGameVisiblePaused()) {
+      setGameState(getGameVisibleActive());
+    }
+  });
+
+  getElements().btnEnglish.addEventListener("click", async () => {
+    await handleLanguageChange("en");
     setGameState(getMenuState());
   });
 
-  getElements().btnSpanish.addEventListener("click", () => {
-    handleLanguageChange("es");
+  getElements().btnSpanish.addEventListener("click", async () => {
+    await handleLanguageChange("es");
     setGameState(getMenuState());
   });
 
-  getElements().btnGerman.addEventListener("click", () => {
-    handleLanguageChange("de");
+  getElements().btnGerman.addEventListener("click", async () => {
+    await handleLanguageChange("de");
     setGameState(getMenuState());
   });
 
-  getElements().btnItalian.addEventListener("click", () => {
-    handleLanguageChange("it");
+  getElements().btnItalian.addEventListener("click", async () => {
+    await handleLanguageChange("it");
     setGameState(getMenuState());
   });
 
-  getElements().btnFrench.addEventListener("click", () => {
-    handleLanguageChange("fr");
+  getElements().btnFrench.addEventListener("click", async () => {
+    await handleLanguageChange("fr");
     setGameState(getMenuState());
   });
 
@@ -124,16 +122,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Error loading game:", error);
       });
   });
+  await handleLanguageChange(getLanguageSelected());
   setGameState(getMenuState());
-  handleLanguageChange(getLanguageSelected());
 });
 
 async function setElementsLanguageText() {
   // Localization text
-  getElements().menuTitle.innerHTML = `<h2>${localize(
+  getElements().menuTitle.innerHTML = `${localize(
     "menuTitle",
     getLanguage()
-  )}</h2>`;
+  )}`;
   getElements().newGameMenuButton.innerHTML = `${localize(
     "newGame",
     getLanguage()
@@ -152,6 +150,27 @@ async function setElementsLanguageText() {
   )}`;
   getElements().loadStringButton.innerHTML = `${localize(
     "loadButton",
+    getLanguage()
+  )}`;
+  getElements().counterLabel.innerHTML = `${localize(
+    "counterLabel",
+    getLanguage()
+  )}`;
+
+  if (gameState === getGameVisiblePaused()) {
+    getElements().pauseResumeGameButton.innerHTML = `${localize(
+      "resume",
+      getLanguage()
+    )}`;
+  } else {
+    getElements().pauseResumeGameButton.innerHTML = `${localize(
+      "pause",
+      getLanguage()
+    )}`;
+  }
+
+  getElements().returnToMenuButton.innerHTML = `${localize(
+    "menuTitle",
     getLanguage()
   )}`;
 }
@@ -177,31 +196,6 @@ export function disableActivateButton(button, action, activeClass) {
       button.classList.remove(activeClass);
       button.classList.add("disabled");
       break;
-  }
-}
-
-function requestCanvasFullscreen() {
-  const elem = document.getElementById("fullscreenContainer");
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if (elem.mozRequestFullScreen) {
-    elem.mozRequestFullScreen();
-  } else if (elem.webkitRequestFullscreen) {
-    elem.webkitRequestFullscreen();
-  } else if (elem.msRequestFullscreen) {
-    elem.msRequestFullscreen();
-  }
-}
-
-function exitFullscreen() {
-  if (document.exitFullscreen) {
-    document.exitFullscreen();
-  } else if (document.mozCancelFullScreen) {
-    document.mozCancelFullScreen();
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
   }
 }
   

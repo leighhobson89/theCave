@@ -19,19 +19,6 @@ export const GAME_ASPECT_RATIO = GAME_CANVAS_WIDTH / GAME_CANVAS_HEIGHT;
 export const MENU_STATE = "menuState";
 export const GAME_VISIBLE_PAUSED = "gameVisiblePaused";
 export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
-export const NUMBER_OF_ENEMY_SQUARES = 10;
-export const INITIAL_SPEED_PLAYER = 4;
-export const INITIAL_SPEED_MOVING_ENEMY = 4;
-export const MAX_ATTEMPTS_TO_DRAW_ENEMIES = 1000;
-
-export const playerObject = {
-  x: 100,
-  y: 100,
-  width: 50,
-  height: 50,
-  dx: getInitialSpeedPlayer(),
-  dy: getInitialSpeedPlayer(),
-};
 
 //GLOBAL VARIABLES
 
@@ -47,6 +34,7 @@ export let pauseAutoSaveCountdown = true;
 //GETTER SETTER METHODS
 export function setElements() {
   elements = {
+    appShell: document.getElementById("appShell"),
     menu: document.getElementById("menu"),
     menuTitle: document.getElementById("menuTitle"),
     newGameMenuButton: document.getElementById("newGame"),
@@ -54,16 +42,16 @@ export function setElements() {
     loadGameButton: document.getElementById("loadGame"),
     saveGameButton: document.getElementById("saveGame"),
     saveLoadPopup: document.getElementById("loadSaveGameStringPopup"),
-    loadSaveGameStringTextArea: document.getElementById(
-      "loadSaveGameStringTextArea"
-    ),
+    loadSaveGameStringTextArea: document.getElementById("loadSaveGameStringTextArea"),
     loadStringButton: document.getElementById("loadStringButton"),
     textAreaLabel: document.getElementById("textAreaLabel"),
     returnToMenuButton: document.getElementById("returnToMenu"),
-    pauseResumeGameButton: document.getElementById("resumeGame"),
-    canvas: document.getElementById("canvas"),
-    canvasContainer: document.getElementById("canvasContainer"),
+    pauseResumeGameButton: document.getElementById("pauseResumeButton"),
+    gameArea: document.getElementById("gameArea"),
+    gameSurface: document.getElementById("gameSurface"),
     buttonRow: document.getElementById("buttonRow"),
+    counterLabel: document.getElementById("counterLabel"),
+    counterValue: document.getElementById("counterValue"),
     btnEnglish: document.getElementById("btnEnglish"),
     btnSpanish: document.getElementById("btnSpanish"),
     btnFrench: document.getElementById("btnFrench"),
@@ -73,10 +61,6 @@ export function setElements() {
     closeButtonSavePopup: document.getElementById("closeButtonSavePopup"),
     overlay: document.getElementById("overlay"),
   };
-}
-
-export function getPlayerObject() {
-  return playerObject;
 }
 
 export function setGameStateVariable(value) {
@@ -177,22 +161,6 @@ export function getGameVisiblePaused() {
 
 export function getGameVisibleActive() {
   return GAME_VISIBLE_ACTIVE;
-}
-
-export function getNumberOfEnemySquares() {
-  return NUMBER_OF_ENEMY_SQUARES;
-}
-
-export function getInitialSpeedPlayer() {
-  return INITIAL_SPEED_PLAYER;
-}
-
-export function getInitialSpeedMovingEnemy() {
-  return INITIAL_SPEED_MOVING_ENEMY;
-}
-
-export function getMaxAttemptsToDrawEnemies() {
-  return MAX_ATTEMPTS_TO_DRAW_ENEMIES;
 }
 
 export function getLanguageSelected() {
