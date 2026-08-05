@@ -23,7 +23,7 @@ import {
   copySaveStringToClipBoard,
 } from "./saveLoadGame.js";
 
-let storyTextCache = null;
+const storyTextCacheByLanguage = new Map();
 let storyWindowController = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -274,24 +274,28 @@ function initializeStoryWindowControls() {
   });
 }
 
-async function getStoryText() {
-  if (storyTextCache !== null) {
-    return storyTextCache;
+async function getStoryText(language, forceReload = false) {
+  const storyLanguage = language || "en";
+
+  if (!forceReload && storyTextCacheByLanguage.has(storyLanguage)) {
+    return storyTextCacheByLanguage.get(storyLanguage);
   }
 
   try {
-    const response = await fetch("assets/story.md");
+    const response = await fetch(`assets/story_${storyLanguage}.md`);
     if (!response.ok) {
       throw new Error(`Failed to load story: ${response.status}`);
     }
 
-    storyTextCache = await response.text();
+    const storyText = await response.text();
+    storyTextCacheByLanguage.set(storyLanguage, storyText);
+    return storyText;
   } catch (error) {
     console.error("Error fetching story markdown:", error);
-    storyTextCache = "Unable to load story content.";
+    const fallbackStory = "Unable to load story content.";
+    storyTextCacheByLanguage.set(storyLanguage, fallbackStory);
+    return fallbackStory;
   }
-
-  return storyTextCache;
 }
 
 async function openStoryWindow(resizable = false, showScrollbar = true) {
@@ -299,7 +303,7 @@ async function openStoryWindow(resizable = false, showScrollbar = true) {
     return;
   }
 
-  const storyText = await getStoryText();
+  const storyText = await getStoryText(getLanguage(), true);
   getElements().storyDocumentText.textContent = storyText;
 
   if (storyWindowController) {
