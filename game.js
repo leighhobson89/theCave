@@ -27,6 +27,11 @@ let dragStartY = 0;
 let dragOriginPanX = 0;
 let dragOriginPanY = 0;
 let desktopObjectAudioBound = false;
+let zoomReadoutFadeTimeoutId = null;
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
 
 function getViewportRect() {
   if (!getElements().desktopViewport) {
@@ -59,6 +64,78 @@ function updateZoomReadout() {
   getElements().zoomReadout.textContent = `${localize("zoomLabel", getLanguage())} ${currentZoomIndex + 1}/5`;
 }
 
+function showZoomReadoutTransient() {
+  if (!getElements().zoomReadout) {
+    return;
+  }
+
+  getElements().zoomReadout.classList.add("is-visible");
+
+  if (zoomReadoutFadeTimeoutId !== null) {
+    window.clearTimeout(zoomReadoutFadeTimeoutId);
+  }
+
+  zoomReadoutFadeTimeoutId = window.setTimeout(() => {
+    getElements().zoomReadout.classList.remove("is-visible");
+  }, 1500);
+}
+
+function updateTableLegPerspective(zoom) {
+  const legs = [
+    { element: getElements().tableLegTopLeft, x: 279, y: 229 },
+    { element: getElements().tableLegTopRight, x: WORLD_WIDTH - 279, y: 229 },
+    { element: getElements().tableLegBottomLeft, x: 279, y: WORLD_HEIGHT - 229 },
+    { element: getElements().tableLegBottomRight, x: WORLD_WIDTH - 279, y: WORLD_HEIGHT - 229 },
+  ];
+
+  if (!legs.every((item) => item.element)) {
+    return;
+  }
+
+  const rect = getViewportRect();
+  const scaledWidth = WORLD_WIDTH * zoom;
+  const scaledHeight = WORLD_HEIGHT * zoom;
+  const minPanX = Math.min(0, rect.width - scaledWidth);
+  const minPanY = Math.min(0, rect.height - scaledHeight);
+  const centerPanX = minPanX / 2;
+  const centerPanY = minPanY / 2;
+  const maxPanTravel = Math.hypot(
+    Math.max(1, Math.abs(minPanX - centerPanX)),
+    Math.max(1, Math.abs(minPanY - centerPanY))
+  );
+  const viewportCenterX = rect.width / 2;
+  const viewportCenterY = rect.height / 2;
+
+  legs.forEach(({ element, x, y }) => {
+    const centeredScreenX = centerPanX + x * zoom;
+    const centeredScreenY = centerPanY + y * zoom;
+    const currentScreenX = panX + x * zoom;
+    const currentScreenY = panY + y * zoom;
+
+    const centeredDistance = Math.hypot(
+      centeredScreenX - viewportCenterX,
+      centeredScreenY - viewportCenterY
+    );
+    const currentDistance = Math.hypot(
+      currentScreenX - viewportCenterX,
+      currentScreenY - viewportCenterY
+    );
+
+    const awayFromCorner = clampNumber(
+      (currentDistance - centeredDistance) / maxPanTravel,
+      0,
+      1
+    );
+    const legExtend = 1 + awayFromCorner * 1.9;
+    const legSquash = 1 - awayFromCorner * 0.16;
+    const sheen = 0.55 + awayFromCorner * 0.45;
+
+    element.style.setProperty("--leg-extend", legExtend.toFixed(3));
+    element.style.setProperty("--leg-squash", legSquash.toFixed(3));
+    element.style.setProperty("--leg-sheen", sheen.toFixed(3));
+  });
+}
+
 function applyDesktopTransform() {
   if (!getElements().deskWorld || !getElements().deskParallax) {
     return;
@@ -69,6 +146,7 @@ function applyDesktopTransform() {
 
   getElements().deskWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
   getElements().deskParallax.style.transform = `translate(${panX * PARALLAX_FACTOR}px, ${panY * PARALLAX_FACTOR}px) scale(${0.9 + zoom * 0.03})`;
+  updateTableLegPerspective(zoom);
   updateZoomReadout();
 }
 
@@ -108,6 +186,7 @@ function handleWheelZoom(event) {
 
   panX = cx - worldX * nextZoom;
   panY = cy - worldY * nextZoom;
+  showZoomReadoutTransient();
   applyDesktopTransform();
 }
 
@@ -141,10 +220,36 @@ function handlePointerMove(event) {
   applyDesktopTransform();
 }
 
-function handlePointerUp() {
+function cancelDrag() {
   isDragging = false;
   if (getElements().desktopViewport) {
     getElements().desktopViewport.classList.remove("is-dragging");
+  }
+}
+
+function handlePointerUp() {
+  cancelDrag();
+}
+
+function handlePointerLeave() {
+  if (!isDragging) {
+    return;
+  }
+
+  cancelDrag();
+}
+
+function handlePointerCancel() {
+  cancelDrag();
+}
+
+function handleWindowBlur() {
+  cancelDrag();
+}
+
+function handleVisibilityChange() {
+  if (document.hidden) {
+    cancelDrag();
   }
 }
 
@@ -184,8 +289,12 @@ function initializeDesktopInteractions() {
 
   getElements().desktopViewport.addEventListener("wheel", handleWheelZoom, { passive: false });
   getElements().desktopViewport.addEventListener("pointerdown", handlePointerDown);
-  window.addEventListener("pointermove", handlePointerMove);
-  window.addEventListener("pointerup", handlePointerUp);
+  getElements().desktopViewport.addEventListener("pointermove", handlePointerMove);
+  getElements().desktopViewport.addEventListener("pointerup", handlePointerUp);
+  getElements().desktopViewport.addEventListener("pointerleave", handlePointerLeave);
+  getElements().desktopViewport.addEventListener("pointercancel", handlePointerCancel);
+  window.addEventListener("blur", handleWindowBlur);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
   window.addEventListener("resize", applyDesktopTransform);
 
   if (getElements().settingsToggle) {

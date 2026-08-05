@@ -9,7 +9,7 @@ export class AudioManager {
       clickSwitch: "audio/sfx/clickSwitch.mp3",
     };
 
-    this.musicVolume = 0.7;
+    this.musicVolume = 0.1;
     this.sfxVolume = 0.85;
     this.userInteracted = false;
     this.currentMusic = null;

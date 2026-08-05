@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -43,8 +46,12 @@
 
                 <div id="deskWorld" class="desk-world" aria-label="Investigation workspace">
                     <div id="deskTable" class="desk-table" aria-hidden="true"></div>
+                    <div id="tableLegTopLeft" class="table-leg leg-top-left" aria-hidden="true"></div>
+                    <div id="tableLegTopRight" class="table-leg leg-top-right" aria-hidden="true"></div>
+                    <div id="tableLegBottomLeft" class="table-leg leg-bottom-left" aria-hidden="true"></div>
+                    <div id="tableLegBottomRight" class="table-leg leg-bottom-right" aria-hidden="true"></div>
 
-                    <div id="bookOne" class="desk-book book-one">Witness Notes</div>
+                    <div id="bookOne" class="desk-book book-one">Background Story</div>
                     <div id="bookTwo" class="desk-book book-two">Case Timeline</div>
                     <div id="bookThree" class="desk-book book-three">Suspect Profiles</div>
 
@@ -62,6 +69,22 @@
                 <div id="zoomReadout" class="zoom-readout">Zoom 3/5</div>
             </div>
 
+            <div id="storyWindow" class="desktop-window story-window d-none" aria-label="Background story window">
+                <div id="storyWindowHeader" class="desktop-window-header story-window-header">
+                    <div id="storyWindowTitle" class="desktop-window-title story-window-title">Background Story</div>
+                    <button id="storyWindowClose" type="button" class="story-window-close" aria-label="Close story window">x</button>
+                </div>
+                <div class="desktop-window-body story-window-body">
+                    <div class="story-paper-wrap">
+                        <div id="storyDocumentContent" class="story-document-content">
+                            <div class="story-paperclip" aria-hidden="true"></div>
+                            <div id="storyDocumentText" class="story-document-text"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="storyWindowResizeHandle" class="desktop-window-resize-handle d-none" aria-hidden="true"></div>
+            </div>
+
             <div id="floatingSettings" class="floating-settings" aria-label="Settings menu">
                 <button id="settingsToggle" class="settings-toggle" aria-expanded="false" aria-controls="settingsItems">
                     <span class="settings-cog">⚙</span>
@@ -70,8 +93,8 @@
                     <button id="muteToggleButton" class="settings-item settings-toggle-item">Mute: Off</button>
                     <div class="settings-item settings-slider-row">
                         <label id="musicVolumeLabel" for="musicVolumeSlider">Music Volume</label>
-                        <input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="70">
-                        <span id="musicVolumeValue" class="settings-value">70%</span>
+                        <input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="10">
+                        <span id="musicVolumeValue" class="settings-value">10%</span>
                     </div>
                     <div class="settings-item settings-slider-row">
                         <label id="sfxVolumeLabel" for="sfxVolumeSlider">SFX Volume</label>

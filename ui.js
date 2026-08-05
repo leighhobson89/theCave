@@ -14,6 +14,7 @@ import {
 } from "./constantsAndGlobalVars.js";
 import { setGameState, startGame } from "./game.js";
 import { audioManager } from "./audioManager.js";
+import { DesktopWindow } from "./desktopWindow.js";
 import { initLocalization, localize } from "./localization.js";
 import {
   loadGameOption,
@@ -22,9 +23,13 @@ import {
   copySaveStringToClipBoard,
 } from "./saveLoadGame.js";
 
+let storyTextCache = null;
+let storyWindowController = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
   initializeAudioControls();
+  initializeStoryWindowControls();
 
   getElements().newGameMenuButton.addEventListener("click", () => {
     audioManager.onUserGesture();
@@ -160,6 +165,11 @@ async function setElementsLanguageText() {
     "zoomLabel",
     getLanguage()
   )} 3/5`;
+  getElements().bookOne.innerHTML = `${localize("backgroundStory", getLanguage())}`;
+  getElements().storyWindowTitle.innerHTML = `${localize(
+    "backgroundStory",
+    getLanguage()
+  )}`;
   getElements().evidenceLabel.innerHTML = `${localize("evidence", getLanguage())}`;
   getElements().musicVolumeLabel.innerHTML = `${localize(
     "musicVolume",
@@ -234,5 +244,85 @@ function refreshMuteButtonLabel() {
     "mute",
     getLanguage()
   )}: ${localize(muteStateKey, getLanguage())}`;
+}
+
+function initializeStoryWindowControls() {
+  if (
+    !getElements().bookOne ||
+    !getElements().storyWindow ||
+    !getElements().storyWindowHeader ||
+    !getElements().storyWindowResizeHandle ||
+    !getElements().storyWindowClose
+  ) {
+    return;
+  }
+
+  storyWindowController = new DesktopWindow({
+    rootElement: getElements().storyWindow,
+    headerElement: getElements().storyWindowHeader,
+    resizeHandleElement: getElements().storyWindowResizeHandle,
+    scrollContainerElement: getElements().storyDocumentContent,
+  });
+
+  getElements().bookOne.addEventListener("click", () => {
+    openStoryWindow(false, false);
+  });
+
+  getElements().storyWindowClose.addEventListener("click", (event) => {
+    event.stopPropagation();
+    closeStoryWindow();
+  });
+}
+
+async function getStoryText() {
+  if (storyTextCache !== null) {
+    return storyTextCache;
+  }
+
+  try {
+    const response = await fetch("assets/story.md");
+    if (!response.ok) {
+      throw new Error(`Failed to load story: ${response.status}`);
+    }
+
+    storyTextCache = await response.text();
+  } catch (error) {
+    console.error("Error fetching story markdown:", error);
+    storyTextCache = "Unable to load story content.";
+  }
+
+  return storyTextCache;
+}
+
+async function openStoryWindow(resizable = false, showScrollbar = true) {
+  if (!getElements().storyDocumentContent || !getElements().storyDocumentText) {
+    return;
+  }
+
+  const storyText = await getStoryText();
+  getElements().storyDocumentText.textContent = storyText;
+
+  if (storyWindowController) {
+    storyWindowController.open({ resizable, showScrollbar });
+  } else {
+    getElements().storyWindow.classList.remove("d-none");
+    getElements().storyDocumentContent.classList.toggle("scrollbars-hidden", !showScrollbar);
+  }
+
+  getElements().storyDocumentContent.scrollTop = 0;
+}
+
+function closeStoryWindow() {
+  if (!getElements().storyWindow) {
+    return;
+  }
+
+  if (storyWindowController) {
+    storyWindowController.close();
+  } else {
+    getElements().storyWindow.classList.add("d-none");
+  }
+
+  audioManager.playSfx("clickSwitch");
 }
   
