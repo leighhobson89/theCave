@@ -358,24 +358,219 @@ button.disabled {
     border-radius: 5px;
     background: #f5f1ea;
     border: 1px solid #ddd5c8;
+    z-index: 3;
 }
 
 .paper-back {
     left: 128px;
     top: -36px;
-    transform: rotate(-2deg);
+    transform: rotate(32deg);
 }
 
 .paper-mid {
     left: 118px;
     top: -28px;
-    transform: rotate(0.4deg);
+    transform: rotate(34.4deg);
 }
 
 .paper-front {
     left: 108px;
     top: -20px;
-    transform: rotate(3deg);
+    transform: rotate(37deg);
+
+    position: absolute;
+    overflow: hidden;
+}
+
+.fake-text {
+    position: absolute;
+    inset: 16px;
+    opacity: .45;
+    pointer-events: none;
+}
+
+.fake-text::before {
+    content: "";
+    
+    position: absolute;
+    width: 150px;
+    height: 280px;
+
+    left: 20%;
+    top: 55%;
+
+    transform: translate(-50%, -50%) rotate(90deg);
+
+    background:
+        linear-gradient(#666, #666) 0 0 / 92% 3px no-repeat,
+        linear-gradient(#666, #666) 0 12px / 75% 3px no-repeat,
+        linear-gradient(#666, #666) 0 24px / 88% 3px no-repeat,
+        linear-gradient(#666, #666) 0 36px / 65% 3px no-repeat,
+
+        linear-gradient(#666, #666) 0 60px / 90% 3px no-repeat,
+        linear-gradient(#666, #666) 0 72px / 82% 3px no-repeat,
+        linear-gradient(#666, #666) 0 84px / 70% 3px no-repeat,
+        linear-gradient(#666, #666) 0 96px / 94% 3px no-repeat,
+        linear-gradient(#666, #666) 0 108px / 58% 3px no-repeat;
+
+    filter: blur(.7px);
+}
+
+.stamp {
+    position: absolute;
+
+    right: 210px;
+    top: 20px;
+
+    width: 105px;
+    height: 105px;
+    color: rgba(170, 20, 20, .8);
+
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 2px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-transform: uppercase;
+
+    transform: rotate(-91deg);
+
+    opacity: .85;
+
+    pointer-events: none;
+}
+
+.magnifying-glass {
+    position: absolute;
+
+    left: 160px;
+    top: 20px;
+
+    width: 120px;
+    height: 120px;
+
+    transform: rotate(18deg);
+
+    z-index: 20;
+}
+
+.lens {
+    position: absolute;
+
+    width: 82px;
+    height: 82px;
+
+    border-radius: 50%;
+    overflow: hidden;
+
+    border: 8px solid #666;
+
+    background:
+        radial-gradient(circle at 35% 35%,
+            rgba(255, 255, 255, .55),
+            rgba(200, 220, 255, .18) 55%,
+            rgba(120, 150, 180, .25) 100%);
+
+    box-shadow:
+        inset 0 0 8px rgba(255, 255, 255, .4),
+        0 5px 12px rgba(0, 0, 0, .35);
+
+    z-index: 2;
+}
+
+.lens-text {
+    position: absolute;
+
+    width: 220px;
+    height: 220px;
+
+    left: -45px;
+    top: -40px;
+
+    transform: rotate(-71deg) scale(1.4);
+    transform-origin: center;
+
+    background:
+        linear-gradient(#666, #666) 0 0 / 92% 3px no-repeat,
+        linear-gradient(#666, #666) 0 12px / 75% 3px no-repeat,
+        linear-gradient(#666, #666) 0 24px / 88% 3px no-repeat,
+        linear-gradient(#666, #666) 0 36px / 65% 3px no-repeat,
+        linear-gradient(#666, #666) 0 60px / 90% 3px no-repeat,
+        linear-gradient(#666, #666) 0 72px / 82% 3px no-repeat,
+        linear-gradient(#666, #666) 0 84px / 70% 3px no-repeat,
+        linear-gradient(#666, #666) 0 96px / 94% 3px no-repeat,
+        linear-gradient(#666, #666) 0 108px / 58% 3px no-repeat;
+
+    filter: blur(.6px);
+}
+
+.handle {
+    position: absolute;
+
+    width: 18px;
+    height: 95px;
+
+    left: 70px;
+    top: 63px;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(to right,
+            #5c3b1d 0%,
+            #8a5b31 40%,
+            #b9844d 55%,
+            #7d5029 100%);
+
+    box-shadow:
+        inset 0 0 4px rgba(255, 255, 255, .2),
+        0 3px 6px rgba(0, 0, 0, .3);
+
+    transform: rotate(-60deg);
+    transform-origin: top center;
+}
+
+.lens::before {
+    content: "";
+
+    position: absolute;
+
+    width: 26px;
+    height: 12px;
+
+    left: 18px;
+    top: 16px;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, .7);
+
+    filter: blur(2px);
+
+    transform: rotate(-25deg);
+}
+
+.handle::before {
+    content: "";
+
+    position: absolute;
+
+    width: 24px;
+    height: 14px;
+
+    left: -3px;
+    top: -6px;
+
+    border-radius: 8px;
+
+    background: #8c8c8c;
+
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, .4);
 }
 
 .evidence-label {
@@ -387,6 +582,7 @@ button.disabled {
     letter-spacing: 0.08em;
     color: rgba(82, 45, 8, 0.78);
     transform: rotate(-4deg);
+    z-index: 2;
 }
 
 .zoom-readout {
