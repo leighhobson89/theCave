@@ -63,6 +63,7 @@ const storyWindowContentRefs = new WeakMap();
 const photosWindowContentRefs = new WeakMap();
 const reportsWindowContentRefs = new WeakMap();
 const notesWindowContentRefs = new WeakMap();
+const computerWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
 const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
@@ -780,8 +781,527 @@ function refreshOpenWindowLocalization() {
 
     if (windowKind === "notes") {
       windowController.setTitle(localize("notes", getLanguage()));
+      return;
+    }
+
+    if (windowKind === "computer-notes") {
+      windowController.setTitle(localize("notes", getLanguage()));
+      return;
+    }
+
+    if (windowKind === "computer-paint") {
+      windowController.setTitle("Paint");
+      return;
+    }
+
+    if (windowKind === "computer-netscape") {
+      windowController.setTitle("Netscape");
+      return;
+    }
+
+    if (windowKind === "computer") {
+      windowController.setTitle("Computer");
     }
   });
+}
+
+function updateComputerDesktopClock(refs) {
+  if (!refs?.minuteHand || !refs?.hourHand || !refs?.secondHand || !refs?.dateText) {
+    return;
+  }
+
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+
+  const secondAngle = seconds * 6;
+  const minuteAngle = (minutes + seconds / 60) * 6;
+  const hourAngle = ((hours % 12) + minutes / 60) * 30;
+
+  refs.secondHand.style.transform = `rotate(${secondAngle}deg)`;
+  refs.minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
+  refs.hourHand.style.transform = `rotate(${hourAngle}deg)`;
+
+  const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+  refs.dateText.textContent = dateFormatter.format(now);
+}
+
+function createComputerWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("computer-desktop", "scrollbars-hidden");
+
+  const header = document.createElement("div");
+  header.classList.add("computer-desktop-header");
+  header.textContent = "CAVE OS 1996";
+
+  const subHeader = document.createElement("div");
+  subHeader.classList.add("computer-desktop-subheader");
+  subHeader.textContent = "ui://desktop";
+
+  const iconsGrid = document.createElement("div");
+  iconsGrid.classList.add("computer-icons-grid");
+
+  const createIconButton = (labelText, className) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("computer-icon", className);
+    button.setAttribute("aria-label", labelText);
+
+    const pixelArt = document.createElement("span");
+    pixelArt.classList.add("computer-icon-pixel", `${className}-pixel`);
+
+    const label = document.createElement("span");
+    label.classList.add("computer-icon-label");
+    label.textContent = labelText;
+
+    button.append(pixelArt, label);
+    return button;
+  };
+
+  const notesIcon = createIconButton("Notes", "computer-icon-notes");
+  const paintIcon = createIconButton("Paint", "computer-icon-paint");
+  const netscapeIcon = createIconButton("Netscape", "computer-icon-netscape");
+
+  const clockPanel = document.createElement("button");
+  clockPanel.type = "button";
+  clockPanel.classList.add("computer-clock-panel");
+  clockPanel.setAttribute("aria-label", "Open main menu");
+  clockPanel.title = "Open main menu";
+
+  const analogClock = document.createElement("div");
+  analogClock.classList.add("computer-analog-clock");
+
+  const centerDot = document.createElement("span");
+  centerDot.classList.add("computer-clock-center");
+
+  const hourHand = document.createElement("span");
+  hourHand.classList.add("computer-clock-hand", "computer-clock-hour");
+
+  const minuteHand = document.createElement("span");
+  minuteHand.classList.add("computer-clock-hand", "computer-clock-minute");
+
+  const secondHand = document.createElement("span");
+  secondHand.classList.add("computer-clock-hand", "computer-clock-second");
+
+  analogClock.append(hourHand, minuteHand, secondHand, centerDot);
+
+  const dateText = document.createElement("div");
+  dateText.classList.add("computer-clock-date");
+
+  const clockHint = document.createElement("div");
+  clockHint.classList.add("computer-clock-hint");
+  clockHint.textContent = "MENU";
+
+  clockPanel.append(analogClock, dateText, clockHint);
+
+  iconsGrid.append(notesIcon, paintIcon, netscapeIcon);
+  container.append(header, subHeader, iconsGrid, clockPanel);
+
+  const refs = {
+    container,
+    notesIcon,
+    paintIcon,
+    netscapeIcon,
+    clockPanel,
+    dateText,
+    hourHand,
+    minuteHand,
+    secondHand,
+    clockIntervalId: null,
+    appWindows: new Set(),
+  };
+
+  updateComputerDesktopClock(refs);
+  refs.clockIntervalId = window.setInterval(() => {
+    updateComputerDesktopClock(refs);
+  }, 1000);
+
+  return refs;
+}
+
+function createComputerPaintWindowContentElements() {
+  const PAINT_BACKGROUND_COLOR = "#041204";
+
+  const container = document.createElement("div");
+  container.classList.add("caveos-paint-app");
+
+  const toolbar = document.createElement("div");
+  toolbar.classList.add("caveos-paint-toolbar");
+
+  const toolButtons = [];
+  const toolNames = ["pen", "line", "rect", "eraser", "fill"];
+
+  toolNames.forEach((toolName, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("caveos-paint-tool");
+    if (index === 0) {
+      button.classList.add("is-active");
+    }
+    button.dataset.tool = toolName;
+    button.textContent = toolName.toUpperCase();
+    toolbar.appendChild(button);
+    toolButtons.push(button);
+  });
+
+  const sizeInput = document.createElement("input");
+  sizeInput.type = "range";
+  sizeInput.min = "1";
+  sizeInput.max = "18";
+  sizeInput.value = "3";
+  sizeInput.classList.add("caveos-paint-size");
+  sizeInput.setAttribute("aria-label", "Brush size");
+
+  const colorInput = document.createElement("input");
+  colorInput.type = "color";
+  colorInput.value = "#76ff62";
+  colorInput.classList.add("caveos-paint-color");
+  colorInput.setAttribute("aria-label", "Paint color");
+
+  const clearButton = document.createElement("button");
+  clearButton.type = "button";
+  clearButton.classList.add("caveos-paint-tool", "caveos-paint-clear");
+  clearButton.textContent = "CLEAR";
+
+  toolbar.append(sizeInput, colorInput, clearButton);
+
+  const canvasWrap = document.createElement("div");
+  canvasWrap.classList.add("caveos-paint-canvas-wrap");
+
+  const canvas = document.createElement("canvas");
+  canvas.classList.add("caveos-paint-canvas");
+  canvas.width = 1024;
+  canvas.height = 640;
+  canvasWrap.appendChild(canvas);
+
+  container.append(toolbar, canvasWrap);
+
+  const context = canvas.getContext("2d");
+  if (context) {
+    context.fillStyle = PAINT_BACKGROUND_COLOR;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = "#76ff62";
+    context.lineWidth = 3;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+  }
+
+  let currentTool = "pen";
+  let isDrawing = false;
+  let startX = 0;
+  let startY = 0;
+  let lastX = 0;
+  let lastY = 0;
+  let previewSnapshot = null;
+
+  const parseColor = (hexColor) => {
+    const normalized = String(hexColor || "").trim();
+    const match = /^#([0-9a-f]{6})$/i.exec(normalized);
+    if (!match) {
+      return [118, 255, 98, 255];
+    }
+
+    const value = match[1];
+    return [
+      Number.parseInt(value.slice(0, 2), 16),
+      Number.parseInt(value.slice(2, 4), 16),
+      Number.parseInt(value.slice(4, 6), 16),
+      255,
+    ];
+  };
+
+  const colorsEqual = (data, index, target) => (
+    data[index] === target[0]
+    && data[index + 1] === target[1]
+    && data[index + 2] === target[2]
+    && data[index + 3] === target[3]
+  );
+
+  const setPixelColor = (data, index, color) => {
+    data[index] = color[0];
+    data[index + 1] = color[1];
+    data[index + 2] = color[2];
+    data[index + 3] = color[3];
+  };
+
+  const floodFill = (startXCoord, startYCoord, fillColorHex) => {
+    if (!context) {
+      return;
+    }
+
+    const boundedX = Math.max(0, Math.min(canvas.width - 1, Math.floor(startXCoord)));
+    const boundedY = Math.max(0, Math.min(canvas.height - 1, Math.floor(startYCoord)));
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const { data } = imageData;
+    const fillColor = parseColor(fillColorHex);
+    const startIndex = (boundedY * canvas.width + boundedX) * 4;
+    const targetColor = [
+      data[startIndex],
+      data[startIndex + 1],
+      data[startIndex + 2],
+      data[startIndex + 3],
+    ];
+
+    if (
+      targetColor[0] === fillColor[0]
+      && targetColor[1] === fillColor[1]
+      && targetColor[2] === fillColor[2]
+      && targetColor[3] === fillColor[3]
+    ) {
+      return;
+    }
+
+    const stack = [[boundedX, boundedY]];
+    while (stack.length) {
+      const next = stack.pop();
+      if (!next) {
+        continue;
+      }
+
+      const x = next[0];
+      const y = next[1];
+      if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
+        continue;
+      }
+
+      const pixelIndex = (y * canvas.width + x) * 4;
+      if (!colorsEqual(data, pixelIndex, targetColor)) {
+        continue;
+      }
+
+      setPixelColor(data, pixelIndex, fillColor);
+      stack.push([x + 1, y]);
+      stack.push([x - 1, y]);
+      stack.push([x, y + 1]);
+      stack.push([x, y - 1]);
+    }
+
+    context.putImageData(imageData, 0, 0);
+  };
+
+  const readPaintPosition = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY,
+    };
+  };
+
+  const applyToolStyles = () => {
+    if (!context) {
+      return;
+    }
+
+    const size = Math.max(1, Number.parseInt(sizeInput.value, 10) || 3);
+    if (currentTool === "eraser") {
+      context.globalCompositeOperation = "source-over";
+      context.strokeStyle = PAINT_BACKGROUND_COLOR;
+      context.fillStyle = PAINT_BACKGROUND_COLOR;
+      context.lineWidth = size * 2;
+    } else {
+      context.globalCompositeOperation = "source-over";
+      context.strokeStyle = colorInput.value;
+      context.fillStyle = colorInput.value;
+      context.lineWidth = size;
+    }
+  };
+
+  toolButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      currentTool = button.dataset.tool || "pen";
+      toolButtons.forEach((candidate) => {
+        candidate.classList.toggle("is-active", candidate === button);
+      });
+      applyToolStyles();
+    });
+  });
+
+  clearButton.addEventListener("click", () => {
+    if (!context) {
+      return;
+    }
+
+    context.globalCompositeOperation = "source-over";
+    context.fillStyle = PAINT_BACKGROUND_COLOR;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    applyToolStyles();
+  });
+
+  const handlePointerMove = (event) => {
+    if (!isDrawing || !context) {
+      return;
+    }
+
+    const position = readPaintPosition(event);
+
+    if (currentTool === "pen" || currentTool === "eraser") {
+      context.beginPath();
+      context.moveTo(lastX, lastY);
+      context.lineTo(position.x, position.y);
+      context.stroke();
+      lastX = position.x;
+      lastY = position.y;
+      return;
+    }
+
+    if (!previewSnapshot) {
+      return;
+    }
+
+    context.putImageData(previewSnapshot, 0, 0);
+    context.beginPath();
+    if (currentTool === "line") {
+      context.moveTo(startX, startY);
+      context.lineTo(position.x, position.y);
+      context.stroke();
+      return;
+    }
+
+    if (currentTool === "rect") {
+      context.strokeRect(startX, startY, position.x - startX, position.y - startY);
+    }
+  };
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (!context) {
+      return;
+    }
+
+    const position = readPaintPosition(event);
+
+    if (currentTool === "fill") {
+      floodFill(position.x, position.y, colorInput.value);
+      return;
+    }
+
+    applyToolStyles();
+
+    isDrawing = true;
+    startX = position.x;
+    startY = position.y;
+    lastX = position.x;
+    lastY = position.y;
+    previewSnapshot = context.getImageData(0, 0, canvas.width, canvas.height);
+
+    if (currentTool === "pen" || currentTool === "eraser") {
+      context.beginPath();
+      context.moveTo(position.x, position.y);
+      context.lineTo(position.x + 0.01, position.y + 0.01);
+      context.stroke();
+    }
+
+    if (typeof event.pointerId === "number") {
+      try {
+        canvas.setPointerCapture(event.pointerId);
+      } catch (error) {
+        // Ignore pointer capture failures for non-primary/synthetic pointer events.
+      }
+    }
+  });
+
+  canvas.addEventListener("pointermove", handlePointerMove);
+
+  const stopDraw = (event) => {
+    if (!isDrawing) {
+      return;
+    }
+
+    handlePointerMove(event);
+    isDrawing = false;
+    previewSnapshot = null;
+    if (typeof event.pointerId === "number") {
+      try {
+        if (canvas.hasPointerCapture(event.pointerId)) {
+          canvas.releasePointerCapture(event.pointerId);
+        }
+      } catch (error) {
+        // Ignore pointer release failures when capture was never established.
+      }
+    }
+  };
+
+  canvas.addEventListener("pointerup", stopDraw);
+  canvas.addEventListener("pointercancel", stopDraw);
+
+  return container;
+}
+
+function createComputerNetscapeWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("caveos-browser-app");
+
+  const topBar = document.createElement("div");
+  topBar.classList.add("caveos-browser-topbar");
+  topBar.textContent = "Netscape Navigator 3.0";
+
+  const addressRow = document.createElement("div");
+  addressRow.classList.add("caveos-browser-address-row");
+
+  const label = document.createElement("span");
+  label.textContent = "URL:";
+
+  const fakeAddress = document.createElement("div");
+  fakeAddress.classList.add("caveos-browser-address");
+  fakeAddress.textContent = "http://cave-net.local/offline";
+
+  addressRow.append(label, fakeAddress);
+
+  const body = document.createElement("div");
+  body.classList.add("caveos-browser-body");
+  body.textContent = "No modem signal detected. Explore the cave to reconnect.";
+
+  container.append(topBar, addressRow, body);
+  return container;
+}
+
+function openComputerAppWindow({
+  parentElement,
+  kind,
+  title,
+  classNames = [],
+  contentNode,
+  appWindowSet,
+  resizable = true,
+  showScrollbar = false,
+}) {
+  if (!parentElement || !(contentNode instanceof Node)) {
+    return null;
+  }
+
+  let appWindowController = null;
+  appWindowController = new DesktopWindow({
+    parentElement,
+    classNames: ["caveos-app-window", ...classNames],
+    title,
+    showCarouselNavigation: false,
+    closeButtonAriaLabel: `Close ${title} window`,
+    onClose: () => {
+      unregisterDesktopWindow(appWindowController);
+      if (appWindowSet) {
+        appWindowSet.delete(appWindowController);
+      }
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  appWindowController.setContent(contentNode);
+  appWindowController.scrollContainerElement = contentNode;
+  registerDesktopWindow(appWindowController, kind);
+  appWindowController.open({ resizable, showScrollbar });
+  bringDesktopWindowToFront(appWindowController);
+
+  if (appWindowSet) {
+    appWindowSet.add(appWindowController);
+  }
+
+  return appWindowController;
 }
 
 async function getStoryText(language, forceReload = false) {
@@ -2030,15 +2550,23 @@ function openReportsWindow() {
   audioManager.playSfx("clickSwitch");
 }
 
-function openNotesWindow() {
-  if (!getElements().gameArea) {
+function openNotesWindow(options = {}) {
+  const {
+    parentElement = getElements().gameArea,
+    classNames = ["story-window", "notes-window"],
+    windowKind = "notes",
+    showCloseSfx = true,
+    onWindowClose = null,
+  } = options;
+
+  if (!parentElement) {
     return;
   }
 
   let notesWindowController = null;
   notesWindowController = new DesktopWindow({
-    parentElement: getElements().gameArea,
-    classNames: ["story-window", "notes-window"],
+    parentElement,
+    classNames,
     title: localize("notes", getLanguage()),
     showCarouselNavigation: false,
     closeButtonAriaLabel: "Close notes window",
@@ -2049,7 +2577,12 @@ function openNotesWindow() {
       }
 
       unregisterDesktopWindow(notesWindowController);
-      audioManager.playSfx("clickSwitch");
+      if (typeof onWindowClose === "function") {
+        onWindowClose(notesWindowController);
+      }
+      if (showCloseSfx) {
+        audioManager.playSfx("clickSwitch");
+      }
     },
   });
 
@@ -2057,7 +2590,7 @@ function openNotesWindow() {
   notesWindowController.setContent(contentRefs.container);
   notesWindowController.scrollContainerElement = contentRefs.textarea;
   notesWindowContentRefs.set(notesWindowController, contentRefs);
-  registerDesktopWindow(notesWindowController, "notes");
+  registerDesktopWindow(notesWindowController, windowKind);
 
   renderNotesWindowContent(contentRefs);
   notesWindowController.open({ resizable: true, showScrollbar: false });
@@ -2070,8 +2603,86 @@ function openComputerWindow() {
     return;
   }
 
-  const emptyContent = document.createElement("div");
-  emptyContent.classList.add("computer-window-empty");
+  const contentRefs = createComputerWindowContentElements();
+
+  const openMenuFromComputerClock = () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickSwitch");
+    setGameState(getMenuState());
+  };
+
+  contentRefs.clockPanel.addEventListener("click", () => {
+    openMenuFromComputerClock();
+  });
+
+  contentRefs.clockPanel.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    openMenuFromComputerClock();
+  });
+
+  contentRefs.notesIcon.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+    if (!toggleExistingWindowsByKind("computer-notes")) {
+      const notesWindow = openNotesWindow({
+        parentElement: contentRefs.container,
+        classNames: ["notes-window", "caveos-app-window", "caveos-notes-window"],
+        windowKind: "computer-notes",
+        onWindowClose: (windowController) => {
+          contentRefs.appWindows.delete(windowController);
+        },
+      });
+      if (notesWindow) {
+        contentRefs.appWindows.add(notesWindow);
+      }
+    }
+  });
+
+  contentRefs.paintIcon.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+
+    if (toggleExistingWindowsByKind("computer-paint")) {
+      return;
+    }
+
+    const paintContent = createComputerPaintWindowContentElements();
+    openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-paint",
+      title: "Paint",
+      classNames: ["caveos-paint-window"],
+      contentNode: paintContent,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+    });
+  });
+
+  contentRefs.netscapeIcon.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+
+    if (toggleExistingWindowsByKind("computer-netscape")) {
+      return;
+    }
+
+    const netscapeContent = createComputerNetscapeWindowContentElements();
+    openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-netscape",
+      title: "Netscape",
+      classNames: ["caveos-browser-window"],
+      contentNode: netscapeContent,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+    });
+  });
 
   let nextController = null;
   nextController = new DesktopWindow({
@@ -2081,6 +2692,17 @@ function openComputerWindow() {
     showCarouselNavigation: false,
     closeButtonAriaLabel: "Close computer window",
     onClose: () => {
+      const refs = computerWindowContentRefs.get(nextController);
+      if (refs?.appWindows?.size) {
+        const windowsToClose = Array.from(refs.appWindows);
+        windowsToClose.forEach((windowController) => {
+          windowController.close();
+        });
+      }
+      if (refs?.clockIntervalId) {
+        clearInterval(refs.clockIntervalId);
+        refs.clockIntervalId = null;
+      }
       unregisterDesktopWindow(nextController);
       if (computerWindowController === nextController) {
         computerWindowController = null;
@@ -2089,8 +2711,9 @@ function openComputerWindow() {
     },
   });
 
-  nextController.setContent(emptyContent);
-  nextController.scrollContainerElement = emptyContent;
+  nextController.setContent(contentRefs.container);
+  nextController.scrollContainerElement = contentRefs.container;
+  computerWindowContentRefs.set(nextController, contentRefs);
   registerDesktopWindow(nextController, "computer");
   nextController.open({ resizable: false, showScrollbar: false });
 
