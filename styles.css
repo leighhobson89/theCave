@@ -325,15 +325,6 @@ button.disabled {
     text-transform: uppercase;
 }
 
-.folder-red {
-    background: linear-gradient(165deg, #d36a6a, #b13d3d 55%, #7b1d1d);
-}
-
-.folder-red .desk-folder-tab {
-    background: linear-gradient(#e88b8b, #bf4747);
-}
-
-
 .folder-green {
     background: linear-gradient(165deg, #8cbf73, #5d9346 55%, #40662f);
 }
@@ -367,6 +358,133 @@ button.disabled {
     left: 1250px;
     top: 245px;
     transform: rotate(-8deg);
+}
+
+.background-story-stack {
+    position: absolute;
+    left: 360px;
+    top: 250px;
+    width: 390px;
+    height: 510px;
+    transform: rotate(-5deg);
+    z-index: 2;
+}
+
+.background-story-paper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    border: 1px solid rgba(199, 186, 160, 0.78);
+    background-color: #f2ead7;
+    box-shadow:
+        0 10px 16px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.background-story-paper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+        linear-gradient(to bottom,
+            rgba(194, 75, 75, 0.48) 0,
+            rgba(194, 75, 75, 0.48) 100%) 60px 0 / 2px 100% no-repeat,
+        repeating-linear-gradient(to bottom,
+            transparent 0,
+            transparent 24px,
+            rgba(147, 165, 194, 0.28) 24px,
+            rgba(147, 165, 194, 0.28) 25px),
+        linear-gradient(180deg, rgba(247, 240, 223, 0.98), rgba(239, 231, 213, 0.98));
+}
+
+.background-story-paper-back {
+    left: 10px;
+    top: 8px;
+    transform: rotate(-1.8deg);
+    opacity: 0.86;
+}
+
+.background-story-paper-mid {
+    left: 5px;
+    top: 4px;
+    transform: rotate(-0.8deg);
+    opacity: 0.93;
+}
+
+.background-story-paper-front {
+    left: 0;
+    top: 0;
+    overflow: hidden;
+}
+
+.background-story-paperclip {
+    position: absolute;
+    left: 14px;
+    top: -2px;
+    width: 30px;
+    height: 108px;
+    border: 4px solid rgba(145, 153, 160, 0.95);
+    border-radius: 16px;
+    transform: rotate(8deg);
+    z-index: 4;
+    background: transparent;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.background-story-paperclip::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 7px;
+    width: 12px;
+    height: 88px;
+    border: 4px solid rgba(167, 173, 178, 0.9);
+    border-radius: 12px;
+}
+
+.background-story-text {
+    position: absolute;
+    left: 68px;
+    top: 82px;
+    width: 302px;
+    height: 246px;
+    opacity: 0.95;
+}
+
+.background-story-text::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(#3158a0, #3158a0) 0 0 / 96% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 20px / 92% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 40px / 97% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 60px / 86% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 80px / 94% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 100px / 89% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 120px / 95% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 140px / 87% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 160px / 93% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 180px / 85% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 200px / 92% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 220px / 88% 4px no-repeat,
+        linear-gradient(#3158a0, #3158a0) 0 240px / 90% 4px no-repeat;
+    filter: blur(0.35px);
+}
+
+.background-story-label {
+    position: absolute;
+    left: 24px;
+    top: 10px;
+    font-size: 30px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: rgba(40, 25, 15, .7);
+    text-transform: uppercase;
 }
 
 .notes-folder {
