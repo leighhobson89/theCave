@@ -15,10 +15,10 @@
 
 ### Persons Involved
 
-**Andrew Spencer DOB 12 AUG 1888 (12)**
-Recovered alive. Died from injuries sustained underground.
+**Andrew John Spencer DOB 12 AUG 1888 (12)**
+Recovered alive. Died from injuries sustained.
 
-**Arnie Spencer DOB 06 NOV 1891 (9)**
+**Arnold Askew Spencer DOB 06 NOV 1891 (9) Known as 'Arnie'**
 Missing. Presumed DEAD.
 
 ---
@@ -27,9 +27,9 @@ Missing. Presumed DEAD.
 
 Both boys entered the abandoned B Shaft of the Black Pine Former Silver Mine during the afternoon of 12 July 1901.
 
-Andrew Spencer later returned to Spencer Farm, Black Pine, suffering severe injuries according to witness statements. He later died at the residence from suspected blood loss and shock, confirmed by the local Coroner on 13 July.
+Andrew John Spencer later returned to Spencer Farm, Black Pine, suffering severe injuries according to witness statements. He later died at the residence from suspected blood loss and shock, confirmed by the local Coroner on 13 July.
 
-The search for Arnie Spencer continues.
+The search for Arnold Askew Spencer continues.
 
 ---
 
@@ -46,4 +46,4 @@ The search for Arnie Spencer continues.
 
 **Remarks** 
 
-No explanation has been established for the circumstances surrounding Andrew Spencer's injuries.
+No explanation has been established for the circumstances surrounding Andrew John Spencer's injuries.

@@ -752,6 +752,56 @@ button.disabled {
     padding: 0.75rem 1.35rem 1.35rem;
 }
 
+.debug-window {
+    width: min(560px, 78vw);
+    height: min(360px, 62vh);
+}
+
+.debug-window-content {
+    width: 100%;
+    height: 100%;
+    padding: 0.85rem;
+    border: 1px solid rgba(183, 255, 156, 0.38);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(26, 47, 19, 0.72), rgba(11, 24, 10, 0.8));
+    box-sizing: border-box;
+}
+
+.debug-window-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.65rem 0.7rem;
+    border: 1px solid rgba(174, 250, 144, 0.22);
+    border-radius: 10px;
+    background: rgba(11, 21, 9, 0.58);
+}
+
+.debug-window-label {
+    color: rgba(226, 255, 207, 0.95);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+}
+
+.debug-window-button {
+    min-width: 90px;
+    border: 1px solid rgba(161, 255, 120, 0.65);
+    border-radius: 8px;
+    padding: 0.42rem 0.8rem;
+    background: linear-gradient(180deg, rgba(141, 255, 96, 0.92), rgba(88, 212, 58, 0.88));
+    color: rgba(17, 31, 12, 0.95);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+}
+
+.debug-window-button:hover {
+    background: linear-gradient(180deg, rgba(163, 255, 127, 0.95), rgba(100, 224, 70, 0.9));
+}
+
 .desktop-window-carousel-layout {
     height: 100%;
     display: grid;
@@ -795,22 +845,89 @@ button.disabled {
     box-sizing: border-box;
     width: 100%;
     height: 100%;
-    padding: 0.65rem;
-    border: 1px solid rgba(206, 220, 236, 0.2);
-    border-radius: 12px;
-    background:
-        radial-gradient(circle at 20% 18%, rgba(84, 108, 142, 0.16), transparent 42%),
-        linear-gradient(180deg, rgba(14, 20, 30, 0.9), rgba(7, 11, 18, 0.94));
+    padding: 0.35rem;
+    border: none;
+    border-radius: 0;
+    background: transparent;
     overflow: hidden;
+}
+
+.photo-paper-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    padding: 0.65rem;
+    border-radius: 12px;
+    border: 1px solid rgba(198, 182, 150, 0.55);
+    background:
+        radial-gradient(circle at 18% 16%, rgba(255, 244, 214, 0.5), transparent 42%),
+        radial-gradient(circle at 80% 72%, rgba(214, 189, 148, 0.32), transparent 48%),
+        linear-gradient(180deg, #f6efe0 0%, #eadcbc 58%, #dbc69f 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.74),
+        inset 0 -14px 22px rgba(101, 80, 50, 0.2),
+        0 8px 16px rgba(0, 0, 0, 0.28);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.photo-paper-wrap.photo-paper-style-photo-mounted {
+    border-color: rgba(198, 182, 150, 0.55);
+}
+
+.photo-paper-wrap.photo-paper-style-photo-mounted-ivory {
+    border-color: rgba(204, 191, 166, 0.58);
+    background:
+        radial-gradient(circle at 16% 14%, rgba(255, 250, 232, 0.55), transparent 42%),
+        radial-gradient(circle at 82% 76%, rgba(221, 206, 175, 0.35), transparent 48%),
+        linear-gradient(180deg, #f8f3e7 0%, #eee4cf 56%, #ddcdae 100%);
+}
+
+.photo-paper-wrap.photo-paper-style-photo-mounted-linen {
+    border-color: rgba(186, 176, 154, 0.56);
+    background:
+        repeating-linear-gradient(0deg,
+            rgba(255, 255, 255, 0.07) 0px,
+            rgba(255, 255, 255, 0.07) 1px,
+            rgba(233, 223, 198, 0.02) 1px,
+            rgba(233, 223, 198, 0.02) 6px),
+        repeating-linear-gradient(90deg,
+            rgba(255, 255, 255, 0.06) 0px,
+            rgba(255, 255, 255, 0.06) 1px,
+            rgba(229, 216, 187, 0.03) 1px,
+            rgba(229, 216, 187, 0.03) 7px),
+        linear-gradient(180deg, #f2ead8 0%, #e4d5b8 60%, #d1bc95 100%);
+}
+
+.photo-paper-wrap.photo-paper-style-photo-mounted-chalk {
+    border-color: rgba(189, 193, 188, 0.58);
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.42), transparent 44%),
+        radial-gradient(circle at 74% 70%, rgba(208, 211, 202, 0.32), transparent 46%),
+        linear-gradient(180deg, #f4f4ed 0%, #e2e2d7 58%, #cbcabd 100%);
+}
+
+.photo-paper-wrap.photo-paper-style-photo-mounted-aged {
+    border-color: rgba(168, 140, 98, 0.58);
+    background:
+        radial-gradient(circle at 16% 18%, rgba(201, 162, 94, 0.28), transparent 42%),
+        radial-gradient(circle at 78% 80%, rgba(153, 113, 66, 0.24), transparent 48%),
+        linear-gradient(180deg, #eed9b8 0%, #d8b688 58%, #bb9365 100%);
 }
 
 .photos-carousel-image {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
-    border-radius: 10px;
-    background: rgba(5, 9, 15, 0.38);
+    border-radius: 6px;
+    background: transparent;
 }
 
 .photos-carousel-empty {
@@ -857,6 +974,46 @@ button.disabled {
         inset 0 -22px 38px rgba(80, 52, 26, 0.2),
         0 8px 18px rgba(0, 0, 0, 0.28);
     overflow: hidden;
+}
+
+.report-paper-wrap.report-paper-style-report-parchment-ash {
+    border-color: rgba(114, 112, 98, 0.44);
+    background:
+        radial-gradient(circle at 12% 15%, rgba(92, 89, 80, 0.2), transparent 42%),
+        radial-gradient(circle at 82% 68%, rgba(120, 117, 106, 0.18), transparent 44%),
+        linear-gradient(180deg, #e2ded2 0%, #cfc8b7 56%, #b7ae9d 100%);
+}
+
+.report-paper-wrap.report-paper-style-report-parchment-sepia {
+    border-color: rgba(141, 92, 38, 0.46);
+    background:
+        radial-gradient(circle at 24% 20%, rgba(152, 95, 38, 0.2), transparent 40%),
+        radial-gradient(circle at 76% 74%, rgba(126, 74, 29, 0.18), transparent 46%),
+        linear-gradient(180deg, #f0d6aa 0%, #ddb37f 58%, #bc8958 100%);
+}
+
+.report-paper-wrap.report-paper-style-report-parchment-moss {
+    border-color: rgba(95, 98, 63, 0.48);
+    background:
+        radial-gradient(circle at 18% 16%, rgba(110, 126, 77, 0.24), transparent 40%),
+        radial-gradient(circle at 80% 82%, rgba(93, 108, 64, 0.2), transparent 45%),
+        linear-gradient(180deg, #e5dcc2 0%, #c7b991 57%, #9f946e 100%);
+}
+
+.report-paper-wrap.report-paper-style-report-parchment-char {
+    border-color: rgba(89, 79, 66, 0.52);
+    background:
+        radial-gradient(circle at 14% 10%, rgba(109, 98, 85, 0.24), transparent 38%),
+        radial-gradient(circle at 88% 78%, rgba(77, 68, 58, 0.28), transparent 44%),
+        linear-gradient(180deg, #d5c9ad 0%, #b09d7e 56%, #847259 100%);
+}
+
+.report-paper-wrap.report-paper-style-report-parchment-crimson {
+    border-color: rgba(133, 67, 63, 0.5);
+    background:
+        radial-gradient(circle at 20% 14%, rgba(141, 76, 71, 0.23), transparent 40%),
+        radial-gradient(circle at 74% 80%, rgba(122, 57, 54, 0.19), transparent 46%),
+        linear-gradient(180deg, #e9d4c7 0%, #d0a795 58%, #ab7f70 100%);
 }
 
 .report-document-content {

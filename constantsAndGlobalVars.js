@@ -1,3 +1,18 @@
+import {
+  createPhotoEvidence,
+  createReportEvidence,
+  getEvidenceCollection,
+  getEvidenceIndex,
+  getEvidenceStorageKeys,
+  getEvidenceStoreSnapshot,
+  initializeEvidenceStoreForNewGame,
+  resolveEvidenceContentPath,
+  setEvidenceIndex,
+  setEvidenceStoreSnapshot,
+  setPhotoCollectionFromPaths,
+  setReportCollectionFromPaths,
+} from "./evidenceManager.js";
+
 //DEBUG
 export let debugFlag = false;
 export let debugOptionFlag = false;
@@ -20,12 +35,13 @@ export const MENU_STATE = "menuState";
 export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
 export const DEFAULT_STARTING_CAROUSEL_ITEMS = [
   "./assets/photos/caveEntrance.png",
-  "./assets/photos/caveEntrance2.png",
+  "./assets/photos/insideCaveLookingBack.png",
 ];
 export const DEFAULT_STARTING_REPORT_CAROUSEL_ITEMS = [
-  "./assets/reports/missingReport.md",
+  "./assets/reports/missingReport_en.md",
 ];
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
+const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 
 //GLOBAL VARIABLES
 
@@ -38,10 +54,6 @@ let gameInProgress = false;
 let autoSaveOn = false;
 export let pauseAutoSaveCountdown = true;
 
-let currentCarouselIndex = 0;
-let carouselItems = [];
-let currentReportCarouselIndex = 0;
-let reportCarouselItems = [];
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
 //GETTER SETTER METHODS
@@ -132,6 +144,9 @@ export function captureGameStatusForSaving() {
   // UI elements
 
   gameState.language = getLanguage();
+  gameState.evidenceStore = getEvidenceStoreSnapshot();
+
+  // Legacy compatibility fields for older loaders/tools.
   gameState.currentCarouselIndex = getCurrentCarouselIndex();
   gameState.carouselItems = getCarouselItems();
   gameState.currentReportCarouselIndex = getCurrentReportCarouselIndex();
@@ -150,10 +165,20 @@ export function restoreGameStatus(gameState) {
       // UI elements
 
       setLanguage(gameState.language || "en");
-      setCarouselItems(gameState.carouselItems);
-      setCurrentCarouselIndex(gameState.currentCarouselIndex ?? 0);
-      setReportCarouselItems(gameState.reportCarouselItems);
-      setCurrentReportCarouselIndex(gameState.currentReportCarouselIndex ?? 0);
+
+      if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
+        initializeEvidenceStoreForNewGame();
+
+        if (Array.isArray(gameState.carouselItems)) {
+          setCarouselItems(gameState.carouselItems);
+          setCurrentCarouselIndex(gameState.currentCarouselIndex ?? 0);
+        }
+
+        if (Array.isArray(gameState.reportCarouselItems)) {
+          setReportCarouselItems(gameState.reportCarouselItems);
+          setCurrentReportCarouselIndex(gameState.currentReportCarouselIndex ?? 0);
+        }
+      }
 
       resolve();
     } catch (error) {
@@ -227,45 +252,31 @@ export function setGameInProgress(value) {
 }
 
 export function getCurrentCarouselIndex() {
-  return currentCarouselIndex;
+  return getEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS);
 }
 
 export function setCurrentCarouselIndex(value) {
-  const parsed = Number.parseInt(value, 10);
-  const safeIndex = Number.isFinite(parsed) ? parsed : 0;
-
-  if (!carouselItems.length) {
-    currentCarouselIndex = 0;
-    return;
-  }
-
-  const normalizedIndex = ((safeIndex % carouselItems.length) + carouselItems.length) % carouselItems.length;
-  currentCarouselIndex = normalizedIndex;
+  setEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, value);
 }
 
 export function getCarouselItems() {
-  return [...carouselItems];
+  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).map((evidence) =>
+    resolveEvidenceContentPath(evidence, getLanguage())
+  );
 }
 
 export function getCurrentReportCarouselIndex() {
-  return currentReportCarouselIndex;
+  return getEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS);
 }
 
 export function setCurrentReportCarouselIndex(value) {
-  const parsed = Number.parseInt(value, 10);
-  const safeIndex = Number.isFinite(parsed) ? parsed : 0;
-
-  if (!reportCarouselItems.length) {
-    currentReportCarouselIndex = 0;
-    return;
-  }
-
-  const normalizedIndex = ((safeIndex % reportCarouselItems.length) + reportCarouselItems.length) % reportCarouselItems.length;
-  currentReportCarouselIndex = normalizedIndex;
+  setEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, value);
 }
 
 export function getReportCarouselItems() {
-  return [...reportCarouselItems];
+  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).map((evidence) =>
+    resolveEvidenceContentPath(evidence, getLanguage())
+  );
 }
 
 export function getDesktopWindowBaseZIndex() {
@@ -299,67 +310,39 @@ export function getDefaultStartingReportCarouselItems() {
 }
 
 export function setCarouselItems(items) {
-  if (!Array.isArray(items)) {
-    return;
-  }
-
-  carouselItems = items
-    .filter((item) => typeof item === "string")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-
-  if (!carouselItems.length) {
-    currentCarouselIndex = 0;
-    return;
-  }
-
-  setCurrentCarouselIndex(currentCarouselIndex);
+  setPhotoCollectionFromPaths(items);
 }
 
 export function setReportCarouselItems(items) {
-  if (!Array.isArray(items)) {
-    return;
-  }
-
-  reportCarouselItems = items
-    .filter((item) => typeof item === "string")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-
-  if (!reportCarouselItems.length) {
-    currentReportCarouselIndex = 0;
-    return;
-  }
-
-  setCurrentReportCarouselIndex(currentReportCarouselIndex);
+  setReportCollectionFromPaths(items);
 }
 
 export function addCarouselItem(path) {
-  if (typeof path !== "string") {
+  const evidence = createPhotoEvidence({ photoPath: path });
+  if (!evidence) {
     return -1;
   }
 
-  const normalizedPath = path.trim();
-  if (!normalizedPath) {
-    return -1;
-  }
-
-  carouselItems.push(normalizedPath);
-  return carouselItems.length - 1;
+  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).findIndex((item) => item.id === evidence.id);
 }
 
 export function addReportCarouselItem(path) {
-  if (typeof path !== "string") {
+  const reportName = String(path || "")
+    .trim()
+    .replace(/^\.\/assets\/reports\//, "")
+    .replace(/_[a-z]{2}\.md$/i, "")
+    .replace(/\.md$/i, "");
+
+  if (!reportName) {
     return -1;
   }
 
-  const normalizedPath = path.trim();
-  if (!normalizedPath) {
-    return -1;
-  }
+  const evidence = createReportEvidence({
+    reportName,
+    storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+  });
 
-  reportCarouselItems.push(normalizedPath);
-  return reportCarouselItems.length - 1;
+  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).findIndex((item) => item.id === evidence.id);
 }
 
 export function getCanvasWidth() {

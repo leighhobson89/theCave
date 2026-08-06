@@ -8,6 +8,7 @@ export class DesktopWindow {
     classNames = [],
     title = "",
     showCarouselNavigation = false,
+    windowColor = null,
     onNavigatePrevious = null,
     onNavigateNext = null,
     onClose = null,
@@ -16,6 +17,7 @@ export class DesktopWindow {
     this.ownsDom = !rootElement;
     this.parentElement = parentElement || document.body;
     this.showCarouselNavigation = Boolean(showCarouselNavigation);
+    this.windowColor = windowColor;
     this.onNavigatePrevious = onNavigatePrevious;
     this.onNavigateNext = onNavigateNext;
     this.onClose = onClose;
@@ -126,6 +128,21 @@ export class DesktopWindow {
     this.rootElement.append(this.headerElement, this.bodyElement, this.resizeHandleElement);
     this.parentElement.appendChild(this.rootElement);
     this.scrollContainerElement = this.scrollContainerElement || this.contentHostElement;
+    this.applyWindowColor();
+  }
+
+  applyWindowColor() {
+    if (!this.rootElement || !this.headerElement || !this.windowColor) {
+      return;
+    }
+
+    const normalizedColor = String(this.windowColor).trim();
+    if (!normalizedColor || !window.CSS?.supports?.("color", normalizedColor)) {
+      return;
+    }
+
+    this.rootElement.style.borderColor = normalizedColor;
+    this.headerElement.style.background = `linear-gradient(180deg, ${normalizedColor} 0%, rgba(0, 0, 0, 0) 100%)`;
   }
 
   initialize() {

@@ -1,4 +1,5 @@
 import {
+  captureGameStatusForSaving,
   gameState,
   getLanguage,
   setElements,
@@ -11,20 +12,21 @@ import {
   getLanguageSelected,
   setLanguageSelected,
   setLanguage,
-  getCarouselItems,
-  getCurrentCarouselIndex,
-  setCurrentCarouselIndex,
-  setCarouselItems,
-  getDefaultStartingCarouselItems,
-  addCarouselItem,
   getNextDesktopWindowZIndex,
-  getReportCarouselItems,
-  getCurrentReportCarouselIndex,
-  setCurrentReportCarouselIndex,
-  setReportCarouselItems,
-  getDefaultStartingReportCarouselItems,
-  addReportCarouselItem,
 } from "./constantsAndGlobalVars.js";
+import {
+  createPhotoEvidence,
+  createReportEvidence,
+  getCurrentEvidence,
+  getEvidenceCollection,
+  getEvidenceIndex,
+  getEvidenceStoreSnapshot,
+  getEvidenceStorageKeys,
+  initializeEvidenceStoreForNewGame,
+  resolveEvidenceContentPath,
+  setEvidenceIndex,
+  stepEvidenceIndex,
+} from "./evidenceManager.js";
 import { setGameState, startGame } from "./game.js";
 import { audioManager } from "./audioManager.js";
 import { DesktopWindow } from "./desktopWindow.js";
@@ -40,8 +42,14 @@ const storyTextCacheByLanguage = new Map();
 const reportTextCacheByPath = new Map();
 const activeDesktopWindows = new Set();
 const desktopWindowKinds = new WeakMap();
+const storyWindowContentRefs = new WeakMap();
 const photosWindowContentRefs = new WeakMap();
 const reportsWindowContentRefs = new WeakMap();
+const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
+const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
+const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
+const DEBUG_WINDOW_COLOR = "rgb(108, 255, 64)";
+let debugWindowController = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
@@ -50,10 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   getElements().newGameMenuButton.addEventListener("click", () => {
     audioManager.onUserGesture();
-    setCarouselItems(getDefaultStartingCarouselItems());
-    setCurrentCarouselIndex(0);
-    setReportCarouselItems(getDefaultStartingReportCarouselItems());
-    setCurrentReportCarouselIndex(0);
+    initializeEvidenceStoreForNewGame();
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -81,6 +86,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (
+      isEvidenceDebugToggleKey(event) &&
+      gameState === getGameVisibleActive() &&
+      !isTypingIntoField(event)
+    ) {
+      event.preventDefault();
+      toggleEvidenceDebugWindow();
+      return;
+    }
+
     if (event.key === "Escape" && gameState === getGameVisibleActive()) {
       setGameState(getMenuState());
     }
@@ -207,6 +222,148 @@ async function setElementsLanguageText() {
   refreshOpenWindowLocalization();
 }
 
+function isTypingIntoField(event) {
+  const eventTarget = event.target;
+  if (!(eventTarget instanceof Element)) {
+    return false;
+  }
+
+  return Boolean(
+    eventTarget.closest(
+      "input, textarea, select, [contenteditable='true'], [contenteditable='plaintext-only']"
+    )
+  );
+}
+
+function isEvidenceDebugToggleKey(event) {
+  return event.key === "-" || event.code === "Minus" || event.code === "NumpadSubtract";
+}
+
+function createEvidenceDebugWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("debug-window-content");
+
+  const row = document.createElement("div");
+  row.classList.add("debug-window-row");
+
+  const label = document.createElement("div");
+  label.classList.add("debug-window-label");
+  label.textContent = "Log Evidences";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.classList.add("debug-window-button");
+  button.textContent = "Log";
+
+  row.append(label, button);
+  container.appendChild(row);
+
+  return {
+    container,
+    logButton: button,
+  };
+}
+
+function buildResolvedEvidenceView(languageCode) {
+  const resolvedView = {};
+  Object.values(EVIDENCE_STORAGE_KEYS).forEach((storageKey) => {
+    const collection = getEvidenceCollection(storageKey);
+    const index = getEvidenceIndex(storageKey);
+
+    resolvedView[storageKey] = {
+      currentIndex: index,
+      total: collection.length,
+      items: collection.map((evidence) => ({
+        ...evidence,
+        resolvedPath: resolveEvidenceContentPath(evidence, languageCode),
+      })),
+    };
+  });
+
+  return resolvedView;
+}
+
+function logEvidenceDebugSnapshot() {
+  const now = new Date().toISOString();
+  const languageCode = getLanguage();
+  const evidenceStoreSnapshot = getEvidenceStoreSnapshot();
+  const resolvedEvidenceView = buildResolvedEvidenceView(languageCode);
+  const savePayloadSnapshot = captureGameStatusForSaving();
+  const serializedSavePayload = JSON.stringify(savePayloadSnapshot);
+
+  let compressedSavePayload = null;
+  if (window.LZString?.compressToEncodedURIComponent) {
+    compressedSavePayload = window.LZString.compressToEncodedURIComponent(serializedSavePayload);
+  }
+
+  console.group(`[Evidence Debug] ${now}`);
+  console.log("Language:", languageCode);
+  console.log("Evidence store in memory (raw):", evidenceStoreSnapshot);
+  console.log("Evidence store by collection with resolved paths:", resolvedEvidenceView);
+  console.log("Save payload object (captureGameStatusForSaving):", savePayloadSnapshot);
+  console.log("Save payload JSON length:", serializedSavePayload.length);
+
+  if (compressedSavePayload !== null) {
+    console.log("Compressed save length:", compressedSavePayload.length);
+    console.log(
+      "Compressed save preview:",
+      `${compressedSavePayload.slice(0, 180)}${compressedSavePayload.length > 180 ? "..." : ""}`
+    );
+  } else {
+    console.log("Compressed save preview unavailable: LZString global not found.");
+  }
+
+  console.groupEnd();
+}
+
+function openEvidenceDebugWindow() {
+  if (!getElements().gameArea) {
+    return;
+  }
+
+  const contentRefs = createEvidenceDebugWindowContentElements();
+  contentRefs.logButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickSwitch");
+    logEvidenceDebugSnapshot();
+  });
+
+  let nextController = null;
+  nextController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["debug-window"],
+    title: "Debug Tools",
+    windowColor: DEBUG_WINDOW_COLOR,
+    showCarouselNavigation: false,
+    closeButtonAriaLabel: "Close debug window",
+    onClose: () => {
+      unregisterDesktopWindow(nextController);
+      if (debugWindowController === nextController) {
+        debugWindowController = null;
+      }
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  nextController.setContent(contentRefs.container);
+  nextController.scrollContainerElement = contentRefs.container;
+  registerDesktopWindow(nextController, "debug");
+  nextController.open({ resizable: true, showScrollbar: false });
+  bringDesktopWindowToFront(nextController);
+
+  debugWindowController = nextController;
+  audioManager.playSfx("clickSwitch");
+}
+
+function toggleEvidenceDebugWindow() {
+  if (debugWindowController?.rootElement) {
+    debugWindowController.close();
+    return;
+  }
+
+  openEvidenceDebugWindow();
+}
+
 export async function handleLanguageChange(languageCode) {
   setLanguageSelected(languageCode);
   await setupLanguageAndLocalization();
@@ -328,6 +485,7 @@ function refreshOpenWindowLocalization() {
 
     if (windowKind === "story") {
       windowController.setTitle(localize("backgroundStory", getLanguage()));
+      updateStoryWindowContent(windowController);
       return;
     }
 
@@ -345,25 +503,29 @@ function refreshOpenWindowLocalization() {
 }
 
 async function getStoryText(language, forceReload = false) {
+  const storyEvidence = getCurrentEvidence(EVIDENCE_STORAGE_KEYS.BACKGROUND_STORY);
   const storyLanguage = language || "en";
+  const storyPath = storyEvidence
+    ? resolveEvidenceContentPath(storyEvidence, storyLanguage)
+    : `assets/story_${storyLanguage}.md`;
 
-  if (!forceReload && storyTextCacheByLanguage.has(storyLanguage)) {
-    return storyTextCacheByLanguage.get(storyLanguage);
+  if (!forceReload && storyTextCacheByLanguage.has(storyPath)) {
+    return storyTextCacheByLanguage.get(storyPath);
   }
 
   try {
-    const response = await fetch(`assets/story_${storyLanguage}.md`);
+    const response = await fetch(storyPath);
     if (!response.ok) {
       throw new Error(`Failed to load story: ${response.status}`);
     }
 
     const storyText = await response.text();
-    storyTextCacheByLanguage.set(storyLanguage, storyText);
+    storyTextCacheByLanguage.set(storyPath, storyText);
     return storyText;
   } catch (error) {
     console.error("Error fetching story markdown:", error);
     const fallbackStory = "Unable to load story content.";
-    storyTextCacheByLanguage.set(storyLanguage, fallbackStory);
+    storyTextCacheByLanguage.set(storyPath, fallbackStory);
     return fallbackStory;
   }
 }
@@ -373,7 +535,6 @@ async function openStoryWindow(resizable = false, showScrollbar = true) {
     return;
   }
 
-  const storyText = await getStoryText(getLanguage(), true);
   const storyPaperWrap = document.createElement("div");
   storyPaperWrap.classList.add("story-paper-wrap");
 
@@ -386,7 +547,6 @@ async function openStoryWindow(resizable = false, showScrollbar = true) {
 
   const storyDocumentText = document.createElement("div");
   storyDocumentText.classList.add("story-document-text");
-  storyDocumentText.textContent = storyText;
 
   storyDocumentContent.append(storyPaperclip, storyDocumentText);
   storyPaperWrap.appendChild(storyDocumentContent);
@@ -407,15 +567,49 @@ async function openStoryWindow(resizable = false, showScrollbar = true) {
   storyWindowController.setContent(storyPaperWrap);
   storyWindowController.scrollContainerElement = storyDocumentContent;
   registerDesktopWindow(storyWindowController, "story");
+  storyWindowContentRefs.set(storyWindowController, {
+    storyDocumentContent,
+    storyDocumentText,
+  });
 
   storyWindowController.open({ resizable, showScrollbar });
   bringDesktopWindowToFront(storyWindowController);
-  storyDocumentContent.scrollTop = 0;
+  updateStoryWindowContent(storyWindowController, true);
+}
+
+async function updateStoryWindowContent(windowController, forceReload = false) {
+  const refs = storyWindowContentRefs.get(windowController);
+  if (!refs) {
+    return;
+  }
+
+  refs.storyDocumentText.textContent = "Loading story...";
+  const storyText = await getStoryText(getLanguage(), forceReload);
+  refs.storyDocumentText.textContent = storyText;
+  refs.storyDocumentContent.scrollTop = 0;
+}
+
+function applyReportPaperStyle(reportPaperWrapElement, paperStyle) {
+  if (!reportPaperWrapElement) {
+    return;
+  }
+
+  reportPaperWrapElement.className = "report-paper-wrap";
+
+  const styleSuffix = String(paperStyle || "report-parchment").trim();
+  if (!styleSuffix) {
+    return;
+  }
+
+  reportPaperWrapElement.classList.add(`${REPORT_PAPER_STYLE_CLASS_PREFIX}${styleSuffix}`);
 }
 
 function createPhotosWindowContentElements() {
   const container = document.createElement("div");
   container.classList.add("photos-carousel-container");
+
+  const photoPaperWrap = document.createElement("div");
+  photoPaperWrap.classList.add("photo-paper-wrap");
 
   const image = document.createElement("img");
   image.classList.add("photos-carousel-image");
@@ -426,14 +620,83 @@ function createPhotosWindowContentElements() {
   const counter = document.createElement("div");
   counter.classList.add("photos-carousel-counter");
 
-  container.append(image, emptyState, counter);
+  photoPaperWrap.appendChild(image);
+  container.append(photoPaperWrap, emptyState, counter);
 
   return {
     container,
+    photoPaperWrap,
     image,
     emptyState,
     counter,
+    resizeObserver: null,
   };
+}
+
+function parsePixels(cssValue) {
+  const numeric = Number.parseFloat(cssValue || "0");
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function layoutPhotoMount(refs) {
+  if (!refs?.container || !refs?.photoPaperWrap || !refs?.image) {
+    return;
+  }
+
+  const imageElement = refs.image;
+  const naturalWidth = imageElement.naturalWidth;
+  const naturalHeight = imageElement.naturalHeight;
+
+  if (!naturalWidth || !naturalHeight) {
+    return;
+  }
+
+  const paperComputed = window.getComputedStyle(refs.photoPaperWrap);
+  const padLeft = parsePixels(paperComputed.paddingLeft);
+  const padRight = parsePixels(paperComputed.paddingRight);
+  const padTop = parsePixels(paperComputed.paddingTop);
+  const padBottom = parsePixels(paperComputed.paddingBottom);
+  const borderLeft = parsePixels(paperComputed.borderLeftWidth);
+  const borderRight = parsePixels(paperComputed.borderRightWidth);
+  const borderTop = parsePixels(paperComputed.borderTopWidth);
+  const borderBottom = parsePixels(paperComputed.borderBottomWidth);
+
+  const availableWidth = refs.container.clientWidth;
+  const availableHeight = refs.container.clientHeight;
+  if (!availableWidth || !availableHeight) {
+    return;
+  }
+
+  const maxMediaWidth = Math.max(
+    1,
+    availableWidth - padLeft - padRight - borderLeft - borderRight
+  );
+  const maxMediaHeight = Math.max(
+    1,
+    availableHeight - padTop - padBottom - borderTop - borderBottom
+  );
+
+  const scale = Math.min(maxMediaWidth / naturalWidth, maxMediaHeight / naturalHeight);
+  const targetWidth = Math.max(1, Math.floor(naturalWidth * scale));
+  const targetHeight = Math.max(1, Math.floor(naturalHeight * scale));
+
+  imageElement.style.width = `${targetWidth}px`;
+  imageElement.style.height = `${targetHeight}px`;
+}
+
+function applyPhotoPaperStyle(photoPaperWrapElement, paperStyle) {
+  if (!photoPaperWrapElement) {
+    return;
+  }
+
+  photoPaperWrapElement.className = "photo-paper-wrap";
+
+  const styleSuffix = String(paperStyle || "photo-mounted").trim();
+  if (!styleSuffix) {
+    return;
+  }
+
+  photoPaperWrapElement.classList.add(`${PHOTO_PAPER_STYLE_CLASS_PREFIX}${styleSuffix}`);
 }
 
 function createReportsWindowContentElements() {
@@ -461,6 +724,7 @@ function createReportsWindowContentElements() {
 
   return {
     container,
+    reportPaperWrap,
     reportDocumentContent,
     reportDocumentText,
     emptyState,
@@ -474,10 +738,10 @@ function updatePhotosWindowContent(windowController) {
     return;
   }
 
-  const carouselItems = getCarouselItems();
+  const photoEvidences = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS);
   refs.emptyState.textContent = `${localize("photos", getLanguage())}: 0/0`;
 
-  if (!carouselItems.length) {
+  if (!photoEvidences.length) {
     refs.image.classList.add("d-none");
     refs.emptyState.classList.remove("d-none");
     refs.counter.textContent = "0/0";
@@ -488,18 +752,33 @@ function updatePhotosWindowContent(windowController) {
     if (windowController.nextButtonElement) {
       windowController.nextButtonElement.disabled = true;
     }
+
+    refs.image.style.width = "";
+    refs.image.style.height = "";
     return;
   }
 
-  setCurrentCarouselIndex(getCurrentCarouselIndex());
-  const currentIndex = getCurrentCarouselIndex();
-  const currentItem = carouselItems[currentIndex];
+  setEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, getEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS));
+  const currentIndex = getEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS);
+  const currentEvidence = photoEvidences[currentIndex];
+  const currentItem = resolveEvidenceContentPath(currentEvidence, getLanguage());
+  applyPhotoPaperStyle(refs.photoPaperWrap, currentEvidence?.paperStyle);
 
   refs.image.classList.remove("d-none");
   refs.emptyState.classList.add("d-none");
   refs.image.src = currentItem;
   refs.image.alt = `${localize("photos", getLanguage())} ${currentIndex + 1}`;
-  refs.counter.textContent = `${currentIndex + 1}/${carouselItems.length}`;
+  refs.counter.textContent = `${currentIndex + 1}/${photoEvidences.length}`;
+
+  const applyLayout = () => {
+    layoutPhotoMount(refs);
+  };
+
+  if (refs.image.complete && refs.image.naturalWidth > 0 && refs.image.naturalHeight > 0) {
+    applyLayout();
+  }
+
+  refs.image.onload = applyLayout;
 
   if (windowController.previousButtonElement) {
     windowController.previousButtonElement.disabled = false;
@@ -509,6 +788,8 @@ function updatePhotosWindowContent(windowController) {
   }
 
   refs.image.onerror = () => {
+    refs.image.style.width = "";
+    refs.image.style.height = "";
     refs.image.classList.add("d-none");
     refs.emptyState.classList.remove("d-none");
     refs.emptyState.textContent = `Missing image: ${currentItem}`;
@@ -545,9 +826,9 @@ async function updateReportsWindowContent(windowController) {
     return;
   }
 
-  const reportItems = getReportCarouselItems();
+  const reportEvidences = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS);
 
-  if (!reportItems.length) {
+  if (!reportEvidences.length) {
     refs.reportDocumentText.textContent = "";
     refs.emptyState.classList.remove("d-none");
     refs.emptyState.textContent = `${localize("reports", getLanguage())}: 0/0`;
@@ -562,16 +843,19 @@ async function updateReportsWindowContent(windowController) {
     return;
   }
 
-  setCurrentReportCarouselIndex(getCurrentReportCarouselIndex());
-  const currentIndex = getCurrentReportCarouselIndex();
-  const currentReportPath = reportItems[currentIndex];
+  setEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, getEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS));
+  const currentIndex = getEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS);
+  const currentEvidence = reportEvidences[currentIndex];
+  const currentReportPath = resolveEvidenceContentPath(currentEvidence, getLanguage());
+
+  applyReportPaperStyle(refs.reportPaperWrap, currentEvidence?.paperStyle);
 
   refs.emptyState.classList.add("d-none");
   refs.reportDocumentText.textContent = "Loading report...";
 
   const reportText = await getReportTextByPath(currentReportPath);
   refs.reportDocumentText.textContent = reportText;
-  refs.counter.textContent = `${currentIndex + 1}/${reportItems.length}`;
+  refs.counter.textContent = `${currentIndex + 1}/${reportEvidences.length}`;
   refs.reportDocumentContent.scrollTop = 0;
 
   if (windowController.previousButtonElement) {
@@ -583,35 +867,35 @@ async function updateReportsWindowContent(windowController) {
 }
 
 function showPreviousCarouselImage() {
-  if (!getCarouselItems().length) {
+  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).length) {
     return;
   }
 
-  setCurrentCarouselIndex(getCurrentCarouselIndex() - 1);
+  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, -1);
 }
 
 function showNextCarouselImage() {
-  if (!getCarouselItems().length) {
+  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).length) {
     return;
   }
 
-  setCurrentCarouselIndex(getCurrentCarouselIndex() + 1);
+  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, 1);
 }
 
 function showPreviousReport() {
-  if (!getReportCarouselItems().length) {
+  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).length) {
     return;
   }
 
-  setCurrentReportCarouselIndex(getCurrentReportCarouselIndex() - 1);
+  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, -1);
 }
 
 function showNextReport() {
-  if (!getReportCarouselItems().length) {
+  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).length) {
     return;
   }
 
-  setCurrentReportCarouselIndex(getCurrentReportCarouselIndex() + 1);
+  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, 1);
 }
 
 function openPhotosWindow() {
@@ -635,6 +919,12 @@ function openPhotosWindow() {
     },
     closeButtonAriaLabel: "Close photos window",
     onClose: () => {
+      const refs = photosWindowContentRefs.get(photosWindowController);
+      if (refs?.resizeObserver) {
+        refs.resizeObserver.disconnect();
+        refs.resizeObserver = null;
+      }
+
       unregisterDesktopWindow(photosWindowController);
       audioManager.playSfx("clickSwitch");
     },
@@ -643,6 +933,12 @@ function openPhotosWindow() {
   const contentRefs = createPhotosWindowContentElements();
   photosWindowController.setContent(contentRefs.container);
   photosWindowController.scrollContainerElement = contentRefs.container;
+  if (typeof ResizeObserver !== "undefined") {
+    contentRefs.resizeObserver = new ResizeObserver(() => {
+      layoutPhotoMount(contentRefs);
+    });
+    contentRefs.resizeObserver.observe(contentRefs.container);
+  }
   photosWindowContentRefs.set(photosWindowController, contentRefs);
   registerDesktopWindow(photosWindowController, "photos");
 
@@ -707,10 +1003,20 @@ export function refreshAllReportsWindows() {
 }
 
 export function addPhotoToCarousel(path) {
-  const newIndex = addCarouselItem(path);
+  const evidence = createPhotoEvidence({
+    photoPath: path,
+    storageKey: EVIDENCE_STORAGE_KEYS.PHOTOS,
+  });
 
-  if (newIndex >= 0 && getCarouselItems().length === 1) {
-    setCurrentCarouselIndex(0);
+  if (!evidence) {
+    return -1;
+  }
+
+  const photoEvidences = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS);
+  const newIndex = photoEvidences.findIndex((item) => item.id === evidence.id);
+
+  if (newIndex >= 0 && photoEvidences.length === 1) {
+    setEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, 0);
   }
 
   refreshAllPhotosWindows();
@@ -718,10 +1024,26 @@ export function addPhotoToCarousel(path) {
 }
 
 export function addReportToCarousel(path) {
-  const newIndex = addReportCarouselItem(path);
+  const reportName = String(path || "")
+    .trim()
+    .replace(/^\.\/assets\/reports\//, "")
+    .replace(/_[a-z]{2}\.md$/i, "")
+    .replace(/\.md$/i, "");
 
-  if (newIndex >= 0 && getReportCarouselItems().length === 1) {
-    setCurrentReportCarouselIndex(0);
+  const evidence = createReportEvidence({
+    reportName,
+    storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+  });
+
+  if (!evidence) {
+    return -1;
+  }
+
+  const reportEvidences = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS);
+  const newIndex = reportEvidences.findIndex((item) => item.id === evidence.id);
+
+  if (newIndex >= 0 && reportEvidences.length === 1) {
+    setEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, 0);
   }
 
   refreshAllReportsWindows();
