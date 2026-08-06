@@ -442,6 +442,72 @@ button.disabled {
     z-index: 2;
 }
 
+.desktop-hoverable {
+    position: relative;
+    cursor: pointer;
+    --desktop-hover-stroke: rgba(70, 70, 70, 0.92);
+    --desktop-hover-radius: 16px;
+}
+
+.desktop-hoverable::after {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border-radius: var(--desktop-hover-radius);
+    border: 5px solid var(--desktop-hover-stroke);
+    opacity: 0;
+    pointer-events: none;
+    box-shadow:
+        0 0 0 0 rgba(255, 255, 255, 0),
+        0 0 0 0 rgba(255, 255, 255, 0);
+    transform: scale(0.985);
+    transition:
+        opacity 0.33s ease-in-out,
+        box-shadow 0.33s ease-in-out,
+        transform 0.33s ease-in-out;
+    z-index: 45;
+}
+
+.desktop-hoverable:hover::after,
+.desktop-hoverable:focus-visible::after,
+.desktop-hoverable:focus-within::after {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow:
+        0 0 18px 6px rgba(255, 255, 255, 0.42),
+        0 0 34px 10px rgba(255, 255, 255, 0.24);
+}
+
+#backgroundFolder {
+    --desktop-hover-stroke: rgba(140, 124, 94, 0.95);
+    --desktop-hover-radius: 12px;
+}
+
+#reportsFolder {
+    --desktop-hover-stroke: rgba(52, 89, 41, 0.95);
+    --desktop-hover-radius: 22px;
+}
+
+#photosFolder {
+    --desktop-hover-stroke: rgba(35, 72, 116, 0.95);
+    --desktop-hover-radius: 22px;
+}
+
+#notesFolder {
+    --desktop-hover-stroke: rgba(139, 97, 22, 0.95);
+    --desktop-hover-radius: 24px;
+}
+
+#desktopCalendar {
+    --desktop-hover-stroke: rgba(91, 83, 65, 0.95);
+    --desktop-hover-radius: 16px;
+}
+
+#desktopComputerHotspot {
+    --desktop-hover-stroke: rgba(72, 70, 66, 0.96);
+    --desktop-hover-radius: 18px;
+}
+
 .desk-folder > * {
     pointer-events: none;
 }
@@ -513,7 +579,7 @@ button.disabled {
 
 .folder-three {
     left: 1400px;
-    top: 345px;
+    top: 45px;
     transform: rotate(-8deg);
 }
 
@@ -1169,7 +1235,7 @@ button.disabled {
     width: 68%;
     height: 82%;
     border-radius: 18px;
-    border: 2px solid transparent;
+    border: 0;
     background: transparent;
     padding: 0;
     margin: 0;
@@ -1177,16 +1243,6 @@ button.disabled {
     outline: none;
     z-index: 10;
     cursor: pointer;
-    transition: box-shadow 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
-}
-
-.computer-click-target:hover,
-.computer-click-target:focus-visible {
-    border-color: rgba(255, 54, 54, 0.95);
-    background: rgba(255, 24, 24, 0.08);
-    box-shadow:
-        inset 0 0 0 2px rgba(255, 0, 0, 0.8),
-        0 0 10px rgba(255, 39, 39, 0.45);
 }
 
 .computer-rig-cables {
@@ -2100,6 +2156,154 @@ button.disabled {
     border-radius: 8px;
     background: rgba(232, 212, 177, 0.84);
     color: rgba(53, 34, 16, 0.84);
+}
+
+.notes-window .desktop-window-content-host {
+    padding: 0;
+}
+
+.notes-window-container {
+    display: grid;
+    grid-template-columns: minmax(0, 66fr) minmax(0, 34fr);
+    gap: 0.65rem;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0.45rem;
+    box-sizing: border-box;
+}
+
+.notes-editor-column {
+    min-width: 0;
+    min-height: 0;
+}
+
+.notes-editor-textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    resize: none;
+    border: 1px solid rgba(137, 116, 81, 0.38);
+    border-radius: 11px;
+    background:
+        linear-gradient(to right,
+            transparent 0,
+            transparent 92px,
+            rgba(181, 82, 82, 0.45) 92px,
+            rgba(181, 82, 82, 0.45) 94px,
+            transparent 94px 100%),
+        linear-gradient(to bottom,
+            transparent 33px,
+            rgba(123, 133, 146, 0.34) 33px,
+            rgba(123, 133, 146, 0.34) 34px),
+        linear-gradient(180deg, #f6f0df 0%, #eee2c9 100%);
+    background-size:
+        auto,
+        100% 34px,
+        100% 100%;
+    background-repeat:
+        no-repeat,
+        repeat,
+        no-repeat;
+    background-position:
+        0 0,
+        0 22px,
+        0 0;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #1f3f75;
+    font-family: "Patrick Hand", "Segoe Script", "Comic Sans MS", cursive;
+    font-size: 1.24rem;
+    line-height: 34px;
+    letter-spacing: 0.015em;
+    padding: 22px 1.4rem 2rem 7.7rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+}
+
+.notes-editor-textarea:focus {
+    outline: none;
+    border-color: rgba(149, 120, 82, 0.52);
+    box-shadow:
+        0 0 0 2px rgba(178, 149, 107, 0.25),
+        0 10px 20px rgba(0, 0, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.notes-tabs-column {
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 11px;
+    border: 1px solid rgba(214, 224, 236, 0.16);
+    background: rgba(17, 24, 34, 0.5);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 0.35rem;
+}
+
+.notes-tabs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+}
+
+.notes-page-tab-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.4rem;
+    align-items: center;
+    border-radius: 10px;
+    border: 1px solid rgba(93, 104, 120, 0.58);
+    background: var(--notes-tab-color);
+    padding: 0.3rem;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.68),
+        0 3px 7px rgba(0, 0, 0, 0.2);
+}
+
+.notes-page-tab-row.is-active {
+    border-color: rgba(57, 75, 103, 0.9);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.74),
+        0 0 0 2px rgba(111, 161, 232, 0.3),
+        0 5px 10px rgba(0, 0, 0, 0.25);
+}
+
+.notes-page-tab-activate {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(86, 90, 98, 0.5);
+    background: rgba(255, 255, 255, 0.72);
+    color: rgba(47, 53, 63, 0.95);
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+}
+
+.notes-page-title-bar {
+    width: 100%;
+    padding: 0;
+    gap: 0.28rem;
+}
+
+.notes-page-title-input {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(111, 118, 132, 0.38);
+    color: rgba(25, 31, 40, 0.95);
+    padding: 0.36rem 0.48rem;
+    font-size: 0.88rem;
+}
+
+.notes-page-title-input:focus {
+    border-color: rgba(98, 138, 201, 0.72);
+    box-shadow: 0 0 0 2px rgba(98, 138, 201, 0.2);
+}
+
+.notes-page-title-commit {
+    width: 32px;
+    height: 30px;
 }
 
 .story-paper-wrap {

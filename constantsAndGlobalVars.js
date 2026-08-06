@@ -34,6 +34,7 @@ export const GAME_ASPECT_RATIO = GAME_CANVAS_WIDTH / GAME_CANVAS_HEIGHT;
 export const MENU_STATE = "menuState";
 export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
+export const NOTES_PAGE_COUNT = 10;
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 
 //GLOBAL VARIABLES
@@ -49,8 +50,17 @@ let gameInProgress = false;
 let autoSaveOn = false;
 export let pauseAutoSaveCountdown = true;
 let evidenceCustomNames = {};
+let notesPages = buildDefaultNotesPages();
+let notesActivePageIndex = 0;
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
+
+function buildDefaultNotesPages() {
+  return Array.from({ length: NOTES_PAGE_COUNT }, (_, index) => ({
+    title: `Page ${index + 1}`,
+    content: "",
+  }));
+}
 
 //GETTER SETTER METHODS
 export function setElements() {
@@ -151,6 +161,8 @@ export function captureGameStatusForSaving() {
   gameState.sfxVolumePreference = getSfxVolumePreference();
   gameState.evidenceStore = getEvidenceStoreSnapshot();
   gameState.evidenceCustomNames = getEvidenceCustomNames();
+  gameState.notesPages = getNotesPages();
+  gameState.notesActivePageIndex = getNotesActivePageIndex();
 
   // Legacy compatibility fields for older loaders/tools.
   gameState.currentCarouselIndex = getCurrentCarouselIndex();
@@ -175,6 +187,8 @@ export function restoreGameStatus(gameState) {
       setMusicVolumePreference(gameState.musicVolumePreference);
       setSfxVolumePreference(gameState.sfxVolumePreference);
       setEvidenceCustomNames(gameState.evidenceCustomNames || {});
+      setNotesPages(gameState.notesPages);
+      setNotesActivePageIndex(gameState.notesActivePageIndex ?? 0);
 
       if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
         initializeEvidenceStoreForNewGame();
@@ -428,4 +442,45 @@ export function getEvidenceCustomName(evidenceId) {
   }
 
   return evidenceCustomNames[key] || "";
+}
+
+export function getNotesPages() {
+  return notesPages.map((page) => ({
+    title: String(page?.title || "").trim(),
+    content: String(page?.content || ""),
+  }));
+}
+
+export function setNotesPages(value) {
+  const sourcePages = Array.isArray(value) ? value : [];
+  const defaults = buildDefaultNotesPages();
+
+  notesPages = defaults.map((defaultPage, index) => {
+    const inputPage = sourcePages[index] || {};
+    const normalizedTitle = String(inputPage?.title || "").trim();
+
+    return {
+      title: normalizedTitle || defaultPage.title,
+      content: String(inputPage?.content || ""),
+    };
+  });
+}
+
+export function resetNotesPagesState() {
+  notesPages = buildDefaultNotesPages();
+  notesActivePageIndex = 0;
+}
+
+export function getNotesActivePageIndex() {
+  return notesActivePageIndex;
+}
+
+export function setNotesActivePageIndex(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    notesActivePageIndex = 0;
+    return;
+  }
+
+  notesActivePageIndex = Math.min(NOTES_PAGE_COUNT - 1, Math.max(0, parsed));
 }

@@ -3,6 +3,10 @@ import {
   gameState,
   getEvidenceCustomName,
   getLanguage,
+  getNotesActivePageIndex,
+  getNotesPages,
+  NOTES_PAGE_COUNT,
+  resetNotesPagesState,
   setElements,
   setEvidenceCustomName,
   setEvidenceCustomNames,
@@ -15,6 +19,8 @@ import {
   getLanguageSelected,
   setLanguageSelected,
   setLanguage,
+  setNotesActivePageIndex,
+  setNotesPages,
   getNextDesktopWindowZIndex,
 } from "./constantsAndGlobalVars.js";
 import {
@@ -50,12 +56,25 @@ const desktopWindowKinds = new WeakMap();
 const storyWindowContentRefs = new WeakMap();
 const photosWindowContentRefs = new WeakMap();
 const reportsWindowContentRefs = new WeakMap();
+const notesWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
 const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
 const REPORTS_CATALOG_PATH_TEMPLATE = "./assets/reportsEvidences_{lang}.json";
 const PHOTOS_CATALOG_PATH_TEMPLATE = "./assets/photos_evidences_{lang}.json";
 const DEBUG_WINDOW_COLOR = "rgb(108, 255, 64)";
+const NOTES_TAB_COLORS = [
+  "#ffe2e2",
+  "#ffe9d6",
+  "#fff3c7",
+  "#eef7bf",
+  "#d9f7d2",
+  "#d2f4ef",
+  "#d9ebff",
+  "#e5deff",
+  "#f4dbff",
+  "#ffdff0",
+];
 let debugWindowController = null;
 let computerWindowController = null;
 
@@ -69,6 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     audioManager.onUserGesture();
     initializeEvidenceStoreForNewGame();
     setEvidenceCustomNames({});
+    resetNotesPagesState();
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -556,6 +576,16 @@ function initializeStoryWindowControls() {
     openReportsWindow();
   });
 
+  if (getElements().notesFolder) {
+    getElements().notesFolder.addEventListener("click", () => {
+      if (toggleExistingWindowsByKind("notes")) {
+        return;
+      }
+
+      openNotesWindow();
+    });
+  }
+
   if (getElements().desktopCalendar) {
     getElements().desktopCalendar.addEventListener("click", () => {
       audioManager.onUserGesture();
@@ -652,6 +682,11 @@ function refreshOpenWindowLocalization() {
     if (windowKind === "reports") {
       windowController.setTitle(localize("reports", getLanguage()));
       updateReportsWindowContent(windowController);
+      return;
+    }
+
+    if (windowKind === "notes") {
+      windowController.setTitle(localize("notes", getLanguage()));
     }
   });
 }
@@ -1152,6 +1187,228 @@ function wireEvidenceTitleEditor({ refs, storageKey, onCommitted }) {
   refs.commitButton.addEventListener("click", () => {
     commitTitle();
   });
+}
+
+function persistActiveNotesPageContent(refs) {
+  if (!refs?.textarea) {
+    return;
+  }
+
+  const pages = getNotesPages();
+  if (!pages.length) {
+    return;
+  }
+
+  const activeIndex = Math.min(
+    pages.length - 1,
+    Math.max(0, Number.parseInt(getNotesActivePageIndex(), 10) || 0)
+  );
+  const existingPage = pages[activeIndex] || { title: `Page ${activeIndex + 1}`, content: "" };
+  const nextContent = String(refs.textarea.value || "");
+
+  if (String(existingPage.content || "") === nextContent) {
+    return;
+  }
+
+  pages[activeIndex] = {
+    ...existingPage,
+    content: nextContent,
+  };
+
+  setNotesPages(pages);
+}
+
+function refreshNotesPageCommitState(pageRowRefs) {
+  if (!pageRowRefs?.titleInput || !pageRowRefs?.commitButton) {
+    return;
+  }
+
+  const normalizedInput = String(pageRowRefs.titleInput.value || "").trim();
+  const normalizedCommitted = String(pageRowRefs.committedTitle || "").trim();
+  pageRowRefs.commitButton.disabled = !normalizedInput || normalizedInput === normalizedCommitted;
+}
+
+function commitNotesPageTitle(refs, pageRowRefs) {
+  if (!refs || !pageRowRefs) {
+    return;
+  }
+
+  const nextTitle = String(pageRowRefs.titleInput.value || "").trim();
+  if (!nextTitle) {
+    pageRowRefs.titleInput.value = pageRowRefs.committedTitle;
+    refreshNotesPageCommitState(pageRowRefs);
+    return;
+  }
+
+  if (nextTitle === String(pageRowRefs.committedTitle || "").trim()) {
+    pageRowRefs.commitButton.disabled = true;
+    return;
+  }
+
+  const pages = getNotesPages();
+  const existingPage = pages[pageRowRefs.pageIndex] || {
+    title: `Page ${pageRowRefs.pageIndex + 1}`,
+    content: "",
+  };
+
+  pages[pageRowRefs.pageIndex] = {
+    ...existingPage,
+    title: nextTitle,
+  };
+
+  setNotesPages(pages);
+  pageRowRefs.committedTitle = nextTitle;
+  pageRowRefs.titleInput.value = nextTitle;
+  pageRowRefs.commitButton.disabled = true;
+}
+
+function renderNotesWindowContent(refs) {
+  if (!refs?.textarea || !Array.isArray(refs.pageRows)) {
+    return;
+  }
+
+  const pages = getNotesPages();
+  if (!pages.length) {
+    refs.textarea.value = "";
+    return;
+  }
+
+  const activeIndex = Math.min(
+    pages.length - 1,
+    Math.max(0, Number.parseInt(getNotesActivePageIndex(), 10) || 0)
+  );
+  setNotesActivePageIndex(activeIndex);
+  refs.activePageIndex = activeIndex;
+  refs.textarea.value = String(pages[activeIndex]?.content || "");
+
+  refs.pageRows.forEach((pageRowRefs) => {
+    const pageData = pages[pageRowRefs.pageIndex] || {
+      title: `Page ${pageRowRefs.pageIndex + 1}`,
+      content: "",
+    };
+    const normalizedTitle = String(pageData.title || "").trim() || `Page ${pageRowRefs.pageIndex + 1}`;
+    const isActive = pageRowRefs.pageIndex === activeIndex;
+
+    pageRowRefs.root.classList.toggle("is-active", isActive);
+    pageRowRefs.activateButton.setAttribute("aria-pressed", String(isActive));
+    pageRowRefs.activateButton.setAttribute("aria-label", `Open ${normalizedTitle}`);
+    pageRowRefs.committedTitle = normalizedTitle;
+    pageRowRefs.titleInput.value = normalizedTitle;
+    pageRowRefs.commitButton.disabled = true;
+  });
+}
+
+function setActiveNotesPage(refs, requestedIndex) {
+  if (!refs) {
+    return;
+  }
+
+  const boundedIndex = Math.min(NOTES_PAGE_COUNT - 1, Math.max(0, Number.parseInt(requestedIndex, 10) || 0));
+  persistActiveNotesPageContent(refs);
+  setNotesActivePageIndex(boundedIndex);
+  renderNotesWindowContent(refs);
+  refs.textarea.focus();
+}
+
+function createNotesWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("notes-window-container");
+
+  const editorColumn = document.createElement("div");
+  editorColumn.classList.add("notes-editor-column");
+
+  const textarea = document.createElement("textarea");
+  textarea.classList.add("notes-editor-textarea", "scrollbars-hidden");
+  textarea.spellcheck = false;
+  textarea.placeholder = "Write notes...";
+  textarea.setAttribute("aria-label", "Notes page content");
+
+  editorColumn.appendChild(textarea);
+
+  const tabsColumn = document.createElement("div");
+  tabsColumn.classList.add("notes-tabs-column", "scrollbars-hidden");
+
+  const tabsList = document.createElement("div");
+  tabsList.classList.add("notes-tabs-list");
+  tabsColumn.appendChild(tabsList);
+
+  const refs = {
+    container,
+    textarea,
+    tabsList,
+    pageRows: [],
+    activePageIndex: 0,
+  };
+
+  for (let index = 0; index < NOTES_PAGE_COUNT; index += 1) {
+    const row = document.createElement("div");
+    row.classList.add("notes-page-tab-row");
+    row.style.setProperty("--notes-tab-color", NOTES_TAB_COLORS[index % NOTES_TAB_COLORS.length]);
+
+    const activateButton = document.createElement("button");
+    activateButton.type = "button";
+    activateButton.classList.add("notes-page-tab-activate");
+    activateButton.textContent = String(index + 1);
+
+    const titleBar = document.createElement("div");
+    titleBar.classList.add("evidence-title-bar", "notes-page-title-bar");
+
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.classList.add("evidence-title-input", "notes-page-title-input");
+    titleInput.placeholder = `Page ${index + 1}`;
+    titleInput.setAttribute("aria-label", `Title for notes page ${index + 1}`);
+
+    const commitButton = document.createElement("button");
+    commitButton.type = "button";
+    commitButton.classList.add("evidence-title-commit", "notes-page-title-commit");
+    commitButton.textContent = "✓";
+    commitButton.setAttribute("aria-label", `Apply title for notes page ${index + 1}`);
+    commitButton.disabled = true;
+
+    titleBar.append(titleInput, commitButton);
+    row.append(activateButton, titleBar);
+    tabsList.appendChild(row);
+
+    const pageRowRefs = {
+      pageIndex: index,
+      root: row,
+      activateButton,
+      titleInput,
+      commitButton,
+      committedTitle: `Page ${index + 1}`,
+    };
+
+    activateButton.addEventListener("click", () => {
+      setActiveNotesPage(refs, index);
+    });
+
+    titleInput.addEventListener("input", () => {
+      refreshNotesPageCommitState(pageRowRefs);
+    });
+
+    titleInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      commitNotesPageTitle(refs, pageRowRefs);
+    });
+
+    commitButton.addEventListener("click", () => {
+      commitNotesPageTitle(refs, pageRowRefs);
+    });
+
+    refs.pageRows.push(pageRowRefs);
+  }
+
+  textarea.addEventListener("focusout", () => {
+    persistActiveNotesPageContent(refs);
+  });
+
+  container.append(editorColumn, tabsColumn);
+  return refs;
 }
 
 function createPhotosWindowContentElements() {
@@ -1677,6 +1934,41 @@ function openReportsWindow() {
   updateReportsWindowContent(reportsWindowController);
   reportsWindowController.open({ resizable: true, showScrollbar: false });
   bringDesktopWindowToFront(reportsWindowController);
+  audioManager.playSfx("clickSwitch");
+}
+
+function openNotesWindow() {
+  if (!getElements().gameArea) {
+    return;
+  }
+
+  let notesWindowController = null;
+  notesWindowController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["story-window", "notes-window"],
+    title: localize("notes", getLanguage()),
+    showCarouselNavigation: false,
+    closeButtonAriaLabel: "Close notes window",
+    onClose: () => {
+      const refs = notesWindowContentRefs.get(notesWindowController);
+      if (refs) {
+        persistActiveNotesPageContent(refs);
+      }
+
+      unregisterDesktopWindow(notesWindowController);
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  const contentRefs = createNotesWindowContentElements();
+  notesWindowController.setContent(contentRefs.container);
+  notesWindowController.scrollContainerElement = contentRefs.textarea;
+  notesWindowContentRefs.set(notesWindowController, contentRefs);
+  registerDesktopWindow(notesWindowController, "notes");
+
+  renderNotesWindowContent(contentRefs);
+  notesWindowController.open({ resizable: true, showScrollbar: false });
+  bringDesktopWindowToFront(notesWindowController);
   audioManager.playSfx("clickSwitch");
 }
 
