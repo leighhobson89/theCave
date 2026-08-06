@@ -1,16 +1,7 @@
 import {
-  createPhotoEvidence,
-  createReportEvidence,
-  getEvidenceCollection,
-  getEvidenceIndex,
-  getEvidenceStorageKeys,
   getEvidenceStoreSnapshot,
   initializeEvidenceStoreForNewGame,
-  resolveEvidenceContentPath,
-  setEvidenceIndex,
   setEvidenceStoreSnapshot,
-  setPhotoCollectionFromPaths,
-  setReportCollectionFromPaths,
 } from "./evidenceManager.js";
 
 //DEBUG
@@ -36,7 +27,6 @@ export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
 export const NOTES_PAGE_COUNT = 10;
 export const PAINT_PAGE_COUNT = 10;
-const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 
 //GLOBAL VARIABLES
 
@@ -183,12 +173,6 @@ export function captureGameStatusForSaving() {
   gameState.ashtrayHasLitCigarette = getAshtrayHasLitCigarette();
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
 
-  // Legacy compatibility fields for older loaders/tools.
-  gameState.currentCarouselIndex = getCurrentCarouselIndex();
-  gameState.carouselItems = getCarouselItems();
-  gameState.currentReportCarouselIndex = getCurrentReportCarouselIndex();
-  gameState.reportCarouselItems = getReportCarouselItems();
-
   return gameState;
 }
 
@@ -215,16 +199,6 @@ export function restoreGameStatus(gameState) {
 
       if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
         initializeEvidenceStoreForNewGame();
-
-        if (Array.isArray(gameState.carouselItems)) {
-          setCarouselItems(gameState.carouselItems);
-          setCurrentCarouselIndex(gameState.currentCarouselIndex ?? 0);
-        }
-
-        if (Array.isArray(gameState.reportCarouselItems)) {
-          setReportCarouselItems(gameState.reportCarouselItems);
-          setCurrentReportCarouselIndex(gameState.currentReportCarouselIndex ?? 0);
-        }
       }
 
       resolve();
@@ -324,34 +298,6 @@ export function setGameInProgress(value) {
   gameInProgress = value;
 }
 
-export function getCurrentCarouselIndex() {
-  return getEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS);
-}
-
-export function setCurrentCarouselIndex(value) {
-  setEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, value);
-}
-
-export function getCarouselItems() {
-  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).map((evidence) =>
-    resolveEvidenceContentPath(evidence, getLanguage())
-  );
-}
-
-export function getCurrentReportCarouselIndex() {
-  return getEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS);
-}
-
-export function setCurrentReportCarouselIndex(value) {
-  setEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, value);
-}
-
-export function getReportCarouselItems() {
-  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).map((evidence) =>
-    resolveEvidenceContentPath(evidence, getLanguage())
-  );
-}
-
 export function getDesktopWindowBaseZIndex() {
   return DESKTOP_WINDOW_BASE_Z_INDEX;
 }
@@ -372,42 +318,6 @@ export function setCurrentDesktopWindowZIndex(value) {
 export function getNextDesktopWindowZIndex() {
   currentDesktopWindowZIndex += 1;
   return currentDesktopWindowZIndex;
-}
-
-export function setCarouselItems(items) {
-  setPhotoCollectionFromPaths(items);
-}
-
-export function setReportCarouselItems(items) {
-  setReportCollectionFromPaths(items);
-}
-
-export function addCarouselItem(path) {
-  const evidence = createPhotoEvidence({ photoPath: path });
-  if (!evidence) {
-    return -1;
-  }
-
-  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).findIndex((item) => item.id === evidence.id);
-}
-
-export function addReportCarouselItem(path) {
-  const normalizedInput = String(path || "").trim();
-  const reportName = normalizedInput
-    .replace(/^\.\/assets\/reports\//, "")
-    .replace(/_[a-z]{2}\.md$/i, "")
-    .replace(/\.md$/i, "");
-
-  if (!reportName) {
-    return -1;
-  }
-
-  const evidence = createReportEvidence({
-    reportName,
-    storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
-  });
-
-  return getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).findIndex((item) => item.id === evidence.id);
 }
 
 export function getCanvasWidth() {

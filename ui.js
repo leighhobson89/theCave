@@ -1536,6 +1536,34 @@ function createComputerNetscapeWindowContentElements() {
   return container;
 }
 
+function positionWindowWithinParent(rootElement, parentElement, widthScale = 1) {
+  if (!(rootElement instanceof HTMLElement) || !(parentElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const parentWidth = parentElement.clientWidth;
+  const parentHeight = parentElement.clientHeight;
+
+  const baseWidth = rootElement.offsetWidth || Math.round(parentWidth * 0.88);
+  const scaledWidth = Math.min(
+    Math.round(baseWidth * Math.max(0.5, Number(widthScale) || 1)),
+    Math.round(parentWidth * 0.96)
+  );
+  const nextHeight = Math.min(
+    rootElement.offsetHeight || Math.round(parentHeight * 0.76),
+    Math.round(parentHeight * 0.94)
+  );
+
+  const nextLeft = Math.max(0, Math.round((parentWidth - scaledWidth) / 2));
+  const nextTop = Math.max(0, Math.round((parentHeight - nextHeight) / 2));
+
+  rootElement.style.width = `${scaledWidth}px`;
+  rootElement.style.height = `${nextHeight}px`;
+  rootElement.style.left = `${nextLeft}px`;
+  rootElement.style.top = `${nextTop}px`;
+  rootElement.style.transform = "none";
+}
+
 function openComputerAppWindow({
   parentElement,
   kind,
@@ -1545,6 +1573,8 @@ function openComputerAppWindow({
   appWindowSet,
   resizable = true,
   showScrollbar = false,
+  centerWithinParent = true,
+  widthScale = 1,
 }) {
   if (!parentElement || !(contentNode instanceof Node)) {
     return null;
@@ -1570,6 +1600,11 @@ function openComputerAppWindow({
   appWindowController.scrollContainerElement = contentNode;
   registerDesktopWindow(appWindowController, kind);
   appWindowController.open({ resizable, showScrollbar });
+
+  if (centerWithinParent) {
+    positionWindowWithinParent(appWindowController.rootElement, parentElement, widthScale);
+  }
+
   bringDesktopWindowToFront(appWindowController);
 
   if (appWindowSet) {
@@ -2832,6 +2867,8 @@ function openNotesWindow(options = {}) {
     windowKind = "notes",
     showCloseSfx = true,
     onWindowClose = null,
+    centerWithinParent = false,
+    widthScale = 1,
   } = options;
 
   if (!parentElement) {
@@ -2869,6 +2906,11 @@ function openNotesWindow(options = {}) {
 
   renderNotesWindowContent(contentRefs);
   notesWindowController.open({ resizable: true, showScrollbar: false });
+
+  if (centerWithinParent) {
+    positionWindowWithinParent(notesWindowController.rootElement, parentElement, widthScale);
+  }
+
   bringDesktopWindowToFront(notesWindowController);
   audioManager.playSfx("clickSwitch");
 }
@@ -2907,6 +2949,7 @@ function openComputerWindow() {
         parentElement: contentRefs.container,
         classNames: ["notes-window", "caveos-app-window", "caveos-notes-window"],
         windowKind: "computer-notes",
+        centerWithinParent: true,
         onWindowClose: (windowController) => {
           contentRefs.appWindows.delete(windowController);
         },
@@ -2935,6 +2978,7 @@ function openComputerWindow() {
       appWindowSet: contentRefs.appWindows,
       resizable: true,
       showScrollbar: false,
+      widthScale: 1.1,
     });
   });
 

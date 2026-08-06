@@ -10,6 +10,18 @@ body {
     width: 100%;
 }
 
+@font-face {
+    font-family: "Homemade Apple";
+    src:
+        local("Homemade Apple"),
+        local("HomemadeApple-Regular"),
+        url("./assets/fonts/HomemadeApple-Regular.ttf") format("truetype"),
+        url("./fonts/HomemadeApple-Regular.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
 .app-shell {
     width: 100vw;
     height: 100vh;
@@ -1946,6 +1958,18 @@ button.disabled {
     border-radius: 0;
 }
 
+.computer-window,
+.computer-window * {
+    font-family: "Courier New", "Lucida Console", monospace;
+}
+
+.computer-window button,
+.computer-window input,
+.computer-window textarea,
+.computer-window select {
+    font-family: inherit;
+}
+
 .computer-window .desktop-window-body {
     padding: 0;
 }
@@ -1976,6 +2000,7 @@ button.disabled {
     left: 26px;
     top: 20px;
     font-size: 1.25rem;
+    font-weight: 700;
     letter-spacing: 0.09em;
     text-transform: uppercase;
     text-shadow: 0 0 10px rgba(110, 255, 106, 0.45);
@@ -1986,6 +2011,7 @@ button.disabled {
     left: 26px;
     top: 48px;
     font-size: 0.85rem;
+    font-weight: 600;
     opacity: 0.85;
 }
 
@@ -2192,6 +2218,7 @@ button.disabled {
     color: #7cff64;
     font-family: "Courier New", "Lucida Console", monospace;
     font-size: 0.9rem;
+    font-weight: 700;
     letter-spacing: 0.08em;
 }
 
@@ -2233,6 +2260,18 @@ button.disabled {
             rgba(58, 120, 58, 0.36) 27px,
             rgba(58, 120, 58, 0.36) 28px),
         linear-gradient(180deg, #031103 0%, #020902 100%);
+    background-size:
+        auto,
+        100% 28px,
+        100% 100%;
+    background-repeat:
+        no-repeat,
+        repeat,
+        no-repeat;
+    background-position:
+        0 0,
+        0 16px,
+        0 0;
     color: #7fff68;
     font-family: "Courier New", "Lucida Console", monospace;
     line-height: 28px;
@@ -3099,7 +3138,7 @@ button.disabled {
         0 0;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #1f3f75;
-    font-family: "Patrick Hand", "Segoe Script", "Comic Sans MS", cursive;
+    font-family: "Homemade Apple", "Segoe Script", "Comic Sans MS", cursive;
     font-size: 1.24rem;
     line-height: 34px;
     letter-spacing: 0.015em;
@@ -3272,7 +3311,7 @@ button.disabled {
     border-radius: 11px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #1f3f75;
-    font-family: "Patrick Hand", "Segoe Script", "Comic Sans MS", cursive;
+    font-family: "Homemade Apple", "Segoe Script", "Comic Sans MS", cursive;
     font-size: 1.42rem;
     line-height: var(--story-line-pitch);
     white-space: pre-wrap;
