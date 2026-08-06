@@ -22,6 +22,9 @@ export const DEFAULT_STARTING_CAROUSEL_ITEMS = [
   "./assets/photos/caveEntrance.png",
   "./assets/photos/caveEntrance2.png",
 ];
+export const DEFAULT_STARTING_REPORT_CAROUSEL_ITEMS = [
+  "./assets/reports/missingReport.md",
+];
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
 
 //GLOBAL VARIABLES
@@ -37,6 +40,8 @@ export let pauseAutoSaveCountdown = true;
 
 let currentCarouselIndex = 0;
 let carouselItems = [];
+let currentReportCarouselIndex = 0;
+let reportCarouselItems = [];
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
 //GETTER SETTER METHODS
@@ -129,6 +134,8 @@ export function captureGameStatusForSaving() {
   gameState.language = getLanguage();
   gameState.currentCarouselIndex = getCurrentCarouselIndex();
   gameState.carouselItems = getCarouselItems();
+  gameState.currentReportCarouselIndex = getCurrentReportCarouselIndex();
+  gameState.reportCarouselItems = getReportCarouselItems();
 
   return gameState;
 }
@@ -145,6 +152,8 @@ export function restoreGameStatus(gameState) {
       setLanguage(gameState.language || "en");
       setCarouselItems(gameState.carouselItems);
       setCurrentCarouselIndex(gameState.currentCarouselIndex ?? 0);
+      setReportCarouselItems(gameState.reportCarouselItems);
+      setCurrentReportCarouselIndex(gameState.currentReportCarouselIndex ?? 0);
 
       resolve();
     } catch (error) {
@@ -238,6 +247,27 @@ export function getCarouselItems() {
   return [...carouselItems];
 }
 
+export function getCurrentReportCarouselIndex() {
+  return currentReportCarouselIndex;
+}
+
+export function setCurrentReportCarouselIndex(value) {
+  const parsed = Number.parseInt(value, 10);
+  const safeIndex = Number.isFinite(parsed) ? parsed : 0;
+
+  if (!reportCarouselItems.length) {
+    currentReportCarouselIndex = 0;
+    return;
+  }
+
+  const normalizedIndex = ((safeIndex % reportCarouselItems.length) + reportCarouselItems.length) % reportCarouselItems.length;
+  currentReportCarouselIndex = normalizedIndex;
+}
+
+export function getReportCarouselItems() {
+  return [...reportCarouselItems];
+}
+
 export function getDesktopWindowBaseZIndex() {
   return DESKTOP_WINDOW_BASE_Z_INDEX;
 }
@@ -264,6 +294,10 @@ export function getDefaultStartingCarouselItems() {
   return [...DEFAULT_STARTING_CAROUSEL_ITEMS];
 }
 
+export function getDefaultStartingReportCarouselItems() {
+  return [...DEFAULT_STARTING_REPORT_CAROUSEL_ITEMS];
+}
+
 export function setCarouselItems(items) {
   if (!Array.isArray(items)) {
     return;
@@ -282,6 +316,24 @@ export function setCarouselItems(items) {
   setCurrentCarouselIndex(currentCarouselIndex);
 }
 
+export function setReportCarouselItems(items) {
+  if (!Array.isArray(items)) {
+    return;
+  }
+
+  reportCarouselItems = items
+    .filter((item) => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  if (!reportCarouselItems.length) {
+    currentReportCarouselIndex = 0;
+    return;
+  }
+
+  setCurrentReportCarouselIndex(currentReportCarouselIndex);
+}
+
 export function addCarouselItem(path) {
   if (typeof path !== "string") {
     return -1;
@@ -294,6 +346,20 @@ export function addCarouselItem(path) {
 
   carouselItems.push(normalizedPath);
   return carouselItems.length - 1;
+}
+
+export function addReportCarouselItem(path) {
+  if (typeof path !== "string") {
+    return -1;
+  }
+
+  const normalizedPath = path.trim();
+  if (!normalizedPath) {
+    return -1;
+  }
+
+  reportCarouselItems.push(normalizedPath);
+  return reportCarouselItems.length - 1;
 }
 
 export function getCanvasWidth() {

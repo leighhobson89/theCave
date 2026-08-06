@@ -18,6 +18,12 @@ import {
   getDefaultStartingCarouselItems,
   addCarouselItem,
   getNextDesktopWindowZIndex,
+  getReportCarouselItems,
+  getCurrentReportCarouselIndex,
+  setCurrentReportCarouselIndex,
+  setReportCarouselItems,
+  getDefaultStartingReportCarouselItems,
+  addReportCarouselItem,
 } from "./constantsAndGlobalVars.js";
 import { setGameState, startGame } from "./game.js";
 import { audioManager } from "./audioManager.js";
@@ -31,9 +37,11 @@ import {
 } from "./saveLoadGame.js";
 
 const storyTextCacheByLanguage = new Map();
+const reportTextCacheByPath = new Map();
 const activeDesktopWindows = new Set();
 const desktopWindowKinds = new WeakMap();
 const photosWindowContentRefs = new WeakMap();
+const reportsWindowContentRefs = new WeakMap();
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
@@ -44,6 +52,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     audioManager.onUserGesture();
     setCarouselItems(getDefaultStartingCarouselItems());
     setCurrentCarouselIndex(0);
+    setReportCarouselItems(getDefaultStartingReportCarouselItems());
+    setCurrentReportCarouselIndex(0);
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -265,7 +275,7 @@ function refreshMuteButtonLabel() {
 }
 
 function initializeStoryWindowControls() {
-  if (!getElements().backgroundFolder || !getElements().photosFolder) {
+  if (!getElements().backgroundFolder || !getElements().photosFolder || !getElements().reportsFolder) {
     return;
   }
 
@@ -279,6 +289,12 @@ function initializeStoryWindowControls() {
     audioManager.onUserGesture();
     audioManager.playSfx("clickButton");
     openPhotosWindow();
+  });
+
+  getElements().reportsFolder.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+    openReportsWindow();
   });
 }
 
@@ -318,6 +334,12 @@ function refreshOpenWindowLocalization() {
     if (windowKind === "photos") {
       windowController.setTitle(localize("photos", getLanguage()));
       updatePhotosWindowContent(windowController);
+      return;
+    }
+
+    if (windowKind === "reports") {
+      windowController.setTitle(localize("reports", getLanguage()));
+      updateReportsWindowContent(windowController);
     }
   });
 }
@@ -414,6 +436,38 @@ function createPhotosWindowContentElements() {
   };
 }
 
+function createReportsWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("reports-carousel-container");
+
+  const reportPaperWrap = document.createElement("div");
+  reportPaperWrap.classList.add("report-paper-wrap");
+
+  const reportDocumentContent = document.createElement("div");
+  reportDocumentContent.classList.add("report-document-content", "scrollbars-hidden");
+
+  const reportDocumentText = document.createElement("div");
+  reportDocumentText.classList.add("report-document-text");
+
+  const emptyState = document.createElement("div");
+  emptyState.classList.add("report-carousel-empty", "d-none");
+
+  const counter = document.createElement("div");
+  counter.classList.add("report-carousel-counter");
+
+  reportDocumentContent.append(reportDocumentText, emptyState);
+  reportPaperWrap.appendChild(reportDocumentContent);
+  container.append(reportPaperWrap, counter);
+
+  return {
+    container,
+    reportDocumentContent,
+    reportDocumentText,
+    emptyState,
+    counter,
+  };
+}
+
 function updatePhotosWindowContent(windowController) {
   const refs = photosWindowContentRefs.get(windowController);
   if (!refs) {
@@ -461,6 +515,73 @@ function updatePhotosWindowContent(windowController) {
   };
 }
 
+async function getReportTextByPath(path, forceReload = false) {
+  const reportPath = path || "";
+
+  if (!forceReload && reportTextCacheByPath.has(reportPath)) {
+    return reportTextCacheByPath.get(reportPath);
+  }
+
+  try {
+    const response = await fetch(reportPath);
+    if (!response.ok) {
+      throw new Error(`Failed to load report: ${response.status}`);
+    }
+
+    const reportText = await response.text();
+    reportTextCacheByPath.set(reportPath, reportText);
+    return reportText;
+  } catch (error) {
+    console.error("Error fetching report markdown:", error);
+    const fallbackReport = "placeholder report";
+    reportTextCacheByPath.set(reportPath, fallbackReport);
+    return fallbackReport;
+  }
+}
+
+async function updateReportsWindowContent(windowController) {
+  const refs = reportsWindowContentRefs.get(windowController);
+  if (!refs) {
+    return;
+  }
+
+  const reportItems = getReportCarouselItems();
+
+  if (!reportItems.length) {
+    refs.reportDocumentText.textContent = "";
+    refs.emptyState.classList.remove("d-none");
+    refs.emptyState.textContent = `${localize("reports", getLanguage())}: 0/0`;
+    refs.counter.textContent = "0/0";
+
+    if (windowController.previousButtonElement) {
+      windowController.previousButtonElement.disabled = true;
+    }
+    if (windowController.nextButtonElement) {
+      windowController.nextButtonElement.disabled = true;
+    }
+    return;
+  }
+
+  setCurrentReportCarouselIndex(getCurrentReportCarouselIndex());
+  const currentIndex = getCurrentReportCarouselIndex();
+  const currentReportPath = reportItems[currentIndex];
+
+  refs.emptyState.classList.add("d-none");
+  refs.reportDocumentText.textContent = "Loading report...";
+
+  const reportText = await getReportTextByPath(currentReportPath);
+  refs.reportDocumentText.textContent = reportText;
+  refs.counter.textContent = `${currentIndex + 1}/${reportItems.length}`;
+  refs.reportDocumentContent.scrollTop = 0;
+
+  if (windowController.previousButtonElement) {
+    windowController.previousButtonElement.disabled = false;
+  }
+  if (windowController.nextButtonElement) {
+    windowController.nextButtonElement.disabled = false;
+  }
+}
+
 function showPreviousCarouselImage() {
   if (!getCarouselItems().length) {
     return;
@@ -475,6 +596,22 @@ function showNextCarouselImage() {
   }
 
   setCurrentCarouselIndex(getCurrentCarouselIndex() + 1);
+}
+
+function showPreviousReport() {
+  if (!getReportCarouselItems().length) {
+    return;
+  }
+
+  setCurrentReportCarouselIndex(getCurrentReportCarouselIndex() - 1);
+}
+
+function showNextReport() {
+  if (!getReportCarouselItems().length) {
+    return;
+  }
+
+  setCurrentReportCarouselIndex(getCurrentReportCarouselIndex() + 1);
 }
 
 function openPhotosWindow() {
@@ -515,10 +652,56 @@ function openPhotosWindow() {
   audioManager.playSfx("clickSwitch");
 }
 
+function openReportsWindow() {
+  if (!getElements().gameArea) {
+    return;
+  }
+
+  let reportsWindowController = null;
+  reportsWindowController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["story-window", "reports-window"],
+    title: localize("reports", getLanguage()),
+    showCarouselNavigation: true,
+    onNavigatePrevious: () => {
+      showPreviousReport();
+      updateReportsWindowContent(reportsWindowController);
+    },
+    onNavigateNext: () => {
+      showNextReport();
+      updateReportsWindowContent(reportsWindowController);
+    },
+    closeButtonAriaLabel: "Close reports window",
+    onClose: () => {
+      unregisterDesktopWindow(reportsWindowController);
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  const contentRefs = createReportsWindowContentElements();
+  reportsWindowController.setContent(contentRefs.container);
+  reportsWindowController.scrollContainerElement = contentRefs.reportDocumentContent;
+  reportsWindowContentRefs.set(reportsWindowController, contentRefs);
+  registerDesktopWindow(reportsWindowController, "reports");
+
+  updateReportsWindowContent(reportsWindowController);
+  reportsWindowController.open({ resizable: true, showScrollbar: false });
+  bringDesktopWindowToFront(reportsWindowController);
+  audioManager.playSfx("clickSwitch");
+}
+
 export function refreshAllPhotosWindows() {
   activeDesktopWindows.forEach((windowController) => {
     if (desktopWindowKinds.get(windowController) === "photos") {
       updatePhotosWindowContent(windowController);
+    }
+  });
+}
+
+export function refreshAllReportsWindows() {
+  activeDesktopWindows.forEach((windowController) => {
+    if (desktopWindowKinds.get(windowController) === "reports") {
+      updateReportsWindowContent(windowController);
     }
   });
 }
@@ -531,6 +714,17 @@ export function addPhotoToCarousel(path) {
   }
 
   refreshAllPhotosWindows();
+  return newIndex;
+}
+
+export function addReportToCarousel(path) {
+  const newIndex = addReportCarouselItem(path);
+
+  if (newIndex >= 0 && getReportCarouselItems().length === 1) {
+    setCurrentReportCarouselIndex(0);
+  }
+
+  refreshAllReportsWindows();
   return newIndex;
 }
   
