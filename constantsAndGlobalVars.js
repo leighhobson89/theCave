@@ -18,6 +18,11 @@ export const GAME_ASPECT_RATIO = GAME_CANVAS_WIDTH / GAME_CANVAS_HEIGHT;
 
 export const MENU_STATE = "menuState";
 export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
+export const DEFAULT_STARTING_CAROUSEL_ITEMS = [
+  "./assets/photos/caveEntrance.png",
+  "./assets/photos/caveEntrance2.png",
+];
+export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
 
 //GLOBAL VARIABLES
 
@@ -29,6 +34,10 @@ let gameInProgress = false;
 
 let autoSaveOn = false;
 export let pauseAutoSaveCountdown = true;
+
+let currentCarouselIndex = 0;
+let carouselItems = [];
+let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
 //GETTER SETTER METHODS
 export function setElements() {
@@ -61,13 +70,6 @@ export function setElements() {
     reportsFolderLabel: document.getElementById("reportsFolderLabel"),
     photosFolder: document.getElementById("photosFolder"),
     photosFolderLabel: document.getElementById("photosFolderLabel"),
-    storyWindow: document.getElementById("storyWindow"),
-    storyWindowHeader: document.getElementById("storyWindowHeader"),
-    storyWindowTitle: document.getElementById("storyWindowTitle"),
-    storyWindowClose: document.getElementById("storyWindowClose"),
-    storyWindowResizeHandle: document.getElementById("storyWindowResizeHandle"),
-    storyDocumentContent: document.getElementById("storyDocumentContent"),
-    storyDocumentText: document.getElementById("storyDocumentText"),
     zoomReadout: document.getElementById("zoomReadout"),
     evidenceLabel: document.getElementById("evidenceLabel"),
     settingsToggle: document.getElementById("settingsToggle"),
@@ -125,9 +127,12 @@ export function captureGameStatusForSaving() {
   // UI elements
 
   gameState.language = getLanguage();
+  gameState.currentCarouselIndex = getCurrentCarouselIndex();
+  gameState.carouselItems = getCarouselItems();
 
   return gameState;
 }
+
 export function restoreGameStatus(gameState) {
   return new Promise((resolve, reject) => {
     try {
@@ -137,7 +142,9 @@ export function restoreGameStatus(gameState) {
 
       // UI elements
 
-      setLanguage(gameState.language);
+      setLanguage(gameState.language || "en");
+      setCarouselItems(gameState.carouselItems);
+      setCurrentCarouselIndex(gameState.currentCarouselIndex ?? 0);
 
       resolve();
     } catch (error) {
@@ -208,6 +215,85 @@ export function getGameInProgress() {
 
 export function setGameInProgress(value) {
   gameInProgress = value;
+}
+
+export function getCurrentCarouselIndex() {
+  return currentCarouselIndex;
+}
+
+export function setCurrentCarouselIndex(value) {
+  const parsed = Number.parseInt(value, 10);
+  const safeIndex = Number.isFinite(parsed) ? parsed : 0;
+
+  if (!carouselItems.length) {
+    currentCarouselIndex = 0;
+    return;
+  }
+
+  const normalizedIndex = ((safeIndex % carouselItems.length) + carouselItems.length) % carouselItems.length;
+  currentCarouselIndex = normalizedIndex;
+}
+
+export function getCarouselItems() {
+  return [...carouselItems];
+}
+
+export function getDesktopWindowBaseZIndex() {
+  return DESKTOP_WINDOW_BASE_Z_INDEX;
+}
+
+export function getCurrentDesktopWindowZIndex() {
+  return currentDesktopWindowZIndex;
+}
+
+export function setCurrentDesktopWindowZIndex(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    return;
+  }
+
+  currentDesktopWindowZIndex = Math.max(parsed, DESKTOP_WINDOW_BASE_Z_INDEX);
+}
+
+export function getNextDesktopWindowZIndex() {
+  currentDesktopWindowZIndex += 1;
+  return currentDesktopWindowZIndex;
+}
+
+export function getDefaultStartingCarouselItems() {
+  return [...DEFAULT_STARTING_CAROUSEL_ITEMS];
+}
+
+export function setCarouselItems(items) {
+  if (!Array.isArray(items)) {
+    return;
+  }
+
+  carouselItems = items
+    .filter((item) => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  if (!carouselItems.length) {
+    currentCarouselIndex = 0;
+    return;
+  }
+
+  setCurrentCarouselIndex(currentCarouselIndex);
+}
+
+export function addCarouselItem(path) {
+  if (typeof path !== "string") {
+    return -1;
+  }
+
+  const normalizedPath = path.trim();
+  if (!normalizedPath) {
+    return -1;
+  }
+
+  carouselItems.push(normalizedPath);
+  return carouselItems.length - 1;
 }
 
 export function getCanvasWidth() {

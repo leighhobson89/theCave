@@ -1,9 +1,35 @@
 export class DesktopWindow {
-  constructor({ rootElement, headerElement, resizeHandleElement, scrollContainerElement = null }) {
+  constructor({
+    rootElement = null,
+    headerElement = null,
+    resizeHandleElement = null,
+    scrollContainerElement = null,
+    parentElement = null,
+    classNames = [],
+    title = "",
+    showCarouselNavigation = false,
+    onNavigatePrevious = null,
+    onNavigateNext = null,
+    onClose = null,
+    closeButtonAriaLabel = "Close window",
+  } = {}) {
+    this.ownsDom = !rootElement;
+    this.parentElement = parentElement || document.body;
+    this.showCarouselNavigation = Boolean(showCarouselNavigation);
+    this.onNavigatePrevious = onNavigatePrevious;
+    this.onNavigateNext = onNavigateNext;
+    this.onClose = onClose;
+
     this.rootElement = rootElement;
     this.headerElement = headerElement;
     this.resizeHandleElement = resizeHandleElement;
     this.scrollContainerElement = scrollContainerElement;
+    this.bodyElement = null;
+    this.titleElement = null;
+    this.closeButtonElement = null;
+    this.contentHostElement = null;
+    this.previousButtonElement = null;
+    this.nextButtonElement = null;
 
     this.isDragging = false;
     this.isResizing = false;
@@ -25,7 +51,81 @@ export class DesktopWindow {
     this.boundPointerMove = this.handlePointerMove.bind(this);
     this.boundPointerUp = this.handlePointerUp.bind(this);
 
+    if (this.ownsDom) {
+      this.createDomStructure({ classNames, title, closeButtonAriaLabel });
+    }
+
     this.initialize();
+  }
+
+  createDomStructure({ classNames, title, closeButtonAriaLabel }) {
+    this.rootElement = document.createElement("div");
+    this.rootElement.classList.add("desktop-window", "d-none");
+
+    if (Array.isArray(classNames)) {
+      classNames.filter(Boolean).forEach((className) => {
+        this.rootElement.classList.add(className);
+      });
+    } else if (typeof classNames === "string" && classNames.trim()) {
+      this.rootElement.classList.add(classNames.trim());
+    }
+
+    this.headerElement = document.createElement("div");
+    this.headerElement.classList.add("desktop-window-header");
+
+    this.titleElement = document.createElement("div");
+    this.titleElement.classList.add("desktop-window-title");
+    this.titleElement.textContent = title;
+
+    this.closeButtonElement = document.createElement("button");
+    this.closeButtonElement.type = "button";
+    this.closeButtonElement.classList.add("story-window-close");
+    this.closeButtonElement.setAttribute("aria-label", closeButtonAriaLabel);
+    this.closeButtonElement.textContent = "x";
+
+    this.headerElement.append(this.titleElement, this.closeButtonElement);
+
+    this.bodyElement = document.createElement("div");
+    this.bodyElement.classList.add("desktop-window-body");
+
+    if (this.showCarouselNavigation) {
+      const carouselLayout = document.createElement("div");
+      carouselLayout.classList.add("desktop-window-carousel-layout");
+
+      this.previousButtonElement = document.createElement("button");
+      this.previousButtonElement.type = "button";
+      this.previousButtonElement.classList.add("desktop-window-carousel-nav", "carousel-nav-prev");
+      this.previousButtonElement.setAttribute("aria-label", "Previous image");
+      this.previousButtonElement.textContent = "<";
+
+      this.nextButtonElement = document.createElement("button");
+      this.nextButtonElement.type = "button";
+      this.nextButtonElement.classList.add("desktop-window-carousel-nav", "carousel-nav-next");
+      this.nextButtonElement.setAttribute("aria-label", "Next image");
+      this.nextButtonElement.textContent = ">";
+
+      this.contentHostElement = document.createElement("div");
+      this.contentHostElement.classList.add("desktop-window-carousel-content");
+
+      carouselLayout.append(
+        this.previousButtonElement,
+        this.contentHostElement,
+        this.nextButtonElement
+      );
+      this.bodyElement.appendChild(carouselLayout);
+    } else {
+      this.contentHostElement = document.createElement("div");
+      this.contentHostElement.classList.add("desktop-window-content-host");
+      this.bodyElement.appendChild(this.contentHostElement);
+    }
+
+    this.resizeHandleElement = document.createElement("div");
+    this.resizeHandleElement.classList.add("desktop-window-resize-handle", "d-none");
+    this.resizeHandleElement.setAttribute("aria-hidden", "true");
+
+    this.rootElement.append(this.headerElement, this.bodyElement, this.resizeHandleElement);
+    this.parentElement.appendChild(this.rootElement);
+    this.scrollContainerElement = this.scrollContainerElement || this.contentHostElement;
   }
 
   initialize() {
@@ -59,6 +159,27 @@ export class DesktopWindow {
 
       this.beginResize(event);
     });
+
+    if (this.closeButtonElement) {
+      this.closeButtonElement.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.close();
+      });
+    }
+
+    if (this.previousButtonElement && typeof this.onNavigatePrevious === "function") {
+      this.previousButtonElement.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.onNavigatePrevious();
+      });
+    }
+
+    if (this.nextButtonElement && typeof this.onNavigateNext === "function") {
+      this.nextButtonElement.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.onNavigateNext();
+      });
+    }
   }
 
   open({ resizable = false, showScrollbar = true } = {}) {
@@ -91,8 +212,62 @@ export class DesktopWindow {
       return;
     }
 
-    this.rootElement.classList.add("d-none");
     this.cancelInteractions();
+
+    if (typeof this.onClose === "function") {
+      this.onClose();
+    }
+
+    if (this.ownsDom) {
+      this.destroy();
+      return;
+    }
+
+    this.rootElement.classList.add("d-none");
+  }
+
+  destroy() {
+    this.cancelInteractions();
+
+    if (this.rootElement && this.rootElement.parentNode) {
+      this.rootElement.parentNode.removeChild(this.rootElement);
+    }
+
+    this.rootElement = null;
+    this.headerElement = null;
+    this.resizeHandleElement = null;
+    this.scrollContainerElement = null;
+    this.bodyElement = null;
+    this.titleElement = null;
+    this.closeButtonElement = null;
+    this.contentHostElement = null;
+    this.previousButtonElement = null;
+    this.nextButtonElement = null;
+  }
+
+  setTitle(title) {
+    if (this.titleElement) {
+      this.titleElement.textContent = title;
+    }
+  }
+
+  setContent(content) {
+    if (!this.contentHostElement) {
+      return;
+    }
+
+    this.contentHostElement.replaceChildren();
+
+    if (content instanceof Node) {
+      this.contentHostElement.appendChild(content);
+      return;
+    }
+
+    this.contentHostElement.textContent = String(content ?? "");
+  }
+
+  getContentHostElement() {
+    return this.contentHostElement;
   }
 
   centerInViewport() {

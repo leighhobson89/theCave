@@ -11,6 +11,13 @@ import {
   getLanguageSelected,
   setLanguageSelected,
   setLanguage,
+  getCarouselItems,
+  getCurrentCarouselIndex,
+  setCurrentCarouselIndex,
+  setCarouselItems,
+  getDefaultStartingCarouselItems,
+  addCarouselItem,
+  getNextDesktopWindowZIndex,
 } from "./constantsAndGlobalVars.js";
 import { setGameState, startGame } from "./game.js";
 import { audioManager } from "./audioManager.js";
@@ -24,7 +31,9 @@ import {
 } from "./saveLoadGame.js";
 
 const storyTextCacheByLanguage = new Map();
-let storyWindowController = null;
+const activeDesktopWindows = new Set();
+const desktopWindowKinds = new WeakMap();
+const photosWindowContentRefs = new WeakMap();
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
@@ -33,6 +42,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   getElements().newGameMenuButton.addEventListener("click", () => {
     audioManager.onUserGesture();
+    setCarouselItems(getDefaultStartingCarouselItems());
+    setCurrentCarouselIndex(0);
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -165,30 +176,25 @@ async function setElementsLanguageText() {
     "zoomLabel",
     getLanguage()
   )} 3/5`;
-getElements().backgroundFolderLabel.textContent = localize(
-  "backgroundStory",
-  getLanguage(),
-);
+  getElements().backgroundFolderLabel.textContent = localize(
+    "backgroundStory",
+    getLanguage(),
+  );
 
-getElements().reportsFolderLabel.textContent = localize(
-  "reports",
-  getLanguage(),
-);
+  getElements().reportsFolderLabel.textContent = localize(
+    "reports",
+    getLanguage(),
+  );
 
-getElements().photosFolderLabel.textContent = localize("photos", getLanguage());
-
-getElements().storyWindowTitle.textContent = localize(
-  "backgroundStory",
-  getLanguage(),
-);
-
-getElements().evidenceLabel.textContent = localize("evidence", getLanguage());
+  getElements().photosFolderLabel.textContent = localize("photos", getLanguage());
+  getElements().evidenceLabel.textContent = localize("evidence", getLanguage());
   getElements().musicVolumeLabel.innerHTML = `${localize(
     "musicVolume",
     getLanguage()
   )}`;
   getElements().sfxVolumeLabel.innerHTML = `${localize("sfxVolume", getLanguage())}`;
   refreshMuteButtonLabel();
+  refreshOpenWindowLocalization();
 }
 
 export async function handleLanguageChange(languageCode) {
@@ -259,30 +265,60 @@ function refreshMuteButtonLabel() {
 }
 
 function initializeStoryWindowControls() {
-  if (
-    !getElements().backgroundFolder ||
-    !getElements().storyWindow ||
-    !getElements().storyWindowHeader ||
-    !getElements().storyWindowResizeHandle ||
-    !getElements().storyWindowClose
-  ) {
+  if (!getElements().backgroundFolder || !getElements().photosFolder) {
     return;
   }
 
-  storyWindowController = new DesktopWindow({
-    rootElement: getElements().storyWindow,
-    headerElement: getElements().storyWindowHeader,
-    resizeHandleElement: getElements().storyWindowResizeHandle,
-    scrollContainerElement: getElements().storyDocumentContent,
-  });
-
   getElements().backgroundFolder.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
     openStoryWindow(false, false);
   });
 
-  getElements().storyWindowClose.addEventListener("click", (event) => {
-    event.stopPropagation();
-    closeStoryWindow();
+  getElements().photosFolder.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+    openPhotosWindow();
+  });
+}
+
+function registerDesktopWindow(windowController, kind) {
+  activeDesktopWindows.add(windowController);
+  desktopWindowKinds.set(windowController, kind);
+
+  if (windowController?.rootElement) {
+    windowController.rootElement.addEventListener("pointerdown", () => {
+      bringDesktopWindowToFront(windowController);
+    });
+  }
+}
+
+function unregisterDesktopWindow(windowController) {
+  activeDesktopWindows.delete(windowController);
+}
+
+function bringDesktopWindowToFront(windowController) {
+  if (!windowController?.rootElement) {
+    return;
+  }
+
+  const nextZIndex = getNextDesktopWindowZIndex();
+  windowController.rootElement.style.zIndex = String(nextZIndex);
+}
+
+function refreshOpenWindowLocalization() {
+  activeDesktopWindows.forEach((windowController) => {
+    const windowKind = desktopWindowKinds.get(windowController);
+
+    if (windowKind === "story") {
+      windowController.setTitle(localize("backgroundStory", getLanguage()));
+      return;
+    }
+
+    if (windowKind === "photos") {
+      windowController.setTitle(localize("photos", getLanguage()));
+      updatePhotosWindowContent(windowController);
+    }
   });
 }
 
@@ -311,34 +347,190 @@ async function getStoryText(language, forceReload = false) {
 }
 
 async function openStoryWindow(resizable = false, showScrollbar = true) {
-  if (!getElements().storyDocumentContent || !getElements().storyDocumentText) {
+  if (!getElements().gameArea) {
     return;
   }
 
   const storyText = await getStoryText(getLanguage(), true);
-  getElements().storyDocumentText.textContent = storyText;
+  const storyPaperWrap = document.createElement("div");
+  storyPaperWrap.classList.add("story-paper-wrap");
 
-  if (storyWindowController) {
-    storyWindowController.open({ resizable, showScrollbar });
-  } else {
-    getElements().storyWindow.classList.remove("d-none");
-    getElements().storyDocumentContent.classList.toggle("scrollbars-hidden", !showScrollbar);
-  }
+  const storyDocumentContent = document.createElement("div");
+  storyDocumentContent.classList.add("story-document-content");
 
-  getElements().storyDocumentContent.scrollTop = 0;
+  const storyPaperclip = document.createElement("div");
+  storyPaperclip.classList.add("story-paperclip");
+  storyPaperclip.setAttribute("aria-hidden", "true");
+
+  const storyDocumentText = document.createElement("div");
+  storyDocumentText.classList.add("story-document-text");
+  storyDocumentText.textContent = storyText;
+
+  storyDocumentContent.append(storyPaperclip, storyDocumentText);
+  storyPaperWrap.appendChild(storyDocumentContent);
+
+  let storyWindowController = null;
+  storyWindowController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["story-window"],
+    title: localize("backgroundStory", getLanguage()),
+    showCarouselNavigation: false,
+    closeButtonAriaLabel: "Close story window",
+    onClose: () => {
+      unregisterDesktopWindow(storyWindowController);
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  storyWindowController.setContent(storyPaperWrap);
+  storyWindowController.scrollContainerElement = storyDocumentContent;
+  registerDesktopWindow(storyWindowController, "story");
+
+  storyWindowController.open({ resizable, showScrollbar });
+  bringDesktopWindowToFront(storyWindowController);
+  storyDocumentContent.scrollTop = 0;
 }
 
-function closeStoryWindow() {
-  if (!getElements().storyWindow) {
+function createPhotosWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("photos-carousel-container");
+
+  const image = document.createElement("img");
+  image.classList.add("photos-carousel-image");
+
+  const emptyState = document.createElement("div");
+  emptyState.classList.add("photos-carousel-empty", "d-none");
+
+  const counter = document.createElement("div");
+  counter.classList.add("photos-carousel-counter");
+
+  container.append(image, emptyState, counter);
+
+  return {
+    container,
+    image,
+    emptyState,
+    counter,
+  };
+}
+
+function updatePhotosWindowContent(windowController) {
+  const refs = photosWindowContentRefs.get(windowController);
+  if (!refs) {
     return;
   }
 
-  if (storyWindowController) {
-    storyWindowController.close();
-  } else {
-    getElements().storyWindow.classList.add("d-none");
+  const carouselItems = getCarouselItems();
+  refs.emptyState.textContent = `${localize("photos", getLanguage())}: 0/0`;
+
+  if (!carouselItems.length) {
+    refs.image.classList.add("d-none");
+    refs.emptyState.classList.remove("d-none");
+    refs.counter.textContent = "0/0";
+
+    if (windowController.previousButtonElement) {
+      windowController.previousButtonElement.disabled = true;
+    }
+    if (windowController.nextButtonElement) {
+      windowController.nextButtonElement.disabled = true;
+    }
+    return;
   }
 
+  setCurrentCarouselIndex(getCurrentCarouselIndex());
+  const currentIndex = getCurrentCarouselIndex();
+  const currentItem = carouselItems[currentIndex];
+
+  refs.image.classList.remove("d-none");
+  refs.emptyState.classList.add("d-none");
+  refs.image.src = currentItem;
+  refs.image.alt = `${localize("photos", getLanguage())} ${currentIndex + 1}`;
+  refs.counter.textContent = `${currentIndex + 1}/${carouselItems.length}`;
+
+  if (windowController.previousButtonElement) {
+    windowController.previousButtonElement.disabled = false;
+  }
+  if (windowController.nextButtonElement) {
+    windowController.nextButtonElement.disabled = false;
+  }
+
+  refs.image.onerror = () => {
+    refs.image.classList.add("d-none");
+    refs.emptyState.classList.remove("d-none");
+    refs.emptyState.textContent = `Missing image: ${currentItem}`;
+  };
+}
+
+function showPreviousCarouselImage() {
+  if (!getCarouselItems().length) {
+    return;
+  }
+
+  setCurrentCarouselIndex(getCurrentCarouselIndex() - 1);
+}
+
+function showNextCarouselImage() {
+  if (!getCarouselItems().length) {
+    return;
+  }
+
+  setCurrentCarouselIndex(getCurrentCarouselIndex() + 1);
+}
+
+function openPhotosWindow() {
+  if (!getElements().gameArea) {
+    return;
+  }
+
+  let photosWindowController = null;
+  photosWindowController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["story-window", "photos-window"],
+    title: localize("photos", getLanguage()),
+    showCarouselNavigation: true,
+    onNavigatePrevious: () => {
+      showPreviousCarouselImage();
+      updatePhotosWindowContent(photosWindowController);
+    },
+    onNavigateNext: () => {
+      showNextCarouselImage();
+      updatePhotosWindowContent(photosWindowController);
+    },
+    closeButtonAriaLabel: "Close photos window",
+    onClose: () => {
+      unregisterDesktopWindow(photosWindowController);
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  const contentRefs = createPhotosWindowContentElements();
+  photosWindowController.setContent(contentRefs.container);
+  photosWindowController.scrollContainerElement = contentRefs.container;
+  photosWindowContentRefs.set(photosWindowController, contentRefs);
+  registerDesktopWindow(photosWindowController, "photos");
+
+  updatePhotosWindowContent(photosWindowController);
+  photosWindowController.open({ resizable: true, showScrollbar: false });
+  bringDesktopWindowToFront(photosWindowController);
   audioManager.playSfx("clickSwitch");
+}
+
+export function refreshAllPhotosWindows() {
+  activeDesktopWindows.forEach((windowController) => {
+    if (desktopWindowKinds.get(windowController) === "photos") {
+      updatePhotosWindowContent(windowController);
+    }
+  });
+}
+
+export function addPhotoToCarousel(path) {
+  const newIndex = addCarouselItem(path);
+
+  if (newIndex >= 0 && getCarouselItems().length === 1) {
+    setCurrentCarouselIndex(0);
+  }
+
+  refreshAllPhotosWindows();
+  return newIndex;
 }
   
