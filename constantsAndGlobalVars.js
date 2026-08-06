@@ -52,6 +52,8 @@ export let pauseAutoSaveCountdown = true;
 let evidenceCustomNames = {};
 let notesPages = buildDefaultNotesPages();
 let notesActivePageIndex = 0;
+let ashtrayHasLitCigarette = true;
+let ashtrayHasExtraButt = false;
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
@@ -97,6 +99,8 @@ export function setElements() {
     notesFolder: document.getElementById("notesFolder"),
     notesLabel: document.getElementById("notesLabel"),
     desktopCalendar: document.getElementById("desktopCalendar"),
+    desktopAshtray: document.getElementById("desktopAshtray"),
+    desktopAshtrayHotspot: document.getElementById("desktopAshtrayHotspot"),
     desktopComputerRig: document.getElementById("desktopComputerRig"),
     desktopComputerHotspot: document.getElementById("desktopComputerHotspot"),
     settingsToggle: document.getElementById("settingsToggle"),
@@ -116,6 +120,7 @@ export function setElements() {
     btnGerman: document.getElementById("btnGerman"),
     btnItalian: document.getElementById("btnItalian"),
     copyButtonSavePopup: document.getElementById("copyButtonSavePopup"),
+    pasteButtonLoadPopup: document.getElementById("pasteButtonLoadPopup"),
     closeButtonSavePopup: document.getElementById("closeButtonSavePopup"),
     overlay: document.getElementById("overlay"),
   };
@@ -163,6 +168,8 @@ export function captureGameStatusForSaving() {
   gameState.evidenceCustomNames = getEvidenceCustomNames();
   gameState.notesPages = getNotesPages();
   gameState.notesActivePageIndex = getNotesActivePageIndex();
+  gameState.ashtrayHasLitCigarette = getAshtrayHasLitCigarette();
+  gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
 
   // Legacy compatibility fields for older loaders/tools.
   gameState.currentCarouselIndex = getCurrentCarouselIndex();
@@ -189,6 +196,8 @@ export function restoreGameStatus(gameState) {
       setEvidenceCustomNames(gameState.evidenceCustomNames || {});
       setNotesPages(gameState.notesPages);
       setNotesActivePageIndex(gameState.notesActivePageIndex ?? 0);
+      setAshtrayHasLitCigarette(gameState.ashtrayHasLitCigarette);
+      setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
 
       if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
         initializeEvidenceStoreForNewGame();
@@ -483,4 +492,25 @@ export function setNotesActivePageIndex(value) {
   }
 
   notesActivePageIndex = Math.min(NOTES_PAGE_COUNT - 1, Math.max(0, parsed));
+}
+
+export function getAshtrayHasLitCigarette() {
+  return ashtrayHasLitCigarette === true;
+}
+
+export function setAshtrayHasLitCigarette(value) {
+  ashtrayHasLitCigarette = value !== false;
+}
+
+export function getAshtrayHasExtraButt() {
+  return ashtrayHasExtraButt === true;
+}
+
+export function setAshtrayHasExtraButt(value) {
+  ashtrayHasExtraButt = value === true;
+}
+
+export function resetAshtrayState() {
+  ashtrayHasLitCigarette = true;
+  ashtrayHasExtraButt = false;
 }

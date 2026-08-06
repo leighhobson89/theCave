@@ -12,13 +12,13 @@ import {
 
 //--------------------------------------------------------------------------------------------------------
 
-const ZOOM_LEVELS = [0.65, 0.85, 1, 1.2, 1.45];
+const ZOOM_LEVELS = [0.60, 0.65, 0.85, 1];
 const WORLD_WIDTH = 2600;
 const WORLD_HEIGHT = 1800;
 const PARALLAX_FACTOR = 0.1;
 
 let desktopInitialized = false;
-let currentZoomIndex = 2;
+let currentZoomIndex = 0;
 let panX = 0;
 let panY = 0;
 let isDragging = false;
@@ -61,7 +61,7 @@ function updateZoomReadout() {
     return;
   }
 
-  getElements().zoomReadout.textContent = `${localize("zoomLabel", getLanguage())} ${currentZoomIndex + 1}/5`;
+  getElements().zoomReadout.textContent = `${localize("zoomLabel", getLanguage())} ${currentZoomIndex + 1}/${ZOOM_LEVELS.length}`;
 }
 
 function showZoomReadoutTransient() {
@@ -310,7 +310,7 @@ export function startGame(resetView = false) {
   initializeDesktopInteractions();
 
   if (resetView) {
-    currentZoomIndex = 2;
+    currentZoomIndex = 0;
     focusWorldAtCenter();
   }
 

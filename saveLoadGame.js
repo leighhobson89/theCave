@@ -15,6 +15,7 @@ export function saveGame(isManualSave) {
         document.querySelector('.save-load-header').innerHTML = `${localize('headerStringSave', getLanguage())}`;
         document.getElementById('copyButtonSavePopup').classList.remove('d-none');
         document.getElementById('loadStringButton').classList.add('d-none');
+        document.getElementById('pasteButtonLoadPopup').classList.add('d-none');
         getElements().saveLoadPopup.classList.remove('d-none');
         document.getElementById('overlay').classList.remove('d-none');
 
@@ -75,10 +76,38 @@ export function loadGameOption() {
     document.querySelector('.save-load-header').innerHTML = `${localize('headerStringLoad', getLanguage())}`;
     document.getElementById('loadStringButton').classList.remove('d-none');
     document.getElementById('copyButtonSavePopup').classList.add('d-none');
+    document.getElementById('pasteButtonLoadPopup').classList.remove('d-none');
     getElements().saveLoadPopup.classList.remove('d-none');
     document.getElementById('overlay').classList.remove('d-none');
     getElements().loadSaveGameStringTextArea.value = "";
     getElements().loadSaveGameStringTextArea.placeholder = `${localize('textAreaLabel', getLanguage())}`;
+}
+
+export async function pasteLoadStringFromClipboard() {
+    const textArea = getElements().loadSaveGameStringTextArea;
+    if (!textArea) {
+        return;
+    }
+
+    if (!navigator?.clipboard?.readText) {
+        alert('Clipboard paste is not available in this browser.');
+        return;
+    }
+
+    try {
+        const clipboardText = await navigator.clipboard.readText();
+        if (!String(clipboardText || '').trim()) {
+            alert('Clipboard is empty.');
+            return;
+        }
+
+        textArea.value = clipboardText;
+        textArea.focus();
+        textArea.setSelectionRange(textArea.value.length, textArea.value.length);
+    } catch (error) {
+        console.error('Clipboard read failed:', error);
+        alert('Could not read clipboard. Please allow clipboard permissions.');
+    }
 }
 
 export function loadGame(string) {

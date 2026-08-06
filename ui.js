@@ -1,4 +1,6 @@
 import {
+  getAshtrayHasExtraButt,
+  getAshtrayHasLitCigarette,
   captureGameStatusForSaving,
   gameState,
   getEvidenceCustomName,
@@ -6,8 +8,11 @@ import {
   getNotesActivePageIndex,
   getNotesPages,
   NOTES_PAGE_COUNT,
+  resetAshtrayState,
   resetNotesPagesState,
   setElements,
+  setAshtrayHasExtraButt,
+  setAshtrayHasLitCigarette,
   setEvidenceCustomName,
   setEvidenceCustomNames,
   getElements,
@@ -43,6 +48,7 @@ import { initLocalization, localize } from "./localization.js";
 import {
   loadGameOption,
   loadGame,
+  pasteLoadStringFromClipboard,
   saveGame,
   copySaveStringToClipBoard,
 } from "./saveLoadGame.js";
@@ -77,9 +83,22 @@ const NOTES_TAB_COLORS = [
 ];
 let debugWindowController = null;
 let computerWindowController = null;
+let ashtrayAnimationTimeoutId = null;
+
+function syncAshtrayVisualState() {
+  const ashtrayElement = getElements().desktopAshtray;
+  if (!ashtrayElement) {
+    return;
+  }
+
+  ashtrayElement.classList.toggle("has-lit-cig", getAshtrayHasLitCigarette());
+  ashtrayElement.classList.toggle("has-extra-butt", getAshtrayHasExtraButt());
+  ashtrayElement.classList.remove("is-extinguishing", "is-relighting");
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
+  syncAshtrayVisualState();
   initializeAudioControls();
   initializeStoryWindowControls();
   updateDesktopCalendarDate();
@@ -89,6 +108,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     initializeEvidenceStoreForNewGame();
     setEvidenceCustomNames({});
     resetNotesPagesState();
+    resetAshtrayState();
+    syncAshtrayVisualState();
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -180,6 +201,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     copySaveStringToClipBoard();
   });
 
+  getElements().pasteButtonLoadPopup.addEventListener("click", async function () {
+    audioManager.onUserGesture();
+    await pasteLoadStringFromClipboard();
+  });
+
   getElements().closeButtonSavePopup.addEventListener("click", function () {
     audioManager.onUserGesture();
     getElements().saveLoadPopup.classList.add("d-none");
@@ -191,6 +217,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadGame(true)
       .then(() => {
         setElements();
+        syncAshtrayVisualState();
         audioManager.syncFromSavedPreferences();
         refreshAudioControlsDisplay();
         getElements().saveLoadPopup.classList.add("d-none");
@@ -232,6 +259,20 @@ async function setElementsLanguageText() {
   )}`;
   getElements().loadStringButton.innerHTML = `${localize(
     "loadButton",
+    getLanguage()
+  )}`;
+  if (getElements().pasteButtonLoadPopup) {
+    getElements().pasteButtonLoadPopup.textContent = localize(
+      "pasteButton",
+      getLanguage()
+    );
+  }
+  getElements().copyButtonSavePopup.innerHTML = `${localize(
+    "copyButton",
+    getLanguage()
+  )}`;
+  getElements().closeButtonSavePopup.innerHTML = `${localize(
+    "closeButton",
     getLanguage()
   )}`;
   getElements().zoomReadout.innerHTML = `${localize(
@@ -592,6 +633,58 @@ function initializeStoryWindowControls() {
       audioManager.playSfx("clickSwitch");
       setGameState(getMenuState());
     });
+  }
+
+  if (getElements().desktopAshtrayHotspot && getElements().desktopAshtray) {
+    const activateAshtray = () => {
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickButton");
+
+      const ashtrayElement = getElements().desktopAshtray;
+      if (!ashtrayElement) {
+        return;
+      }
+
+      if (
+        ashtrayElement.classList.contains("is-extinguishing")
+        || ashtrayElement.classList.contains("is-relighting")
+      ) {
+        return;
+      }
+
+      if (ashtrayAnimationTimeoutId) {
+        clearTimeout(ashtrayAnimationTimeoutId);
+        ashtrayAnimationTimeoutId = null;
+      }
+
+      const hasLitCigarette = ashtrayElement.classList.contains("has-lit-cig");
+
+      if (hasLitCigarette) {
+        ashtrayElement.classList.add("is-extinguishing");
+
+        ashtrayAnimationTimeoutId = window.setTimeout(() => {
+          ashtrayElement.classList.remove("is-extinguishing");
+          ashtrayElement.classList.remove("has-lit-cig");
+          ashtrayElement.classList.add("has-extra-butt");
+          setAshtrayHasLitCigarette(false);
+          setAshtrayHasExtraButt(true);
+          ashtrayAnimationTimeoutId = null;
+        }, 620);
+
+        return;
+      }
+
+      ashtrayElement.classList.add("has-lit-cig");
+      ashtrayElement.classList.add("is-relighting");
+      setAshtrayHasLitCigarette(true);
+
+      ashtrayAnimationTimeoutId = window.setTimeout(() => {
+        ashtrayElement.classList.remove("is-relighting");
+        ashtrayAnimationTimeoutId = null;
+      }, 620);
+    };
+
+    getElements().desktopAshtrayHotspot.addEventListener("click", activateAshtray);
   }
 
   if (getElements().desktopComputerHotspot || getElements().desktopComputerRig) {
