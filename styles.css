@@ -761,11 +761,12 @@ button.disabled {
 
 .notes-folder {
     position: absolute;
-    left: 1080px;
-    top: 900px;
+    left: 300px;
+    bottom: 300px;
     width: 440px;
     height: 270px;
-    transform: rotate(-2deg);
+    top: auto;
+    transform: rotate(20deg);
     z-index: 2;
 }
 
@@ -1139,6 +1140,337 @@ button.disabled {
     height: 435px;
     transform: rotate(-1.8deg);
     z-index: 2;
+}
+
+.computer-rig {
+    position: absolute;
+    right: 270px;
+    bottom: 220px;
+    width: 50%;
+    height: 50%;
+    z-index: 3;
+    cursor: default;
+    display: block;
+    outline: none;
+}
+
+.computer-rig > * {
+    pointer-events: none;
+}
+
+.computer-rig > .computer-click-target {
+    pointer-events: auto;
+}
+
+.computer-click-target {
+    position: absolute;
+    right: 20%;
+    bottom: 8%;
+    width: 68%;
+    height: 82%;
+    border-radius: 18px;
+    border: 2px solid transparent;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    appearance: none;
+    outline: none;
+    z-index: 10;
+    cursor: pointer;
+    transition: box-shadow 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.computer-click-target:hover,
+.computer-click-target:focus-visible {
+    border-color: rgba(255, 54, 54, 0.95);
+    background: rgba(255, 24, 24, 0.08);
+    box-shadow:
+        inset 0 0 0 2px rgba(255, 0, 0, 0.8),
+        0 0 10px rgba(255, 39, 39, 0.45);
+}
+
+.computer-rig-cables {
+    position: absolute;
+    inset: 0;
+}
+
+.computer-cable {
+    position: absolute;
+    border: 6px solid rgba(37, 36, 34, 0.84);
+    border-top: none;
+    border-left: none;
+    border-radius: 0 0 28px 0;
+    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.35);
+}
+
+.cable-one {
+    right: 45%;
+    bottom: 18%;
+    width: 180px;
+    height: 130px;
+    transform: rotate(4deg);
+}
+
+.cable-two {
+    right: 24%;
+    bottom: 10%;
+    width: 190px;
+    height: 118px;
+    transform: rotate(-7deg);
+}
+
+.cable-three {
+    right: 10%;
+    bottom: 7%;
+    width: 130px;
+    height: 96px;
+    transform: rotate(11deg);
+}
+
+.computer-laptop {
+    position: absolute;
+    right: 20%;
+    bottom: 8%;
+    width: 68%;
+    height: 76%;
+}
+
+.computer-screen-lid {
+    position: absolute;
+    left: 3%;
+    top: -8%;
+    width: 88%;
+    height: 70%;
+    border-radius: 16px 16px 10px 10px;
+    border: 3px solid rgba(121, 119, 114, 0.96);
+    background:
+        linear-gradient(160deg, rgba(169, 162, 152, 0.92), rgba(119, 113, 104, 0.92));
+    box-shadow:
+        0 13px 18px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.computer-screen-bezel {
+    position: absolute;
+    left: 7%;
+    top: 10%;
+    width: 86%;
+    height: 80%;
+    border-radius: 8px;
+    border: 2px solid rgba(82, 81, 78, 0.94);
+    background: #111;
+    overflow: hidden;
+}
+
+.computer-screen-content {
+    position: absolute;
+    inset: 5% 4%;
+    border-radius: 4px;
+    background: #000;
+    box-shadow: inset 0 0 22px rgba(38, 98, 86, 0.32);
+}
+
+.computer-screen-fake-text {
+    position: absolute;
+    left: 10%;
+    top: 12%;
+    width: 82%;
+    height: 76%;
+    opacity: 0.62;
+    background:
+        linear-gradient(#4ef5c3, #4ef5c3) 0 0 / 80% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 12px / 55% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 24px / 72% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 36px / 61% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 54px / 78% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 66px / 64% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 78px / 86% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 90px / 57% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 102px / 64% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 114px / 86% 3px no-repeat,
+        linear-gradient(#4ef5c3, #4ef5c3) 0 126px / 57% 3px no-repeat;
+    filter: drop-shadow(0 0 5px rgba(72, 224, 179, 0.35));
+}
+
+.computer-laptop-base {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 94%;
+    height: 39%;
+    border-radius: 16px 16px 20px 20px;
+    border: 3px solid rgba(117, 112, 103, 0.95);
+    background:
+        linear-gradient(180deg, rgba(186, 179, 166, 0.94), rgba(132, 124, 112, 0.94));
+    box-shadow:
+        0 16px 22px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.computer-keyboard {
+    position: absolute;
+    left: 7%;
+    top: 20%;
+    width: 70%;
+    height: 38%;
+    border-radius: 8px;
+    border: 1px solid rgba(102, 97, 90, 0.86);
+    background:
+        repeating-linear-gradient(90deg,
+            rgba(62, 62, 62, 0.85) 0,
+            rgba(62, 62, 62, 0.85) 6px,
+            rgba(26, 26, 26, 0.8) 6px,
+            rgba(26, 26, 26, 0.8) 10px),
+        repeating-linear-gradient(180deg,
+            transparent 0,
+            transparent 7px,
+            rgba(124, 124, 124, 0.18) 7px,
+            rgba(124, 124, 124, 0.18) 8px);
+}
+
+.computer-trackpad {
+    position: absolute;
+    right: 8%;
+    bottom: 12%;
+    width: 18%;
+    height: 24%;
+    border-radius: 6px;
+    border: 1px solid rgba(96, 90, 81, 0.85);
+    background: rgba(154, 146, 133, 0.62);
+}
+
+.computer-banana-logo {
+    position: absolute;
+    right: 14%;
+    top: 70%;
+    width: 62px;
+    height: 44px;
+    transform: rotate(-18deg);
+    z-index: 4;
+}
+
+.banana-body {
+    position: absolute;
+    left: 2px;
+    top: 5px;
+    width: 56px;
+    height: 32px;
+    border-radius: 20px 26px 20px 22px;
+    background:
+        linear-gradient(180deg,
+            #2ca348 0 19%,
+            #f2db3f 19% 38%,
+            #f49e2c 38% 58%,
+            #d4463d 58% 79%,
+            #7053be 79% 100%);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+    clip-path: polygon(2% 48%, 12% 23%, 30% 11%, 58% 12%, 83% 28%, 96% 53%, 92% 67%, 77% 77%, 53% 84%, 28% 81%, 10% 69%);
+}
+
+.banana-body::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 6px;
+    width: 34px;
+    height: 19px;
+    border-radius: 14px 16px 12px 14px;
+    background: rgba(176, 168, 151, 0.92);
+    clip-path: polygon(5% 45%, 20% 26%, 42% 22%, 68% 30%, 84% 44%, 82% 58%, 64% 67%, 42% 69%, 22% 62%, 9% 53%);
+}
+
+.banana-leaf {
+    position: absolute;
+    right: 2px;
+    top: 0;
+    width: 13px;
+    height: 9px;
+    border-radius: 10px 10px 6px 2px;
+    background: #53803d;
+    transform: rotate(28deg);
+}
+
+.computer-floppy-slot {
+    position: absolute;
+    left: 8%;
+    bottom: 11%;
+    width: 26%;
+    height: 18%;
+    border-radius: 5px;
+    border: 1px solid rgba(84, 80, 73, 0.88);
+    background:
+        linear-gradient(180deg, rgba(79, 77, 71, 0.95), rgba(36, 35, 33, 0.95));
+    box-shadow: inset 0 1px 0 rgba(200, 194, 181, 0.2);
+}
+
+.floppy-slot-notch {
+    position: absolute;
+    left: 8%;
+    top: 32%;
+    width: 76%;
+    height: 34%;
+    border-radius: 2px;
+    background: rgba(8, 8, 8, 0.86);
+}
+
+.computer-modem {
+    position: absolute;
+    right: 0;
+    bottom: 8%;
+    width: 24%;
+    height: 20%;
+    border-radius: 12px;
+    border: 2px solid rgba(122, 117, 106, 0.9);
+    background:
+        linear-gradient(180deg, rgba(188, 182, 169, 0.95), rgba(133, 126, 114, 0.95));
+    box-shadow:
+        0 10px 14px rgba(0, 0, 0, 0.33),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.computer-modem-lights {
+    position: absolute;
+    left: 14%;
+    top: 18%;
+    width: 72%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.computer-modem-lights span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #7dff65;
+    box-shadow: 0 0 4px rgba(125, 255, 101, 0.65);
+}
+
+.computer-modem-vent {
+    position: absolute;
+    left: 14%;
+    bottom: 16%;
+    width: 72%;
+    height: 32%;
+    border-radius: 6px;
+    background:
+        repeating-linear-gradient(90deg,
+            rgba(90, 86, 78, 0.85) 0,
+            rgba(90, 86, 78, 0.85) 4px,
+            rgba(125, 119, 109, 0.74) 4px,
+            rgba(125, 119, 109, 0.74) 8px);
+}
+
+.computer-window {
+    border-radius: 0;
+}
+
+.computer-window .desktop-window-body {
+    padding: 0;
+}
+
+.computer-window-empty {
+    width: 100%;
+    height: 100%;
 }
 
 .calendar-rings {

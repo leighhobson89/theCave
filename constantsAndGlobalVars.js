@@ -87,6 +87,8 @@ export function setElements() {
     notesFolder: document.getElementById("notesFolder"),
     notesLabel: document.getElementById("notesLabel"),
     desktopCalendar: document.getElementById("desktopCalendar"),
+    desktopComputerRig: document.getElementById("desktopComputerRig"),
+    desktopComputerHotspot: document.getElementById("desktopComputerHotspot"),
     settingsToggle: document.getElementById("settingsToggle"),
     settingsItems: document.getElementById("settingsItems"),
     muteToggleButton: document.getElementById("muteToggleButton"),

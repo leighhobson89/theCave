@@ -57,6 +57,7 @@ const REPORTS_CATALOG_PATH_TEMPLATE = "./assets/reportsEvidences_{lang}.json";
 const PHOTOS_CATALOG_PATH_TEMPLATE = "./assets/photos_evidences_{lang}.json";
 const DEBUG_WINDOW_COLOR = "rgb(108, 255, 64)";
 let debugWindowController = null;
+let computerWindowController = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
@@ -560,6 +561,30 @@ function initializeStoryWindowControls() {
       audioManager.onUserGesture();
       audioManager.playSfx("clickSwitch");
       setGameState(getMenuState());
+    });
+  }
+
+  if (getElements().desktopComputerHotspot || getElements().desktopComputerRig) {
+    const computerTrigger = getElements().desktopComputerHotspot || getElements().desktopComputerRig;
+    const openComputerRig = () => {
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickButton");
+
+      if (toggleExistingWindowsByKind("computer")) {
+        return;
+      }
+
+      openComputerWindow();
+    };
+
+    computerTrigger.addEventListener("click", openComputerRig);
+    computerTrigger.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      openComputerRig();
     });
   }
 }
@@ -1652,6 +1677,49 @@ function openReportsWindow() {
   updateReportsWindowContent(reportsWindowController);
   reportsWindowController.open({ resizable: true, showScrollbar: false });
   bringDesktopWindowToFront(reportsWindowController);
+  audioManager.playSfx("clickSwitch");
+}
+
+function openComputerWindow() {
+  if (!getElements().gameArea) {
+    return;
+  }
+
+  const emptyContent = document.createElement("div");
+  emptyContent.classList.add("computer-window-empty");
+
+  let nextController = null;
+  nextController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["story-window", "computer-window"],
+    title: "Computer",
+    showCarouselNavigation: false,
+    closeButtonAriaLabel: "Close computer window",
+    onClose: () => {
+      unregisterDesktopWindow(nextController);
+      if (computerWindowController === nextController) {
+        computerWindowController = null;
+      }
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  nextController.setContent(emptyContent);
+  nextController.scrollContainerElement = emptyContent;
+  registerDesktopWindow(nextController, "computer");
+  nextController.open({ resizable: false, showScrollbar: false });
+
+  if (nextController.rootElement) {
+    nextController.marginRatio = 0;
+    nextController.rootElement.style.width = "100vw";
+    nextController.rootElement.style.height = "100vh";
+    nextController.rootElement.style.left = "0";
+    nextController.rootElement.style.top = "0";
+    nextController.rootElement.style.transform = "none";
+  }
+
+  bringDesktopWindowToFront(nextController);
+  computerWindowController = nextController;
   audioManager.playSfx("clickSwitch");
 }
 
