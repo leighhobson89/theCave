@@ -13,16 +13,9 @@ const EVIDENCE_TYPES = {
 const PAPER_STYLES = {
   STORY_LINED: "story-lined",
   REPORT_PARCHMENT: "report-parchment",
-  REPORT_PARCHMENT_ASH: "report-parchment-ash",
-  REPORT_PARCHMENT_SEPIA: "report-parchment-sepia",
-  REPORT_PARCHMENT_MOSS: "report-parchment-moss",
-  REPORT_PARCHMENT_CHAR: "report-parchment-char",
-  REPORT_PARCHMENT_CRIMSON: "report-parchment-crimson",
   PHOTO_MOUNTED: "photo-mounted",
   PHOTO_MOUNTED_IVORY: "photo-mounted-ivory",
   PHOTO_MOUNTED_LINEN: "photo-mounted-linen",
-  PHOTO_MOUNTED_CHALK: "photo-mounted-chalk",
-  PHOTO_MOUNTED_AGED: "photo-mounted-aged",
 };
 
 const REPORTS_CATALOG_PATH_TEMPLATE = "./assets/reportsEvidences_{lang}.json";
@@ -30,34 +23,26 @@ const PHOTOS_CATALOG_PATH_TEMPLATE = "./assets/photos_evidences_{lang}.json";
 
 const DEFAULT_EVIDENCE_BLUEPRINTS = [
   {
-    kind: "story",
+    kind: EVIDENCE_TYPES.STORY,
     storyName: "story",
-    storageKey: STORAGE_KEYS.BACKGROUND_STORY,
-    titleKey: "backgroundStory",
     defaultTitleString: "Background Story",
   },
   {
-    kind: "photo",
-    storageKey: STORAGE_KEYS.PHOTOS,
+    kind: EVIDENCE_TYPES.PHOTO,
     photoPath: "./assets/photos/caveEntrance.png",
     name: "caveEntrance",
-    titleKey: "photos",
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_IVORY,
   },
   {
-    kind: "photo",
-    storageKey: STORAGE_KEYS.PHOTOS,
+    kind: EVIDENCE_TYPES.PHOTO,
     photoPath: "./assets/photos/insideCaveLookingBack.png",
     name: "insideCaveLookingBack",
-    titleKey: "photos",
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_LINEN,
   },
   {
-    kind: "report",
+    kind: EVIDENCE_TYPES.REPORT,
     reportName: "missingReport",
-    storageKey: STORAGE_KEYS.REPORTS,
-    titleKey: "reports",
-  },
+  }
 ];
 
 let evidenceStore = createEmptyEvidenceStore();
@@ -183,13 +168,13 @@ export function initializeEvidenceStoreForNewGame() {
 
   DEFAULT_EVIDENCE_BLUEPRINTS.forEach((blueprint) => {
     switch (blueprint.kind) {
-      case "story":
+      case EVIDENCE_TYPES.STORY:
         createStoryEvidence(blueprint);
         break;
-      case "photo":
+      case EVIDENCE_TYPES.PHOTO:
         createPhotoEvidence(blueprint);
         break;
-      case "report":
+      case EVIDENCE_TYPES.REPORT:
         createReportEvidence(blueprint);
         break;
     }

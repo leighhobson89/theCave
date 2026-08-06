@@ -1,18 +1,30 @@
-import { getAudioMuted, setAudioMuted } from "./constantsAndGlobalVars.js";
+import {
+  getAudioMuted,
+  getMusicVolumePreference,
+  getSfxVolumePreference,
+  setAudioMuted,
+  setMusicVolumePreference,
+  setSfxVolumePreference,
+} from "./constantsAndGlobalVars.js";
 
 export class AudioManager {
   constructor() {
-    this.musicTracks = ["audio/music/background_music_1.mp3"];
+    this.musicTracks = [
+      "audio/music/backgroundMusic_1.mp3",
+      "audio/music/backgroundMusic_2.mp3",
+    ];
 
     this.sfxSources = {
       clickButton: "audio/sfx/clickButton.mp3",
       clickSwitch: "audio/sfx/clickSwitch.mp3",
     };
 
-    this.musicVolume = 0.1;
-    this.sfxVolume = 0.85;
+    this.musicVolume = getMusicVolumePreference();
+    this.sfxVolume = getSfxVolumePreference();
     this.userInteracted = false;
     this.currentMusic = null;
+    this.currentTrackIndex = -1;
+    this.manuallyPaused = false;
 
     if (typeof getAudioMuted() !== "boolean") {
       setAudioMuted(false);
@@ -35,6 +47,8 @@ export class AudioManager {
 
   setMusicVolume(value) {
     this.musicVolume = Math.max(0, Math.min(1, value));
+    setMusicVolumePreference(this.musicVolume);
+
     if (this.currentMusic) {
       this.currentMusic.volume = this.getMuted() ? 0 : this.musicVolume;
     }
@@ -42,13 +56,51 @@ export class AudioManager {
 
   setSfxVolume(value) {
     this.sfxVolume = Math.max(0, Math.min(1, value));
+    setSfxVolumePreference(this.sfxVolume);
   }
 
   onUserGesture() {
     this.userInteracted = true;
-    if (!this.getMuted()) {
+
+    if (!this.manuallyPaused) {
       this.ensureBackgroundMusic();
     }
+  }
+
+  isMusicPlaying() {
+    return Boolean(this.currentMusic && !this.currentMusic.paused);
+  }
+
+  toggleMusicPlayback() {
+    this.userInteracted = true;
+
+    if (this.isMusicPlaying()) {
+      this.manuallyPaused = true;
+      this.currentMusic.pause();
+      return false;
+    }
+
+    this.manuallyPaused = false;
+    this.ensureBackgroundMusic({ force: true });
+    return true;
+  }
+
+  playNextRandomTrack() {
+    this.userInteracted = true;
+    this.manuallyPaused = false;
+    this.playRandomTrack({ excludeCurrent: true, force: true });
+  }
+
+  startBackgroundMusicForGame() {
+    this.userInteracted = true;
+    this.manuallyPaused = false;
+    this.ensureBackgroundMusic({ force: true });
+  }
+
+  syncFromSavedPreferences() {
+    this.musicVolume = getMusicVolumePreference();
+    this.sfxVolume = getSfxVolumePreference();
+    this.applyMuteState();
   }
 
   playSfx(name) {
@@ -64,13 +116,17 @@ export class AudioManager {
     });
   }
 
-  ensureBackgroundMusic() {
-    if (!this.userInteracted || this.getMuted()) {
+  ensureBackgroundMusic({ force = false } = {}) {
+    if (!this.userInteracted) {
+      return;
+    }
+
+    if (this.manuallyPaused && !force) {
       return;
     }
 
     if (!this.currentMusic) {
-      this.playRandomTrack();
+      this.playRandomTrack({ force });
       return;
     }
 
@@ -86,31 +142,53 @@ export class AudioManager {
       this.currentMusic.volume = this.getMuted() ? 0 : this.musicVolume;
     }
 
-    if (!this.getMuted()) {
-      this.ensureBackgroundMusic();
+    if (!this.manuallyPaused) {
+      this.ensureBackgroundMusic({ force: true });
     }
   }
 
-  playRandomTrack() {
-    if (this.musicTracks.length === 0 || this.getMuted()) {
+  playRandomTrack({ excludeCurrent = false, force = false } = {}) {
+    if (this.musicTracks.length === 0) {
       return;
     }
 
-    const index = Math.floor(Math.random() * this.musicTracks.length);
+    if (!force && this.getMuted()) {
+      return;
+    }
+
+    const availableIndices = this.musicTracks
+      .map((_, index) => index)
+      .filter((index) => !excludeCurrent || index !== this.currentTrackIndex);
+
+    const candidateIndices = availableIndices.length
+      ? availableIndices
+      : this.musicTracks.map((_, index) => index);
+
+    const index = candidateIndices[Math.floor(Math.random() * candidateIndices.length)];
     const trackPath = this.musicTracks[index];
 
     if (this.currentMusic) {
+      this.currentMusic.onended = null;
+      this.currentMusic.onerror = null;
       this.currentMusic.pause();
-      this.currentMusic.src = "";
     }
 
     const audio = new Audio(trackPath);
-    audio.volume = this.musicVolume;
-    audio.addEventListener("ended", () => {
-      this.playRandomTrack();
-    });
+    audio.volume = this.getMuted() ? 0 : this.musicVolume;
+    audio.onended = () => {
+      if (this.manuallyPaused) {
+        return;
+      }
+
+      this.playRandomTrack({ excludeCurrent: true, force: true });
+    };
+    audio.onerror = () => {
+      // Skip to a different track if this one cannot play.
+      this.playRandomTrack({ excludeCurrent: true, force: true });
+    };
 
     this.currentMusic = audio;
+    this.currentTrackIndex = index;
     audio.play().catch(() => {
       // Retry after next user gesture.
     });

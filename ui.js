@@ -84,6 +84,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
     setGameState(getGameVisibleActive());
     startGame(true);
+    audioManager.startBackgroundMusicForGame();
+    refreshAudioControlsDisplay();
   });
 
   getElements().resumeGameMenuButton.addEventListener("click", () => {
@@ -168,11 +170,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadGame(true)
       .then(() => {
         setElements();
+        audioManager.syncFromSavedPreferences();
+        refreshAudioControlsDisplay();
         getElements().saveLoadPopup.classList.add("d-none");
         document.getElementById("overlay").classList.add("d-none");
         setGameInProgress(true);
         setGameState(getGameVisibleActive());
         startGame(false);
+        audioManager.startBackgroundMusicForGame();
       })
       .catch((error) => {
         console.error("Error loading game:", error);
@@ -230,6 +235,7 @@ async function setElementsLanguageText() {
   )}`;
   getElements().sfxVolumeLabel.innerHTML = `${localize("sfxVolume", getLanguage())}`;
   refreshMuteButtonLabel();
+  refreshMusicTransportControls();
   refreshOpenWindowLocalization();
   updateDesktopCalendarDate();
 }
@@ -419,21 +425,30 @@ export function disableActivateButton(button, action, activeClass) {
 }
 
 function initializeAudioControls() {
-  const musicPercent = Math.round(audioManager.musicVolume * 100);
-  const sfxPercent = Math.round(audioManager.sfxVolume * 100);
-
-  getElements().musicVolumeSlider.value = String(musicPercent);
-  getElements().sfxVolumeSlider.value = String(sfxPercent);
-  getElements().musicVolumeValue.textContent = `${musicPercent}%`;
-  getElements().sfxVolumeValue.textContent = `${sfxPercent}%`;
+  refreshAudioControlsDisplay();
 
   getElements().muteToggleButton.addEventListener("click", () => {
     audioManager.onUserGesture();
     const isMuted = audioManager.toggleMuted();
     refreshMuteButtonLabel();
+    refreshMusicTransportControls();
     if (!isMuted) {
       audioManager.playSfx("clickSwitch");
     }
+  });
+
+  getElements().musicPlayPauseButton?.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.toggleMusicPlayback();
+    audioManager.playSfx("clickSwitch");
+    refreshMusicTransportControls();
+  });
+
+  getElements().musicNextButton?.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playNextRandomTrack();
+    audioManager.playSfx("clickSwitch");
+    refreshMusicTransportControls();
   });
 
   getElements().musicVolumeSlider.addEventListener("input", (event) => {
@@ -441,6 +456,7 @@ function initializeAudioControls() {
     const volume = Number(event.target.value) / 100;
     audioManager.setMusicVolume(volume);
     getElements().musicVolumeValue.textContent = `${event.target.value}%`;
+    refreshMusicTransportControls();
   });
 
   getElements().sfxVolumeSlider.addEventListener("input", (event) => {
@@ -451,6 +467,28 @@ function initializeAudioControls() {
   });
 
   refreshMuteButtonLabel();
+  refreshMusicTransportControls();
+}
+
+function refreshAudioControlsDisplay() {
+  const musicPercent = Math.round(audioManager.musicVolume * 100);
+  const sfxPercent = Math.round(audioManager.sfxVolume * 100);
+
+  if (getElements().musicVolumeSlider) {
+    getElements().musicVolumeSlider.value = String(musicPercent);
+  }
+  if (getElements().sfxVolumeSlider) {
+    getElements().sfxVolumeSlider.value = String(sfxPercent);
+  }
+  if (getElements().musicVolumeValue) {
+    getElements().musicVolumeValue.textContent = `${musicPercent}%`;
+  }
+  if (getElements().sfxVolumeValue) {
+    getElements().sfxVolumeValue.textContent = `${sfxPercent}%`;
+  }
+
+  refreshMuteButtonLabel();
+  refreshMusicTransportControls();
 }
 
 function refreshMuteButtonLabel() {
@@ -459,6 +497,24 @@ function refreshMuteButtonLabel() {
     "mute",
     getLanguage()
   )}: ${localize(muteStateKey, getLanguage())}`;
+}
+
+function refreshMusicTransportControls() {
+  if (!getElements().musicPlayPauseButton || !getElements().musicNextButton) {
+    return;
+  }
+
+  const isPlaying = audioManager.isMusicPlaying();
+  getElements().musicPlayPauseButton.textContent = isPlaying ? "⏸" : "▶";
+  getElements().musicPlayPauseButton.setAttribute(
+    "aria-label",
+    isPlaying ? "Pause music" : "Play music"
+  );
+  getElements().musicPlayPauseButton.title = isPlaying ? "Pause" : "Play";
+
+  getElements().musicNextButton.textContent = "⏭";
+  getElements().musicNextButton.setAttribute("aria-label", "Next track");
+  getElements().musicNextButton.title = "Next";
 }
 
 function initializeStoryWindowControls() {

@@ -16,28 +16,30 @@
     <div id="appShell" class="app-shell">
         <!-- Menu Container -->
         <div id="menu" class="d-flex flex-column align-items-center justify-content-center">
-            <h1 id="menuTitle" class="mb-4">Game Title Placeholder</h1>
-            <div id="languageContainer" class="d-flex justify-content-between my-2 flex-wrap">
-                <div class="col">
-                    <button id="btnEnglish" class="btn btn-success mx-2">English</button>
+            <div class="menu-panel">
+                <h1 id="menuTitle" class="mb-4">Askew Cave</h1>
+                <div id="languageContainer" class="d-flex justify-content-center my-2">
+                    <div class="col">
+                        <button id="btnEnglish" class="language-flag-button mx-2" title="English" aria-label="English" data-label="English"></button>
+                    </div>
+                    <div class="col">
+                        <button id="btnSpanish" class="language-flag-button mx-2" title="Español" aria-label="Español" data-label="Español"></button>
+                    </div>
+                    <div class="col">
+                        <button id="btnGerman" class="language-flag-button mx-2" title="Deutsch" aria-label="Deutsch" data-label="Deutsch"></button>
+                    </div>
+                    <div class="col">
+                        <button id="btnItalian" class="language-flag-button mx-2" title="Italiano" aria-label="Italiano" data-label="Italiano"></button>
+                    </div>
+                    <div class="col">
+                        <button id="btnFrench" class="language-flag-button mx-2" title="Français" aria-label="Français" data-label="Français"></button>
+                    </div>
                 </div>
-                <div class="col">
-                    <button id="btnSpanish" class="btn btn-success mx-2">Español</button>
-                </div>
-                <div class="col">
-                    <button id="btnGerman" class="btn btn-success mx-2">Deutsch</button>
-                </div>
-                <div class="col">
-                    <button id="btnItalian" class="btn btn-success mx-2">Italiano</button>
-                </div>
-                <div class="col">
-                    <button id="btnFrench" class="btn btn-success mx-2">Français</button>
-                </div>
+                <button id="newGame" class="menu-action-button btn btn-primary mb-2">New Game Placeholder</button>
+                <button id="resumeFromMenu" class="menu-action-button btn disabled mb-2">Resume Game Placeholder</button>
+                <button id="loadGame" class="menu-action-button btn btn-primary mb-2">Load Game Placeholder</button>
+                <button id="saveGame" class="menu-action-button btn disabled">Save Game Placeholder</button>
             </div>
-            <button id="newGame" class="btn btn-primary mb-2">New Game Placeholder</button>
-            <button id="resumeFromMenu" class="btn disabled mb-2">Resume Game Placeholder</button>
-            <button id="loadGame" class="btn btn-primary mb-2">Load Game Placeholder</button>
-            <button id="saveGame" class="btn disabled">Save Game Placeholder</button>
         </div>
 
         <div id="gameArea" class="game-area d-none">
@@ -64,11 +66,30 @@
                     </div>
 
                     <div id="reportsFolder" class="desk-folder folder-green folder-two">
+                        <div class="reports-paper-stack" aria-hidden="true">
+                            <div class="reports-paper-sheet reports-paper-sheet-back"></div>
+                            <div class="reports-paper-sheet reports-paper-sheet-mid"></div>
+                            <div class="reports-paper-sheet reports-paper-sheet-front"></div>
+
+                            <div class="magnifying-glass reports-folder-magnifier">
+                                <div class="lens">
+                                    <div class="lens-text"></div>
+                                </div>
+                                <div class="handle"></div>
+                            </div>
+                        </div>
                         <div class="desk-folder-tab"></div>
                         <div id="reportsFolderLabel" class="desk-folder-label">REPORTS</div>
                     </div>
 
                     <div id="photosFolder" class="desk-folder folder-blue folder-three">
+                        <div class="photos-paper-stack" aria-hidden="true">
+                            <div class="photos-paper-sheet photos-paper-sheet-back"></div>
+                            <div class="photos-paper-sheet photos-paper-sheet-mid"></div>
+                            <div class="photos-paper-sheet photos-paper-sheet-front">
+                                <img class="photos-stack-preview" src="./assets/photos/caveEntrance.png" alt="" />
+                            </div>
+                        </div>
                         <div class="desk-folder-tab"></div>
                         <div id="photosFolderLabel" class="desk-folder-label">PHOTOS</div>
                     </div>
@@ -85,11 +106,15 @@
                                 <div class="stamp">CONFIDENTIAL</div>
                             </div>
 
-                            <div class="magnifying-glass">
-                                <div class="lens">
-                                    <div class="lens-text"></div>
-                                </div>
-                                <div class="handle"></div>
+                            <div class="notes-inkwell" aria-hidden="true">
+                                <div class="notes-inkwell-opening"></div>
+                            </div>
+
+                            <div class="notes-pen" aria-hidden="true">
+                                <div class="notes-pen-tip"></div>
+                                <div class="notes-pen-band"></div>
+                                <div class="notes-pen-cap"></div>
+                                <div class="notes-pen-highlight"></div>
                             </div>
 
                             <div id="notesLabel" class="notes-label">NOTES</div>
@@ -123,6 +148,10 @@
                 </button>
                 <div id="settingsItems" class="settings-items d-none">
                     <button id="muteToggleButton" class="settings-item settings-toggle-item">Mute: Off</button>
+                    <div class="settings-item settings-transport-row">
+                        <button id="musicPlayPauseButton" class="settings-transport-button" aria-label="Pause music">⏸</button>
+                        <button id="musicNextButton" class="settings-transport-button" aria-label="Next track">⏭</button>
+                    </div>
                     <div class="settings-item settings-slider-row">
                         <label id="musicVolumeLabel" for="musicVolumeSlider">Music Volume</label>
                         <input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="10">

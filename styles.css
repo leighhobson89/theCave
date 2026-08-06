@@ -23,17 +23,164 @@ body {
     justify-content: center;
     height: 100vh;
     width: 100vw;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, rgba(40, 29, 21, 0.96), rgba(18, 16, 13, 0.96));
+    padding: 1.2rem;
+    background: linear-gradient(135deg, rgba(23, 31, 43, 0.95), rgba(11, 17, 26, 0.95));
     color: #fff;
     text-align: center;
     top: 0;
     left: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+#menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("./assets/photos/caveEntrance.png") center center / cover no-repeat;
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+#menu::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(165deg, rgba(66, 118, 190, 0.36), rgba(21, 49, 86, 0.5));
+    pointer-events: none;
+}
+
+.menu-panel {
+    width: min(96vw, 1160px);
+    min-height: min(92vh, 760px);
+    padding: clamp(1rem, 2.4vw, 2rem);
+    border-radius: 20px;
+    border: 1px solid rgba(214, 224, 236, 0.28);
+    background:
+        linear-gradient(180deg, rgba(40, 53, 70, 0.9), rgba(16, 25, 36, 0.9));
+    box-shadow:
+        0 24px 44px rgba(0, 0, 0, 0.56),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -1px 0 rgba(155, 186, 236, 0.16);
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#menuTitle {
+    margin-bottom: 1.2rem !important;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: rgba(235, 243, 255, 0.96);
+    text-shadow: 0 3px 18px rgba(9, 13, 22, 0.65);
 }
 
 #languageContainer {
-    max-width: 900px;
+    width: 100%;
+    max-width: 700px;
     justify-content: center !important;
+    align-items: center;
+    flex-wrap: nowrap !important;
+    margin: 0 auto 1rem !important;
+    gap: 0.38rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+#languageContainer .col {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    padding: 0.15rem;
+}
+
+.language-flag-button {
+    position: relative;
+    width: 64px;
+    height: 44px;
+    border-radius: 9px;
+    border: 1px solid rgba(226, 237, 255, 0.4);
+    box-shadow:
+        0 8px 16px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    cursor: pointer;
+    transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.language-flag-button::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%) translateY(4px);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: rgba(240, 247, 255, 0.95);
+    background: rgba(16, 24, 36, 0.94);
+    border: 1px solid rgba(178, 201, 236, 0.42);
+    border-radius: 7px;
+    padding: 0.22rem 0.5rem;
+    transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.language-flag-button:hover,
+.language-flag-button:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(238, 246, 255, 0.78);
+    box-shadow:
+        0 12px 20px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.language-flag-button:hover::after,
+.language-flag-button:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+#btnEnglish { background-image: url("./assets/flags/en.png"); }
+#btnSpanish { background-image: url("./assets/flags/es.png"); }
+#btnGerman { background-image: url("./assets/flags/de.png"); }
+#btnItalian { background-image: url("./assets/flags/it.png"); }
+#btnFrench { background-image: url("./assets/flags/fr.png"); }
+
+.menu-action-button {
+    width: min(92%, 520px);
+    margin: 0.38rem auto !important;
+    min-height: 48px;
+    border-radius: 10px;
+    border: 1px solid rgba(200, 217, 255, 0.28);
+    background: rgba(19, 27, 39, 0.72);
+    color: rgba(246, 248, 255, 0.96);
+    font-size: 0.97rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    box-shadow:
+        0 10px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+#menu .menu-action-button.btn-primary {
+    background: linear-gradient(180deg, rgba(70, 111, 176, 0.88), rgba(47, 78, 126, 0.88));
+    border-color: rgba(186, 210, 255, 0.4);
+}
+
+#menu .menu-action-button.btn-primary:hover {
+    background: linear-gradient(180deg, rgba(88, 133, 205, 0.92), rgba(58, 92, 146, 0.92));
 }
 
 button {
@@ -283,8 +430,8 @@ button.disabled {
 
 .desk-folder {
     position: absolute;
-    width: 380px;
-    height: 210px;
+    width: 450px;
+    height: 300px;
     border-radius: 18px;
     border: 1px solid rgba(0, 0, 0, .35);
 
@@ -293,6 +440,15 @@ button.disabled {
         inset 0 1px 0 rgba(255, 255, 255, .25);
 
     z-index: 2;
+}
+
+.desk-folder > * {
+    pointer-events: none;
+}
+
+.desk-folder-tab,
+.desk-folder-label {
+    pointer-events: none;
 }
 
 .desk-folder-tab {
@@ -323,6 +479,7 @@ button.disabled {
     transform: rotate(-4deg);
 
     text-transform: uppercase;
+    z-index: 3;
 }
 
 .folder-green {
@@ -349,15 +506,130 @@ button.disabled {
 }
 
 .folder-two {
-    left: 800px;
-    top: 255px;
+    left: 850px;
+    top: 350px;
     transform: rotate(5deg);
 }
 
 .folder-three {
-    left: 1250px;
-    top: 245px;
+    left: 1400px;
+    top: 345px;
     transform: rotate(-8deg);
+}
+
+.reports-paper-stack {
+    position: absolute;
+    left: 230px;
+    width: 206px;
+    height: 152px;
+    z-index: 7;
+    transform: rotate(60deg);
+}
+
+.reports-paper-sheet {
+    position: absolute;
+    width: 300px;
+    height: 200px;
+    border-radius: 6px;
+    border: 1px solid rgba(198, 191, 177, 0.9);
+    background: linear-gradient(180deg, #fcfbf7 0%, #f0ebe0 100%);
+    box-shadow:
+        0 7px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.reports-paper-sheet::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(90deg,
+            rgba(116, 121, 130, 0.12) 0,
+            rgba(116, 121, 130, 0.12) 1px,
+            transparent 1px,
+            transparent 14px);
+    pointer-events: none;
+}
+
+.reports-paper-sheet-back {
+    left: 34px;
+    top: 20px;
+    transform: rotate(-6deg);
+}
+
+.reports-paper-sheet-mid {
+    left: 24px;
+    top: 12px;
+    transform: rotate(-2deg);
+}
+
+.reports-paper-sheet-front {
+    left: 12px;
+    top: 4px;
+    transform: rotate(2deg);
+}
+
+.photos-paper-stack {
+    position: absolute;
+    left: 180px;
+    width: 206px;
+    height: 152px;
+    z-index: 7;
+    transform: rotate(-45deg);
+}
+
+.photos-paper-sheet {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 6px;
+    border: 1px solid rgba(205, 199, 185, 0.9);
+    background: linear-gradient(180deg, #fbfaf6 0%, #f0ece1 100%);
+    box-shadow:
+        0 7px 12px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.photos-paper-sheet::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(90deg,
+            rgba(116, 121, 130, 0.1) 0,
+            rgba(116, 121, 130, 0.1) 1px,
+            transparent 1px,
+            transparent 14px);
+    pointer-events: none;
+}
+
+.photos-paper-sheet-back {
+    left: 44px;
+    top: 18px;
+    transform: rotate(-7deg);
+}
+
+.photos-paper-sheet-mid {
+    left: 34px;
+    top: 10px;
+    transform: rotate(-3deg);
+}
+
+.photos-paper-sheet-front {
+    left: 22px;
+    top: 2px;
+    transform: rotate(3deg);
+    overflow: hidden;
+}
+
+.photos-stack-preview {
+    position: absolute;
+    inset: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
 }
 
 .background-story-stack {
@@ -626,6 +898,16 @@ button.disabled {
     z-index: 20;
 }
 
+.reports-folder-magnifier {
+    left: 72px;
+    top: 2px;
+    transform: rotate(2deg) scale(0.94);
+}
+
+.reports-folder-magnifier .lens-text {
+    transform: rotate(-90deg) scale(1.35);
+}
+
 .lens {
     position: absolute;
 
@@ -741,6 +1023,102 @@ button.disabled {
         inset 0 1px 2px rgba(255, 255, 255, .4);
 }
 
+.notes-inkwell {
+    position: absolute;
+    left: 176px;
+    top: 28px;
+    width: 54px;
+    height: 52px;
+    border-radius: 10px 10px 14px 14px;
+    background:
+        linear-gradient(180deg, #283749 0%, #172636 62%, #0f1a27 100%);
+    border: 1px solid rgba(10, 17, 24, 0.72);
+    box-shadow:
+        inset 0 1px 0 rgba(193, 218, 241, 0.2),
+        0 7px 11px rgba(0, 0, 0, 0.32);
+    z-index: 20;
+}
+
+.notes-inkwell-opening {
+    position: absolute;
+    left: 11px;
+    top: 7px;
+    width: 30px;
+    height: 15px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 35%, rgba(65, 89, 111, 0.95), rgba(16, 24, 34, 0.98) 62%);
+    border: 1px solid rgba(134, 155, 174, 0.3);
+}
+
+.notes-pen {
+    position: absolute;
+    left: 162px;
+    top: 4px;
+    width: 154px;
+    height: 18px;
+    transform: rotate(29deg);
+    z-index: 21;
+    pointer-events: none;
+}
+
+.notes-pen::before {
+    content: "";
+    position: absolute;
+    left: 22px;
+    top: 2px;
+    width: 118px;
+    height: 14px;
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, #12344f 0%, #0e2a43 46%, #0a1f32 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(190, 220, 245, 0.24),
+        0 3px 5px rgba(0, 0, 0, 0.28);
+}
+
+.notes-pen-tip {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 24px solid #a69a88;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
+.notes-pen-band {
+    position: absolute;
+    left: 111px;
+    top: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #d8ba77 0%, #9d7b35 100%);
+}
+
+.notes-pen-cap {
+    position: absolute;
+    right: 0;
+    top: 3px;
+    width: 22px;
+    height: 12px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #18496f 0%, #123b5c 100%);
+}
+
+.notes-pen-highlight {
+    position: absolute;
+    left: 36px;
+    top: 5px;
+    width: 74px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(202, 232, 255, 0.25);
+}
+
 .notes-label {
     position: absolute;
     left: 26px;
@@ -755,7 +1133,7 @@ button.disabled {
 
 .desktop-calendar {
     position: absolute;
-    left: 1860px;
+    left: 1900px;
     top: 250px;
     width: 375px;
     height: 435px;
@@ -1545,6 +1923,29 @@ button.disabled {
     gap: 0.3rem 0.5rem;
 }
 
+.settings-transport-row {
+    min-width: 170px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    padding: 0.35rem;
+}
+
+.settings-transport-button {
+    border: 1px solid rgba(200, 217, 255, 0.26);
+    border-radius: 8px;
+    background: rgba(26, 39, 58, 0.82);
+    color: rgba(245, 248, 255, 0.95);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.35rem 0;
+    text-align: center;
+}
+
+.settings-transport-button:hover {
+    background: rgba(39, 59, 88, 0.9);
+}
+
 .settings-slider-row label {
     grid-area: label;
     margin: 0;
@@ -1584,9 +1985,34 @@ button.disabled {
 }
 
 @media (max-width: 768px) {
+    .menu-panel {
+        width: 98vw;
+        min-height: 96vh;
+        border-radius: 14px;
+    }
+
+    #menuTitle {
+        font-size: clamp(1.8rem, 7.5vw, 2.5rem);
+    }
+
+    #languageContainer {
+        justify-content: flex-start !important;
+        padding-inline: 0.3rem;
+    }
+
+    .language-flag-button {
+        width: 58px;
+        height: 40px;
+    }
+
+    .menu-action-button {
+        width: 96%;
+        max-width: 520px;
+    }
+
     #menu button {
         width: 100%;
-        max-width: 320px;
+        max-width: 520px;
         font-size: 16px;
     }
 

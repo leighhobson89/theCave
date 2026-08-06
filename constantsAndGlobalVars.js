@@ -33,13 +33,6 @@ export const GAME_ASPECT_RATIO = GAME_CANVAS_WIDTH / GAME_CANVAS_HEIGHT;
 
 export const MENU_STATE = "menuState";
 export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
-export const DEFAULT_STARTING_CAROUSEL_ITEMS = [
-  "./assets/photos/caveEntrance.png",
-  "./assets/photos/insideCaveLookingBack.png",
-];
-export const DEFAULT_STARTING_REPORT_CAROUSEL_ITEMS = [
-  "missingReport",
-];
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 
@@ -47,6 +40,8 @@ const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 
 //FLAGS
 let audioMuted;
+let musicVolumePreference = 0.1;
+let sfxVolumePreference = 0.85;
 let languageChangedFlag;
 let beginGameState = true;
 let gameInProgress = false;
@@ -95,6 +90,8 @@ export function setElements() {
     settingsToggle: document.getElementById("settingsToggle"),
     settingsItems: document.getElementById("settingsItems"),
     muteToggleButton: document.getElementById("muteToggleButton"),
+    musicPlayPauseButton: document.getElementById("musicPlayPauseButton"),
+    musicNextButton: document.getElementById("musicNextButton"),
     musicVolumeLabel: document.getElementById("musicVolumeLabel"),
     musicVolumeSlider: document.getElementById("musicVolumeSlider"),
     musicVolumeValue: document.getElementById("musicVolumeValue"),
@@ -147,6 +144,9 @@ export function captureGameStatusForSaving() {
   // UI elements
 
   gameState.language = getLanguage();
+  gameState.audioMuted = getAudioMuted();
+  gameState.musicVolumePreference = getMusicVolumePreference();
+  gameState.sfxVolumePreference = getSfxVolumePreference();
   gameState.evidenceStore = getEvidenceStoreSnapshot();
   gameState.evidenceCustomNames = getEvidenceCustomNames();
 
@@ -169,6 +169,9 @@ export function restoreGameStatus(gameState) {
       // UI elements
 
       setLanguage(gameState.language || "en");
+      setAudioMuted(gameState.audioMuted === true);
+      setMusicVolumePreference(gameState.musicVolumePreference);
+      setSfxVolumePreference(gameState.sfxVolumePreference);
       setEvidenceCustomNames(gameState.evidenceCustomNames || {});
 
       if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
@@ -222,6 +225,32 @@ export function setAudioMuted(value) {
 
 export function getAudioMuted() {
   return audioMuted;
+}
+
+export function setMusicVolumePreference(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return;
+  }
+
+  musicVolumePreference = Math.max(0, Math.min(1, parsed));
+}
+
+export function getMusicVolumePreference() {
+  return musicVolumePreference;
+}
+
+export function setSfxVolumePreference(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return;
+  }
+
+  sfxVolumePreference = Math.max(0, Math.min(1, parsed));
+}
+
+export function getSfxVolumePreference() {
+  return sfxVolumePreference;
 }
 
 export function getMenuState() {
@@ -304,14 +333,6 @@ export function setCurrentDesktopWindowZIndex(value) {
 export function getNextDesktopWindowZIndex() {
   currentDesktopWindowZIndex += 1;
   return currentDesktopWindowZIndex;
-}
-
-export function getDefaultStartingCarouselItems() {
-  return [...DEFAULT_STARTING_CAROUSEL_ITEMS];
-}
-
-export function getDefaultStartingReportCarouselItems() {
-  return [...DEFAULT_STARTING_REPORT_CAROUSEL_ITEMS];
 }
 
 export function setCarouselItems(items) {

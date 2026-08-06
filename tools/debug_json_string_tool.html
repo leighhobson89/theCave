@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidence JSON Builder Tool</title>
+    <style>
+        :root {
+            --bg: #0f1825;
+            --panel: #1b2a3f;
+            --text: #eaf1ff;
+            --muted: #a8bad9;
+            --line: rgba(203, 222, 255, 0.28);
+            --accent: #5f93db;
+            --accent-2: #3f6faa;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at 20% 10%, #22354f, var(--bg) 45%);
+            color: var(--text);
+        }
+
+        .wrap {
+            width: min(1220px, 95vw);
+            margin: 1.2rem auto;
+            padding: 1rem;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(27, 42, 63, 0.9), rgba(20, 30, 46, 0.9));
+            box-shadow: 0 16px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        h1 {
+            margin: 0 0 0.35rem;
+            letter-spacing: 0.04em;
+            font-size: clamp(1.3rem, 2.3vw, 1.9rem);
+        }
+
+        .subtitle {
+            margin: 0 0 1rem;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+
+        .card {
+            padding: 0.75rem;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(23, 35, 52, 0.86), rgba(15, 24, 37, 0.86));
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 0.45rem;
+            color: var(--muted);
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 58vh;
+            border-radius: 8px;
+            border: 1px solid rgba(194, 214, 252, 0.35);
+            background: rgba(9, 14, 23, 0.78);
+            color: var(--text);
+            padding: 0.75rem;
+            resize: vertical;
+            line-height: 1.35;
+            font-size: 0.95rem;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        .row {
+            margin-top: 0.7rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            align-items: center;
+        }
+
+        .controls-grid {
+            margin-top: 0.8rem;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field span {
+            color: var(--muted);
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        select,
+        input[type="text"] {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(194, 214, 252, 0.35);
+            background: rgba(9, 14, 23, 0.78);
+            color: var(--text);
+            padding: 0.48rem 0.58rem;
+            font-size: 0.92rem;
+        }
+
+        button {
+            border: 1px solid rgba(196, 217, 255, 0.3);
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+            color: #f5f9ff;
+            border-radius: 8px;
+            padding: 0.48rem 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        button.secondary {
+            background: rgba(18, 31, 49, 0.88);
+        }
+
+        .status {
+            color: var(--muted);
+            font-size: 0.86rem;
+        }
+
+        .check {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: var(--muted);
+            font-size: 0.84rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            textarea {
+                min-height: 34vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <h1>Evidence JSON Builder Tool</h1>
+        <p class="subtitle">Paste multiline report or description text, then convert and inject into the correct evidence JSON file for the selected language and target. Inject uses the local fixed-root server (node tools/evidence_builder_server.js).</p>
+
+        <div class="grid">
+            <section class="card">
+                <label class="label" for="inputText">Input (required)</label>
+                <textarea id="inputText" spellcheck="false" placeholder="Paste your report or description text here..."></textarea>
+
+                <div class="row">
+                    <button id="convertButton" type="button">Convert</button>
+                    <button id="clearButton" class="secondary" type="button">Clear</button>
+                </div>
+
+                <div class="controls-grid" aria-label="Evidence builder controls">
+                    <label class="field">
+                        <span>Language (required)</span>
+                        <select id="languageSelect">
+                            <option value="en">English (en)</option>
+                            <option value="de">Deutsch (de)</option>
+                            <option value="es">Espanol (es)</option>
+                            <option value="fr">Francais (fr)</option>
+                            <option value="it">Italiano (it)</option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Inject Target (required)</span>
+                        <select id="targetSelect">
+                            <option value="reportText">Report Content (reportText)</option>
+                            <option value="reportDescription">Report Description (descriptionText)</option>
+                            <option value="photoDescription">Photo Description (descriptionText)</option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Evidence ID (optional, auto-generated when empty)</span>
+                        <input id="evidenceIdInput" type="text" placeholder="e.g. missingReport" spellcheck="false">
+                    </label>
+
+                    <label class="field">
+                        <span>Default Title (optional)</span>
+                        <input id="defaultTitleInput" type="text" placeholder="e.g. Missing Report" spellcheck="false">
+                    </label>
+
+                    <label class="field">
+                        <span>Paper Style (optional)</span>
+                        <input id="paperStyleInput" type="text" placeholder="report-parchment / photo-mounted-ivory / photo-mounted-linen" spellcheck="false">
+                    </label>
+
+                    <label class="field">
+                        <span>Photo Path (optional, used for photo target)</span>
+                        <input id="photoPathInput" type="text" placeholder="./assets/photos/example.png" spellcheck="false">
+                    </label>
+
+                    <div class="field full">
+                        <span>Actions</span>
+                        <div class="row">
+                            <button id="pickPhotoButton" class="secondary" type="button">Pick Photo File</button>
+                            <button id="injectButton" type="button">Confirm + Inject + Copy</button>
+                            <label class="check" for="addDefaultStartupCheckbox">
+                                <input id="addDefaultStartupCheckbox" type="checkbox">
+                                add as default startup evidence
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <label class="label" for="outputText">Output (single-line JSON string + trailing comma)</label>
+                <textarea id="outputText" spellcheck="false" readonly></textarea>
+                <div class="row">
+                    <button id="copyButton" type="button">Copy Output</button>
+                    <span id="status" class="status">Ready.</span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module" src="./debug_json_string_tool.js"></script>
+</body>
+</html>
