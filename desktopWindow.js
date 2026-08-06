@@ -237,6 +237,26 @@ export class DesktopWindow {
     }
   }
 
+  getParentMetrics() {
+    if (!this.parentElement || this.parentElement === document.body || this.parentElement === document.documentElement) {
+      return {
+        left: 0,
+        top: 0,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+    }
+
+    const parentRect = this.parentElement.getBoundingClientRect();
+
+    return {
+      left: parentRect.left,
+      top: parentRect.top,
+      width: this.parentElement.clientWidth,
+      height: this.parentElement.clientHeight,
+    };
+  }
+
   open({ resizable = false, showScrollbar = true } = {}) {
     if (!this.rootElement) {
       return;
@@ -342,14 +362,13 @@ export class DesktopWindow {
   }
 
   centerInViewport() {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    const parentMetrics = this.getParentMetrics();
 
-    const width = Math.min(this.rootElement.offsetWidth || 900, viewportWidth * 0.88);
-    const height = Math.min(this.rootElement.offsetHeight || 640, viewportHeight * 0.76);
+    const width = Math.min(this.rootElement.offsetWidth || 900, parentMetrics.width * 0.88);
+    const height = Math.min(this.rootElement.offsetHeight || 640, parentMetrics.height * 0.76);
 
-    const left = (viewportWidth - width) / 2;
-    const top = (viewportHeight - height) / 2;
+    const left = (parentMetrics.width - width) / 2;
+    const top = (parentMetrics.height - height) / 2;
 
     this.rootElement.style.width = `${Math.round(width)}px`;
     this.rootElement.style.height = `${Math.round(height)}px`;
@@ -370,9 +389,10 @@ export class DesktopWindow {
     this.dragStartX = event.clientX;
     this.dragStartY = event.clientY;
 
+    const parentMetrics = this.getParentMetrics();
     const rect = this.rootElement.getBoundingClientRect();
-    this.dragStartLeft = rect.left;
-    this.dragStartTop = rect.top;
+    this.dragStartLeft = rect.left - parentMetrics.left;
+    this.dragStartTop = rect.top - parentMetrics.top;
 
     this.attachGlobalPointerListeners();
     this.headerElement.setPointerCapture(event.pointerId);
@@ -453,15 +473,16 @@ export class DesktopWindow {
   }
 
   setClampedPosition(left, top) {
-    const marginX = window.innerWidth * this.marginRatio;
-    const marginY = window.innerHeight * this.marginRatio;
+    const parentMetrics = this.getParentMetrics();
+    const marginX = parentMetrics.width * this.marginRatio;
+    const marginY = parentMetrics.height * this.marginRatio;
 
     const rect = this.rootElement.getBoundingClientRect();
 
     const minLeft = marginX;
-    const maxLeft = Math.max(minLeft, window.innerWidth - marginX - rect.width);
+    const maxLeft = Math.max(minLeft, parentMetrics.width - marginX - rect.width);
     const minTop = marginY;
-    const maxTop = Math.max(minTop, window.innerHeight - marginY - rect.height);
+    const maxTop = Math.max(minTop, parentMetrics.height - marginY - rect.height);
 
     const clampedLeft = Math.min(maxLeft, Math.max(minLeft, left));
     const clampedTop = Math.min(maxTop, Math.max(minTop, top));

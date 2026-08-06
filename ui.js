@@ -802,7 +802,7 @@ function refreshOpenWindowLocalization() {
     }
 
     if (windowKind === "computer-netscape") {
-      windowController.setTitle("Netscape");
+      windowController.setTitle("Netscape Navigator 3.0");
       return;
     }
 
@@ -1509,12 +1509,201 @@ function createComputerPaintWindowContentElements() {
 }
 
 function createComputerNetscapeWindowContentElements() {
+  const createWelcomePage = () => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-welcome");
+    page.innerHTML = `
+      <div class="browser-welcome-logo" aria-hidden="true">
+        <div class="browser-welcome-logo-glyph">N</div>
+      </div>
+      <h1 class="browser-welcome-title">Welcome to the World!</h1>
+      <p class="browser-welcome-copy">Use Favorites above to visit web destinations.</p>
+    `;
+    return page;
+  };
+
+  const createZoomSearchPage = () => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-zoomsearch");
+    page.innerHTML = `
+      <div class="browser-page-shell browser-page-shell-zoom">
+        <h1 class="browser-zoom-title"><span>ZoomSearch</span><span class="browser-zoom-rocket" aria-hidden="true"></span></h1>
+        <table class="browser-form-table" role="presentation">
+          <tr>
+            <td><input class="browser-input" type="text" aria-label="ZoomSearch query" /></td>
+            <td><button class="browser-button" type="button">Search</button></td>
+          </tr>
+        </table>
+      </div>
+    `;
+    return page;
+  };
+
+  const createLibraryPage = () => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-library");
+    page.innerHTML = `
+      <div class="browser-page-shell browser-page-shell-library">
+        <h1 class="browser-page-title browser-page-title-library">Intranet Library Database</h1>
+        <table class="browser-form-table browser-grid-table" role="presentation">
+          <tr>
+            <td class="browser-label-cell">Find:</td>
+            <td><input class="browser-input" type="text" aria-label="Library query" /></td>
+          </tr>
+          <tr>
+            <td class="browser-label-cell">Field:</td>
+            <td>
+              <select class="browser-select" aria-label="Library field selector">
+                <option>Author</option>
+                <option>Title</option>
+                <option>Subject</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td><button class="browser-button" type="button">Search Catalog</button></td>
+          </tr>
+        </table>
+      </div>
+    `;
+    return page;
+  };
+
+  const createPoliceRecordsPage = () => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-police");
+    page.innerHTML = `
+      <div class="browser-page-shell browser-page-shell-police">
+        <div class="browser-gov-header browser-police-header">
+          <span class="browser-police-icon" aria-hidden="true"></span>
+          <span>Saskatchewan Police Records Access Terminal</span>
+        </div>
+        <table class="browser-form-table browser-grid-table" role="presentation">
+          <tr>
+            <td class="browser-label-cell">Username</td>
+            <td><input class="browser-input" type="text" aria-label="Police records username" /></td>
+          </tr>
+          <tr>
+            <td class="browser-label-cell">Password</td>
+            <td><input class="browser-input" type="password" aria-label="Police records password" /></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td><button class="browser-button" type="button">Login</button></td>
+          </tr>
+        </table>
+        <p class="browser-gov-note">Authorized personnel only. Placeholder login screen.</p>
+      </div>
+    `;
+    return page;
+  };
+
+  const createCosmicForgePage = () => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-cosmic");
+    page.innerHTML = `
+      <div class="browser-cosmic-shell">
+        <h1 class="browser-cosmic-title">COSMIC FORGE</h1>
+        <p class="browser-cosmic-copy browser-cosmic-welcome">Welcome Pioneer! Please enter your code name!</p>
+        <p class="browser-cosmic-copy browser-cosmic-plain-url">https://leighhobson89.github.io/cosmicForge/</p>
+        <div class="browser-cosmic-links">
+          <a href="https://leighhobson89.github.io/cosmicForge/" target="_blank" rel="noreferrer">Website</a>
+          <a href="https://leighhobson89.itch.io/cosmic-forge" target="_blank" rel="noreferrer">Itch.io</a>
+          <a href="https://discord.com/invite/6bUN6BNtny" target="_blank" rel="noreferrer">Discord</a>
+        </div>
+      </div>
+    `;
+    return page;
+  };
+
+  const createArchivesPage = () => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-archives");
+    page.innerHTML = `
+      <div class="browser-page-shell browser-page-shell-archives">
+        <div class="browser-archives-auth">
+          <div class="browser-archives-auth-title">Archive Access</div>
+          <label>
+            <span>Username</span>
+            <input class="browser-input" type="text" aria-label="Archive username" />
+          </label>
+          <label>
+            <span>Password</span>
+            <input class="browser-input" type="password" aria-label="Archive password" />
+          </label>
+          <button class="browser-button" type="button">Login</button>
+          <div class="browser-archives-status">Logged in as: Public</div>
+        </div>
+        <h1 class="browser-page-title">Canada Newspaper Archive Database</h1>
+        <table class="browser-form-table browser-grid-table" role="presentation">
+          <tr>
+            <td class="browser-label-cell">Keywords</td>
+            <td><input class="browser-input" type="text" aria-label="Archive keyword search" /></td>
+          </tr>
+          <tr>
+            <td class="browser-label-cell">Date</td>
+            <td><input class="browser-input" type="date" aria-label="Archive date selector" /></td>
+          </tr>
+          <tr>
+            <td class="browser-label-cell">Province</td>
+            <td>
+              <select class="browser-select" aria-label="Province selector">
+                <option>All</option>
+                <option>Saskatchewan</option>
+                <option>Alberta</option>
+                <option>Ontario</option>
+                <option>Quebec</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td><button class="browser-button" type="button">Find Records</button></td>
+          </tr>
+        </table>
+        <table class="browser-results-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Province</th>
+              <th>Headline</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="3">No records loaded.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    return page;
+  };
+
+  const createQuickLinkButton = ({ iconClass, label, onClick }) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("caveos-browser-quick-link");
+
+    const icon = document.createElement("span");
+    icon.classList.add("caveos-browser-quick-link-icon", iconClass);
+    icon.setAttribute("aria-hidden", "true");
+
+    const text = document.createElement("span");
+    text.classList.add("caveos-browser-quick-link-label");
+    text.textContent = label;
+
+    button.append(icon, text);
+    button.addEventListener("click", onClick);
+    return button;
+  };
+
   const container = document.createElement("div");
   container.classList.add("caveos-browser-app");
 
-  const topBar = document.createElement("div");
-  topBar.classList.add("caveos-browser-topbar");
-  topBar.textContent = "Netscape Navigator 3.0";
+  const quickLinksBar = document.createElement("div");
+  quickLinksBar.classList.add("caveos-browser-toolbar");
 
   const addressRow = document.createElement("div");
   addressRow.classList.add("caveos-browser-address-row");
@@ -1522,21 +1711,110 @@ function createComputerNetscapeWindowContentElements() {
   const label = document.createElement("span");
   label.textContent = "URL:";
 
-  const fakeAddress = document.createElement("div");
-  fakeAddress.classList.add("caveos-browser-address");
-  fakeAddress.textContent = "http://cave-net.local/offline";
+  const browserAddress = document.createElement("input");
+  browserAddress.classList.add("caveos-browser-address");
+  browserAddress.type = "text";
+  browserAddress.value = "about:welcome";
+  browserAddress.readOnly = true;
+  browserAddress.setAttribute("aria-label", "Browser address");
 
-  addressRow.append(label, fakeAddress);
+  addressRow.append(label, browserAddress);
 
-  const body = document.createElement("div");
-  body.classList.add("caveos-browser-body");
-  body.textContent = "No modem signal detected. Explore the cave to reconnect.";
+  const pageHost = document.createElement("div");
+  pageHost.classList.add("caveos-browser-body", "caveos-browser-page-host");
 
-  container.append(topBar, addressRow, body);
+  const browserViews = {
+    welcome: {
+      url: "about:welcome",
+      render: createWelcomePage,
+    },
+    zoomsearch: {
+      url: "http://www.zoomsearch.net",
+      render: createZoomSearchPage,
+    },
+    library: {
+      url: "http://library.intra",
+      render: createLibraryPage,
+    },
+    police: {
+      url: "http://records.sk-police.gov",
+      render: createPoliceRecordsPage,
+    },
+    cosmic: {
+      url: "https://leighhobson89.github.io/cosmicForge/",
+      render: createCosmicForgePage,
+    },
+    archives: {
+      url: "http://archives.canada.news",
+      render: createArchivesPage,
+    },
+  };
+
+  const navigateToBrowserView = (viewKey) => {
+    const nextView = browserViews[viewKey];
+    if (!nextView) {
+      return;
+    }
+
+    browserAddress.value = nextView.url;
+    pageHost.replaceChildren(nextView.render());
+  };
+
+  const quickLinkConfigs = [
+    {
+      iconClass: "icon-zoomsearch",
+      label: "ZoomSearch",
+      viewKey: "zoomsearch",
+    },
+    {
+      iconClass: "icon-library",
+      label: "Library",
+      viewKey: "library",
+    },
+    {
+      iconClass: "icon-police-records",
+      label: "Police Records",
+      viewKey: "police",
+    },
+    {
+      iconClass: "icon-cosmic-forge",
+      label: "Cosmic Forge",
+      viewKey: "cosmic",
+    },
+    {
+      iconClass: "icon-canada-archives",
+      label: "Canada Archives",
+      viewKey: "archives",
+    },
+  ];
+
+  quickLinkConfigs.forEach(({ iconClass, label: quickLabel, viewKey }) => {
+    quickLinksBar.appendChild(
+      createQuickLinkButton({
+        iconClass,
+        label: quickLabel,
+        onClick: () => {
+          navigateToBrowserView(viewKey);
+        },
+      })
+    );
+  });
+
+  navigateToBrowserView("welcome");
+
+  container.append(quickLinksBar, addressRow, pageHost);
   return container;
 }
 
-function positionWindowWithinParent(rootElement, parentElement, widthScale = 1) {
+function positionWindowWithinParent(
+  rootElement,
+  parentElement,
+  {
+    widthScale = 1,
+    widthRatio = null,
+    heightRatio = null,
+  } = {}
+) {
   if (!(rootElement instanceof HTMLElement) || !(parentElement instanceof HTMLElement)) {
     return;
   }
@@ -1544,15 +1822,22 @@ function positionWindowWithinParent(rootElement, parentElement, widthScale = 1) 
   const parentWidth = parentElement.clientWidth;
   const parentHeight = parentElement.clientHeight;
 
+  const normalizedWidthRatio = Number(widthRatio);
+  const normalizedHeightRatio = Number(heightRatio);
+
   const baseWidth = rootElement.offsetWidth || Math.round(parentWidth * 0.88);
-  const scaledWidth = Math.min(
-    Math.round(baseWidth * Math.max(0.5, Number(widthScale) || 1)),
-    Math.round(parentWidth * 0.96)
-  );
-  const nextHeight = Math.min(
-    rootElement.offsetHeight || Math.round(parentHeight * 0.76),
-    Math.round(parentHeight * 0.94)
-  );
+  const scaledWidth = Number.isFinite(normalizedWidthRatio)
+    ? Math.round(parentWidth * Math.max(0.3, Math.min(0.96, normalizedWidthRatio)))
+    : Math.min(
+      Math.round(baseWidth * Math.max(0.5, Number(widthScale) || 1)),
+      Math.round(parentWidth * 0.96)
+    );
+  const nextHeight = Number.isFinite(normalizedHeightRatio)
+    ? Math.round(parentHeight * Math.max(0.3, Math.min(0.94, normalizedHeightRatio)))
+    : Math.min(
+      rootElement.offsetHeight || Math.round(parentHeight * 0.76),
+      Math.round(parentHeight * 0.94)
+    );
 
   const nextLeft = Math.max(0, Math.round((parentWidth - scaledWidth) / 2));
   const nextTop = Math.max(0, Math.round((parentHeight - nextHeight) / 2));
@@ -1575,6 +1860,8 @@ function openComputerAppWindow({
   showScrollbar = false,
   centerWithinParent = true,
   widthScale = 1,
+  widthRatio = 0.6,
+  heightRatio = 0.58,
 }) {
   if (!parentElement || !(contentNode instanceof Node)) {
     return null;
@@ -1602,7 +1889,11 @@ function openComputerAppWindow({
   appWindowController.open({ resizable, showScrollbar });
 
   if (centerWithinParent) {
-    positionWindowWithinParent(appWindowController.rootElement, parentElement, widthScale);
+    positionWindowWithinParent(appWindowController.rootElement, parentElement, {
+      widthScale,
+      widthRatio,
+      heightRatio,
+    });
   }
 
   bringDesktopWindowToFront(appWindowController);
@@ -2869,6 +3160,8 @@ function openNotesWindow(options = {}) {
     onWindowClose = null,
     centerWithinParent = false,
     widthScale = 1,
+    widthRatio = null,
+    heightRatio = null,
   } = options;
 
   if (!parentElement) {
@@ -2908,7 +3201,11 @@ function openNotesWindow(options = {}) {
   notesWindowController.open({ resizable: true, showScrollbar: false });
 
   if (centerWithinParent) {
-    positionWindowWithinParent(notesWindowController.rootElement, parentElement, widthScale);
+    positionWindowWithinParent(notesWindowController.rootElement, parentElement, {
+      widthScale,
+      widthRatio,
+      heightRatio,
+    });
   }
 
   bringDesktopWindowToFront(notesWindowController);
@@ -2950,6 +3247,8 @@ function openComputerWindow() {
         classNames: ["notes-window", "caveos-app-window", "caveos-notes-window"],
         windowKind: "computer-notes",
         centerWithinParent: true,
+        widthRatio: 0.6,
+        heightRatio: 0.58,
         onWindowClose: (windowController) => {
           contentRefs.appWindows.delete(windowController);
         },
@@ -2978,7 +3277,6 @@ function openComputerWindow() {
       appWindowSet: contentRefs.appWindows,
       resizable: true,
       showScrollbar: false,
-      widthScale: 1.1,
     });
   });
 
@@ -2994,12 +3292,14 @@ function openComputerWindow() {
     openComputerAppWindow({
       parentElement: contentRefs.container,
       kind: "computer-netscape",
-      title: "Netscape",
+      title: "Netscape Navigator 3.0",
       classNames: ["caveos-browser-window"],
       contentNode: netscapeContent,
       appWindowSet: contentRefs.appWindows,
       resizable: true,
       showScrollbar: false,
+      widthRatio: 0.8,
+      heightRatio: 0.8,
     });
   });
 

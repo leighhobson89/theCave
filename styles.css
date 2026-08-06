@@ -2413,23 +2413,132 @@ button.disabled {
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
     gap: 0.35rem;
     font-family: "Courier New", "Lucida Console", monospace;
     color: #7fff68;
 }
 
-.caveos-browser-topbar,
+.caveos-browser-toolbar,
 .caveos-browser-address-row,
-.caveos-browser-body {
+.caveos-browser-body,
+.caveos-browser-page {
     border: 1px solid rgba(89, 209, 79, 0.5);
     background: rgba(4, 18, 4, 0.86);
 }
 
-.caveos-browser-topbar {
-    padding: 0.35rem 0.45rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+.caveos-browser-page-host,
+.caveos-browser-page {
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #72ff62 #000;
+}
+
+.caveos-browser-page-host::-webkit-scrollbar,
+.caveos-browser-page::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.caveos-browser-page-host::-webkit-scrollbar-track,
+.caveos-browser-page::-webkit-scrollbar-track {
+    background: #000;
+}
+
+.caveos-browser-page-host::-webkit-scrollbar-thumb,
+.caveos-browser-page::-webkit-scrollbar-thumb {
+    background: #72ff62;
+    border: 2px solid #000;
+}
+
+.caveos-browser-page-host::-webkit-scrollbar-corner,
+.caveos-browser-page::-webkit-scrollbar-corner {
+    background: #000;
+}
+
+.caveos-browser-toolbar {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.25rem;
+}
+
+.caveos-browser-quick-link {
+    border: 1px solid rgba(136, 159, 140, 0.95);
+    border-radius: 0;
+    background: linear-gradient(180deg, #cad2cb 0%, #8d9b90 100%);
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    min-height: 38px;
+    padding: 0.18rem 0.34rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow:
+        inset 1px 1px 0 rgba(239, 245, 240, 0.95),
+        inset -1px -1px 0 rgba(58, 71, 61, 0.95);
+}
+
+.caveos-browser-quick-link:hover,
+.caveos-browser-quick-link:focus-visible {
+    background: linear-gradient(180deg, #dce4dd 0%, #95a69b 100%);
+}
+
+.caveos-browser-quick-link-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    image-rendering: pixelated;
+    border: 1px solid rgba(42, 42, 42, 0.78);
+    background-color: #d7d7d7;
+}
+
+.caveos-browser-quick-link-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.icon-zoomsearch {
+    background:
+    linear-gradient(180deg, transparent 0 52%, #ff7a00 52% 68%, #ffe166 68% 86%, transparent 86% 100%),
+    linear-gradient(130deg, #f7d02e 0 34%, #d4362a 34% 66%, transparent 66% 100%),
+    linear-gradient(90deg, transparent 0 18%, #b11e16 18% 76%, transparent 76% 100%);
+}
+
+.icon-library {
+    background:
+        linear-gradient(90deg, #7c4f2a 0 22%, #c29056 22% 100%),
+        linear-gradient(180deg, #dfc18f 0 26%, transparent 26% 100%),
+        linear-gradient(0deg, rgba(45, 30, 16, 0.4) 0 2px, transparent 2px 100%);
+}
+
+.icon-police-records {
+    background:
+        radial-gradient(circle at 50% 42%, #f0d06a 0 26%, transparent 26% 100%);
+    clip-path: polygon(50% 0, 61% 23%, 86% 23%, 66% 39%, 75% 64%, 50% 49%, 25% 64%, 34% 39%, 14% 23%, 39% 23%);
+    background-color: #274f9a;
+}
+
+.icon-cosmic-forge {
+    background:
+        radial-gradient(circle at 50% 36%, #8eff77 0 18%, transparent 19% 100%),
+        linear-gradient(90deg, transparent 20%, #8eff77 20% 30%, transparent 30% 70%, #8eff77 70% 80%, transparent 80% 100%),
+        linear-gradient(180deg, transparent 60%, #8eff77 60% 100%);
+    background-color: #001601;
+}
+
+.icon-canada-archives {
+    background:
+        linear-gradient(180deg, #d9d9d9 0 24%, #7b7b7b 24% 28%, #e8e8e8 28% 100%),
+        repeating-linear-gradient(0deg, transparent 0 3px, rgba(71, 71, 71, 0.65) 3px 4px);
+}
+
+.caveos-browser-page-host {
+    min-height: 0;
 }
 
 .caveos-browser-address-row {
@@ -2442,18 +2551,417 @@ button.disabled {
 }
 
 .caveos-browser-address {
+    width: 100%;
+    min-width: 0;
     border: 1px solid rgba(89, 209, 79, 0.45);
+    border-radius: 0;
     padding: 0.2rem 0.35rem;
     background: rgba(2, 11, 2, 0.92);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: #80ff6e;
 }
 
 .caveos-browser-body {
+    padding: 0.45rem;
+    line-height: 1.4;
+}
+
+.caveos-browser-page {
+    color: #121212;
+    background: #f5f5f5;
+    min-height: 100%;
+    box-sizing: border-box;
     padding: 0.8rem;
-    line-height: 1.45;
+}
+
+.browser-page-shell {
+    border: 2px solid #9b9b9b;
+    box-shadow: inset 1px 1px 0 #fff;
+    padding: 0.8rem;
+}
+
+.browser-page-shell-zoom {
+    min-height: 100%;
+    background: linear-gradient(180deg, #172026 0%, #0b111a 100%);
+    color: #dce5ff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.browser-page-shell-zoom .browser-input,
+.browser-page-shell-zoom .browser-button {
+    background: #f6f6f6;
+}
+
+.browser-zoom-title {
+    margin: 0 0 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #ffd43d;
+    font-size: clamp(2rem, 7vw, 4rem);
+    letter-spacing: 0.02em;
+}
+
+.browser-zoom-rocket {
+    width: 44px;
+    height: 28px;
+    position: relative;
+    display: inline-block;
+    clip-path: polygon(10% 54%, 34% 24%, 72% 12%, 100% 34%, 82% 66%, 44% 88%, 16% 82%, 0 66%);
+    background:
+        linear-gradient(135deg, #ffef77 0 22%, #f23d2f 22% 58%, #ffb500 58% 74%, #7d0f0f 74% 100%);
+    box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.browser-zoom-rocket::before {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 11px;
+    width: 14px;
+    height: 8px;
+    background: linear-gradient(90deg, #ff5a00, #ffdf54);
+    clip-path: polygon(0 50%, 40% 0, 100% 50%, 40% 100%);
+}
+
+.browser-zoom-rocket::after {
+    content: "";
+    position: absolute;
+    left: 34px;
+    top: 10px;
+    width: 14px;
+    height: 8px;
+    background: linear-gradient(90deg, #ffe24d, #ff8c00);
+    clip-path: polygon(0 50%, 60% 0, 100% 50%, 60% 100%);
+}
+
+.browser-page-shell-gray {
+    background: #dadada;
+}
+
+.browser-page-shell-beige {
+    background: #dfd6c5;
+}
+
+.browser-page-shell-library {
+    min-height: 100%;
+    background: linear-gradient(180deg, #13233a 0%, #090f16 100%);
+    color: #f8f06e;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.browser-page-title-library {
+    color: #84f4ff;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.browser-page-shell-gov {
+    background: #d7d7d7;
+    border-color: #6f7f95;
+}
+
+.browser-page-shell-police {
+    min-height: 100%;
+    background: linear-gradient(180deg, #07101d 0%, #0f1a2e 100%);
+    color: #a7f8a0;
+    font-family: "Courier New", "Lucida Console", monospace;
+}
+
+.browser-page-shell-archives {
+    position: relative;
+    min-height: 100%;
+    background: linear-gradient(180deg, #474747 0%, #2c2c2c 100%);
+    color: #eef0ee;
+    font-family: "Arial", "Helvetica", sans-serif;
+    padding-right: 240px;
+    padding-top: 3.6rem;
+}
+
+.browser-form-table {
+    border-collapse: collapse;
+    margin-top: 0.6rem;
+}
+
+.browser-form-table td {
+    padding: 0.2rem;
+}
+
+.browser-grid-table {
+    width: 100%;
+    max-width: 700px;
+}
+
+.browser-label-cell {
+    width: 120px;
+    font-weight: 700;
+}
+
+.browser-page-title {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #18356b;
+}
+
+.browser-logo-large {
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+    color: #b10f0f;
+}
+
+.browser-input,
+.browser-select,
+.browser-button {
+    font-family: "Courier New", "Lucida Console", monospace;
+    border: 1px solid #707070;
+    border-radius: 0;
+    background: #fff;
+    color: #111;
+}
+
+.browser-input,
+.browser-select {
+    min-height: 30px;
+    padding: 0.2rem 0.35rem;
+}
+
+.browser-button {
+    min-height: 30px;
+    padding: 0.2rem 0.6rem;
+    background: linear-gradient(180deg, #f0f0f0 0%, #c8c8c8 100%);
+    box-shadow: inset 1px 1px 0 #fff;
+    font-weight: 700;
+}
+
+.browser-link-row {
+    margin-top: 0.7rem;
+}
+
+.browser-link-row a {
+    color: #113fbe;
+    text-decoration: underline;
+}
+
+.browser-police-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: #1d3d71;
+    color: #eff7ff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin: -0.8rem -0.8rem 0.7rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+}
+
+.browser-police-icon {
+    position: relative;
+    width: 34px;
+    height: 22px;
+    flex: 0 0 34px;
+    image-rendering: pixelated;
+}
+
+.browser-police-icon::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 8px;
+    width: 25px;
+    height: 10px;
+    background: #6d4c2e;
+    clip-path: polygon(0 50%, 12% 20%, 34% 18%, 48% 0, 63% 18%, 84% 26%, 100% 58%, 82% 84%, 56% 72%, 36% 100%, 16% 82%);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.browser-police-icon::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 2px;
+    width: 10px;
+    height: 12px;
+    background: #22386b;
+    clip-path: polygon(20% 100%, 10% 55%, 26% 20%, 50% 0, 72% 10%, 90% 34%, 78% 100%);
+    box-shadow:
+        10px 6px 0 -4px #d7c18c,
+        7px 12px 0 -4px #d7c18c;
+}
+
+.browser-archives-auth {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 210px;
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.55rem;
+    border: 1px solid rgba(22, 22, 22, 0.55);
+    background: rgba(25, 25, 25, 0.82);
+    color: #eaeaea;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.browser-archives-auth-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #ffe17a;
+}
+
+.browser-archives-auth label {
+    display: grid;
+    gap: 0.2rem;
+    font-size: 0.82rem;
+}
+
+.browser-archives-status {
+    font-size: 0.82rem;
+    color: #a7ff9a;
+}
+
+.browser-gov-header {
+    margin: -0.8rem -0.8rem 0.7rem;
+    padding: 0.5rem 0.75rem;
+    background: #2756a1;
+    color: #f8fbff;
+    font-weight: 700;
+}
+
+.browser-gov-note {
+    margin: 0.8rem 0 0;
+    font-size: 0.84rem;
+}
+
+.browser-results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.8rem;
+}
+
+.browser-results-table th,
+.browser-results-table td {
+    border: 1px solid #777;
+    padding: 0.28rem 0.35rem;
+    text-align: left;
+    font-size: 0.84rem;
+}
+
+.browser-results-table thead {
+    background: #c3c3c3;
+}
+
+.browser-page-welcome {
+    background: #fbfbfb;
+    text-align: center;
+    padding-top: 2.2rem;
+}
+
+.browser-welcome-logo {
+    width: 102px;
+    height: 102px;
+    margin: 0 auto 1rem;
+    border: 2px solid #7a7a7a;
+    background: linear-gradient(180deg, #d2d8df, #f7f7f7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 0 #fff;
+}
+
+.browser-welcome-logo-glyph {
+    font-size: 3rem;
+    line-height: 1;
+    color: #2b4a86;
+    font-weight: 700;
+}
+
+.browser-welcome-title {
+    margin: 0 0 0.55rem;
+    font-size: 1.7rem;
+    color: #1d2f4f;
+}
+
+.browser-welcome-copy {
+    margin: 0;
+    color: #4f4f4f;
+}
+
+.browser-page-cosmic {
+    background: #000;
+    color: #7dff6c;
+}
+
+.browser-cosmic-shell {
+    border: 1px solid #58d74c;
+    background: #000;
+    padding: 1rem;
+    min-height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.browser-cosmic-title {
+    margin: 0 0 0.6rem;
+    font-size: clamp(4rem, 10vw, 6.5rem);
+    line-height: 0.95;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    color: #89ff74;
+}
+
+.browser-cosmic-copy {
+    margin: 0.4rem 0;
+}
+
+.browser-cosmic-welcome {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+}
+
+.browser-cosmic-plain-url {
+    padding: 0.35rem 0.5rem;
+    border: 1px dashed #6ce35f;
+    user-select: text;
+    color: #a1ff91;
+}
+
+.browser-cosmic-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem 1.2rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.browser-cosmic-links a {
+    color: #d6ff7e;
+    text-decoration: underline;
+    font-weight: 700;
+}
+
+.browser-page-shell-archives .browser-page-title {
+    color: #f5f5f5;
+    margin-bottom: 0.75rem;
+}
+
+.browser-page-shell-archives .browser-grid-table {
+    max-width: none;
+    padding-top: 0.25rem;
+}
+
+.browser-page-shell-archives .browser-input,
+.browser-page-shell-archives .browser-select,
+.browser-page-shell-archives .browser-button {
+    background: #efefef;
+}
+
+.browser-page-shell-archives .browser-results-table {
+    background: #efefef;
+    color: #101010;
 }
 
 .calendar-rings {
