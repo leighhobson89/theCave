@@ -1,0 +1,43 @@
+{
+  "siteId": "zoomsearch",
+  "displayName": "ZoomSearch",
+  "homeUrl": "http://www.zoomsearch.net",
+  "records": [
+    {
+      "id": "black-pine-trail",
+      "title": "Black Pine Trail",
+      "keywords": ["askew", "black pine", "trail", "cave", "map"],
+      "body": "A scanned trail note mentioning the old mine road and a radio relay on the ridge.",
+      "excerpt": "Trail note from the Black Pine route.",
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "zoomsearch-black-pine-trail",
+        "defaultTitleString": "Black Pine Trail",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "markdown-file",
+          "path": "./assets/web-content/evidence/zoomsearch-black-pine-trail.md"
+        }
+      }
+    },
+    {
+      "id": "sun-echo-relay",
+      "title": "Sun Echo Relay",
+      "keywords": ["radio", "signal", "relay", "sun", "echo"],
+      "body": "A short listing for a ridge-top relay tower used for local test signals.",
+      "excerpt": "Signal relay listing.",
+      "awardsEvidence": false
+    },
+    {
+      "id": "lunar-lantern-map",
+      "title": "Lunar Lantern Map",
+      "keywords": ["moon", "lantern", "map", "route"],
+      "body": "A simple route map with handwritten notes about lantern spacing.",
+      "excerpt": "Route map with lantern notes.",
+      "awardsEvidence": false
+    }
+  ]
+}

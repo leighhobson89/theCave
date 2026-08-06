@@ -1,0 +1,76 @@
+{
+  "siteId": "police",
+  "displayName": "Saskatchewan Police Database",
+  "homeUrl": "http://records.sk-police.gov",
+  "accounts": [
+    {
+      "username": "public",
+      "password": "public",
+      "label": "Public",
+      "privilegeLevel": 0,
+      "default": true
+    },
+    {
+      "username": "detective",
+      "password": "ember",
+      "label": "Detective",
+      "privilegeLevel": 2
+    },
+    {
+      "username": "administrator",
+      "password": "atlas",
+      "label": "Administrator",
+      "privilegeLevel": 5
+    }
+  ],
+  "records": [
+    {
+      "id": "station-log-01",
+      "title": "Station Log 01",
+      "keywords": ["station", "log", "patrol"],
+      "body": "Routine note from the station house reporting a quiet evening.",
+      "requiredPrivilegeLevel": 0,
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "police-station-log-01",
+        "defaultTitleString": "Station Log 01",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "markdown-file",
+          "path": "./assets/web-content/evidence/police-station-log-01.md"
+        }
+      }
+    },
+    {
+      "id": "evidence-locker-22",
+      "title": "Evidence Locker 22",
+      "keywords": ["locker", "inventory", "evidence"],
+      "body": "Restricted inventory sheet for the evidence locker on the second floor.",
+      "requiredPrivilegeLevel": 2,
+      "awardsEvidence": false
+    },
+    {
+      "id": "director-file-9",
+      "title": "Director File 9",
+      "keywords": ["director", "file", "task force"],
+      "body": "Top-level case notes retained for administration review.",
+      "requiredPrivilegeLevel": 5,
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "police-director-file-9",
+        "defaultTitleString": "Director File 9",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "markdown-file",
+          "path": "./assets/web-content/evidence/police-director-file-9.md"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "siteId": "library",
+  "displayName": "Library Database",
+  "homeUrl": "http://library.intra",
+  "records": [
+    {
+      "id": "vale-notebook",
+      "author": "Edith Vale",
+      "title": "Notebook of River Marks",
+      "subject": "History",
+      "keywords": ["river", "notes", "archive"],
+      "body": "A library catalogue entry for a slim notebook of survey marks and annotations.",
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "library-notebook-river-marks",
+        "defaultTitleString": "Notebook of River Marks",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "markdown-file",
+          "path": "./assets/web-content/evidence/library-notebook-river-marks.md"
+        }
+      }
+    },
+    {
+      "id": "morton-lantern-guide",
+      "author": "M. A. Morton",
+      "title": "Field Guide to Lanterns",
+      "subject": "Equipment",
+      "keywords": ["lantern", "field", "guide"],
+      "body": "A practical guide to lantern maintenance and storage.",
+      "awardsEvidence": false
+    },
+    {
+      "id": "haskins-catalogue",
+      "author": "R. Haskins",
+      "title": "Catalogue of Northern Rooms",
+      "subject": "Architecture",
+      "keywords": ["catalogue", "rooms", "northern"],
+      "body": "A complete archival catalogue of northern structures.",
+      "awardsEvidence": false
+    }
+  ]
+}

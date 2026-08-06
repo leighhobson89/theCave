@@ -1,0 +1,67 @@
+{
+  "siteId": "archives",
+  "displayName": "Canada Newspaper Archive",
+  "homeUrl": "http://archives.canada.news",
+  "accounts": [
+    {
+      "username": "free",
+      "password": "free",
+      "label": "Free",
+      "accessLevel": 0,
+      "default": true
+    },
+    {
+      "username": "subscriber",
+      "password": "subscribe",
+      "label": "Subscriber",
+      "accessLevel": 1
+    }
+  ],
+  "records": [
+    {
+      "id": "frontier-press-dispatch",
+      "title": "Frontier Press Dispatch",
+      "date": "1996-10-12",
+      "province": "Saskatchewan",
+      "articleAccess": "free",
+      "requiredAccessLevel": 0,
+      "keywords": ["frontier", "press", "dispatch", "cave"],
+      "body": "A short newspaper dispatch about a minor road closure and a cave rescue drill.",
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "archives-frontier-press-dispatch",
+        "defaultTitleString": "Frontier Press Dispatch",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "markdown-file",
+          "path": "./assets/web-content/evidence/archives-frontier-press-dispatch.md"
+        }
+      }
+    },
+    {
+      "id": "prairie-telegram",
+      "title": "Prairie Telegram",
+      "date": "1997-02-18",
+      "province": "Alberta",
+      "articleAccess": "subscriber",
+      "requiredAccessLevel": 1,
+      "keywords": ["telegram", "archive", "premium"],
+      "body": "A subscriber-only article about winter freight and a regional weather warning.",
+      "awardsEvidence": false
+    },
+    {
+      "id": "red-river-bulletin",
+      "title": "Red River Bulletin",
+      "date": "1997-06-04",
+      "province": "Manitoba",
+      "articleAccess": "free",
+      "requiredAccessLevel": 0,
+      "keywords": ["bulletin", "red river", "archive"],
+      "body": "A public archive clipping covering a river level bulletin and market notes.",
+      "awardsEvidence": false
+    }
+  ]
+}

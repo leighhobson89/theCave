@@ -35,6 +35,7 @@ import {
   getNextDesktopWindowZIndex,
 } from "./constantsAndGlobalVars.js";
 import {
+  createEvidence,
   createPhotoEvidence,
   createReportEvidence,
   getCurrentEvidence,
@@ -49,8 +50,8 @@ import {
 } from "./evidenceManager.js";
 import { setGameState, startGame } from "./game.js";
 import { audioManager } from "./audioManager.js";
-import { DesktopWindow } from "./desktopWindow.js";
 import { initLocalization, localize } from "./localization.js";
+import { DesktopWindow } from "./desktopWindow.js";
 import {
   loadGameOption,
   loadGame,
@@ -58,6 +59,8 @@ import {
   saveGame,
   copySaveStringToClipBoard,
 } from "./saveLoadGame.js";
+import { createWebContentManager } from "./webContentManager.js";
+import { registerDefaultWebContentSites } from "./webContentRegistry.js";
 
 const storyTextCacheByLanguage = new Map();
 const legacyTextCacheByPath = new Map();
@@ -92,6 +95,12 @@ let debugWindowController = null;
 let computerWindowController = null;
 let ashtrayAnimationTimeoutId = null;
 
+const webContentManager = createWebContentManager({
+  awardEvidence: awardWebContentEvidence,
+});
+
+registerDefaultWebContentSites(webContentManager);
+
 function syncAshtrayVisualState() {
   const ashtrayElement = getElements().desktopAshtray;
   if (!ashtrayElement) {
@@ -101,6 +110,15 @@ function syncAshtrayVisualState() {
   ashtrayElement.classList.toggle("has-lit-cig", getAshtrayHasLitCigarette());
   ashtrayElement.classList.toggle("has-extra-butt", getAshtrayHasExtraButt());
   ashtrayElement.classList.remove("is-extinguishing", "is-relighting");
+}
+
+function awardWebContentEvidence(evidenceDescriptor) {
+  if (!evidenceDescriptor || typeof evidenceDescriptor !== "object") {
+    return false;
+  }
+
+  createEvidence(evidenceDescriptor);
+  return true;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1523,80 +1541,15 @@ function createComputerNetscapeWindowContentElements() {
   };
 
   const createZoomSearchPage = () => {
-    const page = document.createElement("div");
-    page.classList.add("caveos-browser-page", "browser-page-zoomsearch");
-    page.innerHTML = `
-      <div class="browser-page-shell browser-page-shell-zoom">
-        <h1 class="browser-zoom-title"><span>ZoomSearch</span><span class="browser-zoom-rocket" aria-hidden="true"></span></h1>
-        <table class="browser-form-table" role="presentation">
-          <tr>
-            <td><input class="browser-input" type="text" aria-label="ZoomSearch query" /></td>
-            <td><button class="browser-button" type="button">Search</button></td>
-          </tr>
-        </table>
-      </div>
-    `;
-    return page;
+    return webContentManager.createWebsitePage("zoomsearch");
   };
 
   const createLibraryPage = () => {
-    const page = document.createElement("div");
-    page.classList.add("caveos-browser-page", "browser-page-library");
-    page.innerHTML = `
-      <div class="browser-page-shell browser-page-shell-library">
-        <h1 class="browser-page-title browser-page-title-library">Intranet Library Database</h1>
-        <table class="browser-form-table browser-grid-table" role="presentation">
-          <tr>
-            <td class="browser-label-cell">Find:</td>
-            <td><input class="browser-input" type="text" aria-label="Library query" /></td>
-          </tr>
-          <tr>
-            <td class="browser-label-cell">Field:</td>
-            <td>
-              <select class="browser-select" aria-label="Library field selector">
-                <option>Author</option>
-                <option>Title</option>
-                <option>Subject</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td></td>
-            <td><button class="browser-button" type="button">Search Catalog</button></td>
-          </tr>
-        </table>
-      </div>
-    `;
-    return page;
+    return webContentManager.createWebsitePage("library");
   };
 
   const createPoliceRecordsPage = () => {
-    const page = document.createElement("div");
-    page.classList.add("caveos-browser-page", "browser-page-police");
-    page.innerHTML = `
-      <div class="browser-page-shell browser-page-shell-police">
-        <div class="browser-gov-header browser-police-header">
-          <span class="browser-police-icon" aria-hidden="true"></span>
-          <span>Saskatchewan Police Records Access Terminal</span>
-        </div>
-        <table class="browser-form-table browser-grid-table" role="presentation">
-          <tr>
-            <td class="browser-label-cell">Username</td>
-            <td><input class="browser-input" type="text" aria-label="Police records username" /></td>
-          </tr>
-          <tr>
-            <td class="browser-label-cell">Password</td>
-            <td><input class="browser-input" type="password" aria-label="Police records password" /></td>
-          </tr>
-          <tr>
-            <td></td>
-            <td><button class="browser-button" type="button">Login</button></td>
-          </tr>
-        </table>
-        <p class="browser-gov-note">Authorized personnel only. Placeholder login screen.</p>
-      </div>
-    `;
-    return page;
+    return webContentManager.createWebsitePage("police");
   };
 
   const createCosmicForgePage = () => {
@@ -1618,67 +1571,7 @@ function createComputerNetscapeWindowContentElements() {
   };
 
   const createArchivesPage = () => {
-    const page = document.createElement("div");
-    page.classList.add("caveos-browser-page", "browser-page-archives");
-    page.innerHTML = `
-      <div class="browser-page-shell browser-page-shell-archives">
-        <div class="browser-archives-auth">
-          <div class="browser-archives-auth-title">Archive Access</div>
-          <label>
-            <span>Username</span>
-            <input class="browser-input" type="text" aria-label="Archive username" />
-          </label>
-          <label>
-            <span>Password</span>
-            <input class="browser-input" type="password" aria-label="Archive password" />
-          </label>
-          <button class="browser-button" type="button">Login</button>
-          <div class="browser-archives-status">Logged in as: Public</div>
-        </div>
-        <h1 class="browser-page-title">Canada Newspaper Archive Database</h1>
-        <table class="browser-form-table browser-grid-table" role="presentation">
-          <tr>
-            <td class="browser-label-cell">Keywords</td>
-            <td><input class="browser-input" type="text" aria-label="Archive keyword search" /></td>
-          </tr>
-          <tr>
-            <td class="browser-label-cell">Date</td>
-            <td><input class="browser-input" type="date" aria-label="Archive date selector" /></td>
-          </tr>
-          <tr>
-            <td class="browser-label-cell">Province</td>
-            <td>
-              <select class="browser-select" aria-label="Province selector">
-                <option>All</option>
-                <option>Saskatchewan</option>
-                <option>Alberta</option>
-                <option>Ontario</option>
-                <option>Quebec</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td></td>
-            <td><button class="browser-button" type="button">Find Records</button></td>
-          </tr>
-        </table>
-        <table class="browser-results-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Province</th>
-              <th>Headline</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="3">No records loaded.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-    return page;
+    return webContentManager.createWebsitePage("archives");
   };
 
   const createQuickLinkButton = ({ iconClass, label, onClick }) => {
