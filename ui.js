@@ -8,8 +8,12 @@ import {
   getNotesActivePageIndex,
   getNotesPages,
   NOTES_PAGE_COUNT,
+  PAINT_PAGE_COUNT,
+  getPaintActivePageIndex,
+  getPaintPages,
   resetAshtrayState,
   resetNotesPagesState,
+  resetPaintPagesState,
   setElements,
   setAshtrayHasExtraButt,
   setAshtrayHasLitCigarette,
@@ -26,6 +30,8 @@ import {
   setLanguage,
   setNotesActivePageIndex,
   setNotesPages,
+  setPaintActivePageIndex,
+  setPaintPages,
   getNextDesktopWindowZIndex,
 } from "./constantsAndGlobalVars.js";
 import {
@@ -109,6 +115,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initializeEvidenceStoreForNewGame();
     setEvidenceCustomNames({});
     resetNotesPagesState();
+    resetPaintPagesState();
     resetAshtrayState();
     syncAshtrayVisualState();
     setBeginGameStatus(true);
@@ -926,6 +933,9 @@ function createComputerWindowContentElements() {
 
 function createComputerPaintWindowContentElements() {
   const PAINT_BACKGROUND_COLOR = "#041204";
+  const PAINT_DEFAULT_COLOR = "#76ff62";
+  const SNAPSHOT_TYPE = "image/webp";
+  const SNAPSHOT_QUALITY = 0.82;
 
   const container = document.createElement("div");
   container.classList.add("caveos-paint-app");
@@ -966,9 +976,13 @@ function createComputerPaintWindowContentElements() {
   const clearButton = document.createElement("button");
   clearButton.type = "button";
   clearButton.classList.add("caveos-paint-tool", "caveos-paint-clear");
+  clearButton.dataset.action = "clear";
   clearButton.textContent = "CLEAR";
 
   toolbar.append(sizeInput, colorInput, clearButton);
+
+  const canvasColumn = document.createElement("div");
+  canvasColumn.classList.add("caveos-paint-canvas-column");
 
   const canvasWrap = document.createElement("div");
   canvasWrap.classList.add("caveos-paint-canvas-wrap");
@@ -979,13 +993,22 @@ function createComputerPaintWindowContentElements() {
   canvas.height = 640;
   canvasWrap.appendChild(canvas);
 
-  container.append(toolbar, canvasWrap);
+  canvasColumn.appendChild(canvasWrap);
+
+  const tabsColumn = document.createElement("div");
+  tabsColumn.classList.add("caveos-paint-tabs-column", "scrollbars-hidden");
+
+  const tabsList = document.createElement("div");
+  tabsList.classList.add("notes-tabs-list", "caveos-paint-tabs-list");
+  tabsColumn.appendChild(tabsList);
+
+  container.append(toolbar, canvasColumn, tabsColumn);
 
   const context = canvas.getContext("2d");
   if (context) {
     context.fillStyle = PAINT_BACKGROUND_COLOR;
     context.fillRect(0, 0, canvas.width, canvas.height);
-    context.strokeStyle = "#76ff62";
+    context.strokeStyle = PAINT_DEFAULT_COLOR;
     context.lineWidth = 3;
     context.lineCap = "round";
     context.lineJoin = "round";
@@ -998,6 +1021,7 @@ function createComputerPaintWindowContentElements() {
   let lastX = 0;
   let lastY = 0;
   let previewSnapshot = null;
+  let renderToken = 0;
 
   const parseColor = (hexColor) => {
     const normalized = String(hexColor || "").trim();
@@ -1084,6 +1108,63 @@ function createComputerPaintWindowContentElements() {
     context.putImageData(imageData, 0, 0);
   };
 
+  const fillCanvasBackground = () => {
+    if (!context) {
+      return;
+    }
+
+    context.globalCompositeOperation = "source-over";
+    context.fillStyle = PAINT_BACKGROUND_COLOR;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const snapshotCurrentCanvas = () => {
+    const pngFallbackDataUrl = canvas.toDataURL();
+    try {
+      const preferredDataUrl = canvas.toDataURL(SNAPSHOT_TYPE, SNAPSHOT_QUALITY);
+      if (typeof preferredDataUrl === "string" && preferredDataUrl.startsWith("data:image/")) {
+        return preferredDataUrl;
+      }
+    } catch (error) {
+      // Fall through to PNG fallback.
+    }
+
+    return pngFallbackDataUrl;
+  };
+
+  const restoreCanvasSnapshot = (snapshot) => new Promise((resolve) => {
+    fillCanvasBackground();
+    if (!snapshot || !context) {
+      applyToolStyles();
+      resolve();
+      return;
+    }
+
+    const nextToken = renderToken + 1;
+    renderToken = nextToken;
+
+    const image = new Image();
+    image.onload = () => {
+      if (renderToken !== nextToken) {
+        resolve();
+        return;
+      }
+
+      fillCanvasBackground();
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      applyToolStyles();
+      resolve();
+    };
+    image.onerror = () => {
+      if (renderToken === nextToken) {
+        fillCanvasBackground();
+        applyToolStyles();
+      }
+      resolve();
+    };
+    image.src = snapshot;
+  });
+
   const readPaintPosition = (event) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -1113,6 +1194,197 @@ function createComputerPaintWindowContentElements() {
     }
   };
 
+  const refs = {
+    container,
+    canvas,
+    context,
+    colorInput,
+    sizeInput,
+    tabsList,
+    pageRows: [],
+    activePageIndex: 0,
+  };
+
+  const persistActivePaintPageContent = () => {
+    const pages = getPaintPages();
+    if (!pages.length) {
+      return;
+    }
+
+    const activeIndex = Math.min(
+      pages.length - 1,
+      Math.max(0, Number.parseInt(getPaintActivePageIndex(), 10) || 0)
+    );
+    const existingPage = pages[activeIndex] || {
+      title: `Sketch ${activeIndex + 1}`,
+      snapshot: "",
+    };
+    const nextSnapshot = snapshotCurrentCanvas();
+
+    if (String(existingPage.snapshot || "") === nextSnapshot) {
+      return;
+    }
+
+    pages[activeIndex] = {
+      ...existingPage,
+      snapshot: nextSnapshot,
+    };
+
+    setPaintPages(pages);
+  };
+
+  const refreshPaintPageCommitState = (pageRowRefs) => {
+    if (!pageRowRefs?.titleInput || !pageRowRefs?.commitButton) {
+      return;
+    }
+
+    const normalizedInput = String(pageRowRefs.titleInput.value || "").trim();
+    const normalizedCommitted = String(pageRowRefs.committedTitle || "").trim();
+    pageRowRefs.commitButton.disabled = !normalizedInput || normalizedInput === normalizedCommitted;
+  };
+
+  const commitPaintPageTitle = (pageRowRefs) => {
+    if (!pageRowRefs) {
+      return;
+    }
+
+    const nextTitle = String(pageRowRefs.titleInput.value || "").trim();
+    if (!nextTitle) {
+      pageRowRefs.titleInput.value = pageRowRefs.committedTitle;
+      refreshPaintPageCommitState(pageRowRefs);
+      return;
+    }
+
+    if (nextTitle === String(pageRowRefs.committedTitle || "").trim()) {
+      pageRowRefs.commitButton.disabled = true;
+      return;
+    }
+
+    const pages = getPaintPages();
+    const existingPage = pages[pageRowRefs.pageIndex] || {
+      title: `Sketch ${pageRowRefs.pageIndex + 1}`,
+      snapshot: "",
+    };
+
+    pages[pageRowRefs.pageIndex] = {
+      ...existingPage,
+      title: nextTitle,
+    };
+
+    setPaintPages(pages);
+    pageRowRefs.committedTitle = nextTitle;
+    pageRowRefs.titleInput.value = nextTitle;
+    pageRowRefs.commitButton.disabled = true;
+  };
+
+  const renderPaintWindowContent = async () => {
+    const pages = getPaintPages();
+    if (!pages.length) {
+      fillCanvasBackground();
+      return;
+    }
+
+    const activeIndex = Math.min(
+      pages.length - 1,
+      Math.max(0, Number.parseInt(getPaintActivePageIndex(), 10) || 0)
+    );
+
+    setPaintActivePageIndex(activeIndex);
+    refs.activePageIndex = activeIndex;
+
+    refs.pageRows.forEach((pageRowRefs) => {
+      const pageData = pages[pageRowRefs.pageIndex] || {
+        title: `Sketch ${pageRowRefs.pageIndex + 1}`,
+        snapshot: "",
+      };
+      const normalizedTitle = String(pageData.title || "").trim() || `Sketch ${pageRowRefs.pageIndex + 1}`;
+      const isActive = pageRowRefs.pageIndex === activeIndex;
+
+      pageRowRefs.root.classList.toggle("is-active", isActive);
+      pageRowRefs.activateButton.setAttribute("aria-pressed", String(isActive));
+      pageRowRefs.activateButton.setAttribute("aria-label", `Open ${normalizedTitle}`);
+      pageRowRefs.committedTitle = normalizedTitle;
+      pageRowRefs.titleInput.value = normalizedTitle;
+      pageRowRefs.commitButton.disabled = true;
+    });
+
+    await restoreCanvasSnapshot(String(pages[activeIndex]?.snapshot || ""));
+  };
+
+  const setActivePaintPage = async (requestedIndex) => {
+    const boundedIndex = Math.min(
+      PAINT_PAGE_COUNT - 1,
+      Math.max(0, Number.parseInt(requestedIndex, 10) || 0)
+    );
+
+    persistActivePaintPageContent();
+    setPaintActivePageIndex(boundedIndex);
+    await renderPaintWindowContent();
+  };
+
+  for (let index = 0; index < PAINT_PAGE_COUNT; index += 1) {
+    const row = document.createElement("div");
+    row.classList.add("notes-page-tab-row", "caveos-paint-page-row");
+    row.style.setProperty("--notes-tab-color", NOTES_TAB_COLORS[index % NOTES_TAB_COLORS.length]);
+
+    const activateButton = document.createElement("button");
+    activateButton.type = "button";
+    activateButton.classList.add("notes-page-tab-activate", "caveos-paint-page-activate");
+    activateButton.textContent = String(index + 1);
+
+    const titleBar = document.createElement("div");
+    titleBar.classList.add("evidence-title-bar", "notes-page-title-bar");
+
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.classList.add("evidence-title-input", "notes-page-title-input", "caveos-paint-page-title-input");
+    titleInput.placeholder = `Sketch ${index + 1}`;
+    titleInput.setAttribute("aria-label", `Title for sketch ${index + 1}`);
+
+    const commitButton = document.createElement("button");
+    commitButton.type = "button";
+    commitButton.classList.add("evidence-title-commit", "notes-page-title-commit");
+    commitButton.textContent = "✓";
+    commitButton.setAttribute("aria-label", `Apply title for sketch ${index + 1}`);
+    commitButton.disabled = true;
+
+    titleBar.append(titleInput, commitButton);
+    row.append(activateButton, titleBar);
+    tabsList.appendChild(row);
+
+    const pageRowRefs = {
+      pageIndex: index,
+      root: row,
+      activateButton,
+      titleInput,
+      commitButton,
+      committedTitle: `Sketch ${index + 1}`,
+    };
+
+    activateButton.addEventListener("click", async () => {
+      await setActivePaintPage(index);
+    });
+
+    titleInput.addEventListener("input", () => {
+      refreshPaintPageCommitState(pageRowRefs);
+    });
+
+    titleInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      commitPaintPageTitle(pageRowRefs);
+    });
+
+    commitButton.addEventListener("click", () => {
+      commitPaintPageTitle(pageRowRefs);
+    });
+
+    refs.pageRows.push(pageRowRefs);
+  }
+
   toolButtons.forEach((button) => {
     button.addEventListener("click", () => {
       currentTool = button.dataset.tool || "pen";
@@ -1128,10 +1400,9 @@ function createComputerPaintWindowContentElements() {
       return;
     }
 
-    context.globalCompositeOperation = "source-over";
-    context.fillStyle = PAINT_BACKGROUND_COLOR;
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    fillCanvasBackground();
     applyToolStyles();
+    persistActivePaintPageContent();
   });
 
   const handlePointerMove = (event) => {
@@ -1178,6 +1449,7 @@ function createComputerPaintWindowContentElements() {
 
     if (currentTool === "fill") {
       floodFill(position.x, position.y, colorInput.value);
+      persistActivePaintPageContent();
       return;
     }
 
@@ -1216,6 +1488,7 @@ function createComputerPaintWindowContentElements() {
     handlePointerMove(event);
     isDrawing = false;
     previewSnapshot = null;
+    persistActivePaintPageContent();
     if (typeof event.pointerId === "number") {
       try {
         if (canvas.hasPointerCapture(event.pointerId)) {
@@ -1230,7 +1503,9 @@ function createComputerPaintWindowContentElements() {
   canvas.addEventListener("pointerup", stopDraw);
   canvas.addEventListener("pointercancel", stopDraw);
 
-  return container;
+  renderPaintWindowContent();
+
+  return refs;
 }
 
 function createComputerNetscapeWindowContentElements() {
@@ -2650,13 +2925,13 @@ function openComputerWindow() {
       return;
     }
 
-    const paintContent = createComputerPaintWindowContentElements();
+    const paintRefs = createComputerPaintWindowContentElements();
     openComputerAppWindow({
       parentElement: contentRefs.container,
       kind: "computer-paint",
       title: "Paint",
       classNames: ["caveos-paint-window"],
-      contentNode: paintContent,
+      contentNode: paintRefs.container,
       appWindowSet: contentRefs.appWindows,
       resizable: true,
       showScrollbar: false,

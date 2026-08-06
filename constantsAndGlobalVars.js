@@ -35,6 +35,7 @@ export const MENU_STATE = "menuState";
 export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
 export const NOTES_PAGE_COUNT = 10;
+export const PAINT_PAGE_COUNT = 10;
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 
 //GLOBAL VARIABLES
@@ -52,6 +53,8 @@ export let pauseAutoSaveCountdown = true;
 let evidenceCustomNames = {};
 let notesPages = buildDefaultNotesPages();
 let notesActivePageIndex = 0;
+let paintPages = buildDefaultPaintPages();
+let paintActivePageIndex = 0;
 let ashtrayHasLitCigarette = true;
 let ashtrayHasExtraButt = false;
 
@@ -61,6 +64,13 @@ function buildDefaultNotesPages() {
   return Array.from({ length: NOTES_PAGE_COUNT }, (_, index) => ({
     title: `Page ${index + 1}`,
     content: "",
+  }));
+}
+
+function buildDefaultPaintPages() {
+  return Array.from({ length: PAINT_PAGE_COUNT }, (_, index) => ({
+    title: `Sketch ${index + 1}`,
+    snapshot: "",
   }));
 }
 
@@ -168,6 +178,8 @@ export function captureGameStatusForSaving() {
   gameState.evidenceCustomNames = getEvidenceCustomNames();
   gameState.notesPages = getNotesPages();
   gameState.notesActivePageIndex = getNotesActivePageIndex();
+  gameState.paintPages = getPaintPages();
+  gameState.paintActivePageIndex = getPaintActivePageIndex();
   gameState.ashtrayHasLitCigarette = getAshtrayHasLitCigarette();
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
 
@@ -196,6 +208,8 @@ export function restoreGameStatus(gameState) {
       setEvidenceCustomNames(gameState.evidenceCustomNames || {});
       setNotesPages(gameState.notesPages);
       setNotesActivePageIndex(gameState.notesActivePageIndex ?? 0);
+      setPaintPages(gameState.paintPages);
+      setPaintActivePageIndex(gameState.paintActivePageIndex ?? 0);
       setAshtrayHasLitCigarette(gameState.ashtrayHasLitCigarette);
       setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
 
@@ -478,6 +492,47 @@ export function setNotesPages(value) {
 export function resetNotesPagesState() {
   notesPages = buildDefaultNotesPages();
   notesActivePageIndex = 0;
+}
+
+export function getPaintPages() {
+  return paintPages.map((page) => ({
+    title: String(page?.title || "").trim(),
+    snapshot: String(page?.snapshot || ""),
+  }));
+}
+
+export function setPaintPages(value) {
+  const sourcePages = Array.isArray(value) ? value : [];
+  const defaults = buildDefaultPaintPages();
+
+  paintPages = defaults.map((defaultPage, index) => {
+    const inputPage = sourcePages[index] || {};
+    const normalizedTitle = String(inputPage?.title || "").trim();
+
+    return {
+      title: normalizedTitle || defaultPage.title,
+      snapshot: String(inputPage?.snapshot || ""),
+    };
+  });
+}
+
+export function resetPaintPagesState() {
+  paintPages = buildDefaultPaintPages();
+  paintActivePageIndex = 0;
+}
+
+export function getPaintActivePageIndex() {
+  return paintActivePageIndex;
+}
+
+export function setPaintActivePageIndex(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    paintActivePageIndex = 0;
+    return;
+  }
+
+  paintActivePageIndex = Math.min(PAINT_PAGE_COUNT - 1, Math.max(0, parsed));
 }
 
 export function getNotesActivePageIndex() {
