@@ -269,7 +269,7 @@ function bindDesktopObjectAudio() {
     return;
   }
 
-  const selectors = [".desk-book", "#evidenceFolder"];
+  const selectors = [".desk-book", "#notesFolder", "#desktopCalendar"];
   selectors.forEach((selector) => {
     document.querySelectorAll(selector).forEach((element) => {
       element.addEventListener("click", () => {

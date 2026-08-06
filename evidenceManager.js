@@ -31,6 +31,7 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     storyName: "story",
     storageKey: STORAGE_KEYS.BACKGROUND_STORY,
     titleKey: "backgroundStory",
+    defaultTitleString: "Background Story",
   },
   {
     kind: "photo",
@@ -38,6 +39,7 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     photoPath: "./assets/photos/caveEntrance.png",
     name: "caveEntrance",
     titleKey: "photos",
+    defaultTitleString: "Cave Entrance",
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_IVORY,
   },
   {
@@ -46,6 +48,7 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     photoPath: "./assets/photos/insideCaveLookingBack.png",
     name: "insideCaveLookingBack",
     titleKey: "photos",
+    defaultTitleString: "Inside Cave Looking Back",
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_LINEN,
   },
   {
@@ -53,6 +56,7 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     reportName: "missingReport",
     storageKey: STORAGE_KEYS.REPORTS,
     titleKey: "reports",
+    defaultTitleString: "Missing Report",
   },
 ];
 
@@ -111,6 +115,21 @@ function parseReportNameFromPath(path) {
     .replace(/\.md$/i, "");
 }
 
+function buildDefaultTitleString(rawName) {
+  const normalized = String(rawName || "").trim();
+  if (!normalized) {
+    return "Untitled Evidence";
+  }
+
+  return normalized
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 function addEvidenceToStore(evidence) {
   ensureCollection(evidence.storageKey);
 
@@ -167,6 +186,7 @@ export function createStoryEvidence({
   storageKey = STORAGE_KEYS.BACKGROUND_STORY,
   titleKey = "backgroundStory",
   paperStyle = PAPER_STYLES.STORY_LINED,
+  defaultTitleString,
 } = {}) {
   const normalizedName = (storyName || "story").trim();
 
@@ -175,6 +195,7 @@ export function createStoryEvidence({
     storageKey,
     titleKey,
     name: normalizedName,
+    defaultTitleString: defaultTitleString || buildDefaultTitleString(normalizedName),
     paperStyle,
     source: {
       kind: "markdown-template",
@@ -189,6 +210,7 @@ export function createReportEvidence({
   storageKey = STORAGE_KEYS.REPORTS,
   titleKey = "reports",
   paperStyle = PAPER_STYLES.REPORT_PARCHMENT,
+  defaultTitleString,
 } = {}) {
   const normalizedName = (reportName || "missingReport").trim();
 
@@ -197,6 +219,7 @@ export function createReportEvidence({
     storageKey,
     titleKey,
     name: normalizedName,
+    defaultTitleString: defaultTitleString || buildDefaultTitleString(normalizedName),
     paperStyle,
     source: {
       kind: "markdown-template",
@@ -212,6 +235,7 @@ export function createPhotoEvidence({
   storageKey = STORAGE_KEYS.PHOTOS,
   titleKey = "photos",
   paperStyle = PAPER_STYLES.PHOTO_MOUNTED,
+  defaultTitleString,
 } = {}) {
   const normalizedPath = String(photoPath || "").trim();
 
@@ -224,6 +248,7 @@ export function createPhotoEvidence({
     storageKey,
     titleKey,
     name: (name || normalizedPath).trim(),
+    defaultTitleString: defaultTitleString || buildDefaultTitleString(name || normalizedPath),
     paperStyle,
     source: {
       kind: "photo",
@@ -330,6 +355,7 @@ export function setPhotoCollectionFromPaths(paths) {
       storageKey: STORAGE_KEYS.PHOTOS,
       titleKey: "photos",
       name: path,
+      defaultTitleString: buildDefaultTitleString(path),
       paperStyle: PAPER_STYLES.PHOTO_MOUNTED,
       source: {
         kind: "photo",
@@ -356,6 +382,7 @@ export function setReportCollectionFromPaths(paths) {
         storageKey: STORAGE_KEYS.REPORTS,
         titleKey: "reports",
         name: reportName,
+        defaultTitleString: buildDefaultTitleString(reportName),
         paperStyle: PAPER_STYLES.REPORT_PARCHMENT,
         source: {
           kind: "markdown-template",
@@ -412,6 +439,10 @@ export function setEvidenceStoreSnapshot(snapshot) {
           pathTemplate: `./assets/reports/${reportName}_{lang}.md`,
         };
       }
+    }
+
+    if (!normalizedEvidence.defaultTitleString) {
+      normalizedEvidence.defaultTitleString = buildDefaultTitleString(normalizedEvidence.name);
     }
 
     incomingStore.evidencesById[String(key)] = normalizedEvidence;

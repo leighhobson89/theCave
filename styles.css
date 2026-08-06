@@ -369,10 +369,10 @@ button.disabled {
     transform: rotate(-8deg);
 }
 
-.evidence-folder {
+.notes-folder {
     position: absolute;
-    left: 1700px;
-    top: 250px;
+    left: 1080px;
+    top: 900px;
     width: 440px;
     height: 270px;
     transform: rotate(-2deg);
@@ -623,7 +623,7 @@ button.disabled {
         inset 0 1px 2px rgba(255, 255, 255, .4);
 }
 
-.evidence-label {
+.notes-label {
     position: absolute;
     left: 26px;
     top: 80px;
@@ -633,6 +633,105 @@ button.disabled {
     color: rgba(82, 45, 8, 0.78);
     transform: rotate(-4deg);
     z-index: 2;
+}
+
+.desktop-calendar {
+    position: absolute;
+    left: 1860px;
+    top: 250px;
+    width: 375px;
+    height: 435px;
+    transform: rotate(-1.8deg);
+    z-index: 2;
+}
+
+.calendar-rings {
+    position: absolute;
+    left: 56px;
+    top: 8px;
+    width: 261px;
+    height: 39px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 6;
+}
+
+.calendar-rings span {
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    border: 4px solid rgba(109, 115, 122, 0.95);
+    background: linear-gradient(180deg, #d6dbe0, #a9b1bc);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.calendar-stack {
+    position: absolute;
+    left: 36px;
+    width: 303px;
+    height: 369px;
+    border-radius: 12px;
+    border: 1px solid rgba(173, 173, 173, 0.56);
+    background: linear-gradient(180deg, #f5f5f5 0%, #ececec 100%);
+    box-shadow: 0 8px 14px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-sheet-back {
+    top: 36px;
+    transform: rotate(-2.4deg);
+}
+
+.calendar-sheet-mid {
+    top: 42px;
+    transform: rotate(-1.2deg);
+}
+
+.calendar-sheet-front {
+    position: absolute;
+    left: 30px;
+    top: 30px;
+    width: 309px;
+    height: 378px;
+    border-radius: 14px;
+    border: 1px solid rgba(186, 186, 186, 0.65);
+    background: linear-gradient(180deg, #fcfcfc 0%, #f2f2f2 100%);
+    box-shadow:
+        0 13px 22px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 39px;
+    box-sizing: border-box;
+}
+
+.calendar-month {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: rgba(34, 34, 34, 0.9);
+    margin-bottom: 0.45rem;
+}
+
+.calendar-day {
+    font-size: 7.5rem;
+    line-height: 1;
+    font-weight: 800;
+    color: rgba(170, 24, 24, 0.9);
+    margin-bottom: 0.7rem;
+}
+
+.calendar-quote-lines {
+    width: 222px;
+    height: 96px;
+    opacity: 0.45;
+    background:
+        linear-gradient(#444, #444) 0 0 / 92% 3px no-repeat,
+        linear-gradient(#444, #444) 0 18px / 76% 3px no-repeat,
+        linear-gradient(#444, #444) 0 36px / 85% 3px no-repeat,
+        linear-gradient(#444, #444) 0 54px / 66% 3px no-repeat,
+        linear-gradient(#444, #444) 0 72px / 80% 3px no-repeat;
+    filter: blur(0.2px);
 }
 
 .zoom-readout {
@@ -839,16 +938,69 @@ button.disabled {
 
 .photos-carousel-container {
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.5rem;
     box-sizing: border-box;
     width: 100%;
     height: 100%;
-    padding: 0.35rem;
+    padding: 0.35rem 0.2rem;
     border: none;
     border-radius: 0;
     background: transparent;
+    overflow: hidden;
+}
+
+.evidence-title-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.45rem;
+    align-items: center;
+    padding: 0.2rem;
+}
+
+.evidence-title-input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(210, 220, 234, 0.36);
+    border-radius: 9px;
+    background: rgba(14, 20, 29, 0.62);
+    color: rgba(237, 244, 255, 0.94);
+    font-size: 0.93rem;
+    letter-spacing: 0.02em;
+    padding: 0.44rem 0.62rem;
+}
+
+.evidence-title-input:focus {
+    outline: none;
+    border-color: rgba(171, 202, 255, 0.68);
+    box-shadow: 0 0 0 2px rgba(114, 159, 255, 0.2);
+}
+
+.evidence-title-commit {
+    width: 38px;
+    height: 34px;
+    border: 1px solid rgba(168, 214, 164, 0.58);
+    border-radius: 9px;
+    background: linear-gradient(180deg, rgba(120, 188, 112, 0.9), rgba(74, 142, 74, 0.86));
+    color: rgba(12, 27, 14, 0.95);
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+}
+
+.evidence-title-commit:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+}
+
+.photos-media-viewport {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
 }
 
@@ -954,8 +1106,17 @@ button.disabled {
 
 .reports-carousel-container {
     position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.5rem;
     width: 100%;
     height: 100%;
+}
+
+.reports-content-viewport {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
 }
 
 .report-paper-wrap {

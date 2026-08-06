@@ -1,8 +1,11 @@
 import {
   captureGameStatusForSaving,
   gameState,
+  getEvidenceCustomName,
   getLanguage,
   setElements,
+  setEvidenceCustomName,
+  setEvidenceCustomNames,
   getElements,
   setBeginGameStatus,
   getGameInProgress,
@@ -55,10 +58,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   setElements();
   initializeAudioControls();
   initializeStoryWindowControls();
+  updateDesktopCalendarDate();
 
   getElements().newGameMenuButton.addEventListener("click", () => {
     audioManager.onUserGesture();
     initializeEvidenceStoreForNewGame();
+    setEvidenceCustomNames({});
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -161,7 +166,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         setElements();
         getElements().saveLoadPopup.classList.add("d-none");
         document.getElementById("overlay").classList.add("d-none");
-        setGameState(getMenuState());
+        setGameInProgress(true);
+        setGameState(getGameVisibleActive());
+        startGame(false);
       })
       .catch((error) => {
         console.error("Error loading game:", error);
@@ -212,7 +219,7 @@ async function setElementsLanguageText() {
   );
 
   getElements().photosFolderLabel.textContent = localize("photos", getLanguage());
-  getElements().evidenceLabel.textContent = localize("evidence", getLanguage());
+  getElements().notesLabel.textContent = localize("notes", getLanguage());
   getElements().musicVolumeLabel.innerHTML = `${localize(
     "musicVolume",
     getLanguage()
@@ -220,6 +227,25 @@ async function setElementsLanguageText() {
   getElements().sfxVolumeLabel.innerHTML = `${localize("sfxVolume", getLanguage())}`;
   refreshMuteButtonLabel();
   refreshOpenWindowLocalization();
+  updateDesktopCalendarDate();
+}
+
+function updateDesktopCalendarDate() {
+  const calendarMonthElement = getElements().desktopCalendar?.querySelector(".calendar-month");
+  const calendarDayElement = getElements().desktopCalendar?.querySelector(".calendar-day");
+
+  if (!calendarMonthElement || !calendarDayElement) {
+    return;
+  }
+
+  const now = new Date();
+  const monthText = new Intl.DateTimeFormat(undefined, { month: "short" })
+    .format(now)
+    .replace(/\./g, "")
+    .toUpperCase();
+
+  calendarMonthElement.textContent = monthText;
+  calendarDayElement.textContent = String(now.getDate());
 }
 
 function isTypingIntoField(event) {
@@ -439,20 +465,63 @@ function initializeStoryWindowControls() {
   getElements().backgroundFolder.addEventListener("click", () => {
     audioManager.onUserGesture();
     audioManager.playSfx("clickButton");
+
+    if (toggleExistingWindowsByKind("story")) {
+      return;
+    }
+
     openStoryWindow(false, false);
   });
 
   getElements().photosFolder.addEventListener("click", () => {
     audioManager.onUserGesture();
     audioManager.playSfx("clickButton");
+
+    if (toggleExistingWindowsByKind("photos")) {
+      return;
+    }
+
     openPhotosWindow();
   });
 
   getElements().reportsFolder.addEventListener("click", () => {
     audioManager.onUserGesture();
     audioManager.playSfx("clickButton");
+
+    if (toggleExistingWindowsByKind("reports")) {
+      return;
+    }
+
     openReportsWindow();
   });
+
+  if (getElements().desktopCalendar) {
+    getElements().desktopCalendar.addEventListener("click", () => {
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickSwitch");
+      setGameState(getMenuState());
+    });
+  }
+}
+
+function toggleExistingWindowsByKind(kind) {
+  const matchingWindows = [];
+
+  activeDesktopWindows.forEach((windowController) => {
+    if (desktopWindowKinds.get(windowController) === kind) {
+      matchingWindows.push(windowController);
+    }
+  });
+
+  if (!matchingWindows.length) {
+    return false;
+  }
+
+  matchingWindows.forEach((windowController) => {
+    windowController.close();
+  });
+
+  return true;
 }
 
 function registerDesktopWindow(windowController, kind) {
@@ -604,9 +673,127 @@ function applyReportPaperStyle(reportPaperWrapElement, paperStyle) {
   reportPaperWrapElement.classList.add(`${REPORT_PAPER_STYLE_CLASS_PREFIX}${styleSuffix}`);
 }
 
+function getEvidenceDefaultTitle(evidence) {
+  if (!evidence) {
+    return "Untitled Evidence";
+  }
+
+  const candidate = String(evidence.defaultTitleString || evidence.name || "").trim();
+  return candidate || "Untitled Evidence";
+}
+
+function getEvidenceDisplayTitle(evidence) {
+  if (!evidence?.id) {
+    return "Untitled Evidence";
+  }
+
+  const custom = getEvidenceCustomName(evidence.id);
+  return custom || getEvidenceDefaultTitle(evidence);
+}
+
+function createEvidenceTitleBarElements() {
+  const titleBar = document.createElement("div");
+  titleBar.classList.add("evidence-title-bar");
+
+  const titleInput = document.createElement("input");
+  titleInput.type = "text";
+  titleInput.classList.add("evidence-title-input");
+  titleInput.placeholder = "Evidence title";
+  titleInput.setAttribute("aria-label", "Evidence title");
+
+  const commitButton = document.createElement("button");
+  commitButton.type = "button";
+  commitButton.classList.add("evidence-title-commit");
+  commitButton.textContent = "✓";
+  commitButton.disabled = true;
+  commitButton.setAttribute("aria-label", "Apply evidence title");
+
+  titleBar.append(titleInput, commitButton);
+
+  return {
+    titleBar,
+    titleInput,
+    commitButton,
+    currentEvidenceId: "",
+    currentCommittedTitle: "",
+  };
+}
+
+function syncEvidenceTitleEditor(refs, evidence) {
+  if (!refs?.titleInput || !refs?.commitButton) {
+    return;
+  }
+
+  const displayTitle = getEvidenceDisplayTitle(evidence);
+  refs.currentEvidenceId = evidence?.id ? String(evidence.id) : "";
+  refs.currentCommittedTitle = displayTitle;
+  refs.titleInput.value = displayTitle;
+  refs.commitButton.disabled = true;
+}
+
+function wireEvidenceTitleEditor({ refs, storageKey, onCommitted }) {
+  if (!refs?.titleInput || !refs?.commitButton) {
+    return;
+  }
+
+  const refreshCommitDisabledState = () => {
+    const normalizedInput = String(refs.titleInput.value || "").trim();
+    const normalizedCommitted = String(refs.currentCommittedTitle || "").trim();
+    refs.commitButton.disabled = !normalizedInput || normalizedInput === normalizedCommitted;
+  };
+
+  const commitTitle = () => {
+    const currentEvidence = getCurrentEvidence(storageKey);
+    if (!currentEvidence?.id) {
+      return;
+    }
+
+    const normalizedInput = String(refs.titleInput.value || "").trim();
+    if (!normalizedInput) {
+      refs.titleInput.value = refs.currentCommittedTitle || getEvidenceDefaultTitle(currentEvidence);
+      refreshCommitDisabledState();
+      return;
+    }
+
+    if (normalizedInput === String(refs.currentCommittedTitle || "").trim()) {
+      refs.commitButton.disabled = true;
+      return;
+    }
+
+    setEvidenceCustomName(currentEvidence.id, normalizedInput);
+    refs.currentCommittedTitle = normalizedInput;
+    refs.currentEvidenceId = String(currentEvidence.id);
+    refs.titleInput.value = normalizedInput;
+    refs.commitButton.disabled = true;
+
+    if (typeof onCommitted === "function") {
+      onCommitted(currentEvidence);
+    }
+  };
+
+  refs.titleInput.addEventListener("input", refreshCommitDisabledState);
+  refs.titleInput.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitTitle();
+  });
+
+  refs.commitButton.addEventListener("click", () => {
+    commitTitle();
+  });
+}
+
 function createPhotosWindowContentElements() {
   const container = document.createElement("div");
   container.classList.add("photos-carousel-container");
+
+  const titleEditorRefs = createEvidenceTitleBarElements();
+
+  const mediaViewport = document.createElement("div");
+  mediaViewport.classList.add("photos-media-viewport");
 
   const photoPaperWrap = document.createElement("div");
   photoPaperWrap.classList.add("photo-paper-wrap");
@@ -621,14 +808,20 @@ function createPhotosWindowContentElements() {
   counter.classList.add("photos-carousel-counter");
 
   photoPaperWrap.appendChild(image);
-  container.append(photoPaperWrap, emptyState, counter);
+  mediaViewport.append(photoPaperWrap, emptyState, counter);
+  container.append(titleEditorRefs.titleBar, mediaViewport);
 
   return {
     container,
+    mediaViewport,
     photoPaperWrap,
     image,
     emptyState,
     counter,
+    titleInput: titleEditorRefs.titleInput,
+    commitButton: titleEditorRefs.commitButton,
+    currentEvidenceId: titleEditorRefs.currentEvidenceId,
+    currentCommittedTitle: titleEditorRefs.currentCommittedTitle,
     resizeObserver: null,
   };
 }
@@ -661,8 +854,8 @@ function layoutPhotoMount(refs) {
   const borderTop = parsePixels(paperComputed.borderTopWidth);
   const borderBottom = parsePixels(paperComputed.borderBottomWidth);
 
-  const availableWidth = refs.container.clientWidth;
-  const availableHeight = refs.container.clientHeight;
+  const availableWidth = refs.mediaViewport?.clientWidth || refs.container.clientWidth;
+  const availableHeight = refs.mediaViewport?.clientHeight || refs.container.clientHeight;
   if (!availableWidth || !availableHeight) {
     return;
   }
@@ -703,6 +896,11 @@ function createReportsWindowContentElements() {
   const container = document.createElement("div");
   container.classList.add("reports-carousel-container");
 
+  const titleEditorRefs = createEvidenceTitleBarElements();
+
+  const reportViewport = document.createElement("div");
+  reportViewport.classList.add("reports-content-viewport");
+
   const reportPaperWrap = document.createElement("div");
   reportPaperWrap.classList.add("report-paper-wrap");
 
@@ -720,15 +918,21 @@ function createReportsWindowContentElements() {
 
   reportDocumentContent.append(reportDocumentText, emptyState);
   reportPaperWrap.appendChild(reportDocumentContent);
-  container.append(reportPaperWrap, counter);
+  reportViewport.append(reportPaperWrap, counter);
+  container.append(titleEditorRefs.titleBar, reportViewport);
 
   return {
     container,
+    reportViewport,
     reportPaperWrap,
     reportDocumentContent,
     reportDocumentText,
     emptyState,
     counter,
+    titleInput: titleEditorRefs.titleInput,
+    commitButton: titleEditorRefs.commitButton,
+    currentEvidenceId: titleEditorRefs.currentEvidenceId,
+    currentCommittedTitle: titleEditorRefs.currentCommittedTitle,
   };
 }
 
@@ -755,6 +959,10 @@ function updatePhotosWindowContent(windowController) {
 
     refs.image.style.width = "";
     refs.image.style.height = "";
+    refs.currentEvidenceId = "";
+    refs.currentCommittedTitle = "";
+    refs.titleInput.value = "";
+    refs.commitButton.disabled = true;
     return;
   }
 
@@ -762,6 +970,7 @@ function updatePhotosWindowContent(windowController) {
   const currentIndex = getEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS);
   const currentEvidence = photoEvidences[currentIndex];
   const currentItem = resolveEvidenceContentPath(currentEvidence, getLanguage());
+  syncEvidenceTitleEditor(refs, currentEvidence);
   applyPhotoPaperStyle(refs.photoPaperWrap, currentEvidence?.paperStyle);
 
   refs.image.classList.remove("d-none");
@@ -840,6 +1049,11 @@ async function updateReportsWindowContent(windowController) {
     if (windowController.nextButtonElement) {
       windowController.nextButtonElement.disabled = true;
     }
+
+    refs.currentEvidenceId = "";
+    refs.currentCommittedTitle = "";
+    refs.titleInput.value = "";
+    refs.commitButton.disabled = true;
     return;
   }
 
@@ -847,6 +1061,7 @@ async function updateReportsWindowContent(windowController) {
   const currentIndex = getEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS);
   const currentEvidence = reportEvidences[currentIndex];
   const currentReportPath = resolveEvidenceContentPath(currentEvidence, getLanguage());
+  syncEvidenceTitleEditor(refs, currentEvidence);
 
   applyReportPaperStyle(refs.reportPaperWrap, currentEvidence?.paperStyle);
 
@@ -931,13 +1146,20 @@ function openPhotosWindow() {
   });
 
   const contentRefs = createPhotosWindowContentElements();
+  wireEvidenceTitleEditor({
+    refs: contentRefs,
+    storageKey: EVIDENCE_STORAGE_KEYS.PHOTOS,
+    onCommitted: () => {
+      updatePhotosWindowContent(photosWindowController);
+    },
+  });
   photosWindowController.setContent(contentRefs.container);
   photosWindowController.scrollContainerElement = contentRefs.container;
   if (typeof ResizeObserver !== "undefined") {
     contentRefs.resizeObserver = new ResizeObserver(() => {
       layoutPhotoMount(contentRefs);
     });
-    contentRefs.resizeObserver.observe(contentRefs.container);
+    contentRefs.resizeObserver.observe(contentRefs.mediaViewport);
   }
   photosWindowContentRefs.set(photosWindowController, contentRefs);
   registerDesktopWindow(photosWindowController, "photos");
@@ -975,6 +1197,13 @@ function openReportsWindow() {
   });
 
   const contentRefs = createReportsWindowContentElements();
+  wireEvidenceTitleEditor({
+    refs: contentRefs,
+    storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+    onCommitted: () => {
+      updateReportsWindowContent(reportsWindowController);
+    },
+  });
   reportsWindowController.setContent(contentRefs.container);
   reportsWindowController.scrollContainerElement = contentRefs.reportDocumentContent;
   reportsWindowContentRefs.set(reportsWindowController, contentRefs);

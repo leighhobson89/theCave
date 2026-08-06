@@ -53,6 +53,7 @@ let gameInProgress = false;
 
 let autoSaveOn = false;
 export let pauseAutoSaveCountdown = true;
+let evidenceCustomNames = {};
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
@@ -88,7 +89,9 @@ export function setElements() {
     photosFolder: document.getElementById("photosFolder"),
     photosFolderLabel: document.getElementById("photosFolderLabel"),
     zoomReadout: document.getElementById("zoomReadout"),
-    evidenceLabel: document.getElementById("evidenceLabel"),
+    notesFolder: document.getElementById("notesFolder"),
+    notesLabel: document.getElementById("notesLabel"),
+    desktopCalendar: document.getElementById("desktopCalendar"),
     settingsToggle: document.getElementById("settingsToggle"),
     settingsItems: document.getElementById("settingsItems"),
     muteToggleButton: document.getElementById("muteToggleButton"),
@@ -145,6 +148,7 @@ export function captureGameStatusForSaving() {
 
   gameState.language = getLanguage();
   gameState.evidenceStore = getEvidenceStoreSnapshot();
+  gameState.evidenceCustomNames = getEvidenceCustomNames();
 
   // Legacy compatibility fields for older loaders/tools.
   gameState.currentCarouselIndex = getCurrentCarouselIndex();
@@ -165,6 +169,7 @@ export function restoreGameStatus(gameState) {
       // UI elements
 
       setLanguage(gameState.language || "en");
+      setEvidenceCustomNames(gameState.evidenceCustomNames || {});
 
       if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
         initializeEvidenceStoreForNewGame();
@@ -355,4 +360,49 @@ export function getCanvasHeight() {
 
 export function getCanvasAspectRatio() {
   return GAME_ASPECT_RATIO;
+}
+
+export function setEvidenceCustomNames(value) {
+  const nextMap = {};
+  if (value && typeof value === "object") {
+    Object.keys(value).forEach((rawKey) => {
+      const normalizedKey = String(rawKey).trim();
+      const normalizedValue = String(value[rawKey] ?? "").trim();
+      if (!normalizedKey || !normalizedValue) {
+        return;
+      }
+
+      nextMap[normalizedKey] = normalizedValue;
+    });
+  }
+
+  evidenceCustomNames = nextMap;
+}
+
+export function getEvidenceCustomNames() {
+  return { ...evidenceCustomNames };
+}
+
+export function setEvidenceCustomName(evidenceId, customName) {
+  const key = String(evidenceId || "").trim();
+  if (!key) {
+    return;
+  }
+
+  const value = String(customName ?? "").trim();
+  if (!value) {
+    delete evidenceCustomNames[key];
+    return;
+  }
+
+  evidenceCustomNames[key] = value;
+}
+
+export function getEvidenceCustomName(evidenceId) {
+  const key = String(evidenceId || "").trim();
+  if (!key) {
+    return "";
+  }
+
+  return evidenceCustomNames[key] || "";
 }
