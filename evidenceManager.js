@@ -25,6 +25,9 @@ const PAPER_STYLES = {
   PHOTO_MOUNTED_AGED: "photo-mounted-aged",
 };
 
+const REPORTS_CATALOG_PATH_TEMPLATE = "./assets/reportsEvidences_{lang}.json";
+const PHOTOS_CATALOG_PATH_TEMPLATE = "./assets/photos_evidences_{lang}.json";
+
 const DEFAULT_EVIDENCE_BLUEPRINTS = [
   {
     kind: "story",
@@ -39,7 +42,6 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     photoPath: "./assets/photos/caveEntrance.png",
     name: "caveEntrance",
     titleKey: "photos",
-    defaultTitleString: "Cave Entrance",
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_IVORY,
   },
   {
@@ -48,7 +50,6 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     photoPath: "./assets/photos/insideCaveLookingBack.png",
     name: "insideCaveLookingBack",
     titleKey: "photos",
-    defaultTitleString: "Inside Cave Looking Back",
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_LINEN,
   },
   {
@@ -56,7 +57,6 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     reportName: "missingReport",
     storageKey: STORAGE_KEYS.REPORTS,
     titleKey: "reports",
-    defaultTitleString: "Missing Report",
   },
 ];
 
@@ -113,6 +113,29 @@ function parseReportNameFromPath(path) {
   return filename
     .replace(/_[a-z]{2}\.md$/i, "")
     .replace(/\.md$/i, "");
+}
+
+function parsePhotoNameFromPath(path) {
+  const normalizedPath = String(path || "").trim();
+  if (!normalizedPath) {
+    return "";
+  }
+
+  const filename = normalizedPath.split("/").pop() || "";
+  return filename.replace(/\.(png|jpe?g|webp|gif)$/i, "");
+}
+
+function parseReportNameFromIdentifier(value) {
+  const normalizedValue = String(value || "").trim();
+  if (!normalizedValue) {
+    return "";
+  }
+
+  if (normalizedValue.includes("/") || normalizedValue.endsWith(".md")) {
+    return parseReportNameFromPath(normalizedValue);
+  }
+
+  return normalizedValue.replace(/_[a-z]{2}$/i, "");
 }
 
 function buildDefaultTitleString(rawName) {
@@ -222,9 +245,10 @@ export function createReportEvidence({
     defaultTitleString: defaultTitleString || buildDefaultTitleString(normalizedName),
     paperStyle,
     source: {
-      kind: "markdown-template",
+      kind: "report-localized-catalog-entry",
       languageAware: true,
-      pathTemplate: `./assets/reports/${normalizedName}_{lang}.md`,
+      catalogPathTemplate: REPORTS_CATALOG_PATH_TEMPLATE,
+      entryId: normalizedName,
     },
   });
 }
@@ -243,15 +267,20 @@ export function createPhotoEvidence({
     return null;
   }
 
+  const normalizedName = (name || parsePhotoNameFromPath(normalizedPath) || normalizedPath).trim();
+
   return createEvidence({
     type: EVIDENCE_TYPES.PHOTO,
     storageKey,
     titleKey,
-    name: (name || normalizedPath).trim(),
-    defaultTitleString: defaultTitleString || buildDefaultTitleString(name || normalizedPath),
+    name: normalizedName,
+    defaultTitleString: defaultTitleString || buildDefaultTitleString(normalizedName),
     paperStyle,
     source: {
-      kind: "photo",
+      kind: "photo-localized-catalog-entry",
+      languageAware: true,
+      catalogPathTemplate: PHOTOS_CATALOG_PATH_TEMPLATE,
+      entryId: normalizedName,
       photoPath: normalizedPath,
     },
   });
@@ -305,8 +334,12 @@ export function resolveEvidenceContentPath(evidence, languageCode = "en") {
     return "";
   }
 
-  if (evidence.source.kind === "photo") {
+  if (evidence.source.kind === "photo" || evidence.source.kind === "photo-localized-catalog-entry") {
     return evidence.source.photoPath || "";
+  }
+
+  if (evidence.source.kind === "report-localized-catalog-entry") {
+    return "";
   }
 
   if (evidence.source.kind === "markdown-template") {
@@ -354,11 +387,14 @@ export function setPhotoCollectionFromPaths(paths) {
       type: EVIDENCE_TYPES.PHOTO,
       storageKey: STORAGE_KEYS.PHOTOS,
       titleKey: "photos",
-      name: path,
-      defaultTitleString: buildDefaultTitleString(path),
+      name: parsePhotoNameFromPath(path) || path,
+      defaultTitleString: buildDefaultTitleString(parsePhotoNameFromPath(path) || path),
       paperStyle: PAPER_STYLES.PHOTO_MOUNTED,
       source: {
-        kind: "photo",
+        kind: "photo-localized-catalog-entry",
+        languageAware: true,
+        catalogPathTemplate: PHOTOS_CATALOG_PATH_TEMPLATE,
+        entryId: parsePhotoNameFromPath(path) || path,
         photoPath: path,
       },
     }));
@@ -368,11 +404,11 @@ export function setPhotoCollectionFromPaths(paths) {
 
 export function setReportCollectionFromPaths(paths) {
   const evidences = (Array.isArray(paths) ? paths : [])
-    .filter((path) => typeof path === "string")
-    .map((path) => path.trim())
-    .filter((path) => path.length > 0)
-    .map((path) => {
-      const reportName = parseReportNameFromPath(path);
+    .filter((item) => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .map((item) => {
+      const reportName = parseReportNameFromIdentifier(item);
       if (!reportName) {
         return null;
       }
@@ -385,9 +421,10 @@ export function setReportCollectionFromPaths(paths) {
         defaultTitleString: buildDefaultTitleString(reportName),
         paperStyle: PAPER_STYLES.REPORT_PARCHMENT,
         source: {
-          kind: "markdown-template",
+          kind: "report-localized-catalog-entry",
           languageAware: true,
-          pathTemplate: `./assets/reports/${reportName}_{lang}.md`,
+          catalogPathTemplate: REPORTS_CATALOG_PATH_TEMPLATE,
+          entryId: reportName,
         },
       };
     })
@@ -428,17 +465,37 @@ export function setEvidenceStoreSnapshot(snapshot) {
     if (
       normalizedEvidence.type === EVIDENCE_TYPES.REPORT &&
       normalizedEvidence.source &&
-      normalizedEvidence.source.kind === "markdown-file"
+      (normalizedEvidence.source.kind === "markdown-file" ||
+        normalizedEvidence.source.kind === "markdown-template")
     ) {
-      const reportName = parseReportNameFromPath(normalizedEvidence.source.path);
+      const reportName = parseReportNameFromIdentifier(
+        normalizedEvidence.source.path || normalizedEvidence.source.pathTemplate
+      );
       if (reportName) {
         normalizedEvidence.name = reportName;
         normalizedEvidence.source = {
-          kind: "markdown-template",
+          kind: "report-localized-catalog-entry",
           languageAware: true,
-          pathTemplate: `./assets/reports/${reportName}_{lang}.md`,
+          catalogPathTemplate: REPORTS_CATALOG_PATH_TEMPLATE,
+          entryId: reportName,
         };
       }
+    }
+
+    if (
+      normalizedEvidence.type === EVIDENCE_TYPES.PHOTO &&
+      normalizedEvidence.source &&
+      normalizedEvidence.source.kind === "photo"
+    ) {
+      const photoName = parsePhotoNameFromPath(normalizedEvidence.source.photoPath) || normalizedEvidence.name;
+      normalizedEvidence.name = photoName;
+      normalizedEvidence.source = {
+        kind: "photo-localized-catalog-entry",
+        languageAware: true,
+        catalogPathTemplate: PHOTOS_CATALOG_PATH_TEMPLATE,
+        entryId: photoName,
+        photoPath: normalizedEvidence.source.photoPath,
+      };
     }
 
     if (!normalizedEvidence.defaultTitleString) {

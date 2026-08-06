@@ -38,7 +38,7 @@ export const DEFAULT_STARTING_CAROUSEL_ITEMS = [
   "./assets/photos/insideCaveLookingBack.png",
 ];
 export const DEFAULT_STARTING_REPORT_CAROUSEL_ITEMS = [
-  "./assets/reports/missingReport_en.md",
+  "missingReport",
 ];
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
@@ -332,8 +332,8 @@ export function addCarouselItem(path) {
 }
 
 export function addReportCarouselItem(path) {
-  const reportName = String(path || "")
-    .trim()
+  const normalizedInput = String(path || "").trim();
+  const reportName = normalizedInput
     .replace(/^\.\/assets\/reports\//, "")
     .replace(/_[a-z]{2}\.md$/i, "")
     .replace(/\.md$/i, "");

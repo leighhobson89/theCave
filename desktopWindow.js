@@ -8,6 +8,8 @@ export class DesktopWindow {
     classNames = [],
     title = "",
     showCarouselNavigation = false,
+    showDescriptionPanel = false,
+    descriptionPanelHeightRatio = 0.33,
     windowColor = null,
     onNavigatePrevious = null,
     onNavigateNext = null,
@@ -17,6 +19,10 @@ export class DesktopWindow {
     this.ownsDom = !rootElement;
     this.parentElement = parentElement || document.body;
     this.showCarouselNavigation = Boolean(showCarouselNavigation);
+    this.showDescriptionPanel = Boolean(showDescriptionPanel);
+    this.descriptionPanelHeightRatio = Number.isFinite(descriptionPanelHeightRatio)
+      ? Math.min(0.6, Math.max(0.2, descriptionPanelHeightRatio))
+      : 0.33;
     this.windowColor = windowColor;
     this.onNavigatePrevious = onNavigatePrevious;
     this.onNavigateNext = onNavigateNext;
@@ -30,6 +36,7 @@ export class DesktopWindow {
     this.titleElement = null;
     this.closeButtonElement = null;
     this.contentHostElement = null;
+    this.descriptionHostElement = null;
     this.previousButtonElement = null;
     this.nextButtonElement = null;
 
@@ -106,15 +113,46 @@ export class DesktopWindow {
       this.nextButtonElement.setAttribute("aria-label", "Next image");
       this.nextButtonElement.textContent = ">";
 
-      this.contentHostElement = document.createElement("div");
-      this.contentHostElement.classList.add("desktop-window-carousel-content");
+      if (this.showDescriptionPanel) {
+        this.rootElement.classList.add("desktop-window-has-description-panel");
+        this.rootElement.style.setProperty(
+          "--desktop-window-description-ratio",
+          String(this.descriptionPanelHeightRatio)
+        );
 
-      carouselLayout.append(
-        this.previousButtonElement,
-        this.contentHostElement,
-        this.nextButtonElement
-      );
-      this.bodyElement.appendChild(carouselLayout);
+        const contentStack = document.createElement("div");
+        contentStack.classList.add("desktop-window-carousel-content-stack");
+
+        this.contentHostElement = document.createElement("div");
+        this.contentHostElement.classList.add(
+          "desktop-window-carousel-content",
+          "desktop-window-carousel-content-main"
+        );
+
+        this.descriptionHostElement = document.createElement("div");
+        this.descriptionHostElement.classList.add(
+          "desktop-window-carousel-description-host",
+          "scrollbars-hidden"
+        );
+
+        contentStack.append(this.contentHostElement, this.descriptionHostElement);
+        carouselLayout.append(
+          this.previousButtonElement,
+          contentStack,
+          this.nextButtonElement
+        );
+        this.bodyElement.appendChild(carouselLayout);
+      } else {
+        this.contentHostElement = document.createElement("div");
+        this.contentHostElement.classList.add("desktop-window-carousel-content");
+
+        carouselLayout.append(
+          this.previousButtonElement,
+          this.contentHostElement,
+          this.nextButtonElement
+        );
+        this.bodyElement.appendChild(carouselLayout);
+      }
     } else {
       this.contentHostElement = document.createElement("div");
       this.contentHostElement.classList.add("desktop-window-content-host");
@@ -258,6 +296,7 @@ export class DesktopWindow {
     this.titleElement = null;
     this.closeButtonElement = null;
     this.contentHostElement = null;
+    this.descriptionHostElement = null;
     this.previousButtonElement = null;
     this.nextButtonElement = null;
   }
@@ -285,6 +324,21 @@ export class DesktopWindow {
 
   getContentHostElement() {
     return this.contentHostElement;
+  }
+
+  setDescriptionContent(content) {
+    if (!this.descriptionHostElement) {
+      return;
+    }
+
+    this.descriptionHostElement.replaceChildren();
+
+    if (content instanceof Node) {
+      this.descriptionHostElement.appendChild(content);
+      return;
+    }
+
+    this.descriptionHostElement.textContent = String(content ?? "");
   }
 
   centerInViewport() {

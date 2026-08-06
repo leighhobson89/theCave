@@ -1,0 +1,18 @@
+{
+  "entries": [
+    {
+      "id": "caveEntrance",
+      "photoPath": "./assets/photos/caveEntrance.png",
+      "defaultTitleString": "Cave Entrance",
+      "paperStyle": "photo-mounted-ivory",
+      "descriptionText": "﻿caveEntrance description (en)\r\n\r\nNotes recorded by investigator.\r\n"
+    },
+    {
+      "id": "insideCaveLookingBack",
+      "photoPath": "./assets/photos/insideCaveLookingBack.png",
+      "defaultTitleString": "Inside Cave Looking Back",
+      "paperStyle": "photo-mounted-linen",
+      "descriptionText": "﻿insideCaveLookingBack description (en)\r\n\r\nNotes recorded by investigator.\r\n"
+    }
+  ]
+}
