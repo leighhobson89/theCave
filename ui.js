@@ -89,12 +89,107 @@ const NOTES_TAB_COLORS = [
 let debugWindowController = null;
 let computerWindowController = null;
 let ashtrayAnimationTimeoutId = null;
+const NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS = 3000;
+const notificationQueue = [];
+let notificationReleaseIntervalId = null;
+let notificationHostElement = null;
 
 const webContentManager = createWebContentManager({
   awardEvidence: awardWebContentEvidence,
 });
 
 registerDefaultWebContentSites(webContentManager);
+
+function ensureNotificationHostElement() {
+  if (notificationHostElement?.isConnected) {
+    return notificationHostElement;
+  }
+
+  const host = document.createElement("div");
+  host.classList.add("notification-host");
+  host.setAttribute("aria-live", "polite");
+  host.setAttribute("aria-atomic", "false");
+  document.body.appendChild(host);
+  notificationHostElement = host;
+  return host;
+}
+
+function normalizeNotificationType(type) {
+  const normalizedType = String(type || "info").trim().toLowerCase();
+  if (normalizedType === "error" || normalizedType === "reward") {
+    return normalizedType;
+  }
+
+  return "info";
+}
+
+function releaseNextNotificationFromQueue() {
+  if (!notificationQueue.length) {
+    if (notificationReleaseIntervalId) {
+      clearInterval(notificationReleaseIntervalId);
+      notificationReleaseIntervalId = null;
+    }
+    return;
+  }
+
+  const next = notificationQueue.shift();
+  if (!next) {
+    return;
+  }
+
+  const host = ensureNotificationHostElement();
+  const notificationElement = document.createElement("div");
+  notificationElement.classList.add("game-notification", `game-notification-${next.type}`);
+  notificationElement.textContent = next.text;
+  host.appendChild(notificationElement);
+
+  requestAnimationFrame(() => {
+    notificationElement.classList.add("is-visible");
+  });
+
+  if (next.sound) {
+    audioManager.playSfx(next.sound);
+  }
+
+  const hideDelay = Math.max(200, next.time);
+  window.setTimeout(() => {
+    notificationElement.classList.remove("is-visible");
+    window.setTimeout(() => {
+      notificationElement.remove();
+    }, 260);
+  }, hideDelay);
+}
+
+function ensureNotificationQueueReleaseLoop() {
+  if (notificationReleaseIntervalId) {
+    return;
+  }
+
+  releaseNextNotificationFromQueue();
+  notificationReleaseIntervalId = window.setInterval(() => {
+    releaseNextNotificationFromQueue();
+  }, NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS);
+}
+
+export function showNotifcation(type, text, time, sound = false) {
+  const normalizedText = String(text || "").trim();
+  if (!normalizedText) {
+    return;
+  }
+
+  const parsedTime = Number(time);
+  const notification = {
+    type: normalizeNotificationType(type),
+    text: normalizedText,
+    time: Number.isFinite(parsedTime) ? Math.max(200, parsedTime) : 2500,
+    sound: typeof sound === "string" && sound.trim() ? sound.trim() : false,
+  };
+
+  notificationQueue.push(notification);
+  ensureNotificationQueueReleaseLoop();
+}
+
+window.showNotifcation = showNotifcation;
 
 function syncAshtrayVisualState() {
   const ashtrayElement = getElements().desktopAshtray;
@@ -107,7 +202,7 @@ function syncAshtrayVisualState() {
   ashtrayElement.classList.remove("is-extinguishing", "is-relighting");
 }
 
-function awardWebContentEvidence(evidenceDescriptor) {
+function awardWebContentEvidence(evidenceDescriptor, context = {}) {
   if (!evidenceDescriptor || typeof evidenceDescriptor !== "object") {
     return false;
   }
@@ -148,6 +243,24 @@ function awardWebContentEvidence(evidenceDescriptor) {
   }
 
   createEvidence(evidenceDescriptor);
+
+  const websiteId = String(context?.websiteId || "").trim().toLowerCase();
+  const isWebService = websiteId === "zoomsearch"
+    || websiteId === "library"
+    || websiteId === "police"
+    || websiteId === "archives";
+  const evidenceType = String(evidenceDescriptor?.type || "").trim().toLowerCase();
+
+  if (isWebService && (evidenceType === "photo" || evidenceType === "report")) {
+    const evidenceTypeLabel = evidenceType === "photo" ? "Photo" : "Report";
+    showNotifcation(
+      "reward",
+      `New ${evidenceTypeLabel} Evidence unlocked in your Evidence folder!`,
+      4000,
+      "newEvidence"
+    );
+  }
+
   return true;
 }
 

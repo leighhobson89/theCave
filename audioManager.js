@@ -21,6 +21,7 @@ export class AudioManager {
     this.sfxSources = {
       clickButton: "audio/sfx/clickButton.mp3",
       clickSwitch: "audio/sfx/clickSwitch.mp3",
+      newEvidence: "audio/sfx/newEvidence.mp3",
     };
 
     this.musicVolume = getMusicVolumePreference();
@@ -108,7 +109,12 @@ export class AudioManager {
   }
 
   playSfx(name) {
-    const src = this.sfxSources[name];
+    const normalizedName = String(name || "").trim();
+    const registeredSource = this.sfxSources[normalizedName];
+    const looksLikePath = /\//.test(normalizedName)
+      || /^\./.test(normalizedName)
+      || /\.(mp3|wav|ogg|m4a)$/i.test(normalizedName);
+    const src = registeredSource || (looksLikePath ? normalizedName : "");
     if (!src || this.getMuted()) {
       return;
     }
