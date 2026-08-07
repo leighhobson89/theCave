@@ -88,18 +88,6 @@ function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function parseReportNameFromPath(path) {
-  const normalizedPath = String(path || "").trim();
-  if (!normalizedPath) {
-    return "";
-  }
-
-  const filename = normalizedPath.split("/").pop() || "";
-  return filename
-    .replace(/_[a-z]{2}\.md$/i, "")
-    .replace(/\.md$/i, "");
-}
-
 function parsePhotoNameFromPath(path) {
   const normalizedPath = String(path || "").trim();
   if (!normalizedPath) {
@@ -108,19 +96,6 @@ function parsePhotoNameFromPath(path) {
 
   const filename = normalizedPath.split("/").pop() || "";
   return filename.replace(/\.(png|jpe?g|webp|gif)$/i, "");
-}
-
-function parseReportNameFromIdentifier(value) {
-  const normalizedValue = String(value || "").trim();
-  if (!normalizedValue) {
-    return "";
-  }
-
-  if (normalizedValue.includes("/") || normalizedValue.endsWith(".md")) {
-    return parseReportNameFromPath(normalizedValue);
-  }
-
-  return normalizedValue.replace(/_[a-z]{2}$/i, "");
 }
 
 function buildDefaultTitleString(rawName) {
@@ -319,7 +294,7 @@ export function resolveEvidenceContentPath(evidence, languageCode = "en") {
     return "";
   }
 
-  if (evidence.source.kind === "photo" || evidence.source.kind === "photo-localized-catalog-entry") {
+  if (evidence.source.kind === "photo-localized-catalog-entry") {
     return evidence.source.photoPath || "";
   }
 
@@ -336,86 +311,7 @@ export function resolveEvidenceContentPath(evidence, languageCode = "en") {
     return String(evidence.source.pathTemplate || "").replaceAll("{lang}", language);
   }
 
-  if (evidence.source.kind === "markdown-file") {
-    return evidence.source.path || "";
-  }
-
   return "";
-}
-
-function replaceCollection(storageKey, evidences) {
-  ensureCollection(storageKey);
-
-  const existingIds = [...evidenceStore.collections[storageKey]];
-  existingIds.forEach((id) => {
-    delete evidenceStore.evidencesById[String(id)];
-  });
-
-  evidenceStore.collections[storageKey] = [];
-
-  evidences.forEach((evidence) => {
-    addEvidenceToStore({
-      ...evidence,
-      storageKey,
-    });
-  });
-
-  setEvidenceIndex(storageKey, evidenceStore.indices[storageKey]);
-}
-
-export function setPhotoCollectionFromPaths(paths) {
-  const evidences = (Array.isArray(paths) ? paths : [])
-    .filter((path) => typeof path === "string")
-    .map((path) => path.trim())
-    .filter((path) => path.length > 0)
-    .map((path) => ({
-      type: EVIDENCE_TYPES.PHOTO,
-      storageKey: STORAGE_KEYS.PHOTOS,
-      titleKey: "photos",
-      name: parsePhotoNameFromPath(path) || path,
-      defaultTitleString: buildDefaultTitleString(parsePhotoNameFromPath(path) || path),
-      paperStyle: PAPER_STYLES.PHOTO_MOUNTED,
-      source: {
-        kind: "photo-localized-catalog-entry",
-        languageAware: true,
-        catalogPathTemplate: PHOTOS_CATALOG_PATH_TEMPLATE,
-        entryId: parsePhotoNameFromPath(path) || path,
-        photoPath: path,
-      },
-    }));
-
-  replaceCollection(STORAGE_KEYS.PHOTOS, evidences);
-}
-
-export function setReportCollectionFromPaths(paths) {
-  const evidences = (Array.isArray(paths) ? paths : [])
-    .filter((item) => typeof item === "string")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
-    .map((item) => {
-      const reportName = parseReportNameFromIdentifier(item);
-      if (!reportName) {
-        return null;
-      }
-
-      return {
-        type: EVIDENCE_TYPES.REPORT,
-        storageKey: STORAGE_KEYS.REPORTS,
-        titleKey: "reports",
-        name: reportName,
-        defaultTitleString: buildDefaultTitleString(reportName),
-        paperStyle: PAPER_STYLES.REPORT_PARCHMENT,
-        source: {
-          kind: "report-localized-catalog-entry",
-          languageAware: true,
-          catalogPathTemplate: REPORTS_CATALOG_PATH_TEMPLATE,
-          entryId: reportName,
-        },
-      };
-    })
-    .filter(Boolean);
-
-  replaceCollection(STORAGE_KEYS.REPORTS, evidences);
 }
 
 export function getEvidenceStoreSnapshot() {
@@ -446,42 +342,6 @@ export function setEvidenceStoreSnapshot(snapshot) {
     }
 
     const normalizedEvidence = cloneJson(evidence);
-
-    if (
-      normalizedEvidence.type === EVIDENCE_TYPES.REPORT &&
-      normalizedEvidence.source &&
-      (normalizedEvidence.source.kind === "markdown-file" ||
-        normalizedEvidence.source.kind === "markdown-template")
-    ) {
-      const reportName = parseReportNameFromIdentifier(
-        normalizedEvidence.source.path || normalizedEvidence.source.pathTemplate
-      );
-      if (reportName) {
-        normalizedEvidence.name = reportName;
-        normalizedEvidence.source = {
-          kind: "report-localized-catalog-entry",
-          languageAware: true,
-          catalogPathTemplate: REPORTS_CATALOG_PATH_TEMPLATE,
-          entryId: reportName,
-        };
-      }
-    }
-
-    if (
-      normalizedEvidence.type === EVIDENCE_TYPES.PHOTO &&
-      normalizedEvidence.source &&
-      normalizedEvidence.source.kind === "photo"
-    ) {
-      const photoName = parsePhotoNameFromPath(normalizedEvidence.source.photoPath) || normalizedEvidence.name;
-      normalizedEvidence.name = photoName;
-      normalizedEvidence.source = {
-        kind: "photo-localized-catalog-entry",
-        languageAware: true,
-        catalogPathTemplate: PHOTOS_CATALOG_PATH_TEMPLATE,
-        entryId: photoName,
-        photoPath: normalizedEvidence.source.photoPath,
-      };
-    }
 
     if (!normalizedEvidence.defaultTitleString) {
       normalizedEvidence.defaultTitleString = buildDefaultTitleString(normalizedEvidence.name);
@@ -521,12 +381,4 @@ export function setEvidenceStoreSnapshot(snapshot) {
 
 export function getEvidenceStorageKeys() {
   return { ...STORAGE_KEYS };
-}
-
-export function getEvidenceTypeKeys() {
-  return { ...EVIDENCE_TYPES };
-}
-
-export function getEvidencePaperStyleKeys() {
-  return { ...PAPER_STYLES };
 }

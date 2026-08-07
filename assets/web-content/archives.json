@@ -25,7 +25,11 @@
       "publication": "Frontier Press",
       "edition": "Late Edition",
       "date": "1996-10-12",
-      "keywords": ["frontier", "rescue drill", "mine road"],
+      "keywords": [
+        "frontier",
+        "rescue drill",
+        "mine road"
+      ],
       "summary": "A public article about a cave rescue drill and a road closure.",
       "article": [
         "The Frontier Press reports that a stretch of the mine road was closed while volunteers staged a rescue drill near the old cave trail.",
@@ -48,8 +52,10 @@
         "defaultTitleString": "Frontier Press Dispatch",
         "paperStyle": "report-parchment",
         "source": {
-          "kind": "markdown-file",
-          "path": "./assets/web-content/evidence/archives-frontier-press-dispatch.md"
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "archives-frontier-press-dispatch"
         }
       }
     },
@@ -60,7 +66,11 @@
       "publication": "Prairie Ledger",
       "edition": "Subscriber Archive",
       "date": "1997-02-18",
-      "keywords": ["telegram", "winter freight", "subscriber archive"],
+      "keywords": [
+        "telegram",
+        "winter freight",
+        "subscriber archive"
+      ],
       "summary": "A subscriber-only freight article without photographs.",
       "article": [
         "The Prairie Ledger covers delayed winter freight and a weather bulletin passed between relay crews after midnight.",
@@ -68,7 +78,21 @@
       ],
       "images": [],
       "requiredAccessLevel": 1,
-      "awardsEvidence": false
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "archives-prairie-telegram",
+        "defaultTitleString": "Prairie Telegram",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "archives-prairie-telegram"
+        }
+      }
     },
     {
       "id": "red-river-bulletin",
@@ -77,7 +101,11 @@
       "publication": "Northern Review",
       "edition": "Morning Edition",
       "date": "1997-06-04",
-      "keywords": ["bulletin", "river levels", "market notes"],
+      "keywords": [
+        "bulletin",
+        "river levels",
+        "market notes"
+      ],
       "summary": "A public clipping with a small accompanying photo.",
       "article": [
         "The Northern Review prints a short bulletin on river levels and market notes for northern supply stations.",
@@ -91,12 +119,29 @@
         }
       ],
       "requiredAccessLevel": 0,
-      "awardsEvidence": false
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "archives-red-river-bulletin",
+        "defaultTitleString": "Red River Bulletin",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "archives-red-river-bulletin"
+        }
+      }
     },
     {
       "id": "test-archives-alpha",
       "province": "Saskatchewan",
       "headline": "Newspaper Test Alpha",
+      "publication": "",
+      "edition": "",
+      "date": "",
       "keywords": [
         "test archives alpha"
       ],
@@ -104,8 +149,53 @@
       "article": [
         "This article validates combined province and keyword lookup behavior."
       ],
+      "images": [],
       "requiredAccessLevel": 0,
-      "images": []
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "archives-test-archives-alpha",
+        "defaultTitleString": "Newspaper Test Alpha",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "archives-test-archives-alpha"
+        }
+      }
+    },
+    {
+      "id": "flow-archives-page",
+      "province": "Saskatchewan",
+      "headline": "Flow Archives Bulletin",
+      "publication": "Flow Gazette",
+      "keywords": [
+        "flow archives verification"
+      ],
+      "summary": "Canada archive flow verification article.",
+      "article": [
+        "Selecting Saskatchewan and the exact keyword should unlock this evidence."
+      ],
+      "requiredAccessLevel": 0,
+      "images": [],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "flow-archives-award",
+        "defaultTitleString": "Flow Archives Bulletin",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "flow-archives-award"
+        }
+      }
     }
   ]
 }

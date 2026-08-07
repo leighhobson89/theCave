@@ -28,7 +28,11 @@
       "id": "station-log-01",
       "province": "Saskatchewan",
       "title": "Station Log 01",
-      "keywords": ["station", "patrol", "station log"],
+      "keywords": [
+        "station",
+        "patrol",
+        "station log"
+      ],
       "summary": "Routine overnight station note with no photographs attached.",
       "report": [
         "The station log reports a quiet evening, one lantern inspection, and a patrol route ending near the old cave road junction.",
@@ -56,8 +60,10 @@
         "defaultTitleString": "Station Log 01",
         "paperStyle": "report-parchment",
         "source": {
-          "kind": "markdown-file",
-          "path": "./assets/web-content/evidence/police-station-log-01.md"
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "police-station-log-01"
         }
       }
     },
@@ -65,11 +71,15 @@
       "id": "evidence-locker-22",
       "province": "North-West Territories District",
       "title": "Evidence Locker 22",
-      "keywords": ["locker", "evidence locker", "inventory sheet"],
+      "keywords": [
+        "locker",
+        "evidence locker",
+        "inventory sheet"
+      ],
       "summary": "Restricted inventory sheet with one evidence photograph.",
       "report": [
         "Locker 22 contains tagged field items recovered from an abandoned supply room and a damaged lantern crate.",
-        "The inventory warns that several labels were rewritten after the district transfer." 
+        "The inventory warns that several labels were rewritten after the district transfer."
       ],
       "caseNumber": "NWT-LOCK-22",
       "officer": "Detective Rowan Pike",
@@ -90,13 +100,31 @@
         }
       ],
       "requiredPrivilegeLevel": 2,
-      "awardsEvidence": false
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "police-evidence-locker-22",
+        "defaultTitleString": "Evidence Locker 22",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "police-evidence-locker-22"
+        }
+      }
     },
     {
       "id": "director-file-9",
       "province": "Saskatchewan",
       "title": "Director File 9",
-      "keywords": ["director", "task force", "director file"],
+      "keywords": [
+        "director",
+        "task force",
+        "director file"
+      ],
       "summary": "Senior review file with multiple evidence photographs.",
       "report": [
         "Director File 9 consolidates district task force notes regarding the cave route, the ridge relay, and conflicting witness sketches.",
@@ -139,13 +167,16 @@
         "defaultTitleString": "Director File 9",
         "paperStyle": "report-parchment",
         "source": {
-          "kind": "markdown-file",
-          "path": "./assets/web-content/evidence/police-director-file-9.md"
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "police-director-file-9"
         }
       }
     },
     {
       "id": "test-police-alpha",
+      "province": "",
       "title": "Police Test Alpha",
       "keywords": [
         "test police alpha"
@@ -154,9 +185,57 @@
       "report": [
         "This record validates police keyword matching with public privilege access."
       ],
+      "caseNumber": "",
       "officer": "Test Officer",
+      "classification": "",
+      "declassificationStatus": "",
+      "date": "",
+      "images": [],
+      "attachments": [],
       "requiredPrivilegeLevel": 0,
-      "images": []
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "police-test-police-alpha",
+        "defaultTitleString": "Police Test Alpha",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "police-test-police-alpha"
+        }
+      }
+    },
+    {
+      "id": "flow-police-page",
+      "title": "Flow Police File",
+      "keywords": [
+        "flow police verification"
+      ],
+      "summary": "Police record flow verification case.",
+      "report": [
+        "This public police record should unlock the linked evidence after an exact keyword match."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "flow-police-award",
+        "defaultTitleString": "Flow Police File",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "flow-police-award"
+        }
+      }
     }
   ]
 }

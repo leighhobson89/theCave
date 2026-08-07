@@ -6,6 +6,41 @@
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**NORDWEST-REITERPOLIZEI**\r\n**Dienststelle Black Pine – Distrikt Saskatchewan, Nordwest-Territorien**\r\n\r\n# ERMITTLUNG ZU EINER VERMISSTEN PERSON – FORTSCHRITTSBERICHT – DREI MONATE\r\n\r\n**Aktenzeichen:** 01-1210-00\r\n**Datum:** 12. Oktober 1901\r\n\r\n**Ort:** Ehemalige Silbermine Black Pine (Schacht B)\r\n\r\n---\r\n\r\n### Beteiligte Personen\r\n\r\n**Andrew John Spencer Geburtsdatum: 12. AUG. 1888 (12 Jahre)**\r\nLebend aufgefunden. An den erlittenen Verletzungen verstorben.\r\n\r\n**Arnold Askew Spencer Geburtsdatum: 06. NOV. 1891 (9 Jahre), genannt „Arnie“**\r\nVermisst. Vermutlich VERSTORBEN.\r\n\r\n---\r\n\r\n### Zusammenfassung\r\n\r\nBeide Jungen betraten am Nachmittag des 12. Juli 1901 den verlassenen Schacht B der ehemaligen Silbermine Black Pine.\r\n\r\nAndrew John Spencer kehrte später laut Zeugenaussagen schwer verletzt zur Spencer Farm in Black Pine zurück. Er verstarb später in seinem Wohnhaus infolge vermuteten Blutverlusts und Schocks, bestätigt durch den örtlichen Gerichtsmediziner am 13. Juli.\r\n\r\nDie Suche nach Arnold Askew Spencer dauert weiterhin an.\r\n\r\n---\r\n\r\n### Sichergestellte Beweismittel\r\n\r\n• Weißes Baumwolltaschentuch\r\n• Lackierte Brotdose aus Holz\r\n• 40 Fuß Hanfseil\r\n• Ungenzündete Strohfackel, mit Heizöl getränkt\r\n\r\n---\r\n\r\n**Fallstatus:** OFFEN – VERMISSTE PERSON, VERMUTLICH VERSTORBEN\r\n\r\n**Anmerkungen**\r\n\r\nFür die Umstände der Verletzungen von Andrew John Spencer konnte bislang keine Erklärung festgestellt werden.",
       "descriptionText": "﻿missingReport supplemental notes (de)\r\n\r\nAdditional context filed with the main report.\r\n"
+    },
+    {
+      "id": "flow-standalone-award",
+      "defaultTitleString": "Standalone Flow Award",
+      "paperStyle": "report-parchment",
+      "reportText": "# Standalone Flow Award\r\n\r\nThis report proves standalone page visits can unlock evidence.\r\n",
+      "descriptionText": "Standalone flow evidence created through the evidence tool.\r\n"
+    },
+    {
+      "id": "flow-zoom-award",
+      "defaultTitleString": "Zoom Flow Award",
+      "paperStyle": "report-parchment",
+      "reportText": "# Zoom Flow Award\r\n\r\nThis report proves ZoomSearch keyword matches unlock evidence.\r\n",
+      "descriptionText": "ZoomSearch flow evidence created through the evidence tool.\r\n"
+    },
+    {
+      "id": "flow-library-award",
+      "defaultTitleString": "Flow Library Dossier",
+      "paperStyle": "report-parchment",
+      "reportText": "# Flow Library Dossier\r\n\r\nThis report proves Library author and title search unlocks evidence.\r\n",
+      "descriptionText": "Library flow evidence created through the evidence tool.\r\n"
+    },
+    {
+      "id": "flow-police-award",
+      "defaultTitleString": "Flow Police File",
+      "paperStyle": "report-parchment",
+      "reportText": "# Flow Police File\r\n\r\nThis report proves Police keyword search unlocks evidence.\r\n",
+      "descriptionText": "Police flow evidence created through the evidence tool.\r\n"
+    },
+    {
+      "id": "flow-archives-award",
+      "defaultTitleString": "Flow Archives Bulletin",
+      "paperStyle": "report-parchment",
+      "reportText": "# Flow Archives Bulletin\r\n\r\nThis report proves Newspaper province and keyword search unlocks evidence.\r\n",
+      "descriptionText": "Archives flow evidence created through the evidence tool.\r\n"
     }
   ]
 }

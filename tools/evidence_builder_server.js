@@ -393,7 +393,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`Evidence builder server running on http://127.0.0.1:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Evidence builder server running on http://localhost:${PORT}`);
   console.log(`Project root is fixed to: ${PROJECT_ROOT}`);
 });

@@ -10,7 +10,10 @@
     "url",
     "keywords",
     "summary",
-    "pageContent"
+    "pageContent",
+    "images",
+    "awardsEvidence",
+    "evidence"
   ],
   "properties": {
     "id": { "type": "string" },
@@ -51,7 +54,38 @@
       }
     },
     "awardsEvidence": { "type": "boolean" },
-    "evidence": { "type": "object" },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "type",
+        "storageKey",
+        "titleKey",
+        "name",
+        "defaultTitleString",
+        "paperStyle",
+        "source"
+      ],
+      "properties": {
+        "type": { "type": "string" },
+        "storageKey": { "type": "string" },
+        "titleKey": { "type": "string" },
+        "name": { "type": "string" },
+        "defaultTitleString": { "type": "string" },
+        "paperStyle": { "type": "string" },
+        "source": {
+          "type": "object",
+          "required": ["kind", "languageAware", "catalogPathTemplate", "entryId"],
+          "properties": {
+            "kind": { "type": "string" },
+            "languageAware": { "type": "boolean" },
+            "catalogPathTemplate": { "type": "string" },
+            "entryId": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "standalonePages": {
       "type": "array",
       "items": { "$ref": "./standalone-page.schema.json" }

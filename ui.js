@@ -36,8 +36,6 @@ import {
 } from "./constantsAndGlobalVars.js";
 import {
   createEvidence,
-  createPhotoEvidence,
-  createReportEvidence,
   getCurrentEvidence,
   getEvidenceCollection,
   getEvidenceIndex,
@@ -63,7 +61,6 @@ import { createWebContentManager } from "./webContentManager.js";
 import { registerDefaultWebContentSites } from "./webContentRegistry.js";
 
 const storyTextCacheByLanguage = new Map();
-const legacyTextCacheByPath = new Map();
 const reportCatalogCacheByLanguage = new Map();
 const photoCatalogCacheByLanguage = new Map();
 const activeDesktopWindows = new Set();
@@ -76,8 +73,6 @@ const computerWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
 const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
-const REPORTS_CATALOG_PATH_TEMPLATE = "./assets/reportsEvidences_{lang}.json";
-const PHOTOS_CATALOG_PATH_TEMPLATE = "./assets/photos_evidences_{lang}.json";
 const DEBUG_WINDOW_COLOR = "rgb(108, 255, 64)";
 const NOTES_TAB_COLORS = [
   "#ffe2e2",
@@ -114,6 +109,41 @@ function syncAshtrayVisualState() {
 
 function awardWebContentEvidence(evidenceDescriptor) {
   if (!evidenceDescriptor || typeof evidenceDescriptor !== "object") {
+    return false;
+  }
+
+  const targetStorageKey = String(evidenceDescriptor.storageKey || "").trim() || EVIDENCE_STORAGE_KEYS.REPORTS;
+  const existingCollection = getEvidenceCollection(targetStorageKey);
+  const incomingName = String(evidenceDescriptor.name || "").trim();
+  const incomingType = String(evidenceDescriptor.type || "").trim();
+  const incomingSourceKind = String(evidenceDescriptor?.source?.kind || "").trim();
+  const incomingSourcePath = String(evidenceDescriptor?.source?.path || "").trim();
+  const incomingSourceEntryId = String(evidenceDescriptor?.source?.entryId || "").trim();
+
+  const alreadyExists = existingCollection.some((existingEvidence) => {
+    if (!existingEvidence || typeof existingEvidence !== "object") {
+      return false;
+    }
+
+    const existingName = String(existingEvidence.name || "").trim();
+    const existingType = String(existingEvidence.type || "").trim();
+    const existingSourceKind = String(existingEvidence?.source?.kind || "").trim();
+    const existingSourcePath = String(existingEvidence?.source?.path || "").trim();
+    const existingSourceEntryId = String(existingEvidence?.source?.entryId || "").trim();
+
+    const matchesByEntryId = incomingSourceEntryId && existingSourceEntryId === incomingSourceEntryId;
+    const matchesByPath = incomingSourcePath && existingSourcePath === incomingSourcePath;
+    const matchesByIdentity = incomingName && existingName === incomingName && incomingType && existingType === incomingType;
+    const matchesBySourceKindAndName =
+      incomingSourceKind
+      && existingSourceKind === incomingSourceKind
+      && incomingName
+      && existingName === incomingName;
+
+    return matchesByEntryId || matchesByPath || matchesByIdentity || matchesBySourceKindAndName;
+  });
+
+  if (alreadyExists) {
     return false;
   }
 
@@ -1840,6 +1870,10 @@ function createComputerNetscapeWindowContentElements() {
       return;
     }
 
+    if (pageRecord.awardsEvidence === true && pageRecord.evidence) {
+      awardWebContentEvidence(pageRecord.evidence);
+    }
+
     browserAddress.value = pageRecord.url;
     pageHost.replaceChildren(createStandaloneTextPage(pageRecord));
 
@@ -1929,6 +1963,10 @@ function createComputerNetscapeWindowContentElements() {
               url,
               content: pageRecord.content ?? pageRecord.body ?? "",
               style: pageRecord.style && typeof pageRecord.style === "object" ? pageRecord.style : null,
+              awardsEvidence: pageRecord.awardsEvidence === true,
+              evidence: pageRecord.evidence && typeof pageRecord.evidence === "object"
+                ? pageRecord.evidence
+                : null,
             };
 
             standalonePageRouteMap.set(normalizedUrl, normalizedPage);
@@ -1941,52 +1979,6 @@ function createComputerNetscapeWindowContentElements() {
         console.warn("Unable to load standalone-pages.json routes.", error);
       }
 
-      // Backward-compatible fallback: load embedded standalonePages from service JSON files.
-      const websiteIds = webContentManager.getWebsiteIds();
-      await Promise.all(
-        websiteIds.map(async (websiteId) => {
-          try {
-            const websiteData = await webContentManager.loadWebsiteData(websiteId);
-            const standalonePages = Array.isArray(websiteData?.standalonePages)
-              ? websiteData.standalonePages
-              : [];
-
-            standalonePages.forEach((pageRecord) => {
-              if (!pageRecord || typeof pageRecord !== "object") {
-                return;
-              }
-
-              const url = String(pageRecord.url ?? "").trim();
-              const id = String(pageRecord.id ?? "").trim();
-              if (!url || !id) {
-                return;
-              }
-
-              const normalizedUrl = normalizeBrowserUrl(url);
-              if (!normalizedUrl) {
-                return;
-              }
-
-              const normalizedPage = {
-                id,
-                sourceSiteId: websiteId,
-                sourceLabel: pageRecord.source || websiteId,
-                title: String(pageRecord.title ?? id).trim() || id,
-                url,
-                content: pageRecord.content ?? pageRecord.body ?? pageRecord.pageContent ?? "",
-                style: pageRecord.style && typeof pageRecord.style === "object" ? pageRecord.style : null,
-              };
-
-              standalonePageRouteMap.set(normalizedUrl, normalizedPage);
-              if (normalizedUrl.startsWith("http://") || normalizedUrl.startsWith("https://")) {
-                standalonePageRouteMap.set(`${normalizedUrl}/`, normalizedPage);
-              }
-            });
-          } catch (error) {
-            console.warn(`Unable to load standalone page routes for ${websiteId}.`, error);
-          }
-        })
-      );
     })();
 
     return standalonePagesPromise;
@@ -2375,12 +2367,11 @@ async function loadEvidenceCatalogByLanguage({
   cacheMap,
   languageCode,
   pathTemplate,
-  fallbackTemplate,
   catalogLabel,
   forceReload = false,
 }) {
   const language = normalizeLanguageCode(languageCode);
-  const resolvedTemplate = String(pathTemplate || fallbackTemplate || "").trim();
+  const resolvedTemplate = String(pathTemplate || "").trim();
   if (!resolvedTemplate) {
     return new Map();
   }
@@ -2406,32 +2397,31 @@ async function loadEvidenceCatalogByLanguage({
     cacheMap.set(cacheKey, index);
     return index;
   } catch (error) {
-    if (language !== "en") {
-      try {
-        const fallbackIndex = await tryLoad("en");
-        cacheMap.set(cacheKey, fallbackIndex);
-        return fallbackIndex;
-      } catch (fallbackError) {
-        console.error(`Error fetching ${catalogLabel} catalog JSON:`, fallbackError);
-      }
-    } else {
-      console.error(`Error fetching ${catalogLabel} catalog JSON:`, error);
-    }
-
+    console.error(`Error fetching ${catalogLabel} catalog JSON:`, error);
     const emptyIndex = new Map();
     cacheMap.set(cacheKey, emptyIndex);
     return emptyIndex;
   }
 }
 
+function buildMissingCatalogEntryMessage(evidence, label, languageCode) {
+  const title = getEvidenceDefaultTitle(evidence);
+  const entryId = getCatalogEntryIdFromEvidence(evidence) || "unknown-entry";
+  return `${label} unavailable for '${title}'. Missing catalog entry '${entryId}' for language '${normalizeLanguageCode(languageCode)}'.`;
+}
+
+function buildMissingCatalogFieldMessage(evidence, label, fieldName, languageCode) {
+  const title = getEvidenceDefaultTitle(evidence);
+  const entryId = getCatalogEntryIdFromEvidence(evidence) || "unknown-entry";
+  return `${label} unavailable for '${title}'. Catalog entry '${entryId}' is missing '${fieldName}' for language '${normalizeLanguageCode(languageCode)}'.`;
+}
+
 async function getReportCatalogEntry(evidence, languageCode, forceReload = false) {
-  const catalogPathTemplate =
-    evidence?.source?.catalogPathTemplate || REPORTS_CATALOG_PATH_TEMPLATE;
+  const catalogPathTemplate = String(evidence?.source?.catalogPathTemplate || "").trim();
   const catalogIndex = await loadEvidenceCatalogByLanguage({
     cacheMap: reportCatalogCacheByLanguage,
     languageCode,
     pathTemplate: catalogPathTemplate,
-    fallbackTemplate: REPORTS_CATALOG_PATH_TEMPLATE,
     catalogLabel: "report evidence",
     forceReload,
   });
@@ -2440,83 +2430,16 @@ async function getReportCatalogEntry(evidence, languageCode, forceReload = false
 }
 
 async function getPhotoCatalogEntry(evidence, languageCode, forceReload = false) {
-  const catalogPathTemplate =
-    evidence?.source?.catalogPathTemplate || PHOTOS_CATALOG_PATH_TEMPLATE;
+  const catalogPathTemplate = String(evidence?.source?.catalogPathTemplate || "").trim();
   const catalogIndex = await loadEvidenceCatalogByLanguage({
     cacheMap: photoCatalogCacheByLanguage,
     languageCode,
     pathTemplate: catalogPathTemplate,
-    fallbackTemplate: PHOTOS_CATALOG_PATH_TEMPLATE,
     catalogLabel: "photo evidence",
     forceReload,
   });
 
   return catalogIndex.get(getCatalogEntryIdFromEvidence(evidence)) || null;
-}
-
-async function resolvePhotoContentPath(evidence, languageCode) {
-  const catalogEntry = await getPhotoCatalogEntry(evidence, languageCode);
-  const localizedPhotoPath = String(catalogEntry?.photoPath || "").trim();
-  if (localizedPhotoPath) {
-    return localizedPhotoPath;
-  }
-
-  return resolveEvidenceContentPath(evidence, languageCode);
-}
-
-function resolveLegacyEvidenceDescriptionPath(evidence, languageCode) {
-  const contentPath = resolveEvidenceContentPath(evidence, languageCode);
-  if (!contentPath) {
-    return "";
-  }
-
-  const normalizedPath = String(contentPath).trim();
-
-  if (/_[a-z]{2}\.md$/i.test(normalizedPath)) {
-    return normalizedPath.replace(/_([a-z]{2})\.md$/i, "Desc_$1.md");
-  }
-
-  if (/\.(png|jpe?g|webp|gif)$/i.test(normalizedPath)) {
-    const lang = normalizeLanguageCode(languageCode);
-    return normalizedPath.replace(/\.(png|jpe?g|webp|gif)$/i, `Desc_${lang}.md`);
-  }
-
-  if (/\.md$/i.test(normalizedPath)) {
-    const lang = normalizeLanguageCode(languageCode);
-    return normalizedPath.replace(/\.md$/i, `Desc_${lang}.md`);
-  }
-
-  return "";
-}
-
-async function getLegacyTextByPath(path, {
-  forceReload = false,
-  fallbackText = "",
-  label = "content",
-} = {}) {
-  const resolvedPath = String(path || "").trim();
-  if (!resolvedPath) {
-    return fallbackText;
-  }
-
-  if (!forceReload && legacyTextCacheByPath.has(resolvedPath)) {
-    return legacyTextCacheByPath.get(resolvedPath);
-  }
-
-  try {
-    const response = await fetch(resolvedPath);
-    if (!response.ok) {
-      throw new Error(`Failed to load ${label}: ${response.status}`);
-    }
-
-    const text = await response.text();
-    legacyTextCacheByPath.set(resolvedPath, text);
-    return text;
-  } catch (error) {
-    console.error(`Error fetching ${label}:`, error);
-    legacyTextCacheByPath.set(resolvedPath, fallbackText);
-    return fallbackText;
-  }
 }
 
 async function getDescriptionTextByEvidence(
@@ -2530,27 +2453,32 @@ async function getDescriptionTextByEvidence(
   if (evidenceType === "report") {
     const reportEntry = preloadedCatalogEntry
       || await getReportCatalogEntry(evidence, languageCode, forceReload);
+    if (!reportEntry) {
+      return buildMissingCatalogEntryMessage(evidence, "Report description", languageCode);
+    }
     const descriptionText = sanitizeCatalogText(reportEntry?.descriptionText).trim();
     if (descriptionText) {
       return descriptionText;
     }
+
+    return buildMissingCatalogFieldMessage(evidence, "Report description", "descriptionText", languageCode);
   }
 
   if (evidenceType === "photo") {
     const photoEntry = preloadedCatalogEntry
       || await getPhotoCatalogEntry(evidence, languageCode, forceReload);
+    if (!photoEntry) {
+      return buildMissingCatalogEntryMessage(evidence, "Photo description", languageCode);
+    }
     const descriptionText = sanitizeCatalogText(photoEntry?.descriptionText).trim();
     if (descriptionText) {
       return descriptionText;
     }
+
+    return buildMissingCatalogFieldMessage(evidence, "Photo description", "descriptionText", languageCode);
   }
 
-  const legacyDescriptionPath = resolveLegacyEvidenceDescriptionPath(evidence, languageCode);
-  return getLegacyTextByPath(legacyDescriptionPath, {
-    forceReload,
-    fallbackText: "Description unavailable.",
-    label: "description",
-  });
+  return "Description unavailable.";
 }
 
 function getDescriptionPaperStyleFromEvidence(evidence) {
@@ -3142,9 +3070,7 @@ async function updatePhotosWindowContent(windowController) {
 
   const photoCatalogEntry = await getPhotoCatalogEntry(currentEvidence, languageCode);
   const effectiveEvidence = buildEvidenceWithCatalogDefaults(currentEvidence, photoCatalogEntry);
-  const currentItem = String(
-    photoCatalogEntry?.photoPath || resolveEvidenceContentPath(currentEvidence, languageCode)
-  ).trim();
+  const currentItem = String(photoCatalogEntry?.photoPath || "").trim();
   const descriptionText = await getDescriptionTextByEvidence(
     currentEvidence,
     languageCode,
@@ -3159,6 +3085,27 @@ async function updatePhotosWindowContent(windowController) {
   syncEvidenceTitleEditor(refs, effectiveEvidence);
   applyPhotoPaperStyle(refs.photoPaperWrap, effectiveEvidence?.paperStyle);
   applyReportPaperStyle(refs.descriptionPaperWrap, getDescriptionPaperStyleFromEvidence(effectiveEvidence));
+
+  if (!currentItem) {
+    refs.image.classList.add("d-none");
+    refs.emptyState.classList.remove("d-none");
+    refs.emptyState.textContent = buildMissingCatalogFieldMessage(currentEvidence, "Photo image", "photoPath", languageCode);
+    refs.image.removeAttribute("src");
+    refs.counter.textContent = `${currentIndex + 1}/${photoEvidences.length}`;
+    refs.descriptionText.textContent = descriptionText || "Description unavailable.";
+    refs.descriptionText.scrollTop = 0;
+
+    if (windowController.previousButtonElement) {
+      windowController.previousButtonElement.disabled = false;
+    }
+    if (windowController.nextButtonElement) {
+      windowController.nextButtonElement.disabled = false;
+    }
+
+    syncEvidenceTitleWidth(refs, refs.photoPaperWrap);
+    syncPhotoDescriptionHeight(refs, refs.photoPaperWrap);
+    return;
+  }
 
   refs.image.classList.remove("d-none");
   refs.emptyState.classList.add("d-none");
@@ -3205,17 +3152,16 @@ async function getReportTextByEvidence(
 ) {
   const reportEntry = preloadedReportEntry
     || await getReportCatalogEntry(evidence, languageCode, forceReload);
+  if (!reportEntry) {
+    return buildMissingCatalogEntryMessage(evidence, "Report content", languageCode);
+  }
+
   const localizedReportText = sanitizeCatalogText(reportEntry?.reportText).trim();
   if (localizedReportText) {
     return localizedReportText;
   }
 
-  const legacyReportPath = resolveEvidenceContentPath(evidence, languageCode);
-  return getLegacyTextByPath(legacyReportPath, {
-    forceReload,
-    fallbackText: "placeholder report",
-    label: "report markdown",
-  });
+  return buildMissingCatalogFieldMessage(evidence, "Report content", "reportText", languageCode);
 }
 
 async function updateReportsWindowContent(windowController) {
@@ -3652,53 +3598,5 @@ export function refreshAllReportsWindows() {
       updateReportsWindowContent(windowController);
     }
   });
-}
-
-export function addPhotoToCarousel(path) {
-  const evidence = createPhotoEvidence({
-    photoPath: path,
-    storageKey: EVIDENCE_STORAGE_KEYS.PHOTOS,
-  });
-
-  if (!evidence) {
-    return -1;
-  }
-
-  const photoEvidences = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS);
-  const newIndex = photoEvidences.findIndex((item) => item.id === evidence.id);
-
-  if (newIndex >= 0 && photoEvidences.length === 1) {
-    setEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, 0);
-  }
-
-  refreshAllPhotosWindows();
-  return newIndex;
-}
-
-export function addReportToCarousel(path) {
-  const reportName = String(path || "")
-    .trim()
-    .replace(/^\.\/assets\/reports\//, "")
-    .replace(/_[a-z]{2}\.md$/i, "")
-    .replace(/\.md$/i, "");
-
-  const evidence = createReportEvidence({
-    reportName,
-    storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
-  });
-
-  if (!evidence) {
-    return -1;
-  }
-
-  const reportEvidences = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS);
-  const newIndex = reportEvidences.findIndex((item) => item.id === evidence.id);
-
-  if (newIndex >= 0 && reportEvidences.length === 1) {
-    setEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, 0);
-  }
-
-  refreshAllReportsWindows();
-  return newIndex;
 }
   

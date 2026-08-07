@@ -26,6 +26,17 @@ const publicationInput = document.getElementById("publicationInput");
 const archivesKeywordsInput = document.getElementById("archivesKeywordsInput");
 const requiredAccessInput = document.getElementById("requiredAccessInput");
 
+const awardsEvidenceInput = document.getElementById("awardsEvidenceInput");
+const evidenceTypeInput = document.getElementById("evidenceTypeInput");
+const evidenceStorageKeyInput = document.getElementById("evidenceStorageKeyInput");
+const evidenceTitleKeyInput = document.getElementById("evidenceTitleKeyInput");
+const evidenceNameInput = document.getElementById("evidenceNameInput");
+const evidenceDefaultTitleInput = document.getElementById("evidenceDefaultTitleInput");
+const evidencePaperStyleInput = document.getElementById("evidencePaperStyleInput");
+const evidenceFieldsGrid = document.getElementById("evidenceFieldsGrid");
+const standaloneBgColorPickButton = document.getElementById("standaloneBgColorPickButton");
+const standaloneBgColorPicker = document.getElementById("standaloneBgColorPicker");
+
 const standaloneBgColorInput = document.getElementById("standaloneBgColorInput");
 const standaloneFontSelect = document.getElementById("standaloneFontSelect");
 
@@ -71,7 +82,11 @@ function parseLineList(value) {
 }
 
 function parseImages(value) {
-  return parseLineList(value).map((src) => ({ src }));
+  return parseLineList(value).map((src) => ({
+    src,
+    alt: "",
+    caption: "",
+  }));
 }
 
 function toNumberOrDefault(value, fallback = 0) {
@@ -113,7 +128,33 @@ function getCommonFields() {
   };
 }
 
+function buildEvidence(siteId, common, fallbackTitle) {
+  const awardsEvidence = Boolean(awardsEvidenceInput.checked);
+  const evidenceName = String(evidenceNameInput.value || "").trim() || `${siteId}-${common.id}`;
+  const defaultTitleString = String(evidenceDefaultTitleInput.value || "").trim() || fallbackTitle || common.id;
+
+  return {
+    awardsEvidence,
+    evidence: {
+      type: String(evidenceTypeInput.value || "").trim() || "report",
+      storageKey: String(evidenceStorageKeyInput.value || "").trim() || "reports",
+      titleKey: String(evidenceTitleKeyInput.value || "").trim() || "reports",
+      name: evidenceName,
+      defaultTitleString,
+      paperStyle: String(evidencePaperStyleInput.value || "").trim() || "report-parchment",
+      source: {
+        kind: "report-localized-catalog-entry",
+        languageAware: true,
+        catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+        entryId: evidenceName,
+      },
+    },
+  };
+}
+
 function buildStandaloneEntry(common) {
+  const evidenceFields = buildEvidence("standalone", common, common.title || common.id);
+
   return {
     siteId: "standalone",
     bucket: "records",
@@ -127,6 +168,8 @@ function buildStandaloneEntry(common) {
         backgroundColor: String(standaloneBgColorInput.value || "").trim() || "#eceff3",
         fontFamily: String(standaloneFontSelect.value || "").trim() || "Arial, Helvetica, sans-serif",
       },
+      awardsEvidence: evidenceFields.awardsEvidence,
+      evidence: evidenceFields.evidence,
     },
   };
 }
@@ -137,18 +180,23 @@ function buildZoomsearchEntry(common) {
     throw new Error("Zoom Search keywords are required.");
   }
 
+  const pageTitle = common.title || common.id;
+  const evidenceFields = buildEvidence("zoomsearch", common, pageTitle);
+
   return {
     siteId: "zoomsearch",
     bucket: "records",
     entry: {
       id: common.id,
       websiteName: "Manual Builder Import",
-      pageTitle: common.title || common.id,
+      pageTitle,
       url: common.url || `http://www.zoomsearch.net/manual/${common.id}`,
       keywords,
       summary: common.summary || "",
       pageContent: common.bodyLines,
       images: common.images,
+      awardsEvidence: evidenceFields.awardsEvidence,
+      evidence: evidenceFields.evidence,
     },
   };
 }
@@ -158,6 +206,8 @@ function buildLibraryEntry(common) {
   if (!String(authorInput.value || "").trim() || !publicationTitle) {
     throw new Error("Library Archive requires Author and Publication Title.");
   }
+
+  const evidenceFields = buildEvidence("library", common, publicationTitle);
 
   return {
     siteId: "library",
@@ -170,6 +220,8 @@ function buildLibraryEntry(common) {
       summary: common.summary || "",
       extract: common.bodyLines,
       images: common.images,
+      awardsEvidence: evidenceFields.awardsEvidence,
+      evidence: evidenceFields.evidence,
     },
   };
 }
@@ -179,6 +231,8 @@ function buildPoliceEntry(common) {
   if (!keywords.length) {
     throw new Error("Police Records keywords are required.");
   }
+
+  const evidenceFields = buildEvidence("police", common, common.title || common.id);
 
   return {
     siteId: "police",
@@ -191,6 +245,8 @@ function buildPoliceEntry(common) {
       report: common.bodyLines,
       requiredPrivilegeLevel: toNumberOrDefault(requiredPrivilegeInput.value, 0),
       images: common.images,
+      awardsEvidence: evidenceFields.awardsEvidence,
+      evidence: evidenceFields.evidence,
     },
   };
 }
@@ -201,19 +257,24 @@ function buildArchivesEntry(common) {
     throw new Error("Canada Newspaper Archive keywords are required.");
   }
 
+  const headline = common.title || common.id;
+  const evidenceFields = buildEvidence("archives", common, headline);
+
   return {
     siteId: "archives",
     bucket: "records",
     entry: {
       id: common.id,
       province: String(archiveProvinceInput.value || "").trim(),
-      headline: common.title || common.id,
+      headline,
       publication: String(publicationInput.value || "").trim(),
       keywords,
       summary: common.summary || "",
       article: common.bodyLines,
       requiredAccessLevel: toNumberOrDefault(requiredAccessInput.value, 0),
       images: common.images,
+      awardsEvidence: evidenceFields.awardsEvidence,
+      evidence: evidenceFields.evidence,
     },
   };
 }
@@ -292,11 +353,19 @@ function clearForm() {
     archivesKeywordsInput,
     publicationInput,
     requiredAccessInput,
+    evidenceNameInput,
+    evidenceDefaultTitleInput,
   ].forEach((element) => {
     element.value = "";
   });
 
+  awardsEvidenceInput.checked = false;
+  evidenceTypeInput.value = "report";
+  evidenceStorageKeyInput.value = "reports";
+  evidenceTitleKeyInput.value = "reports";
+  evidencePaperStyleInput.value = "report-parchment";
   standaloneBgColorInput.value = "#eceff3";
+  standaloneBgColorPicker.value = "#eceff3";
   standaloneFontSelect.selectedIndex = 0;
   contentTypeSelect.selectedIndex = 0;
   previewOutput.textContent = "{}";
@@ -315,6 +384,11 @@ function syncFieldStates() {
   policeFieldsPanel.classList.remove("is-hidden");
   archivesFieldsPanel.classList.remove("is-hidden");
   standaloneStylePanel.classList.remove("is-hidden");
+
+  const evidenceEnabled = awardsEvidenceInput.checked;
+  evidenceFieldsGrid.querySelectorAll("input, select").forEach((element) => {
+    element.disabled = !evidenceEnabled;
+  });
 }
 
 previewButton.addEventListener("click", () => {
@@ -339,6 +413,30 @@ clearButton.addEventListener("click", () => {
 
 contentTypeSelect.addEventListener("change", () => {
   syncFieldStates();
+});
+
+awardsEvidenceInput.addEventListener("change", () => {
+  syncFieldStates();
+});
+
+standaloneBgColorPickButton.addEventListener("click", () => {
+  if (typeof standaloneBgColorPicker.showPicker === "function") {
+    standaloneBgColorPicker.showPicker();
+    return;
+  }
+
+  standaloneBgColorPicker.click();
+});
+
+standaloneBgColorPicker.addEventListener("input", () => {
+  standaloneBgColorInput.value = standaloneBgColorPicker.value;
+});
+
+standaloneBgColorInput.addEventListener("input", () => {
+  const value = String(standaloneBgColorInput.value || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+    standaloneBgColorPicker.value = value;
+  }
 });
 
 syncFieldStates();

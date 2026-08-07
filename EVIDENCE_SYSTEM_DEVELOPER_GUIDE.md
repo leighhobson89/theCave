@@ -1,166 +1,113 @@
 # Evidence System Developer Guide
 
 ## Purpose
-The evidence system is the single source of truth for all in-game evidence content.
+The evidence system stores the player's unlocked evidence at runtime and persists it in save data.
 
-Evidence includes:
-- Background story (type: `story`)
-- Photos (type: `photo`)
-- Reports (type: `report`)
+Displayed report and photo content is now loaded strictly from localized catalog JSON files. There is no markdown fallback for report/photo evidence.
 
-Each evidence record includes metadata such as:
-- Unique `id`
-- `type`
-- `storageKey` (where it appears in the UI)
-- `source` (how to load its content)
-- `paperStyle` (presentation/material intent)
+Primary files:
+- [evidenceManager.js](evidenceManager.js)
+- [ui.js](ui.js)
+- [constantsAndGlobalVars.js](constantsAndGlobalVars.js)
 
-The implementation lives in [evidenceManager.js](evidenceManager.js).
-
-## Core Data Model
-The in-memory store has:
+## Runtime Store
+The in-memory evidence store contains:
 - `nextEvidenceId`
 - `evidencesById`
-- `collections`:
+- `collections`
   - `backgroundStory`
   - `photos`
   - `reports`
-- `indices` per collection (carousel positions)
+- `indices`
 
-You can inspect/serialize this via:
+Main APIs:
 - `getEvidenceStoreSnapshot()`
 - `setEvidenceStoreSnapshot(snapshot)`
-
-## Evidence Creation APIs
-Use these APIs from [evidenceManager.js](evidenceManager.js):
-
-- `createStoryEvidence({ storyName, storageKey, titleKey, paperStyle })`
-  - Uses language-aware template: `./assets/${storyName}_{lang}.md`
-- `createReportEvidence({ reportName, storageKey, titleKey, paperStyle })`
-  - Uses language-aware template: `./assets/reports/${reportName}_{lang}.md`
-- `createPhotoEvidence({ photoPath, name, storageKey, titleKey, paperStyle })`
-  - Uses direct photo path source
-- `createEvidence(evidence)`
-  - Low-level function if you need custom evidence types in future
-
-## New Game Defaults
-Default evidences are defined in `DEFAULT_EVIDENCE_BLUEPRINTS` in [evidenceManager.js](evidenceManager.js).
-
-On New Game, UI calls:
-- `initializeEvidenceStoreForNewGame()`
-
-This resets and re-adds default evidence entries.
-
-Current defaults include:
-- Story evidence (`story_en.md` etc depending on language)
-- Two photo evidences (`caveEntrance`, `caveEntrance2`)
-- One report evidence (`missingReport_en.md` etc depending on language)
-
-## Localization: How Language Is Chosen
-Language state is managed by [constantsAndGlobalVars.js](constantsAndGlobalVars.js) and UI localization flow in [ui.js](ui.js).
-
-When rendering evidence content, UI uses:
-- `resolveEvidenceContentPath(evidence, getLanguage())`
-
-For template sources (`markdown-template`), `{lang}` is replaced with active language code.
-
-Example:
-- Template: `./assets/reports/missingReport_{lang}.md`
-- Active language `en` => `./assets/reports/missingReport_en.md`
-- Active language `de` => `./assets/reports/missingReport_de.md`
-
-## Mid-Game Language Change
-If the player changes language while in-game:
-1. `handleLanguageChange(languageCode)` updates active language.
-2. `setElementsLanguageText()` runs.
-3. `refreshOpenWindowLocalization()` updates titles and content for open windows.
-4. Reports/story re-resolve evidence paths with new language and fetch corresponding files.
-
-This ensures open report/story windows switch to the new language version immediately.
-
-## Language Change After Loading a Save
-Load flow:
-1. Save string is parsed in [saveLoadGame.js](saveLoadGame.js).
-2. `restoreGameStatus(gameState)` restores language + evidence store.
-3. `checkForLanguageChange()` triggers `handleLanguageChange(getLanguage())`.
-4. Window content (if open) refreshes based on current language.
-
-Result: report/story files are resolved using the post-load language state.
-
-## Save/Load Persistence
-Saving uses [constantsAndGlobalVars.js](constantsAndGlobalVars.js):
-- `captureGameStatusForSaving()` includes:
-  - `language`
-  - `evidenceStore` snapshot
-
-Loading uses:
-- `restoreGameStatus(gameState)`
-  - Restores `evidenceStore` via `setEvidenceStoreSnapshot(...)`
-  - Includes legacy fallback handling for old save fields
-
-## Legacy Compatibility Behavior
-Older save payloads may contain plain path arrays for reports/photos.
-
-Compatibility helper functions convert those into evidence records:
-- `setPhotoCollectionFromPaths(paths)`
-- `setReportCollectionFromPaths(paths)`
-
-Important:
-- Report legacy paths are normalized into language-aware templates when possible.
-- Old `markdown-file` report entries are normalized on snapshot restore to `markdown-template` so language switching works.
-
-## UI Collection Usage
-UI windows consume collections by storage key:
-- Story: `backgroundStory`
-- Photos: `photos`
-- Reports: `reports`
-
-Navigation uses:
 - `getEvidenceCollection(storageKey)`
-- `getEvidenceIndex(storageKey)`
+- `getCurrentEvidence(storageKey)`
 - `setEvidenceIndex(storageKey, index)`
 - `stepEvidenceIndex(storageKey, delta)`
-- `getCurrentEvidence(storageKey)`
 
-## Adding New Evidence Types In Future
-Recommended approach:
-1. Add a new storage key in `STORAGE_KEYS`.
-2. Add a type in `EVIDENCE_TYPES`.
-3. Add a builder function (similar to `createReportEvidence`).
-4. Define a source strategy (`photo`, `markdown-template`, etc).
-5. Add UI renderer/window handling for that type.
-6. If needed, add default blueprint entries.
+## New Game Defaults
+`initializeEvidenceStoreForNewGame()` rebuilds the store from `DEFAULT_EVIDENCE_BLUEPRINTS` in [evidenceManager.js](evidenceManager.js).
 
-## Current File Naming Convention
-For localized reports, use:
-- `./assets/reports/<reportName>_<lang>.md`
+## Content Sources
+### Story
+Story evidence uses language-aware markdown template source:
+- `./assets/story_{lang}.md`
 
-For localized story files, use:
-- `./assets/<storyName>_<lang>.md`
+### Reports
+Reports use localized catalog entries:
+- catalog file: `./assets/reportsEvidences_{lang}.json`
+- source kind: `report-localized-catalog-entry`
+- source fields:
+  - `languageAware`
+  - `catalogPathTemplate`
+  - `entryId`
 
-Examples:
-- `missingReport_en.md`
-- `story_fr.md`
+Rendered report fields come from the catalog entry:
+- `reportText`
+- `descriptionText`
+- `defaultTitleString`
+- `paperStyle`
 
-## Quick Examples
-Add a new localized report evidence:
+### Photos
+Photos use localized catalog entries:
+- catalog file: `./assets/photos_evidences_{lang}.json`
+- source kind: `photo-localized-catalog-entry`
+- source fields:
+  - `languageAware`
+  - `catalogPathTemplate`
+  - `entryId`
 
-```js
-createReportEvidence({
-  reportName: "autopsyNote",
-  storageKey: "reports",
-  titleKey: "reports",
-});
-```
+Rendered photo fields come from the catalog entry:
+- `photoPath`
+- `descriptionText`
+- `defaultTitleString`
+- `paperStyle`
 
-Add a new photo evidence:
+## Missing Resource Handling
+If a report/photo catalog entry or required field is missing, UI does not fall back to old paths.
+Instead it shows an explicit user-facing unavailable message describing:
+- which evidence item failed
+- which catalog entry is missing
+- which field is missing
+- which language was requested
 
-```js
-createPhotoEvidence({
-  photoPath: "./assets/photos/fingerprint01.png",
-  storageKey: "photos",
-  titleKey: "photos",
-});
-```
+## Web Content Evidence Flow
+Web-linked evidence unlock descriptors live in:
+- `assets/web-content/zoomsearch.json`
+- `assets/web-content/library.json`
+- `assets/web-content/police.json`
+- `assets/web-content/archives.json`
+- `assets/web-content/standalone-pages.json`
 
-Both become part of the persisted evidence store and are included in saves.
+When a Netscape search returns a record with:
+- `awardsEvidence: true`
+- `evidence: { ... }`
+
+Then the flow is:
+1. [webContentManager.js](webContentManager.js) awards the record evidence.
+2. `awardWebContentEvidence(...)` in [ui.js](ui.js) deduplicates it against the current runtime collection.
+3. `createEvidence(...)` in [evidenceManager.js](evidenceManager.js) inserts it into the runtime store.
+4. Save data persists it via `evidenceStore` snapshot.
+
+## Save/Load
+Saved by:
+- `captureGameStatusForSaving()` in [constantsAndGlobalVars.js](constantsAndGlobalVars.js)
+
+Restored by:
+- `restoreGameStatus(gameState)` in [constantsAndGlobalVars.js](constantsAndGlobalVars.js)
+- `setEvidenceStoreSnapshot(snapshot)` in [evidenceManager.js](evidenceManager.js)
+
+If the stored evidence snapshot is invalid, the system falls back only to reinitializing the store for a new game.
+This is not content fallback; it is save validation.
+
+## Authoring Rule For Web Evidence
+For web-unlocked report evidence:
+1. Keep unlock metadata in `assets/web-content/*.json`.
+2. Use source kind `report-localized-catalog-entry`.
+3. Use `evidence.name` and `source.entryId` to match an entry in `assets/reportsEvidences_{lang}.json`.
+4. Add the report text to every supported language catalog.
+
+This keeps unlock logic, save/load, and carousel rendering aligned to one strict pipeline.

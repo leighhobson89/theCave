@@ -1,99 +1,74 @@
 # Web Content Builder Tool Manual
 
 ## Files
-
 - UI: [tools/web_content_builder.html](tools/web_content_builder.html)
 - Logic: [tools/web_content_builder.js](tools/web_content_builder.js)
 - Inject API: [tools/web_content_builder_server.js](tools/web_content_builder_server.js)
 
-## Start the Inject API
-
+## Start Inject API
 ```bash
 node tools/web_content_builder_server.js
 ```
 
-The API listens on `http://localhost:5058`.
-
-## Open the Builder
-
-Open [tools/web_content_builder.html](tools/web_content_builder.html) in your browser (or from your local static server).
+## Writes To
+- `assets/web-content/zoomsearch.json`
+- `assets/web-content/library.json`
+- `assets/web-content/police.json`
+- `assets/web-content/archives.json`
+- `assets/web-content/standalone-pages.json`
 
 ## Workflow
+1. Choose content type.
+2. Enter content ID.
+3. Fill shared fields.
+4. Fill service-specific fields.
+5. Configure standalone style if needed.
+6. Configure evidence metadata if needed.
+7. Generate preview.
+8. Confirm and inject.
 
-1. Choose the Content Type option.
-2. Enter a required content ID.
-3. Fill relevant fields.
-4. Use the service-specific sections:
-  - Zoom Search Fields
-  - Library Archive Fields
-  - Police Records Fields
-  - Canada Newspaper Archive Fields
-5. For Standalone Page, use the styling section.
-6. Click **Generate Preview**.
-7. Click **Confirm + Inject**.
-
-## Content Types
-
-- Zoom Search
-- Library Archive
-- Police Records
-- Canada Newspaper Archive
-- Standalone Page
-
-## Service Sections
-
-- Zoom Search Fields:
-  - Keywords
-- Library Archive Fields:
-  - Author
-  - Publication Title
-- Police Records Fields:
-  - Keywords
-  - Required Privilege Level
-- Canada Newspaper Archive Fields:
-  - Province
-  - Keywords
-  - Publication (optional)
-  - Required Access Level
-
-## Mode Rules
-
-- If `Standalone Page` is selected:
-  - URL is required.
-  - Keywords are optional.
-- If any other content type is selected:
-  - Keywords are required in that content type's own section.
-  - URL is optional.
-
-## Province Placement
-
-- Province is not part of the shared content fields.
-- Province appears only in `Canada Newspaper Archive Fields`.
+## Shared Fields
+- Content Type
+- Content ID
+- URL
+- Title / Headline
+- Summary
+- Main text
+- Image paths
 
 ## Standalone Styling
+- Background Color text field
+- Pipette button opens native color picker
+- Font Family preset dropdown
 
-Standalone pages include style fields for:
+## Evidence Fields
+The builder always emits a full evidence object for consistent record shape.
 
-- `backgroundColor`
-- `fontFamily` with presets:
-  - Arial
-  - Comic Sans
-  - Courier New
-  - Times New Roman
+Controls:
+- `Awards Evidence` checkbox
+- `Evidence Type` dropdown
+- `Storage Key` dropdown
+- `Title Key` dropdown
+- `Name` text field
+- `Default Title String` text field
+- `Paper Style` dropdown
 
-## Buckets
+Current output uses a strict catalog-based report source:
+- `source.kind = report-localized-catalog-entry`
+- `source.languageAware = true`
+- `source.catalogPathTemplate = ./assets/reportsEvidences_{lang}.json`
+- `source.entryId = evidence.name`
 
-- `records`: standard service entries (searchable by the existing archive systems)
-- `records` in `standalone-pages.json`: hidden standalone text pages (manual URL only)
+## Important
+This tool does not create report markdown files.
+If `Awards Evidence` is enabled, matching report content must exist in:
+- `assets/reportsEvidences_en.json`
+- `assets/reportsEvidences_de.json`
+- `assets/reportsEvidences_es.json`
+- `assets/reportsEvidences_fr.json`
+- `assets/reportsEvidences_it.json`
 
-## Notes
-
-- Every injected entry is normalized to a stable slug ID.
-- Existing IDs are updated in-place.
+## Update Rules
+- IDs are slug-normalized.
+- Existing IDs are updated in place.
 - New IDs are appended.
-- This tool writes directly to:
-  - `assets/web-content/zoomsearch.json`
-  - `assets/web-content/library.json`
-  - `assets/web-content/police.json`
-  - `assets/web-content/archives.json`
-  - `assets/web-content/standalone-pages.json`

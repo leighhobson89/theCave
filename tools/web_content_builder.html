@@ -71,6 +71,45 @@
       font-size: 0.77rem;
     }
 
+    .input-with-button {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.35rem;
+      align-items: stretch;
+    }
+
+    .icon-button {
+      width: 2.3rem;
+      min-width: 2.3rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .pipette-icon {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #dce9ff;
+      border-top-width: 3px;
+      transform: rotate(45deg);
+      border-radius: 2px;
+      display: inline-block;
+      position: relative;
+    }
+
+    .pipette-icon::after {
+      content: "";
+      position: absolute;
+      width: 2px;
+      height: 8px;
+      background: #dce9ff;
+      right: -5px;
+      bottom: -5px;
+      transform: rotate(-45deg);
+      border-radius: 2px;
+    }
+
     input,
     select,
     textarea,
@@ -119,6 +158,21 @@
       color: var(--warn);
       font-size: 0.84rem;
       margin-top: 0.4rem;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.77rem;
+    }
+
+    .check-row input {
+      width: auto;
     }
 
     .row {
@@ -299,7 +353,13 @@
           <div class="grid">
             <label class="field">
               <span>Background Color</span>
-              <input id="standaloneBgColorInput" type="text" placeholder="#eceff3" spellcheck="false" value="#eceff3">
+              <div class="input-with-button">
+                <input id="standaloneBgColorInput" type="text" placeholder="#eceff3" spellcheck="false" value="#eceff3">
+                <button id="standaloneBgColorPickButton" class="icon-button secondary" type="button" aria-label="Pick background color" title="Pick background color">
+                  <span class="pipette-icon" aria-hidden="true"></span>
+                </button>
+                <input id="standaloneBgColorPicker" type="color" value="#eceff3" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;">
+              </div>
             </label>
             <label class="field">
               <span>Font Family</span>
@@ -312,6 +372,54 @@
             </label>
           </div>
           <p class="note">Applied only when Standalone Page content type is selected.</p>
+        </div>
+
+        <div class="panel" id="evidencePanel">
+          <h2>Evidence Fields</h2>
+          <label class="check-row" for="awardsEvidenceInput">
+            <input id="awardsEvidenceInput" type="checkbox">
+            Awards Evidence
+          </label>
+          <div class="grid" id="evidenceFieldsGrid">
+            <label class="field">
+              <span>Evidence Type</span>
+              <select id="evidenceTypeInput">
+                <option value="report" selected>report</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Storage Key</span>
+              <select id="evidenceStorageKeyInput">
+                <option value="reports" selected>reports</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Title Key</span>
+              <select id="evidenceTitleKeyInput">
+                <option value="reports" selected>reports</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Name (optional, auto if blank)</span>
+              <input id="evidenceNameInput" type="text" placeholder="zoomsearch-black-pine-trail" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Default Title String (optional)</span>
+              <input id="evidenceDefaultTitleInput" type="text" placeholder="Black Pine Trail" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Paper Style</span>
+              <select id="evidencePaperStyleInput">
+                <option value="report-parchment" selected>report-parchment</option>
+                <option value="report-parchment-ash">report-parchment-ash</option>
+                <option value="report-parchment-sepia">report-parchment-sepia</option>
+                <option value="report-parchment-moss">report-parchment-moss</option>
+                <option value="report-parchment-char">report-parchment-char</option>
+                <option value="report-parchment-crimson">report-parchment-crimson</option>
+              </select>
+            </label>
+          </div>
+          <p class="note">When unchecked, entries still include a full catalog-based evidence object for consistent JSON shape.</p>
         </div>
       </div>
 

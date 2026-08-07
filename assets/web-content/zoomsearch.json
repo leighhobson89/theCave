@@ -34,8 +34,10 @@
         "defaultTitleString": "Black Pine Trail",
         "paperStyle": "report-parchment",
         "source": {
-          "kind": "markdown-file",
-          "path": "./assets/web-content/evidence/zoomsearch-black-pine-trail.md"
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "zoomsearch-black-pine-trail"
         }
       }
     },
@@ -54,7 +56,22 @@
         "The page describes a small relay station used for local experiments and amateur signal checks.",
         "It notes that the relay only stayed active during fair weather and that local hikers often used it as a navigation clue."
       ],
-      "images": []
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "zoomsearch-sun-echo-relay",
+        "defaultTitleString": "Sun Echo Relay",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "zoomsearch-sun-echo-relay"
+        }
+      }
     },
     {
       "id": "lunar-lantern-map",
@@ -82,7 +99,22 @@
           "alt": "Inside the cave looking back toward the opening.",
           "caption": "Interior route reference photo attached to the archived page."
         }
-      ]
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "zoomsearch-lunar-lantern-map",
+        "defaultTitleString": "Lunar Lantern Map",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "zoomsearch-lunar-lantern-map"
+        }
+      }
     },
     {
       "id": "secretone",
@@ -99,9 +131,26 @@
       ],
       "images": [
         {
-          "src": "./assets/photos/caveEntrance.png"
+          "src": "./assets/photos/caveEntrance.png",
+          "alt": "",
+          "caption": ""
         }
-      ]
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "zoomsearch-secretone",
+        "defaultTitleString": "Secret One",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "zoomsearch-secretone"
+        }
+      }
     },
     {
       "id": "test-zoom-alpha",
@@ -115,7 +164,51 @@
       "pageContent": [
         "This page exists to validate exact-keyword search behavior for Zoom Search."
       ],
-      "images": []
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "zoomsearch-test-zoom-alpha",
+        "defaultTitleString": "Zoom Test Alpha",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "zoomsearch-test-zoom-alpha"
+        }
+      }
+    },
+    {
+      "id": "flow-zoom-page",
+      "websiteName": "Manual Builder Import",
+      "pageTitle": "Zoom Flow Page",
+      "url": "http://www.zoomsearch.net/manual/flow-zoom-page",
+      "keywords": [
+        "flow zoom verification"
+      ],
+      "summary": "ZoomSearch exact-keyword flow verification page.",
+      "pageContent": [
+        "Searching the exact keyword should return this page and unlock the linked report evidence."
+      ],
+      "images": [],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "flow-zoom-award",
+        "defaultTitleString": "Zoom Flow Award",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "flow-zoom-award"
+        }
+      }
     }
   ]
 }

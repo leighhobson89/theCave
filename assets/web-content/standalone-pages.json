@@ -3,30 +3,31 @@
   "displayName": "Standalone Pages",
   "records": [
     {
-      "id": "relay-maintenance-bulletin",
-      "title": "Relay Maintenance Bulletin",
-      "url": "http://www.zoomsearch.net/internal/relay-maintenance-bulletin",
+      "id": "flow-standalone-page",
+      "title": "Standalone Flow Page",
+      "url": "http://standalone.local/flow-award",
       "source": "Standalone route",
       "content": [
-        "Maintenance bulletin: the ridge relay cabinet remains unstable during night storms and must stay off the public index.",
-        "Only field operators with a direct URL should inspect this note. The details here are intentionally self-contained and not linked from any archive search results."
+        "This standalone page was created through the web content builder and should award evidence when visited directly."
       ],
       "style": {
-        "backgroundColor": "#eceff3",
+        "backgroundColor": "#dde6ef",
         "fontFamily": "Arial, Helvetica, sans-serif"
-      }
-    },
-    {
-      "id": "test-standalone-alpha",
-      "title": "Standalone Test Alpha",
-      "url": "http://standalone.local/test-alpha",
-      "source": "Standalone route",
-      "content": [
-        "This standalone page validates direct URL navigation outside of archive services."
-      ],
-      "style": {
-        "backgroundColor": "#f4efe0",
-        "fontFamily": "\"Times New Roman\", Times, serif"
+      },
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "flow-standalone-award",
+        "defaultTitleString": "Standalone Flow Award",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "flow-standalone-award"
+        }
       }
     }
   ]
