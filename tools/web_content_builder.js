@@ -46,8 +46,107 @@ const clearButton = document.getElementById("clearButton");
 const previewOutput = document.getElementById("previewOutput");
 const status = document.getElementById("status");
 
+const EVIDENCE_TYPE_PRESETS = {
+  report: {
+    storageKey: "reports",
+    titleKey: "reports",
+    paperStyles: [
+      "report-parchment",
+      "report-parchment-ash",
+      "report-parchment-sepia",
+      "report-parchment-moss",
+      "report-parchment-char",
+      "report-parchment-crimson",
+    ],
+    source: {
+      kind: "report-localized-catalog-entry",
+      catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    },
+  },
+  photo: {
+    storageKey: "photos",
+    titleKey: "photos",
+    paperStyles: [
+      "photo-mounted",
+      "photo-mounted-ivory",
+      "photo-mounted-linen",
+      "photo-mounted-chalk",
+      "photo-mounted-aged",
+    ],
+    source: {
+      kind: "photo-localized-catalog-entry",
+      catalogPathTemplate: "./assets/photos_evidences_{lang}.json",
+    },
+  },
+};
+
+let lastEvidencePresetType = "report";
+
 function setStatus(message) {
   status.textContent = message;
+}
+
+function getSelectedEvidenceType() {
+  return String(evidenceTypeInput.value || "report").trim() || "report";
+}
+
+function getEvidencePreset() {
+  return EVIDENCE_TYPE_PRESETS[getSelectedEvidenceType()] || EVIDENCE_TYPE_PRESETS.report;
+}
+
+function fillSelectOptions(selectElement, values, selectedValue) {
+  if (!selectElement) {
+    return;
+  }
+
+  selectElement.replaceChildren();
+  values.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    if (value === selectedValue) {
+      option.selected = true;
+    }
+    selectElement.appendChild(option);
+  });
+}
+
+function syncEvidenceFieldPresets(forcePresetSelection = false) {
+  const selectedType = getSelectedEvidenceType();
+  const preset = getEvidencePreset();
+  const currentStorageKey = String(evidenceStorageKeyInput.value || "").trim();
+  const currentTitleKey = String(evidenceTitleKeyInput.value || "").trim();
+  const currentPaperStyle = String(evidencePaperStyleInput.value || "").trim();
+  const presetChanged = selectedType !== lastEvidencePresetType;
+  const usePresetDefaults = forcePresetSelection || presetChanged;
+
+  const storageOptions = Array.from(new Set([preset.storageKey, "reports", "photos"]));
+  const titleOptions = Array.from(new Set([preset.titleKey, "reports", "photos"]));
+  const paperStyleOptions = preset.paperStyles;
+
+  fillSelectOptions(
+    evidenceStorageKeyInput,
+    storageOptions,
+    usePresetDefaults
+      ? preset.storageKey
+      : storageOptions.includes(currentStorageKey) ? currentStorageKey : preset.storageKey
+  );
+  fillSelectOptions(
+    evidenceTitleKeyInput,
+    titleOptions,
+    usePresetDefaults
+      ? preset.titleKey
+      : titleOptions.includes(currentTitleKey) ? currentTitleKey : preset.titleKey
+  );
+  fillSelectOptions(
+    evidencePaperStyleInput,
+    paperStyleOptions,
+    usePresetDefaults
+      ? paperStyleOptions[0]
+      : paperStyleOptions.includes(currentPaperStyle) ? currentPaperStyle : paperStyleOptions[0]
+  );
+
+  lastEvidencePresetType = selectedType;
 }
 
 function slugifyId(value) {
@@ -130,22 +229,23 @@ function getCommonFields() {
 
 function buildEvidence(siteId, common, fallbackTitle) {
   const awardsEvidence = Boolean(awardsEvidenceInput.checked);
+  const preset = getEvidencePreset();
   const evidenceName = String(evidenceNameInput.value || "").trim() || `${siteId}-${common.id}`;
   const defaultTitleString = String(evidenceDefaultTitleInput.value || "").trim() || fallbackTitle || common.id;
 
   return {
     awardsEvidence,
     evidence: {
-      type: String(evidenceTypeInput.value || "").trim() || "report",
-      storageKey: String(evidenceStorageKeyInput.value || "").trim() || "reports",
-      titleKey: String(evidenceTitleKeyInput.value || "").trim() || "reports",
+      type: getSelectedEvidenceType(),
+      storageKey: String(evidenceStorageKeyInput.value || "").trim() || preset.storageKey,
+      titleKey: String(evidenceTitleKeyInput.value || "").trim() || preset.titleKey,
       name: evidenceName,
       defaultTitleString,
-      paperStyle: String(evidencePaperStyleInput.value || "").trim() || "report-parchment",
+      paperStyle: String(evidencePaperStyleInput.value || "").trim() || preset.paperStyles[0],
       source: {
-        kind: "report-localized-catalog-entry",
+        kind: preset.source.kind,
         languageAware: true,
-        catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+        catalogPathTemplate: preset.source.catalogPathTemplate,
         entryId: evidenceName,
       },
     },
@@ -361,9 +461,6 @@ function clearForm() {
 
   awardsEvidenceInput.checked = false;
   evidenceTypeInput.value = "report";
-  evidenceStorageKeyInput.value = "reports";
-  evidenceTitleKeyInput.value = "reports";
-  evidencePaperStyleInput.value = "report-parchment";
   standaloneBgColorInput.value = "#eceff3";
   standaloneBgColorPicker.value = "#eceff3";
   standaloneFontSelect.selectedIndex = 0;
@@ -371,6 +468,7 @@ function clearForm() {
   previewOutput.textContent = "{}";
   setStatus("Cleared.");
   syncFieldStates();
+  syncEvidenceFieldPresets(true);
 }
 
 function syncFieldStates() {
@@ -419,6 +517,10 @@ awardsEvidenceInput.addEventListener("change", () => {
   syncFieldStates();
 });
 
+evidenceTypeInput.addEventListener("change", () => {
+  syncEvidenceFieldPresets(true);
+});
+
 standaloneBgColorPickButton.addEventListener("click", () => {
   if (typeof standaloneBgColorPicker.showPicker === "function") {
     standaloneBgColorPicker.showPicker();
@@ -439,4 +541,5 @@ standaloneBgColorInput.addEventListener("input", () => {
   }
 });
 
+syncEvidenceFieldPresets(true);
 syncFieldStates();

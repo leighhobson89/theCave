@@ -1,34 +1,5 @@
 {
   "siteId": "standalone",
   "displayName": "Standalone Pages",
-  "records": [
-    {
-      "id": "flow-standalone-page",
-      "title": "Standalone Flow Page",
-      "url": "http://standalone.local/flow-award",
-      "source": "Standalone route",
-      "content": [
-        "This standalone page was created through the web content builder and should award evidence when visited directly."
-      ],
-      "style": {
-        "backgroundColor": "#dde6ef",
-        "fontFamily": "Arial, Helvetica, sans-serif"
-      },
-      "awardsEvidence": true,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "flow-standalone-award",
-        "defaultTitleString": "Standalone Flow Award",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "flow-standalone-award"
-        }
-      }
-    }
-  ]
+  "records": []
 }

@@ -208,34 +208,6 @@
           "entryId": "police-test-police-alpha"
         }
       }
-    },
-    {
-      "id": "flow-police-page",
-      "title": "Flow Police File",
-      "keywords": [
-        "flow police verification"
-      ],
-      "summary": "Police record flow verification case.",
-      "report": [
-        "This public police record should unlock the linked evidence after an exact keyword match."
-      ],
-      "requiredPrivilegeLevel": 0,
-      "images": [],
-      "awardsEvidence": true,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "flow-police-award",
-        "defaultTitleString": "Flow Police File",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "flow-police-award"
-        }
-      }
     }
   ]
 }

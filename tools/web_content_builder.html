@@ -385,6 +385,7 @@
               <span>Evidence Type</span>
               <select id="evidenceTypeInput">
                 <option value="report" selected>report</option>
+                <option value="photo">photo</option>
               </select>
             </label>
             <label class="field">
@@ -409,17 +410,10 @@
             </label>
             <label class="field">
               <span>Paper Style</span>
-              <select id="evidencePaperStyleInput">
-                <option value="report-parchment" selected>report-parchment</option>
-                <option value="report-parchment-ash">report-parchment-ash</option>
-                <option value="report-parchment-sepia">report-parchment-sepia</option>
-                <option value="report-parchment-moss">report-parchment-moss</option>
-                <option value="report-parchment-char">report-parchment-char</option>
-                <option value="report-parchment-crimson">report-parchment-crimson</option>
-              </select>
+              <select id="evidencePaperStyleInput"></select>
             </label>
           </div>
-          <p class="note">When unchecked, entries still include a full catalog-based evidence object for consistent JSON shape.</p>
+          <p class="note">Report and photo evidence now map to their correct localized catalogs and presentation presets.</p>
         </div>
       </div>
 

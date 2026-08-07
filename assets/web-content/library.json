@@ -159,34 +159,6 @@
           "entryId": "library-test-library-alpha"
         }
       }
-    },
-    {
-      "id": "flow-library-page",
-      "author": "Flow Archivist",
-      "title": "Flow Library Dossier",
-      "keywords": [
-        "Flow Library Dossier"
-      ],
-      "summary": "Library archive flow verification record.",
-      "extract": [
-        "Matching the exact author and publication title should unlock this report."
-      ],
-      "images": [],
-      "awardsEvidence": true,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "flow-library-award",
-        "defaultTitleString": "Flow Library Dossier",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "flow-library-award"
-        }
-      }
     }
   ]
 }

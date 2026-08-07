@@ -180,35 +180,6 @@
           "entryId": "zoomsearch-test-zoom-alpha"
         }
       }
-    },
-    {
-      "id": "flow-zoom-page",
-      "websiteName": "Manual Builder Import",
-      "pageTitle": "Zoom Flow Page",
-      "url": "http://www.zoomsearch.net/manual/flow-zoom-page",
-      "keywords": [
-        "flow zoom verification"
-      ],
-      "summary": "ZoomSearch exact-keyword flow verification page.",
-      "pageContent": [
-        "Searching the exact keyword should return this page and unlock the linked report evidence."
-      ],
-      "images": [],
-      "awardsEvidence": true,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "flow-zoom-award",
-        "defaultTitleString": "Zoom Flow Award",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "flow-zoom-award"
-        }
-      }
     }
   ]
 }

@@ -53,20 +53,37 @@ Controls:
 - `Default Title String` text field
 - `Paper Style` dropdown
 
-Current output uses a strict catalog-based report source:
-- `source.kind = report-localized-catalog-entry`
+Supported presets:
+- `report`
+	- `storageKey = reports`
+	- `titleKey = reports`
+	- `source.kind = report-localized-catalog-entry`
+	- `source.catalogPathTemplate = ./assets/reportsEvidences_{lang}.json`
+- `photo`
+	- `storageKey = photos`
+	- `titleKey = photos`
+	- `source.kind = photo-localized-catalog-entry`
+	- `source.catalogPathTemplate = ./assets/photos_evidences_{lang}.json`
+
+All presets also emit:
 - `source.languageAware = true`
-- `source.catalogPathTemplate = ./assets/reportsEvidences_{lang}.json`
 - `source.entryId = evidence.name`
 
 ## Important
-This tool does not create report markdown files.
-If `Awards Evidence` is enabled, matching report content must exist in:
+This tool does not create report or photo content files by itself.
+If `Awards Evidence` is enabled, matching localized catalog content must exist in:
 - `assets/reportsEvidences_en.json`
 - `assets/reportsEvidences_de.json`
 - `assets/reportsEvidences_es.json`
 - `assets/reportsEvidences_fr.json`
 - `assets/reportsEvidences_it.json`
+
+For photo evidence, matching entries must exist in:
+- `assets/photos_evidences_en.json`
+- `assets/photos_evidences_de.json`
+- `assets/photos_evidences_es.json`
+- `assets/photos_evidences_fr.json`
+- `assets/photos_evidences_it.json`
 
 ## Update Rules
 - IDs are slug-normalized.

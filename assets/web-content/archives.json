@@ -166,36 +166,6 @@
           "entryId": "archives-test-archives-alpha"
         }
       }
-    },
-    {
-      "id": "flow-archives-page",
-      "province": "Saskatchewan",
-      "headline": "Flow Archives Bulletin",
-      "publication": "Flow Gazette",
-      "keywords": [
-        "flow archives verification"
-      ],
-      "summary": "Canada archive flow verification article.",
-      "article": [
-        "Selecting Saskatchewan and the exact keyword should unlock this evidence."
-      ],
-      "requiredAccessLevel": 0,
-      "images": [],
-      "awardsEvidence": true,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "flow-archives-award",
-        "defaultTitleString": "Flow Archives Bulletin",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "flow-archives-award"
-        }
-      }
     }
   ]
 }

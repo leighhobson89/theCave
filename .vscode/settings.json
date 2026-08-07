@@ -7,6 +7,11 @@
         "/^node tools/web_content_builder_server\\.js$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "/^node --check tools/web_content_builder\\.js$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "npm uninstall": true
     }
 }
