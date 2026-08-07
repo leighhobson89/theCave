@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Content Builder Tool</title>
+  <style>
+    :root {
+      --bg: #101824;
+      --panel: #1a2737;
+      --line: rgba(191, 215, 245, 0.28);
+      --text: #eaf2ff;
+      --muted: #adc3e4;
+      --accent: #4f79b5;
+      --accent-2: #365b90;
+      --warn: #f4c86d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 16% 8%, #253955 0%, var(--bg) 46%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1280px, 95vw);
+      margin: 1rem auto;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(26, 39, 55, 0.92), rgba(15, 24, 36, 0.92));
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.42);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2.5vw, 2rem);
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      margin: 0.3rem 0 1rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field span {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.77rem;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid rgba(193, 215, 245, 0.34);
+      background: rgba(8, 14, 23, 0.8);
+      color: var(--text);
+      padding: 0.48rem 0.58rem;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      margin-top: 0.7rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.75rem;
+      background: linear-gradient(180deg, rgba(22, 34, 48, 0.88), rgba(14, 21, 32, 0.88));
+    }
+
+    .panel h2 {
+      margin: 0 0 0.65rem;
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+    }
+
+    .note {
+      color: var(--warn);
+      font-size: 0.84rem;
+      margin-top: 0.4rem;
+    }
+
+    .row {
+      margin-top: 0.8rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      border: 1px solid rgba(192, 213, 243, 0.35);
+      border-radius: 8px;
+      padding: 0.45rem 0.78rem;
+      color: #f3f8ff;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: rgba(23, 35, 51, 0.9);
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    pre {
+      margin: 0;
+      border-radius: 8px;
+      border: 1px solid rgba(193, 215, 245, 0.3);
+      background: rgba(5, 9, 15, 0.88);
+      color: #e8f3ff;
+      padding: 0.75rem;
+      overflow: auto;
+      min-height: 240px;
+      line-height: 1.35;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .grid,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Web Content Builder Tool</h1>
+    <p class="subtitle">Build records for archive services or hidden standalone pages, preview JSON, then inject into the game data files.</p>
+
+    <section class="panel">
+      <h2>Content Form</h2>
+      <div class="grid">
+        <label class="field">
+          <span>Content Type</span>
+          <select id="contentTypeSelect">
+            <option value="zoomsearch">Zoom Search</option>
+            <option value="library">Library Archive</option>
+            <option value="police">Police Records</option>
+            <option value="archives">Canada Newspaper Archive</option>
+            <option value="standalone">Standalone Page</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Content ID (required)</span>
+          <input id="idInput" type="text" placeholder="e.g. sun-echo-relay" spellcheck="false">
+        </label>
+
+        <label class="field" id="urlField">
+          <span>URL (optional)</span>
+          <input id="urlInput" type="text" placeholder="http://example.local/page" spellcheck="false">
+        </label>
+
+        <label class="field">
+          <span>Title / Headline</span>
+          <input id="titleInput" type="text" placeholder="Record title" spellcheck="false">
+        </label>
+
+        <label class="field">
+          <span>Summary</span>
+          <input id="summaryInput" type="text" placeholder="One-line summary" spellcheck="false">
+        </label>
+
+        <label class="field full">
+          <span>Main text (paragraphs split by blank lines)</span>
+          <textarea id="bodyInput" spellcheck="false" placeholder="Body/extract/article/report/page text"></textarea>
+        </label>
+
+        <label class="field full">
+          <span>Image paths (one path per line)</span>
+          <textarea id="imagesInput" spellcheck="false" placeholder="./assets/photos/example.png"></textarea>
+        </label>
+      </div>
+
+      <div class="two-col">
+        <div class="panel" id="zoomsearchFieldsPanel">
+          <h2>Zoom Search Fields</h2>
+          <div class="grid">
+            <label class="field full">
+              <span>Keywords</span>
+              <input id="zoomKeywordsInput" type="text" placeholder="relay, signal tower, archive" spellcheck="false">
+            </label>
+          </div>
+        </div>
+
+        <div class="panel" id="libraryFieldsPanel">
+          <h2>Library Archive Fields</h2>
+          <div class="grid">
+            <label class="field">
+              <span>Author</span>
+              <input id="authorInput" type="text" placeholder="Author name" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Publication Title</span>
+              <input id="libraryPublicationTitleInput" type="text" placeholder="Notebook of River Marks" spellcheck="false">
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="two-col">
+        <div class="panel" id="policeFieldsPanel">
+          <h2>Police Records Fields</h2>
+          <div class="grid">
+            <label class="field">
+              <span>Keywords</span>
+              <input id="policeKeywordsInput" type="text" placeholder="director file, station log" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Required Privilege Level</span>
+              <input id="requiredPrivilegeInput" type="text" placeholder="0" spellcheck="false">
+            </label>
+          </div>
+        </div>
+
+        <div class="panel" id="archivesFieldsPanel">
+          <h2>Canada Newspaper Archive Fields</h2>
+          <div class="grid">
+            <label class="field">
+              <span>Province</span>
+              <input id="archiveProvinceInput" type="text" placeholder="Saskatchewan" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Publication (optional)</span>
+              <input id="publicationInput" type="text" placeholder="Frontier Press" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Keywords</span>
+              <input id="archivesKeywordsInput" type="text" placeholder="telegram, frontier" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Required Access Level</span>
+              <input id="requiredAccessInput" type="text" placeholder="0" spellcheck="false">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel" id="standaloneStylePanel">
+          <h2>Standalone Page Styling</h2>
+          <div class="grid">
+            <label class="field">
+              <span>Background Color</span>
+              <input id="standaloneBgColorInput" type="text" placeholder="#eceff3" spellcheck="false" value="#eceff3">
+            </label>
+            <label class="field">
+              <span>Font Family</span>
+              <select id="standaloneFontSelect">
+                <option value="Arial, Helvetica, sans-serif">Arial</option>
+                <option value="\"Comic Sans MS\", \"Comic Sans\", cursive">Comic Sans</option>
+                <option value="\"Courier New\", \"Lucida Console\", monospace">Courier New</option>
+                <option value="\"Times New Roman\", Times, serif">Times New Roman</option>
+              </select>
+            </label>
+          </div>
+          <p class="note">Applied only when Standalone Page content type is selected.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="previewButton" type="button">Generate Preview</button>
+        <button id="injectButton" type="button">Confirm + Inject</button>
+        <button id="clearButton" class="secondary" type="button">Clear</button>
+        <span id="status" class="status">Ready.</span>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 0.75rem;">
+      <h2>Preview</h2>
+      <pre id="previewOutput">{}</pre>
+    </section>
+  </main>
+
+  <script type="module" src="./web_content_builder.js"></script>
+</body>
+</html>

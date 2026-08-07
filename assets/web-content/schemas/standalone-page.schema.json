@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thecave.local/schemas/standalone-page.schema.json",
+  "title": "Standalone Browser Text Page",
+  "type": "object",
+  "required": ["id", "url", "content"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
+    "url": { "type": "string", "minLength": 1 },
+    "source": { "type": "string" },
+    "content": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      ]
+    }
+  },
+  "additionalProperties": true
+}

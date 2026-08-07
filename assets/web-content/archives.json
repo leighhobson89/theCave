@@ -20,13 +20,25 @@
   "records": [
     {
       "id": "frontier-press-dispatch",
-      "title": "Frontier Press Dispatch",
-      "date": "1996-10-12",
       "province": "Saskatchewan",
-      "articleAccess": "free",
+      "headline": "Frontier Press Dispatch",
+      "publication": "Frontier Press",
+      "edition": "Late Edition",
+      "date": "1996-10-12",
+      "keywords": ["frontier", "rescue drill", "mine road"],
+      "summary": "A public article about a cave rescue drill and a road closure.",
+      "article": [
+        "The Frontier Press reports that a stretch of the mine road was closed while volunteers staged a rescue drill near the old cave trail.",
+        "Witnesses describe lantern signals on the ridge and a temporary relay post set up to coordinate the exercise."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance.png",
+          "alt": "Archived newspaper photo of the cave entrance.",
+          "caption": "Printed alongside the rescue drill article."
+        }
+      ],
       "requiredAccessLevel": 0,
-      "keywords": ["frontier", "press", "dispatch", "cave"],
-      "body": "A short newspaper dispatch about a minor road closure and a cave rescue drill.",
       "awardsEvidence": true,
       "evidence": {
         "type": "report",
@@ -43,25 +55,57 @@
     },
     {
       "id": "prairie-telegram",
-      "title": "Prairie Telegram",
-      "date": "1997-02-18",
       "province": "Alberta",
-      "articleAccess": "subscriber",
+      "headline": "Prairie Telegram",
+      "publication": "Prairie Ledger",
+      "edition": "Subscriber Archive",
+      "date": "1997-02-18",
+      "keywords": ["telegram", "winter freight", "subscriber archive"],
+      "summary": "A subscriber-only freight article without photographs.",
+      "article": [
+        "The Prairie Ledger covers delayed winter freight and a weather bulletin passed between relay crews after midnight.",
+        "An editorial note mentions that the archived subscriber edition includes extra logistics details omitted from the public print."
+      ],
+      "images": [],
       "requiredAccessLevel": 1,
-      "keywords": ["telegram", "archive", "premium"],
-      "body": "A subscriber-only article about winter freight and a regional weather warning.",
       "awardsEvidence": false
     },
     {
       "id": "red-river-bulletin",
-      "title": "Red River Bulletin",
+      "province": "Ontario",
+      "headline": "Red River Bulletin",
+      "publication": "Northern Review",
+      "edition": "Morning Edition",
       "date": "1997-06-04",
-      "province": "Manitoba",
-      "articleAccess": "free",
+      "keywords": ["bulletin", "river levels", "market notes"],
+      "summary": "A public clipping with a small accompanying photo.",
+      "article": [
+        "The Northern Review prints a short bulletin on river levels and market notes for northern supply stations.",
+        "A later paragraph remarks on how recent trail repairs may change shipping times to the district outbuildings."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/insideCaveLookingBack.png",
+          "alt": "Inset image archived with the bulletin.",
+          "caption": "Inset print reproduced from the original paper archive."
+        }
+      ],
       "requiredAccessLevel": 0,
-      "keywords": ["bulletin", "red river", "archive"],
-      "body": "A public archive clipping covering a river level bulletin and market notes.",
       "awardsEvidence": false
+    },
+    {
+      "id": "test-archives-alpha",
+      "province": "Saskatchewan",
+      "headline": "Newspaper Test Alpha",
+      "keywords": [
+        "test archives alpha"
+      ],
+      "summary": "Temporary test record for newspaper province and keyword matching.",
+      "article": [
+        "This article validates combined province and keyword lookup behavior."
+      ],
+      "requiredAccessLevel": 0,
+      "images": []
     }
   ]
 }

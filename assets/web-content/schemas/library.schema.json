@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thecave.local/schemas/library.schema.json",
+  "title": "Library Archive Record",
+  "type": "object",
+  "required": [
+    "id",
+    "author",
+    "title",
+    "keywords",
+    "summary",
+    "extract"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "author": { "type": "string" },
+    "title": { "type": "string" },
+    "keywords": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "summary": { "type": "string" },
+    "extract": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ]
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["src"],
+            "properties": {
+              "src": { "type": "string" },
+              "alt": { "type": "string" },
+              "caption": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "awardsEvidence": { "type": "boolean" },
+    "evidence": { "type": "object" },
+    "standalonePages": {
+      "type": "array",
+      "items": { "$ref": "./standalone-page.schema.json" }
+    }
+  },
+  "additionalProperties": true
+}

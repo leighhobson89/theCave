@@ -1527,6 +1527,96 @@ function createComputerPaintWindowContentElements() {
 }
 
 function createComputerNetscapeWindowContentElements() {
+  const HISTORY_LIMIT = 5;
+
+  const normalizeBrowserUrl = (value) => {
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) {
+      return "";
+    }
+
+    const lowered = trimmed.toLowerCase();
+    if (lowered.startsWith("http://") || lowered.startsWith("https://")) {
+      return lowered.replace(/\/+$/, "");
+    }
+
+    return lowered;
+  };
+
+  const normalizeStandaloneContent = (value) => {
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+    }
+
+    const textValue = String(value ?? "").trim();
+    if (!textValue) {
+      return [];
+    }
+
+    return textValue
+      .split(/\n\s*\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  };
+
+  const createMissingPage = (attemptedUrl) => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-welcome", "browser-page-missing");
+    page.innerHTML = `
+      <h1 class="browser-welcome-title">Page Not Found</h1>
+      <p class="browser-welcome-copy">No in-game page exists at:</p>
+      <p class="browser-cosmic-copy browser-cosmic-plain-url">${attemptedUrl}</p>
+      <p class="browser-welcome-copy">Try one of the favorites or a known hidden page URL.</p>
+    `;
+    return page;
+  };
+
+  const createStandaloneTextPage = (pageRecord) => {
+    const page = document.createElement("div");
+    page.classList.add("caveos-browser-page", "browser-page-standalone");
+
+    const shell = document.createElement("div");
+    shell.classList.add("browser-page-shell", "browser-page-shell-gray", "browser-page-shell-standalone");
+
+    const sourceLabel = pageRecord.sourceLabel
+      ? `<p class="browser-standalone-source">Source: ${pageRecord.sourceLabel}</p>`
+      : "";
+
+    shell.innerHTML = `
+      <h1 class="browser-page-title">${pageRecord.title || pageRecord.id || "Recovered Page"}</h1>
+      <p class="browser-cosmic-copy browser-cosmic-plain-url">${pageRecord.url}</p>
+      ${sourceLabel}
+    `;
+
+    const styleSettings = pageRecord?.style && typeof pageRecord.style === "object"
+      ? pageRecord.style
+      : null;
+    if (styleSettings?.backgroundColor) {
+      shell.style.background = String(styleSettings.backgroundColor);
+    }
+    if (styleSettings?.fontFamily) {
+      shell.style.fontFamily = String(styleSettings.fontFamily);
+    }
+
+    const contentLines = normalizeStandaloneContent(pageRecord.content);
+    if (!contentLines.length) {
+      const empty = document.createElement("p");
+      empty.classList.add("browser-welcome-copy");
+      empty.textContent = "This hidden page has no body content.";
+      shell.appendChild(empty);
+    } else {
+      contentLines.forEach((line) => {
+        const paragraph = document.createElement("p");
+        paragraph.classList.add("browser-standalone-paragraph");
+        paragraph.textContent = line;
+        shell.appendChild(paragraph);
+      });
+    }
+
+    page.appendChild(shell);
+    return page;
+  };
+
   const createWelcomePage = () => {
     const page = document.createElement("div");
     page.classList.add("caveos-browser-page", "browser-page-welcome");
@@ -1608,10 +1698,32 @@ function createComputerNetscapeWindowContentElements() {
   browserAddress.classList.add("caveos-browser-address");
   browserAddress.type = "text";
   browserAddress.value = "about:welcome";
-  browserAddress.readOnly = true;
   browserAddress.setAttribute("aria-label", "Browser address");
 
-  addressRow.append(label, browserAddress);
+  const addressInputShell = document.createElement("div");
+  addressInputShell.classList.add("caveos-browser-address-shell");
+
+  const addressSubmitButton = document.createElement("button");
+  addressSubmitButton.type = "button";
+  addressSubmitButton.classList.add("caveos-browser-address-submit");
+  addressSubmitButton.setAttribute("aria-label", "Go to URL");
+  addressSubmitButton.title = "Go";
+
+  addressInputShell.append(browserAddress, addressSubmitButton);
+
+  const backButton = document.createElement("button");
+  backButton.type = "button";
+  backButton.classList.add("caveos-browser-nav-button");
+  backButton.textContent = "Back";
+  backButton.setAttribute("aria-label", "Back");
+
+  const homeButton = document.createElement("button");
+  homeButton.type = "button";
+  homeButton.classList.add("caveos-browser-nav-button");
+  homeButton.textContent = "Home";
+  homeButton.setAttribute("aria-label", "Home");
+
+  addressRow.append(label, addressInputShell, backButton, homeButton);
 
   const pageHost = document.createElement("div");
   pageHost.classList.add("caveos-browser-body", "caveos-browser-page-host");
@@ -1643,14 +1755,276 @@ function createComputerNetscapeWindowContentElements() {
     },
   };
 
-  const navigateToBrowserView = (viewKey) => {
+  const urlRouteMap = new Map();
+  const standalonePageRouteMap = new Map();
+  const navigationHistory = [];
+  let historyIndex = -1;
+  let standalonePagesPromise = null;
+
+  const registerViewRoute = (viewKey, url) => {
+    const normalized = normalizeBrowserUrl(url);
+    if (!normalized) {
+      return;
+    }
+
+    urlRouteMap.set(normalized, {
+      type: "view",
+      viewKey,
+      url,
+    });
+
+    if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+      const withSlash = `${normalized}/`;
+      urlRouteMap.set(withSlash, {
+        type: "view",
+        viewKey,
+        url,
+      });
+    }
+  };
+
+  Object.entries(browserViews).forEach(([viewKey, view]) => {
+    registerViewRoute(viewKey, view.url);
+  });
+
+  const updateBackButtonState = () => {
+    backButton.disabled = historyIndex <= 0;
+  };
+
+  const pushHistoryEntry = (entry) => {
+    if (!entry) {
+      return;
+    }
+
+    if (historyIndex < navigationHistory.length - 1) {
+      navigationHistory.splice(historyIndex + 1);
+    }
+
+    const previousEntry = navigationHistory[navigationHistory.length - 1];
+    if (previousEntry && previousEntry.url === entry.url) {
+      historyIndex = navigationHistory.length - 1;
+      updateBackButtonState();
+      return;
+    }
+
+    navigationHistory.push(entry);
+    if (navigationHistory.length > HISTORY_LIMIT) {
+      navigationHistory.splice(0, navigationHistory.length - HISTORY_LIMIT);
+    }
+
+    historyIndex = navigationHistory.length - 1;
+    updateBackButtonState();
+  };
+
+  const navigateToBrowserView = (viewKey, { pushHistory = true, overrideUrl = "" } = {}) => {
     const nextView = browserViews[viewKey];
     if (!nextView) {
       return;
     }
 
-    browserAddress.value = nextView.url;
+    const finalUrl = overrideUrl || nextView.url;
+    browserAddress.value = finalUrl;
     pageHost.replaceChildren(nextView.render());
+
+    if (pushHistory) {
+      pushHistoryEntry({
+        type: "view",
+        viewKey,
+        url: finalUrl,
+      });
+    }
+  };
+
+  const navigateToStandalonePage = (pageRecord, { pushHistory = true } = {}) => {
+    if (!pageRecord?.url) {
+      return;
+    }
+
+    browserAddress.value = pageRecord.url;
+    pageHost.replaceChildren(createStandaloneTextPage(pageRecord));
+
+    if (pushHistory) {
+      pushHistoryEntry({
+        type: "standalone",
+        pageId: pageRecord.id,
+        sourceSiteId: pageRecord.sourceSiteId,
+        url: pageRecord.url,
+      });
+    }
+  };
+
+  const renderHistoryEntry = (entry) => {
+    if (!entry) {
+      return;
+    }
+
+    if (entry.type === "view") {
+      navigateToBrowserView(entry.viewKey, {
+        pushHistory: false,
+        overrideUrl: entry.url,
+      });
+      return;
+    }
+
+    if (entry.type === "standalone") {
+      const routedPage = standalonePageRouteMap.get(normalizeBrowserUrl(entry.url));
+      if (routedPage) {
+        navigateToStandalonePage(routedPage, { pushHistory: false });
+      } else {
+        browserAddress.value = entry.url || "about:missing";
+        pageHost.replaceChildren(createMissingPage(entry.url || "Unknown URL"));
+      }
+      return;
+    }
+
+    browserAddress.value = entry.url || "about:missing";
+    pageHost.replaceChildren(createMissingPage(entry.url || "Unknown URL"));
+  };
+
+  const navigateBack = () => {
+    if (historyIndex <= 0) {
+      return;
+    }
+
+    historyIndex -= 1;
+    renderHistoryEntry(navigationHistory[historyIndex]);
+    updateBackButtonState();
+  };
+
+  const ensureStandaloneRoutesLoaded = async () => {
+    if (standalonePagesPromise) {
+      return standalonePagesPromise;
+    }
+
+    standalonePagesPromise = (async () => {
+      try {
+        const standaloneResponse = await fetch("./assets/web-content/standalone-pages.json");
+        if (standaloneResponse.ok) {
+          const standaloneData = await standaloneResponse.json();
+          const standaloneRecords = Array.isArray(standaloneData?.records)
+            ? standaloneData.records
+            : [];
+
+          standaloneRecords.forEach((pageRecord) => {
+            if (!pageRecord || typeof pageRecord !== "object") {
+              return;
+            }
+
+            const url = String(pageRecord.url ?? "").trim();
+            const id = String(pageRecord.id ?? "").trim();
+            if (!url || !id) {
+              return;
+            }
+
+            const normalizedUrl = normalizeBrowserUrl(url);
+            if (!normalizedUrl) {
+              return;
+            }
+
+            const normalizedPage = {
+              id,
+              sourceSiteId: "standalone",
+              sourceLabel: pageRecord.source || "standalone",
+              title: String(pageRecord.title ?? id).trim() || id,
+              url,
+              content: pageRecord.content ?? pageRecord.body ?? "",
+              style: pageRecord.style && typeof pageRecord.style === "object" ? pageRecord.style : null,
+            };
+
+            standalonePageRouteMap.set(normalizedUrl, normalizedPage);
+            if (normalizedUrl.startsWith("http://") || normalizedUrl.startsWith("https://")) {
+              standalonePageRouteMap.set(`${normalizedUrl}/`, normalizedPage);
+            }
+          });
+        }
+      } catch (error) {
+        console.warn("Unable to load standalone-pages.json routes.", error);
+      }
+
+      // Backward-compatible fallback: load embedded standalonePages from service JSON files.
+      const websiteIds = webContentManager.getWebsiteIds();
+      await Promise.all(
+        websiteIds.map(async (websiteId) => {
+          try {
+            const websiteData = await webContentManager.loadWebsiteData(websiteId);
+            const standalonePages = Array.isArray(websiteData?.standalonePages)
+              ? websiteData.standalonePages
+              : [];
+
+            standalonePages.forEach((pageRecord) => {
+              if (!pageRecord || typeof pageRecord !== "object") {
+                return;
+              }
+
+              const url = String(pageRecord.url ?? "").trim();
+              const id = String(pageRecord.id ?? "").trim();
+              if (!url || !id) {
+                return;
+              }
+
+              const normalizedUrl = normalizeBrowserUrl(url);
+              if (!normalizedUrl) {
+                return;
+              }
+
+              const normalizedPage = {
+                id,
+                sourceSiteId: websiteId,
+                sourceLabel: pageRecord.source || websiteId,
+                title: String(pageRecord.title ?? id).trim() || id,
+                url,
+                content: pageRecord.content ?? pageRecord.body ?? pageRecord.pageContent ?? "",
+                style: pageRecord.style && typeof pageRecord.style === "object" ? pageRecord.style : null,
+              };
+
+              standalonePageRouteMap.set(normalizedUrl, normalizedPage);
+              if (normalizedUrl.startsWith("http://") || normalizedUrl.startsWith("https://")) {
+                standalonePageRouteMap.set(`${normalizedUrl}/`, normalizedPage);
+              }
+            });
+          } catch (error) {
+            console.warn(`Unable to load standalone page routes for ${websiteId}.`, error);
+          }
+        })
+      );
+    })();
+
+    return standalonePagesPromise;
+  };
+
+  const navigateToAddress = async ({ pushHistory = true } = {}) => {
+    const enteredValue = String(browserAddress.value ?? "").trim();
+    const normalized = normalizeBrowserUrl(enteredValue);
+
+    if (!normalized) {
+      return;
+    }
+
+    const favoriteRoute = urlRouteMap.get(normalized);
+    if (favoriteRoute?.type === "view") {
+      navigateToBrowserView(favoriteRoute.viewKey, {
+        pushHistory,
+        overrideUrl: favoriteRoute.url,
+      });
+      return;
+    }
+
+    await ensureStandaloneRoutesLoaded();
+
+    const standaloneRoute = standalonePageRouteMap.get(normalized);
+    if (standaloneRoute) {
+      navigateToStandalonePage(standaloneRoute, { pushHistory });
+      return;
+    }
+
+    browserAddress.value = enteredValue;
+    pageHost.replaceChildren(createMissingPage(enteredValue));
+    if (pushHistory) {
+      pushHistoryEntry({
+        type: "missing",
+        url: enteredValue,
+      });
+    }
   };
 
   const quickLinkConfigs = [
@@ -1693,7 +2067,28 @@ function createComputerNetscapeWindowContentElements() {
     );
   });
 
+  browserAddress.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void navigateToAddress();
+    }
+  });
+
+  addressSubmitButton.addEventListener("click", () => {
+    void navigateToAddress();
+  });
+
+  backButton.addEventListener("click", () => {
+    navigateBack();
+  });
+
+  homeButton.addEventListener("click", () => {
+    navigateToBrowserView("welcome");
+  });
+
   navigateToBrowserView("welcome");
+  updateBackButtonState();
+  void ensureStandaloneRoutesLoaded();
 
   container.append(quickLinksBar, addressRow, pageHost);
   return container;

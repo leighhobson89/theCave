@@ -1,6 +1,6 @@
 {
   "siteId": "police",
-  "displayName": "Saskatchewan Police Database",
+  "displayName": "Police Records",
   "homeUrl": "http://records.sk-police.gov",
   "accounts": [
     {
@@ -26,9 +26,26 @@
   "records": [
     {
       "id": "station-log-01",
+      "province": "Saskatchewan",
       "title": "Station Log 01",
-      "keywords": ["station", "log", "patrol"],
-      "body": "Routine note from the station house reporting a quiet evening.",
+      "keywords": ["station", "patrol", "station log"],
+      "summary": "Routine overnight station note with no photographs attached.",
+      "report": [
+        "The station log reports a quiet evening, one lantern inspection, and a patrol route ending near the old cave road junction.",
+        "A final note remarks that the ridge weather relay could not be reached before dawn."
+      ],
+      "caseNumber": "SK-NWT-1904-01",
+      "officer": "Constable Mira Hall",
+      "classification": "Routine",
+      "declassificationStatus": "Declassified",
+      "date": "1904-11-08",
+      "images": [],
+      "attachments": [
+        {
+          "label": "Filed With",
+          "value": "Night Patrol Binder A"
+        }
+      ],
       "requiredPrivilegeLevel": 0,
       "awardsEvidence": true,
       "evidence": {
@@ -46,17 +63,72 @@
     },
     {
       "id": "evidence-locker-22",
+      "province": "North-West Territories District",
       "title": "Evidence Locker 22",
-      "keywords": ["locker", "inventory", "evidence"],
-      "body": "Restricted inventory sheet for the evidence locker on the second floor.",
+      "keywords": ["locker", "evidence locker", "inventory sheet"],
+      "summary": "Restricted inventory sheet with one evidence photograph.",
+      "report": [
+        "Locker 22 contains tagged field items recovered from an abandoned supply room and a damaged lantern crate.",
+        "The inventory warns that several labels were rewritten after the district transfer." 
+      ],
+      "caseNumber": "NWT-LOCK-22",
+      "officer": "Detective Rowan Pike",
+      "classification": "Restricted",
+      "declassificationStatus": "Partially Declassified",
+      "date": "1911-03-19",
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance.png",
+          "alt": "Evidence photo attached to the inventory sheet.",
+          "caption": "Field photograph attached to Locker 22."
+        }
+      ],
+      "attachments": [
+        {
+          "label": "Supplement",
+          "value": "Inventory Addendum C"
+        }
+      ],
       "requiredPrivilegeLevel": 2,
       "awardsEvidence": false
     },
     {
       "id": "director-file-9",
+      "province": "Saskatchewan",
       "title": "Director File 9",
-      "keywords": ["director", "file", "task force"],
-      "body": "Top-level case notes retained for administration review.",
+      "keywords": ["director", "task force", "director file"],
+      "summary": "Senior review file with multiple evidence photographs.",
+      "report": [
+        "Director File 9 consolidates district task force notes regarding the cave route, the ridge relay, and conflicting witness sketches.",
+        "The final page recommends restricting circulation until the recovered maps can be cross-checked against the older survey notebooks."
+      ],
+      "caseNumber": "SK-DIR-09",
+      "officer": "Administrator Helen Stroud",
+      "classification": "Confidential",
+      "declassificationStatus": "Not Declassified",
+      "date": "1916-08-02",
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance.png",
+          "alt": "Exterior evidence photograph used in Director File 9.",
+          "caption": "Exterior survey image clipped into the director file."
+        },
+        {
+          "src": "./assets/photos/insideCaveLookingBack.png",
+          "alt": "Interior cave photograph used in Director File 9.",
+          "caption": "Interior route photo attached to the task force notes."
+        }
+      ],
+      "attachments": [
+        {
+          "label": "Annex",
+          "value": "Task Force Sketch Envelope"
+        },
+        {
+          "label": "Review",
+          "value": "Administrator Memorandum 9-B"
+        }
+      ],
       "requiredPrivilegeLevel": 5,
       "awardsEvidence": true,
       "evidence": {
@@ -71,6 +143,20 @@
           "path": "./assets/web-content/evidence/police-director-file-9.md"
         }
       }
+    },
+    {
+      "id": "test-police-alpha",
+      "title": "Police Test Alpha",
+      "keywords": [
+        "test police alpha"
+      ],
+      "summary": "Temporary test record for police keyword matching.",
+      "report": [
+        "This record validates police keyword matching with public privilege access."
+      ],
+      "officer": "Test Officer",
+      "requiredPrivilegeLevel": 0,
+      "images": []
     }
   ]
 }

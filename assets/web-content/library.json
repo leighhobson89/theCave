@@ -1,15 +1,32 @@
 {
   "siteId": "library",
-  "displayName": "Library Database",
+  "displayName": "Library Archive",
   "homeUrl": "http://library.intra",
   "records": [
     {
       "id": "vale-notebook",
       "author": "Edith Vale",
       "title": "Notebook of River Marks",
-      "subject": "History",
-      "keywords": ["river", "notes", "archive"],
-      "body": "A library catalogue entry for a slim notebook of survey marks and annotations.",
+      "publisher": "Prairie Survey Press",
+      "publicationYear": 1918,
+      "province": "Saskatchewan",
+      "keywords": ["river marks", "survey notebook", "askew waterline"],
+      "summary": "A slim survey notebook listing flood markers and route annotations.",
+      "extract": [
+        "Vale records a chain of river marks beside the old cave road and suggests that several were reused as emergency trail signs decades later.",
+        "One entry cross-references a sketched lantern symbol that matches the modern investigation notes."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance.png",
+          "alt": "A weathered cover image used to represent the notebook scan.",
+          "caption": "Cover scan attached to the archive entry."
+        }
+      ],
+      "references": [
+        "Shelf: Prairie Surveys / Cabinet 2 / Drawer 4",
+        "Acquired from the Vale estate donation ledger"
+      ],
       "awardsEvidence": true,
       "evidence": {
         "type": "report",
@@ -28,19 +45,57 @@
       "id": "morton-lantern-guide",
       "author": "M. A. Morton",
       "title": "Field Guide to Lanterns",
-      "subject": "Equipment",
-      "keywords": ["lantern", "field", "guide"],
-      "body": "A practical guide to lantern maintenance and storage.",
-      "awardsEvidence": false
+      "publisher": "Northern Equipment Quarterly",
+      "publicationYear": 1926,
+      "province": "Alberta",
+      "keywords": ["field lantern", "lantern maintenance", "guide book"],
+      "summary": "A practical maintenance guide for expedition lanterns.",
+      "extract": [
+        "Morton describes wick trimming, lens storage, and the safest way to shield lanterns during narrow-corridor travel.",
+        "A short appendix recommends tagging lantern crates by route and weather risk."
+      ],
+      "images": [],
+      "references": [
+        "Reference copy held in Equipment Annex / Shelf 7"
+      ]
     },
     {
       "id": "haskins-catalogue",
       "author": "R. Haskins",
       "title": "Catalogue of Northern Rooms",
-      "subject": "Architecture",
-      "keywords": ["catalogue", "rooms", "northern"],
-      "body": "A complete archival catalogue of northern structures.",
-      "awardsEvidence": false
+      "publisher": "Territory Records Office",
+      "publicationYear": 1909,
+      "province": "Ontario",
+      "keywords": ["northern rooms", "catalogue index", "district architecture"],
+      "summary": "An inventory of isolated rooms and storage buildings across the district.",
+      "extract": [
+        "The catalogue organizes buildings by access route, supply risk, and seasonal occupancy.",
+        "A marginal note mentions a temporary records room being moved after repeated cave moisture damage."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/insideCaveLookingBack.png",
+          "alt": "Illustration page showing a dark interior corridor.",
+          "caption": "Illustration plate included with the catalogue entry."
+        }
+      ],
+      "references": [
+        "Cross-listed with District Building Ledger 14",
+        "Annotated by archivist N. Shepherd in 1947"
+      ]
+    },
+    {
+      "id": "test-library-alpha",
+      "author": "Test Archivist",
+      "title": "Publication Test Alpha",
+      "keywords": [
+        "publication test alpha"
+      ],
+      "summary": "Temporary test record for library author and publication title matching.",
+      "extract": [
+        "This record validates author + publication title exact matching."
+      ],
+      "images": []
     }
   ]
 }

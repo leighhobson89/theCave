@@ -5,10 +5,26 @@
   "records": [
     {
       "id": "black-pine-trail",
-      "title": "Black Pine Trail",
-      "keywords": ["askew", "black pine", "trail", "cave", "map"],
-      "body": "A scanned trail note mentioning the old mine road and a radio relay on the ridge.",
-      "excerpt": "Trail note from the Black Pine route.",
+      "websiteName": "Trailwatch Survey Board",
+      "pageTitle": "Black Pine Trail",
+      "url": "http://www.zoomsearch.net/trailwatch/black-pine-trail.html",
+      "keywords": [
+        "black pine",
+        "trail map",
+        "askew route"
+      ],
+      "summary": "A recovered hiking page with route notes and ridge annotations.",
+      "pageContent": [
+        "The Black Pine trail page contains a copied survey strip showing the old mine road and a weathered note pointing toward the ridge relay path.",
+        "Several margin comments mention the safest lantern stops between the cave mouth and the upper trail fork."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance.png",
+          "alt": "Photo of a cave entrance used as a route landmark.",
+          "caption": "Uploaded marker image attached to the trail page."
+        }
+      ],
       "awardsEvidence": true,
       "evidence": {
         "type": "report",
@@ -25,19 +41,81 @@
     },
     {
       "id": "sun-echo-relay",
-      "title": "Sun Echo Relay",
-      "keywords": ["radio", "signal", "relay", "sun", "echo"],
-      "body": "A short listing for a ridge-top relay tower used for local test signals.",
-      "excerpt": "Signal relay listing.",
-      "awardsEvidence": false
+      "websiteName": "Signal Hobby Ring",
+      "pageTitle": "Sun Echo Relay",
+      "url": "http://www.zoomsearch.net/signal-hobby/sun-echo-relay.html",
+      "keywords": [
+        "relay",
+        "signal tower",
+        "sun echo"
+      ],
+      "summary": "An archived hobbyist page about a ridge-top relay tower.",
+      "pageContent": [
+        "The page describes a small relay station used for local experiments and amateur signal checks.",
+        "It notes that the relay only stayed active during fair weather and that local hikers often used it as a navigation clue."
+      ],
+      "images": []
     },
     {
       "id": "lunar-lantern-map",
-      "title": "Lunar Lantern Map",
-      "keywords": ["moon", "lantern", "map", "route"],
-      "body": "A simple route map with handwritten notes about lantern spacing.",
-      "excerpt": "Route map with lantern notes.",
-      "awardsEvidence": false
+      "websiteName": "Wayfarer Lantern Club",
+      "pageTitle": "Lunar Lantern Map",
+      "url": "http://www.zoomsearch.net/wayfarer/lunar-lantern-map.html",
+      "keywords": [
+        "lunar lantern",
+        "lantern spacing",
+        "moon route"
+      ],
+      "summary": "A lantern club page with route diagrams and field photos.",
+      "pageContent": [
+        "This archived page records how volunteers spaced lanterns along a moonlit emergency route.",
+        "The accompanying notes compare the route markings to older cave maps used during rescue drills."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance.png",
+          "alt": "The cave entrance photographed for a route guide.",
+          "caption": "Entrance marker from the lantern route page."
+        },
+        {
+          "src": "./assets/photos/insideCaveLookingBack.png",
+          "alt": "Inside the cave looking back toward the opening.",
+          "caption": "Interior route reference photo attached to the archived page."
+        }
+      ]
+    },
+    {
+      "id": "secretone",
+      "websiteName": "Manual Builder Import",
+      "pageTitle": "Secret One",
+      "url": "http://www.zoomsearch.net/manual/secretone",
+      "keywords": [
+        "secretOne",
+        "secretTwo"
+      ],
+      "summary": "The Secret You Always Wanted",
+      "pageContent": [
+        "This is the secret you have always wanted, and now you have found it!!"
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance.png"
+        }
+      ]
+    },
+    {
+      "id": "test-zoom-alpha",
+      "websiteName": "Builder Test Site",
+      "pageTitle": "Zoom Test Alpha",
+      "url": "http://www.zoomsearch.net/manual/test-zoom-alpha",
+      "keywords": [
+        "test zoom alpha"
+      ],
+      "summary": "Temporary test record for browser search verification.",
+      "pageContent": [
+        "This page exists to validate exact-keyword search behavior for Zoom Search."
+      ],
+      "images": []
     }
   ]
 }
