@@ -34,6 +34,7 @@ const evidenceTitleKeyInput = document.getElementById("evidenceTitleKeyInput");
 const evidenceNameInput = document.getElementById("evidenceNameInput");
 const evidenceDefaultTitleInput = document.getElementById("evidenceDefaultTitleInput");
 const evidencePaperStyleInput = document.getElementById("evidencePaperStyleInput");
+const evidenceDescriptionInput = document.getElementById("evidenceDescriptionInput");
 const evidenceFieldsGrid = document.getElementById("evidenceFieldsGrid");
 const standaloneBgColorPickButton = document.getElementById("standaloneBgColorPickButton");
 const standaloneBgColorPicker = document.getElementById("standaloneBgColorPicker");
@@ -233,23 +234,32 @@ function buildEvidence(siteId, common, fallbackTitle) {
   const preset = getEvidencePreset();
   const evidenceName = String(evidenceNameInput.value || "").trim() || `${siteId}-${common.id}`;
   const defaultTitleString = String(evidenceDefaultTitleInput.value || "").trim() || fallbackTitle || common.id;
+  const evidenceDescription = String(evidenceDescriptionInput.value || "")
+    .replace(/\r\n/g, "\n")
+    .trim();
+
+  const evidence = {
+    type: getSelectedEvidenceType(),
+    storageKey: String(evidenceStorageKeyInput.value || "").trim() || preset.storageKey,
+    titleKey: String(evidenceTitleKeyInput.value || "").trim() || preset.titleKey,
+    name: evidenceName,
+    defaultTitleString,
+    paperStyle: String(evidencePaperStyleInput.value || "").trim() || preset.paperStyles[0],
+    source: {
+      kind: preset.source.kind,
+      languageAware: true,
+      catalogPathTemplate: preset.source.catalogPathTemplate,
+      entryId: evidenceName,
+    },
+  };
+
+  if (evidenceDescription) {
+    evidence.description = evidenceDescription;
+  }
 
   return {
     awardsEvidence,
-    evidence: {
-      type: getSelectedEvidenceType(),
-      storageKey: String(evidenceStorageKeyInput.value || "").trim() || preset.storageKey,
-      titleKey: String(evidenceTitleKeyInput.value || "").trim() || preset.titleKey,
-      name: evidenceName,
-      defaultTitleString,
-      paperStyle: String(evidencePaperStyleInput.value || "").trim() || preset.paperStyles[0],
-      source: {
-        kind: preset.source.kind,
-        languageAware: true,
-        catalogPathTemplate: preset.source.catalogPathTemplate,
-        entryId: evidenceName,
-      },
-    },
+    evidence,
   };
 }
 
@@ -462,6 +472,7 @@ function clearForm() {
     requiredAccessInput,
     evidenceNameInput,
     evidenceDefaultTitleInput,
+    evidenceDescriptionInput,
   ].forEach((element) => {
     element.value = "";
   });
@@ -493,7 +504,7 @@ function syncFieldStates() {
   standaloneStylePanel.classList.remove("is-hidden");
 
   const evidenceEnabled = awardsEvidenceInput.checked;
-  evidenceFieldsGrid.querySelectorAll("input, select").forEach((element) => {
+  evidenceFieldsGrid.querySelectorAll("input, select, textarea").forEach((element) => {
     element.disabled = !evidenceEnabled;
   });
 }

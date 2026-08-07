@@ -2448,6 +2448,13 @@ async function getDescriptionTextByEvidence(
   forceReload = false,
   preloadedCatalogEntry = null
 ) {
+  const explicitDescription = String(evidence?.description || "")
+    .replace(/\r\n/g, "\n")
+    .trim();
+  if (explicitDescription) {
+    return explicitDescription;
+  }
+
   const evidenceType = String(evidence?.type || "").trim();
 
   if (evidenceType === "report") {

@@ -13,6 +13,13 @@
       "defaultTitleString": "Inside Cave Looking Back",
       "paperStyle": "photo-mounted-linen",
       "descriptionText": "﻿insideCaveLookingBack description (it)\r\n\r\nNotes recorded by investigator.\r\n"
+    },
+    {
+      "id": "No More!",
+      "photoPath": "./assets/photos/caveEntrance1851.png",
+      "defaultTitleString": "No More!",
+      "paperStyle": "photo-mounted",
+      "descriptionText": "No More! description (it)"
     }
   ]
 }

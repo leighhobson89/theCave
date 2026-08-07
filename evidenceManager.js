@@ -34,12 +34,6 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_IVORY,
   },
   {
-    kind: EVIDENCE_TYPES.PHOTO,
-    photoPath: "./assets/photos/insideCaveLookingBack.png",
-    name: "insideCaveLookingBack",
-    paperStyle: PAPER_STYLES.PHOTO_MOUNTED_LINEN,
-  },
-  {
     kind: EVIDENCE_TYPES.REPORT,
     reportName: "missingReport",
   }

@@ -5,7 +5,7 @@
   "records": [
     {
       "id": "silvermineentrance",
-      "websiteName": "Manual Builder Import",
+      "websiteName": "Saskatchewan Mining Gazette",
       "pageTitle": "Black Pine Mine Exhausted",
       "url": "http://www.zoomsearch.net/manual/silvermineentrance",
       "keywords": [
@@ -33,6 +33,7 @@
         "titleKey": "photos",
         "name": "No More!",
         "defaultTitleString": "No More!",
+        "description": "1st of July 1851 - The Silver Mine at Black Pine was officially declared 'Exhausted' today after no further seams have been discovered for over two months of digging. Work is set to dismantle the extraction machinery and rails, and move along to dig out a new extraction shaft, where more seams of Silver Ore were discovered during prospecting.",
         "paperStyle": "photo-mounted",
         "source": {
           "kind": "photo-localized-catalog-entry",
