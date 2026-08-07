@@ -4,180 +4,41 @@
   "homeUrl": "http://www.zoomsearch.net",
   "records": [
     {
-      "id": "black-pine-trail",
-      "websiteName": "Trailwatch Survey Board",
-      "pageTitle": "Black Pine Trail",
-      "url": "http://www.zoomsearch.net/trailwatch/black-pine-trail.html",
+      "id": "silvermineentrance",
+      "websiteName": "Manual Builder Import",
+      "pageTitle": "Black Pine Mine Exhausted",
+      "url": "http://www.zoomsearch.net/manual/silvermineentrance",
       "keywords": [
-        "black pine",
-        "trail map",
-        "askew route"
+        "black pine mine",
+        "silver mine",
+        "mine"
       ],
-      "summary": "A recovered hiking page with route notes and ridge annotations.",
+      "summary": "Black Pine Mine Exhausted",
       "pageContent": [
-        "The Black Pine trail page contains a copied survey strip showing the old mine road and a weathered note pointing toward the ridge relay path.",
-        "Several margin comments mention the safest lantern stops between the cave mouth and the upper trail fork."
+        "An old article has been found printed on a poster from back in 1851, kindly uploaded by our readers, the text is as follows:",
+        "1st of July 1851 - The Silver Mine at Black Pine was officially declared 'Exhausted' today after no further seams have been discovered for over two months of digging.  Work is set to dismantle the extraction machinery and rails, and move along to dig out a new extraction shaft, where more seams of Silver Ore were discovered during prospecting.",
+        "1851"
       ],
       "images": [
         {
-          "src": "./assets/photos/caveEntrance.png",
-          "alt": "Photo of a cave entrance used as a route landmark.",
-          "caption": "Uploaded marker image attached to the trail page."
+          "src": "./assets/photos/caveEntrance1851.png",
+          "alt": "",
+          "caption": "The last day of the Silver Mine at Black Pine, 30 June 1851"
         }
       ],
       "awardsEvidence": true,
       "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "zoomsearch-black-pine-trail",
-        "defaultTitleString": "Black Pine Trail",
-        "paperStyle": "report-parchment",
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "No More!",
+        "defaultTitleString": "No More!",
+        "paperStyle": "photo-mounted",
         "source": {
-          "kind": "report-localized-catalog-entry",
+          "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "zoomsearch-black-pine-trail"
-        }
-      }
-    },
-    {
-      "id": "sun-echo-relay",
-      "websiteName": "Signal Hobby Ring",
-      "pageTitle": "Sun Echo Relay",
-      "url": "http://www.zoomsearch.net/signal-hobby/sun-echo-relay.html",
-      "keywords": [
-        "relay",
-        "signal tower",
-        "sun echo"
-      ],
-      "summary": "An archived hobbyist page about a ridge-top relay tower.",
-      "pageContent": [
-        "The page describes a small relay station used for local experiments and amateur signal checks.",
-        "It notes that the relay only stayed active during fair weather and that local hikers often used it as a navigation clue."
-      ],
-      "images": [],
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "zoomsearch-sun-echo-relay",
-        "defaultTitleString": "Sun Echo Relay",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "zoomsearch-sun-echo-relay"
-        }
-      }
-    },
-    {
-      "id": "lunar-lantern-map",
-      "websiteName": "Wayfarer Lantern Club",
-      "pageTitle": "Lunar Lantern Map",
-      "url": "http://www.zoomsearch.net/wayfarer/lunar-lantern-map.html",
-      "keywords": [
-        "lunar lantern",
-        "lantern spacing",
-        "moon route"
-      ],
-      "summary": "A lantern club page with route diagrams and field photos.",
-      "pageContent": [
-        "This archived page records how volunteers spaced lanterns along a moonlit emergency route.",
-        "The accompanying notes compare the route markings to older cave maps used during rescue drills."
-      ],
-      "images": [
-        {
-          "src": "./assets/photos/caveEntrance.png",
-          "alt": "The cave entrance photographed for a route guide.",
-          "caption": "Entrance marker from the lantern route page."
-        },
-        {
-          "src": "./assets/photos/insideCaveLookingBack.png",
-          "alt": "Inside the cave looking back toward the opening.",
-          "caption": "Interior route reference photo attached to the archived page."
-        }
-      ],
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "zoomsearch-lunar-lantern-map",
-        "defaultTitleString": "Lunar Lantern Map",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "zoomsearch-lunar-lantern-map"
-        }
-      }
-    },
-    {
-      "id": "secretone",
-      "websiteName": "Manual Builder Import",
-      "pageTitle": "Secret One",
-      "url": "http://www.zoomsearch.net/manual/secretone",
-      "keywords": [
-        "secretOne",
-        "secretTwo"
-      ],
-      "summary": "The Secret You Always Wanted",
-      "pageContent": [
-        "This is the secret you have always wanted, and now you have found it!!"
-      ],
-      "images": [
-        {
-          "src": "./assets/photos/caveEntrance.png",
-          "alt": "",
-          "caption": ""
-        }
-      ],
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "zoomsearch-secretone",
-        "defaultTitleString": "Secret One",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "zoomsearch-secretone"
-        }
-      }
-    },
-    {
-      "id": "test-zoom-alpha",
-      "websiteName": "Builder Test Site",
-      "pageTitle": "Zoom Test Alpha",
-      "url": "http://www.zoomsearch.net/manual/test-zoom-alpha",
-      "keywords": [
-        "test zoom alpha"
-      ],
-      "summary": "Temporary test record for browser search verification.",
-      "pageContent": [
-        "This page exists to validate exact-keyword search behavior for Zoom Search."
-      ],
-      "images": [],
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "zoomsearch-test-zoom-alpha",
-        "defaultTitleString": "Zoom Test Alpha",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "zoomsearch-test-zoom-alpha"
+          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "entryId": "No More!"
         }
       }
     }

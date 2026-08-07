@@ -12,6 +12,10 @@ export class AudioManager {
     this.musicTracks = [
       "audio/music/backgroundMusic_1.mp3",
       "audio/music/backgroundMusic_2.mp3",
+      "audio/music/backgroundMusic_3.mp3",
+      "audio/music/backgroundMusic_4.mp3",
+      "audio/music/backgroundMusic_5.mp3",
+      "audio/music/backgroundMusic_6.mp3",
     ];
 
     this.sfxSources = {

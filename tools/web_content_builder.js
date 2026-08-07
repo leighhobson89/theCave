@@ -3,6 +3,7 @@ const INJECT_API_URL = "http://localhost:5058/api/web-content/upsert";
 const contentTypeSelect = document.getElementById("contentTypeSelect");
 const idInput = document.getElementById("idInput");
 const urlInput = document.getElementById("urlInput");
+const websiteNameInput = document.getElementById("websiteNameInput");
 const titleInput = document.getElementById("titleInput");
 const summaryInput = document.getElementById("summaryInput");
 const bodyInput = document.getElementById("bodyInput");
@@ -280,6 +281,11 @@ function buildZoomsearchEntry(common) {
     throw new Error("Zoom Search keywords are required.");
   }
 
+  const websiteName = String(websiteNameInput.value || "").trim();
+  if (!websiteName) {
+    throw new Error("Zoom Search website name is required.");
+  }
+
   const pageTitle = common.title || common.id;
   const evidenceFields = buildEvidence("zoomsearch", common, pageTitle);
 
@@ -288,7 +294,7 @@ function buildZoomsearchEntry(common) {
     bucket: "records",
     entry: {
       id: common.id,
-      websiteName: "Manual Builder Import",
+      websiteName,
       pageTitle,
       url: common.url || `http://www.zoomsearch.net/manual/${common.id}`,
       keywords,
@@ -441,6 +447,7 @@ function clearForm() {
   [
     idInput,
     urlInput,
+    websiteNameInput,
     titleInput,
     summaryInput,
     bodyInput,
@@ -474,7 +481,9 @@ function clearForm() {
 function syncFieldStates() {
   const contentType = getCurrentType();
   const isStandalone = contentType === "standalone";
+  const isZoomsearch = contentType === "zoomsearch";
   urlInput.required = isStandalone;
+  websiteNameInput.required = isZoomsearch;
 
   // Keep all sections visible so authors can reference field requirements while switching types.
   zoomsearchFieldsPanel.classList.remove("is-hidden");
