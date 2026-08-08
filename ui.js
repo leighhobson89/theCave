@@ -3032,8 +3032,8 @@ function createPhotosWindowContentElements() {
   descriptionOuter.appendChild(descriptionPaperWrap);
 
   photoPaperWrap.appendChild(image);
-  mediaViewport.append(photoPaperWrap, emptyState, counter);
-  container.append(titleEditorRefs.titleBar, mediaViewport, captionOuter, descriptionOuter);
+  mediaViewport.append(photoPaperWrap, captionOuter, emptyState);
+  container.append(titleEditorRefs.titleBar, counter, mediaViewport, descriptionOuter);
 
   return {
     container,
@@ -3168,8 +3168,8 @@ function createReportsWindowContentElements() {
 
   reportDocumentContent.append(reportDocumentText, emptyState);
   reportPaperWrap.appendChild(reportDocumentContent);
-  reportViewport.append(reportPaperWrap, counter);
-  container.append(titleEditorRefs.titleBar, reportViewport, descriptionOuter);
+  reportViewport.append(reportPaperWrap);
+  container.append(titleEditorRefs.titleBar, counter, reportViewport, descriptionOuter);
 
   return {
     container,
@@ -3445,6 +3445,7 @@ function openPhotosWindow() {
     classNames: ["story-window", "photos-window"],
     title: localize("photos", getLanguage()),
     showCarouselNavigation: true,
+    initialHeightRatio: 0.646,
     onNavigatePrevious: () => {
       showPreviousCarouselImage();
       updatePhotosWindowContent(photosWindowController);

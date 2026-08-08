@@ -16,6 +16,7 @@
         "/^node --check webContentRegistry\\.js; node --check tools/web_content_builder\\.js; node --check ui\\.js$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "ForEach-Object": true
     }
 }

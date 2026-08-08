@@ -3733,8 +3733,9 @@ button.disabled {
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    gap: 0.5rem;
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 0.5rem;
+    row-gap: 0.24rem;
     box-sizing: border-box;
     width: 100%;
     height: 100%;
@@ -3797,21 +3798,21 @@ button.disabled {
     min-width: 0;
     min-height: 0;
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.12rem;
     overflow: hidden;
     grid-column: 1;
     grid-row: 2;
 }
 
 .photo-caption-outer {
-    grid-column: 1;
-    grid-row: 3;
-    justify-self: center;
     width: 100%;
     max-width: 100%;
-    min-height: 2.1rem;
-    padding: 0.15rem 0;
+    min-height: 1.6rem;
+    padding: 0;
+    flex: 0 0 auto;
 }
 
 .photo-caption-text {
@@ -3935,6 +3936,11 @@ button.disabled {
 }
 
 .photos-carousel-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: rgba(218, 229, 244, 0.76);
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -3944,9 +3950,11 @@ button.disabled {
 }
 
 .photos-carousel-counter {
-    position: absolute;
-    right: 0.7rem;
-    bottom: 0.6rem;
+    position: relative;
+    justify-self: end;
+    align-self: center;
+    grid-column: 2;
+    grid-row: 1;
     font-size: 0.84rem;
     letter-spacing: 0.04em;
     padding: 0.18rem 0.45rem;
@@ -3961,7 +3969,8 @@ button.disabled {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
-    gap: 0.5rem;
+    column-gap: 0.5rem;
+    row-gap: 0.24rem;
     width: 100%;
     height: 100%;
 }
@@ -4059,16 +4068,18 @@ button.disabled {
 }
 
 .report-carousel-counter {
-    position: absolute;
-    right: 0.7rem;
-    bottom: 0.6rem;
+    position: relative;
+    justify-self: end;
+    align-self: center;
+    grid-column: 2;
+    grid-row: 1;
     font-size: 0.84rem;
     letter-spacing: 0.04em;
     padding: 0.18rem 0.45rem;
     border: 1px solid rgba(114, 83, 47, 0.35);
     border-radius: 8px;
-    background: rgba(232, 212, 177, 0.84);
-    color: rgba(53, 34, 16, 0.84);
+    background: rgba(8, 12, 19, 0.72);
+    color: rgba(232, 241, 255, 0.88);
 }
 
 .notes-window .desktop-window-content-host {

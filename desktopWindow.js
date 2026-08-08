@@ -10,6 +10,8 @@ export class DesktopWindow {
     showCarouselNavigation = false,
     showDescriptionPanel = false,
     descriptionPanelHeightRatio = 0.33,
+    initialWidthRatio = 0.88,
+    initialHeightRatio = 0.76,
     windowColor = null,
     onNavigatePrevious = null,
     onNavigateNext = null,
@@ -23,6 +25,12 @@ export class DesktopWindow {
     this.descriptionPanelHeightRatio = Number.isFinite(descriptionPanelHeightRatio)
       ? Math.min(0.6, Math.max(0.2, descriptionPanelHeightRatio))
       : 0.33;
+    this.initialWidthRatio = Number.isFinite(initialWidthRatio)
+      ? Math.min(0.98, Math.max(0.35, initialWidthRatio))
+      : 0.88;
+    this.initialHeightRatio = Number.isFinite(initialHeightRatio)
+      ? Math.min(0.98, Math.max(0.35, initialHeightRatio))
+      : 0.76;
     this.windowColor = windowColor;
     this.onNavigatePrevious = onNavigatePrevious;
     this.onNavigateNext = onNavigateNext;
@@ -364,8 +372,14 @@ export class DesktopWindow {
   centerInViewport() {
     const parentMetrics = this.getParentMetrics();
 
-    const width = Math.min(this.rootElement.offsetWidth || 900, parentMetrics.width * 0.88);
-    const height = Math.min(this.rootElement.offsetHeight || 640, parentMetrics.height * 0.76);
+    const width = Math.min(
+      this.rootElement.offsetWidth || 900,
+      parentMetrics.width * this.initialWidthRatio
+    );
+    const height = Math.min(
+      this.rootElement.offsetHeight || 640,
+      parentMetrics.height * this.initialHeightRatio
+    );
 
     const left = (parentMetrics.width - width) / 2;
     const top = (parentMetrics.height - height) / 2;
