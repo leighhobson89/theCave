@@ -21,6 +21,10 @@
         "/^node --check ui\\.js; node --check webContentRegistry\\.js$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^node --check tools/web_content_builder\\.js; node --check webContentRegistry\\.js$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

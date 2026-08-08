@@ -8,6 +8,8 @@ const titleInput = document.getElementById("titleInput");
 const summaryInput = document.getElementById("summaryInput");
 const bodyInput = document.getElementById("bodyInput");
 const imagesInput = document.getElementById("imagesInput");
+const chooseImagePathsButton = document.getElementById("chooseImagePathsButton");
+const imagePathsPicker = document.getElementById("imagePathsPicker");
 
 const zoomsearchFieldsPanel = document.getElementById("zoomsearchFieldsPanel");
 const libraryFieldsPanel = document.getElementById("libraryFieldsPanel");
@@ -197,26 +199,14 @@ function parseImages(value) {
   }));
 }
 
-function buildEntryImages(images, evidence) {
-  const normalizedImages = Array.isArray(images)
-    ? images.map((image) => ({ ...image }))
-    : [];
-
-  const evidenceType = String(evidence?.type || "").trim().toLowerCase();
-  const photoCaption = String(evidence?.photoCaption || "").trim();
-  if (evidenceType !== "photo" || !photoCaption) {
-    return normalizedImages;
-  }
-
-  return normalizedImages.map((image) => ({
-    ...image,
-    alt: photoCaption,
-    // Keep web page image cards free of visible captions; tooltip uses alt text.
-    caption: "",
-  }));
+function buildImagePathsFromFiles(fileList) {
+  return Array.from(fileList || [])
+    .map((file) => String(file?.name || "").trim())
+    .filter(Boolean)
+    .map((fileName) => `./assets/photos/${fileName}`);
 }
 
-function buildStandaloneImages(images) {
+function buildEntryImages(images) {
   const normalizedImages = Array.isArray(images)
     ? images.map((image) => ({ ...image }))
     : [];
@@ -335,7 +325,7 @@ function buildEvidence(siteId, common, fallbackTitle) {
 
 function buildStandaloneEntry(common) {
   const evidenceFields = buildEvidence("standalone", common, common.title || common.id);
-  const images = buildStandaloneImages(common.images);
+  const images = buildEntryImages(common.images);
 
   return {
     siteId: "standalone",
@@ -370,7 +360,7 @@ function buildZoomsearchEntry(common) {
 
   const pageTitle = common.title || common.id;
   const evidenceFields = buildEvidence("zoomsearch", common, pageTitle);
-  const images = buildEntryImages(common.images, evidenceFields.evidence);
+  const images = buildEntryImages(common.images);
 
   return {
     siteId: "zoomsearch",
@@ -397,7 +387,7 @@ function buildLibraryEntry(common) {
   }
 
   const evidenceFields = buildEvidence("library", common, publicationTitle);
-  const images = buildEntryImages(common.images, evidenceFields.evidence);
+  const images = buildEntryImages(common.images);
 
   return {
     siteId: "library",
@@ -423,7 +413,7 @@ function buildPoliceEntry(common) {
   }
 
   const evidenceFields = buildEvidence("police", common, common.title || common.id);
-  const images = buildEntryImages(common.images, evidenceFields.evidence);
+  const images = buildEntryImages(common.images);
 
   return {
     siteId: "police",
@@ -450,7 +440,7 @@ function buildArchivesEntry(common) {
 
   const headline = common.title || common.id;
   const evidenceFields = buildEvidence("archives", common, headline);
-  const images = buildEntryImages(common.images, evidenceFields.evidence);
+  const images = buildEntryImages(common.images);
 
   return {
     siteId: "archives",
@@ -722,6 +712,22 @@ standaloneTextColorInput.addEventListener("input", () => {
   if (/^#[0-9a-fA-F]{6}$/.test(value)) {
     standaloneTextColorPicker.value = value;
   }
+});
+
+chooseImagePathsButton.addEventListener("click", () => {
+  imagePathsPicker.click();
+});
+
+imagePathsPicker.addEventListener("change", () => {
+  const nextPaths = buildImagePathsFromFiles(imagePathsPicker.files);
+  if (!nextPaths.length) {
+    return;
+  }
+
+  const existingPaths = parseLineList(imagesInput.value);
+  const mergedPaths = Array.from(new Set([...existingPaths, ...nextPaths]));
+  imagesInput.value = mergedPaths.join("\n");
+  imagePathsPicker.value = "";
 });
 
 syncFieldStates();

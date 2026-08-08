@@ -306,6 +306,11 @@ function createImageGallery(images, classNames = []) {
     img.alt = image.alt;
     img.title = image.alt;
     figure.appendChild(img);
+
+    if (image.caption) {
+      figure.appendChild(createElement("figcaption", ["browser-image-caption"], image.caption));
+    }
+
     gallery.appendChild(figure);
   });
 

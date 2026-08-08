@@ -284,15 +284,17 @@
         <label class="field full">
           <span>Image paths (one path per line)</span>
           <textarea id="imagesInput" spellcheck="false" placeholder="./assets/photos/example.png"></textarea>
+          <button id="chooseImagePathsButton" class="secondary" type="button" style="margin-top:0.45rem;align-self:start;">Choose Photo File(s)</button>
+          <input id="imagePathsPicker" type="file" accept="image/*" multiple hidden>
         </label>
 
         <label class="field full">
-          <span>Standalone Image Caption / Alt Text</span>
+          <span>Image Caption / Alt Text</span>
           <input id="standaloneImageCaptionAltInput" type="text" placeholder="Optional text used for caption and/or alt" spellcheck="false">
         </label>
 
         <div class="field full">
-          <span>Standalone Image Text Application</span>
+          <span>Image Text Application</span>
           <label class="check-row" for="standaloneApplyCaptionInput">
             <input id="standaloneApplyCaptionInput" type="checkbox">
             Apply as on-page caption
