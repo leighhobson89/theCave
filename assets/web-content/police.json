@@ -208,6 +208,43 @@
           "entryId": "police-test-police-alpha"
         }
       }
+    },
+    {
+      "id": "jamesfletcher",
+      "title": "Constable James Fletcher",
+      "keywords": [
+        "james fletcher",
+        "james"
+      ],
+      "summary": "A distinguished Constable",
+      "report": [
+        "James Fletcher was a Constable in the NW Mounties.  Among many great things he did during his career, he was awarded the King Charles III Coronation Medal for community leadership and significant contrinutions.  This was for his efforts in the search attempt for Askew 'Arnie' Spencer in the terrible Black Pine tragedy of 1901.  He was a serving Constable until 1934 when he retired from the force.  He lived in Alberta with his wife Hannah and pet Labrador dog Oscar, enjoying his well earned retirement until his passing in 1951."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/jamesFletcher.png",
+          "alt": "",
+          "caption": ""
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
     }
   ]
 }
