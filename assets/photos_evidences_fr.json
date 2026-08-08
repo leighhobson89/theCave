@@ -20,6 +20,14 @@
       "defaultTitleString": "No More!",
       "paperStyle": "photo-mounted",
       "descriptionText": "No More! description (fr)"
+    },
+    {
+      "id": "Search Party outside Black Pine Silver Mine Shaft B",
+      "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft B",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/searchParty.png",
+      "descriptionText": "Here we can see John in a rare photo with the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!",
+      "captionText": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, July 1901"
     }
   ]
 }

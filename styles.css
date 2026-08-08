@@ -3733,7 +3733,7 @@ button.disabled {
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 0.5rem;
     box-sizing: border-box;
     width: 100%;
@@ -3804,6 +3804,30 @@ button.disabled {
     grid-row: 2;
 }
 
+.photo-caption-outer {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: center;
+    width: 100%;
+    max-width: 100%;
+    min-height: 2.1rem;
+    padding: 0.15rem 0;
+}
+
+.photo-caption-text {
+    width: 100%;
+    text-align: center;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    color: rgba(230, 239, 254, 0.9);
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    padding: 0.08rem 0.3rem;
+}
+
 .evidence-description-outer {
     width: 100%;
     max-width: 100%;
@@ -3811,6 +3835,7 @@ button.disabled {
     height: 100%;
     grid-column: 2;
     grid-row: 2;
+    align-self: start;
 }
 
 .evidence-description-paper-wrap {
@@ -3835,8 +3860,8 @@ button.disabled {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: auto;
-    height: auto;
+    width: 760px;
+    height: 428px;
     max-width: 100%;
     max-height: 100%;
     padding: 0.65rem;
@@ -3900,10 +3925,10 @@ button.disabled {
 
 .photos-carousel-image {
     display: block;
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
     object-fit: contain;
     border-radius: 6px;
     background: transparent;

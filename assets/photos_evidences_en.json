@@ -5,21 +5,32 @@
       "photoPath": "./assets/photos/caveEntrance.png",
       "defaultTitleString": "Cave Entrance",
       "paperStyle": "photo-mounted-ivory",
-      "descriptionText": "---\r\n\r\nPhoto taken in August 1901 by Police photographer John Baxley showing the entrance to the cave where the 1901 Arnie Spencer Tragedy unfolded.\r\n\r\n---\r\n"
+      "descriptionText": "---\r\n\r\nPhoto taken in August 1901 by Police photographer John Baxley showing the entrance to the cave where the 1901 Arnie Spencer Tragedy unfolded.\r\n\r\n---\r\n",
+      "captionText": "Cave entrance, August 1901"
     },
     {
       "id": "insideCaveLookingBack",
       "photoPath": "./assets/photos/insideCaveLookingBack.png",
       "defaultTitleString": "Inside Cave Looking Back",
       "paperStyle": "photo-mounted-linen",
-      "descriptionText": "﻿insideCaveLookingBack description (en)\r\n\r\nNotes recorded by investigator.\r\n"
+      "descriptionText": "﻿insideCaveLookingBack description (en)\r\n\r\nNotes recorded by investigator.\r\n",
+      "captionText": "Inside the cave looking back towards the entrance, August 1901"
     },
     {
       "id": "No More!",
       "photoPath": "./assets/photos/caveEntrance1851.png",
       "defaultTitleString": "No More!",
       "paperStyle": "photo-mounted",
-      "descriptionText": "No More! description (en)"
+      "descriptionText": "No More! description (en)",
+      "captionText": "No More!"
+    },
+    {
+      "id": "Search Party outside Black Pine Silver Mine Shaft B",
+      "photoPath": "./assets/photos/searchParty.png",
+      "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft B",
+      "paperStyle": "photo-mounted",
+      "descriptionText": "Here we can see John in a rare photo with the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!",
+      "captionText": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, July 1901"
     }
   ]
 }

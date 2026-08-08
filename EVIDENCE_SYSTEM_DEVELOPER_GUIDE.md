@@ -15,7 +15,7 @@ The in-memory evidence store contains:
 - `nextEvidenceId`
 - `evidencesById`
 - `collections`
-  - `backgroundStory`
+  - `theArnieTragedy`
   - `photos`
   - `reports`
 - `indices`

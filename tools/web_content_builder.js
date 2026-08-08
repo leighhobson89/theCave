@@ -35,6 +35,7 @@ const evidenceNameInput = document.getElementById("evidenceNameInput");
 const evidenceDefaultTitleInput = document.getElementById("evidenceDefaultTitleInput");
 const evidencePaperStyleInput = document.getElementById("evidencePaperStyleInput");
 const evidenceDescriptionInput = document.getElementById("evidenceDescriptionInput");
+const evidencePhotoCaptionInput = document.getElementById("evidencePhotoCaptionInput");
 const evidenceFieldsGrid = document.getElementById("evidenceFieldsGrid");
 const standaloneBgColorPickButton = document.getElementById("standaloneBgColorPickButton");
 const standaloneBgColorPicker = document.getElementById("standaloneBgColorPicker");
@@ -190,6 +191,25 @@ function parseImages(value) {
   }));
 }
 
+function buildEntryImages(images, evidence) {
+  const normalizedImages = Array.isArray(images)
+    ? images.map((image) => ({ ...image }))
+    : [];
+
+  const evidenceType = String(evidence?.type || "").trim().toLowerCase();
+  const photoCaption = String(evidence?.photoCaption || "").trim();
+  if (evidenceType !== "photo" || !photoCaption) {
+    return normalizedImages;
+  }
+
+  return normalizedImages.map((image) => ({
+    ...image,
+    alt: photoCaption,
+    // Keep web page image cards free of visible captions; tooltip uses alt text.
+    caption: "",
+  }));
+}
+
 function toNumberOrDefault(value, fallback = 0) {
   const parsed = Number(String(value || "").trim());
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -232,14 +252,16 @@ function getCommonFields() {
 function buildEvidence(siteId, common, fallbackTitle) {
   const awardsEvidence = Boolean(awardsEvidenceInput.checked);
   const preset = getEvidencePreset();
+  const selectedEvidenceType = getSelectedEvidenceType();
   const evidenceName = String(evidenceNameInput.value || "").trim() || `${siteId}-${common.id}`;
   const defaultTitleString = String(evidenceDefaultTitleInput.value || "").trim() || fallbackTitle || common.id;
   const evidenceDescription = String(evidenceDescriptionInput.value || "")
     .replace(/\r\n/g, "\n")
     .trim();
+  const evidencePhotoCaption = String(evidencePhotoCaptionInput.value || "").trim();
 
   const evidence = {
-    type: getSelectedEvidenceType(),
+    type: selectedEvidenceType,
     storageKey: String(evidenceStorageKeyInput.value || "").trim() || preset.storageKey,
     titleKey: String(evidenceTitleKeyInput.value || "").trim() || preset.titleKey,
     name: evidenceName,
@@ -255,6 +277,10 @@ function buildEvidence(siteId, common, fallbackTitle) {
 
   if (evidenceDescription) {
     evidence.description = evidenceDescription;
+  }
+
+  if (selectedEvidenceType === "photo" && evidencePhotoCaption) {
+    evidence.photoCaption = evidencePhotoCaption;
   }
 
   return {
@@ -298,6 +324,7 @@ function buildZoomsearchEntry(common) {
 
   const pageTitle = common.title || common.id;
   const evidenceFields = buildEvidence("zoomsearch", common, pageTitle);
+  const images = buildEntryImages(common.images, evidenceFields.evidence);
 
   return {
     siteId: "zoomsearch",
@@ -310,7 +337,7 @@ function buildZoomsearchEntry(common) {
       keywords,
       summary: common.summary || "",
       pageContent: common.bodyLines,
-      images: common.images,
+      images,
       awardsEvidence: evidenceFields.awardsEvidence,
       evidence: evidenceFields.evidence,
     },
@@ -324,6 +351,7 @@ function buildLibraryEntry(common) {
   }
 
   const evidenceFields = buildEvidence("library", common, publicationTitle);
+  const images = buildEntryImages(common.images, evidenceFields.evidence);
 
   return {
     siteId: "library",
@@ -335,7 +363,7 @@ function buildLibraryEntry(common) {
       keywords: [publicationTitle],
       summary: common.summary || "",
       extract: common.bodyLines,
-      images: common.images,
+      images,
       awardsEvidence: evidenceFields.awardsEvidence,
       evidence: evidenceFields.evidence,
     },
@@ -349,6 +377,7 @@ function buildPoliceEntry(common) {
   }
 
   const evidenceFields = buildEvidence("police", common, common.title || common.id);
+  const images = buildEntryImages(common.images, evidenceFields.evidence);
 
   return {
     siteId: "police",
@@ -360,7 +389,7 @@ function buildPoliceEntry(common) {
       summary: common.summary || "",
       report: common.bodyLines,
       requiredPrivilegeLevel: toNumberOrDefault(requiredPrivilegeInput.value, 0),
-      images: common.images,
+      images,
       awardsEvidence: evidenceFields.awardsEvidence,
       evidence: evidenceFields.evidence,
     },
@@ -375,6 +404,7 @@ function buildArchivesEntry(common) {
 
   const headline = common.title || common.id;
   const evidenceFields = buildEvidence("archives", common, headline);
+  const images = buildEntryImages(common.images, evidenceFields.evidence);
 
   return {
     siteId: "archives",
@@ -388,7 +418,7 @@ function buildArchivesEntry(common) {
       summary: common.summary || "",
       article: common.bodyLines,
       requiredAccessLevel: toNumberOrDefault(requiredAccessInput.value, 0),
-      images: common.images,
+      images,
       awardsEvidence: evidenceFields.awardsEvidence,
       evidence: evidenceFields.evidence,
     },
@@ -450,7 +480,16 @@ async function injectPayload() {
   }
 
   const result = await response.json();
-  setStatus(`Injected ${result.action} entry '${result.id}' into ${result.targetFile} (${result.bucket}).`);
+  const catalogUpdates = Array.isArray(result.evidenceCatalogUpdates)
+    ? result.evidenceCatalogUpdates
+    : [];
+  const catalogSummary = catalogUpdates.length
+    ? ` Evidence catalogs: ${catalogUpdates.map((update) => `${update.language}:${update.action}`).join(", ")}.`
+    : "";
+
+  setStatus(
+    `Injected ${result.action} entry '${result.id}' into ${result.targetFile} (${result.bucket}).${catalogSummary}`
+  );
 }
 
 function clearForm() {
@@ -473,6 +512,7 @@ function clearForm() {
     evidenceNameInput,
     evidenceDefaultTitleInput,
     evidenceDescriptionInput,
+    evidencePhotoCaptionInput,
   ].forEach((element) => {
     element.value = "";
   });

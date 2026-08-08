@@ -248,10 +248,8 @@ function createImageGallery(images, classNames = []) {
     img.classList.add("browser-detail-image");
     img.src = image.src;
     img.alt = image.alt;
+    img.title = image.alt;
     figure.appendChild(img);
-    if (image.caption) {
-      figure.appendChild(createElement("figcaption", ["browser-image-caption"], image.caption));
-    }
     gallery.appendChild(figure);
   });
 

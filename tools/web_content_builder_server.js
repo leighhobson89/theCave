@@ -5,6 +5,9 @@ const path = require("path");
 const PORT = 5058;
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const WEB_CONTENT_DIR = path.join(PROJECT_ROOT, "assets", "web-content");
+const ASSETS_DIR = path.join(PROJECT_ROOT, "assets");
+
+const LANGUAGE_CODES = ["en", "de", "es", "fr", "it"];
 
 const SITE_FILE_BY_ID = {
   zoomsearch: "zoomsearch.json",
@@ -12,6 +15,27 @@ const SITE_FILE_BY_ID = {
   police: "police.json",
   archives: "archives.json",
   standalone: "standalone-pages.json",
+};
+
+const EVIDENCE_CATALOGS = {
+  photo: {
+    byLanguage: {
+      en: "photos_evidences_en.json",
+      de: "photos_evidences_de.json",
+      es: "photos_evidences_es.json",
+      fr: "photos_evidences_fr.json",
+      it: "photos_evidences_it.json",
+    },
+  },
+  report: {
+    byLanguage: {
+      en: "reportsEvidences_en.json",
+      de: "reportsEvidences_de.json",
+      es: "reportsEvidences_es.json",
+      fr: "reportsEvidences_fr.json",
+      it: "reportsEvidences_it.json",
+    },
+  },
 };
 
 function sendJson(res, statusCode, payload) {
@@ -98,6 +122,228 @@ function upsertById(entries, entry) {
   return "created";
 }
 
+function firstNonEmptyString(...values) {
+  for (const value of values) {
+    const normalized = String(value || "").trim();
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return "";
+}
+
+function normalizeDefaultTitleString(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  if (raw.length % 2 === 0) {
+    const halfLength = raw.length / 2;
+    const left = raw.slice(0, halfLength);
+    const right = raw.slice(halfLength);
+    if (left === right) {
+      return left.trim();
+    }
+  }
+
+  return raw;
+}
+
+function inferPhotoPathFromRecord(record) {
+  const directSourcePath = firstNonEmptyString(record?.evidence?.source?.photoPath);
+  if (directSourcePath) {
+    return directSourcePath;
+  }
+
+  const firstImageSrc = Array.isArray(record?.images)
+    ? firstNonEmptyString(record.images[0]?.src, record.images[0])
+    : "";
+
+  return firstImageSrc;
+}
+
+function inferPhotoCaptionFromRecord(record, evidence) {
+  return firstNonEmptyString(
+    evidence?.photoCaption,
+    record?.images?.[0]?.alt,
+    record?.images?.[0]?.caption
+  );
+}
+
+function coerceEvidenceText(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((line) => String(line || "").trim())
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
+  return String(value || "").trim();
+}
+
+function inferReportTextFromRecord(record) {
+  return firstNonEmptyString(
+    coerceEvidenceText(record?.evidence?.reportText),
+    coerceEvidenceText(record?.report),
+    coerceEvidenceText(record?.article),
+    coerceEvidenceText(record?.extract),
+    coerceEvidenceText(record?.pageContent),
+    coerceEvidenceText(record?.content),
+    coerceEvidenceText(record?.body)
+  );
+}
+
+function resolveEvidenceCatalogFilePath(evidenceType, languageCode) {
+  const normalizedType = String(evidenceType || "").trim().toLowerCase();
+  const normalizedLanguage = String(languageCode || "").trim().toLowerCase();
+  const catalogDefinition = EVIDENCE_CATALOGS[normalizedType];
+  if (!catalogDefinition) {
+    return "";
+  }
+
+  const fileName = catalogDefinition.byLanguage[normalizedLanguage];
+  if (!fileName) {
+    return "";
+  }
+
+  return path.join(ASSETS_DIR, fileName);
+}
+
+function ensureEntriesBucket(payload) {
+  if (!payload || typeof payload !== "object") {
+    return { entries: [] };
+  }
+
+  if (!Array.isArray(payload.entries)) {
+    payload.entries = [];
+  }
+
+  return payload;
+}
+
+function buildPhotoCatalogEntry(record, evidence) {
+  const entryId = firstNonEmptyString(evidence?.source?.entryId, evidence?.name);
+  if (!entryId) {
+    throw new Error("Evidence source.entryId or evidence name is required for photo evidence.");
+  }
+
+  const photoPath = inferPhotoPathFromRecord(record);
+  if (!photoPath) {
+    throw new Error(`Photo evidence '${entryId}' is missing a usable image path. Add an image path in the form or set evidence.source.photoPath.`);
+  }
+
+  return {
+    id: entryId,
+    photoPath,
+    defaultTitleString: firstNonEmptyString(
+      normalizeDefaultTitleString(evidence?.defaultTitleString),
+      evidence?.name,
+      entryId
+    ),
+    paperStyle: firstNonEmptyString(evidence?.paperStyle, "photo-mounted"),
+    descriptionText: coerceEvidenceText(evidence?.description),
+    captionText: inferPhotoCaptionFromRecord(record, evidence),
+  };
+}
+
+function buildReportCatalogEntry(record, evidence) {
+  const entryId = firstNonEmptyString(evidence?.source?.entryId, evidence?.name);
+  if (!entryId) {
+    throw new Error("Evidence source.entryId or evidence name is required for report evidence.");
+  }
+
+  return {
+    id: entryId,
+    defaultTitleString: firstNonEmptyString(
+      normalizeDefaultTitleString(evidence?.defaultTitleString),
+      evidence?.name,
+      entryId
+    ),
+    paperStyle: firstNonEmptyString(evidence?.paperStyle, "report-parchment"),
+    reportText: inferReportTextFromRecord(record),
+    descriptionText: coerceEvidenceText(evidence?.description),
+  };
+}
+
+function mergeCatalogEntriesForLanguage(existingEntry, incomingEntry, evidenceType) {
+  const merged = {
+    ...(existingEntry || {}),
+    id: incomingEntry.id,
+    defaultTitleString: firstNonEmptyString(incomingEntry.defaultTitleString, existingEntry?.defaultTitleString),
+    paperStyle: firstNonEmptyString(incomingEntry.paperStyle, existingEntry?.paperStyle),
+  };
+
+  if (evidenceType === "photo") {
+    merged.photoPath = firstNonEmptyString(incomingEntry.photoPath, existingEntry?.photoPath);
+    merged.captionText = firstNonEmptyString(incomingEntry.captionText, existingEntry?.captionText);
+  }
+
+  if (evidenceType === "report") {
+    merged.reportText = firstNonEmptyString(incomingEntry.reportText, existingEntry?.reportText);
+  }
+
+  const incomingDescription = String(incomingEntry.descriptionText || "").trim();
+  const existingDescription = String(existingEntry?.descriptionText || "").trim();
+  merged.descriptionText = incomingDescription || existingDescription;
+
+  return merged;
+}
+
+function upsertEvidenceCatalogEntries(normalizedEntry) {
+  const shouldAwardEvidence = Boolean(normalizedEntry?.awardsEvidence);
+  if (!shouldAwardEvidence || !normalizedEntry?.evidence || typeof normalizedEntry.evidence !== "object") {
+    return [];
+  }
+
+  const evidence = normalizedEntry.evidence;
+  const evidenceType = String(evidence.type || "").trim().toLowerCase();
+  if (evidenceType !== "photo" && evidenceType !== "report") {
+    return [];
+  }
+
+  const incomingCatalogEntry = evidenceType === "photo"
+    ? buildPhotoCatalogEntry(normalizedEntry, evidence)
+    : buildReportCatalogEntry(normalizedEntry, evidence);
+
+  const updates = [];
+
+  LANGUAGE_CODES.forEach((languageCode) => {
+    const catalogFilePath = resolveEvidenceCatalogFilePath(evidenceType, languageCode);
+    if (!catalogFilePath) {
+      return;
+    }
+
+    const catalogJson = ensureEntriesBucket(readJsonFile(catalogFilePath));
+    const existingIndex = catalogJson.entries.findIndex((candidate) => candidate && candidate.id === incomingCatalogEntry.id);
+    const existingEntry = existingIndex >= 0 ? catalogJson.entries[existingIndex] : null;
+
+    const mergedEntry = mergeCatalogEntriesForLanguage(
+      existingEntry,
+      incomingCatalogEntry,
+      evidenceType
+    );
+
+    if (existingIndex >= 0) {
+      catalogJson.entries[existingIndex] = mergedEntry;
+    } else {
+      catalogJson.entries.push(mergedEntry);
+    }
+
+    writeJsonFile(catalogFilePath, catalogJson);
+    updates.push({
+      language: languageCode,
+      file: `assets/${path.basename(catalogFilePath)}`,
+      action: existingIndex >= 0 ? "updated" : "created",
+      entryId: incomingCatalogEntry.id,
+      evidenceType,
+    });
+  });
+
+  return updates;
+}
+
 function normalizePayload(rawPayload) {
   const siteId = String(rawPayload.siteId || "").trim();
   const bucket = String(rawPayload.bucket || "").trim();
@@ -142,6 +388,7 @@ function handleUpsert(rawPayload) {
 
   const action = upsertById(json[payload.bucket], payload.entry);
   writeJsonFile(filePath, json);
+  const evidenceCatalogUpdates = upsertEvidenceCatalogEntries(payload.entry);
 
   return {
     ok: true,
@@ -149,6 +396,7 @@ function handleUpsert(rawPayload) {
     id: payload.entry.id,
     bucket: payload.bucket,
     targetFile: `assets/web-content/${fileName}`,
+    evidenceCatalogUpdates,
   };
 }
 

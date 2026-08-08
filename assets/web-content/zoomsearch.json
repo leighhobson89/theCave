@@ -42,6 +42,43 @@
           "entryId": "No More!"
         }
       }
+    },
+    {
+      "id": "johnbaxley",
+      "websiteName": "Forestry Imaging Enthusiasts",
+      "pageTitle": "John Baxley",
+      "url": "http://www.zoomsearch.net/manual/johnbaxley",
+      "keywords": [
+        "john baxley"
+      ],
+      "summary": "John Baxley",
+      "pageContent": [
+        "John Baxley was one of the most distinguished photographers that gave up hours of his time to help our club.  Originally a Police Diver and Photographer, he was famous in his working life for working and surveying the scene for some of the most high profile cases of his time, including but not limited to the infamous unsolved Arnie Spencer Tragedy, as it came to be known.  He joined our club in 1928 following his retirement from the North West Mounties.  Here we can see John in a rare photo with the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!"
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/searchParty.png",
+          "alt": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, July 1901",
+          "caption": ""
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "Search Party outside Black Pine Silver Mine Shaft B",
+        "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft BSearch Party outside Black Pine Silver Mine Shaft B",
+        "paperStyle": "photo-mounted",
+        "photoCaption": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, July 1901",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "entryId": "Search Party outside Black Pine Silver Mine Shaft B"
+        },
+        "description": "Here we can see John in a rare photo with the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!"
+      }
     }
   ]
 }

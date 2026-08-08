@@ -1,5 +1,5 @@
 const STORAGE_KEYS = {
-  BACKGROUND_STORY: "backgroundStory",
+  THE_ARNIE_TRAGEDY: "theArnieTragedy",
   PHOTOS: "photos",
   REPORTS: "reports",
 };
@@ -25,7 +25,7 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
   {
     kind: EVIDENCE_TYPES.STORY,
     storyName: "story",
-    defaultTitleString: "Background Story",
+    defaultTitleString: "The Arnie Tragedy",
   },
   {
     kind: EVIDENCE_TYPES.PHOTO,
@@ -161,7 +161,7 @@ export function createEvidence(evidence) {
 export function createStoryEvidence({
   storyName,
   storageKey = STORAGE_KEYS.BACKGROUND_STORY,
-  titleKey = "backgroundStory",
+  titleKey = "theArnieTragedy",
   paperStyle = PAPER_STYLES.STORY_LINED,
   defaultTitleString,
 } = {}) {
@@ -172,7 +172,8 @@ export function createStoryEvidence({
     storageKey,
     titleKey,
     name: normalizedName,
-    defaultTitleString: defaultTitleString || buildDefaultTitleString(normalizedName),
+    defaultTitleString:
+      defaultTitleString || buildDefaultTitleString(normalizedName),
     paperStyle,
     source: {
       kind: "markdown-template",

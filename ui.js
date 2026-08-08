@@ -73,6 +73,9 @@ const computerWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
 const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
+const PHOTO_FRAME_ASPECT_RATIO = 16 / 9;
+const PHOTO_FRAME_MAX_WIDTH = 760;
+const PHOTO_FRAME_MAX_HEIGHT = Math.round(PHOTO_FRAME_MAX_WIDTH / PHOTO_FRAME_ASPECT_RATIO);
 const DEBUG_WINDOW_COLOR = "rgb(108, 255, 64)";
 const NOTES_TAB_COLORS = [
   "#ffe2e2",
@@ -449,7 +452,7 @@ async function setElementsLanguageText() {
     getLanguage()
   )} 3/5`;
   getElements().backgroundFolderLabel.textContent = localize(
-    "backgroundStory",
+    "theArnieTragedy",
     getLanguage(),
   );
 
@@ -930,7 +933,9 @@ function refreshOpenWindowLocalization() {
     const windowKind = desktopWindowKinds.get(windowController);
 
     if (windowKind === "story") {
-      windowController.setTitle(localize("backgroundStory", getLanguage()));
+      windowController.setTitle(
+        localize("backgrotheArnieTragedyundStory", getLanguage()),
+      );
       updateStoryWindowContent(windowController);
       return;
     }
@@ -2351,7 +2356,7 @@ async function openStoryWindow(resizable = false, showScrollbar = true) {
   storyWindowController = new DesktopWindow({
     parentElement: getElements().gameArea,
     classNames: ["story-window"],
-    title: localize("backgroundStory", getLanguage()),
+    title: localize("theArnieTragedy", getLanguage()),
     showCarouselNavigation: false,
     closeButtonAriaLabel: "Close story window",
     onClose: () => {
@@ -2436,6 +2441,20 @@ function buildEvidenceWithCatalogDefaults(evidence, catalogEntry) {
   }
 
   return nextEvidence;
+}
+
+function getPhotoCaptionByEvidence(evidence, catalogEntry) {
+  const directCaption = String(evidence?.photoCaption || "").trim();
+  if (directCaption) {
+    return directCaption;
+  }
+
+  const catalogCaption = String(catalogEntry?.captionText || catalogEntry?.caption || "").trim();
+  if (catalogCaption) {
+    return sanitizeCatalogText(catalogCaption).trim();
+  }
+
+  return "";
 }
 
 function normalizeLanguageCode(languageCode) {
@@ -2642,6 +2661,15 @@ function syncPhotoDescriptionHeight(refs, sourceElement) {
 
   const height = Math.max(1, Math.round(sourceElement.getBoundingClientRect().height));
   refs.descriptionOuterElement.style.height = `${height}px`;
+}
+
+function syncPhotoCaptionWidth(refs, sourceElement) {
+  if (!refs?.captionOuterElement || !sourceElement) {
+    return;
+  }
+
+  const width = Math.max(1, Math.round(sourceElement.getBoundingClientRect().width));
+  refs.captionOuterElement.style.width = `${width}px`;
 }
 
 function createEvidenceTitleBarElements() {
@@ -2982,6 +3010,14 @@ function createPhotosWindowContentElements() {
   const counter = document.createElement("div");
   counter.classList.add("photos-carousel-counter");
 
+  const captionOuter = document.createElement("div");
+  captionOuter.classList.add("photo-caption-outer");
+
+  const captionText = document.createElement("div");
+  captionText.classList.add("photo-caption-text", "scrollbars-hidden");
+  captionText.textContent = "";
+  captionOuter.appendChild(captionText);
+
   const descriptionOuter = document.createElement("div");
   descriptionOuter.classList.add("evidence-description-outer");
 
@@ -2997,7 +3033,7 @@ function createPhotosWindowContentElements() {
 
   photoPaperWrap.appendChild(image);
   mediaViewport.append(photoPaperWrap, emptyState, counter);
-  container.append(titleEditorRefs.titleBar, mediaViewport, descriptionOuter);
+  container.append(titleEditorRefs.titleBar, mediaViewport, captionOuter, descriptionOuter);
 
   return {
     container,
@@ -3007,6 +3043,8 @@ function createPhotosWindowContentElements() {
     image,
     emptyState,
     counter,
+    captionOuterElement: captionOuter,
+    captionText,
     descriptionOuterElement: descriptionOuter,
     descriptionPaperWrap,
     descriptionText,
@@ -3024,15 +3062,7 @@ function parsePixels(cssValue) {
 }
 
 function layoutPhotoMount(refs) {
-  if (!refs?.container || !refs?.photoPaperWrap || !refs?.image) {
-    return;
-  }
-
-  const imageElement = refs.image;
-  const naturalWidth = imageElement.naturalWidth;
-  const naturalHeight = imageElement.naturalHeight;
-
-  if (!naturalWidth || !naturalHeight) {
+  if (!refs?.mediaViewport || !refs?.photoPaperWrap || !refs?.image) {
     return;
   }
 
@@ -3046,28 +3076,41 @@ function layoutPhotoMount(refs) {
   const borderTop = parsePixels(paperComputed.borderTopWidth);
   const borderBottom = parsePixels(paperComputed.borderBottomWidth);
 
-  const availableWidth = refs.mediaViewport?.clientWidth || refs.container.clientWidth;
-  const availableHeight = refs.mediaViewport?.clientHeight || refs.container.clientHeight;
+  const availableWidth = refs.mediaViewport.clientWidth;
+  const availableHeight = refs.mediaViewport.clientHeight;
   if (!availableWidth || !availableHeight) {
     return;
   }
 
-  const maxMediaWidth = Math.max(
+  const availableFrameWidth = Math.max(
     1,
     availableWidth - padLeft - padRight - borderLeft - borderRight
   );
-  const maxMediaHeight = Math.max(
+  const availableFrameHeight = Math.max(
     1,
     availableHeight - padTop - padBottom - borderTop - borderBottom
   );
 
-  const scale = Math.min(maxMediaWidth / naturalWidth, maxMediaHeight / naturalHeight);
-  const targetWidth = Math.max(1, Math.floor(naturalWidth * scale));
-  const targetHeight = Math.max(1, Math.floor(naturalHeight * scale));
+  const constrainedWidth = Math.min(PHOTO_FRAME_MAX_WIDTH, availableFrameWidth);
+  const constrainedHeight = Math.min(PHOTO_FRAME_MAX_HEIGHT, availableFrameHeight);
 
-  imageElement.style.width = `${targetWidth}px`;
-  imageElement.style.height = `${targetHeight}px`;
+  let frameWidth = constrainedWidth;
+  let frameHeight = Math.floor(frameWidth / PHOTO_FRAME_ASPECT_RATIO);
+
+  if (frameHeight > constrainedHeight) {
+    frameHeight = constrainedHeight;
+    frameWidth = Math.floor(frameHeight * PHOTO_FRAME_ASPECT_RATIO);
+  }
+
+  frameWidth = Math.max(1, frameWidth);
+  frameHeight = Math.max(1, frameHeight);
+
+  refs.photoPaperWrap.style.width = `${frameWidth + padLeft + padRight + borderLeft + borderRight}px`;
+  refs.photoPaperWrap.style.height = `${frameHeight + padTop + padBottom + borderTop + borderBottom}px`;
+  refs.image.style.width = `${frameWidth}px`;
+  refs.image.style.height = `${frameHeight}px`;
   syncEvidenceTitleWidth(refs, refs.photoPaperWrap);
+  syncPhotoCaptionWidth(refs, refs.photoPaperWrap);
   syncPhotoDescriptionHeight(refs, refs.photoPaperWrap);
 }
 
@@ -3175,6 +3218,7 @@ async function updatePhotosWindowContent(windowController) {
     refs.currentCommittedTitle = "";
     refs.titleInput.value = "";
     refs.commitButton.disabled = true;
+    refs.captionText.textContent = "";
     refs.descriptionText.textContent = "Description unavailable.";
     return;
   }
@@ -3190,6 +3234,7 @@ async function updatePhotosWindowContent(windowController) {
 
   const photoCatalogEntry = await getPhotoCatalogEntry(currentEvidence, languageCode);
   const effectiveEvidence = buildEvidenceWithCatalogDefaults(currentEvidence, photoCatalogEntry);
+  const photoCaptionText = getPhotoCaptionByEvidence(effectiveEvidence, photoCatalogEntry);
   const currentItem = String(photoCatalogEntry?.photoPath || "").trim();
   const descriptionText = await getDescriptionTextByEvidence(
     currentEvidence,
@@ -3212,6 +3257,7 @@ async function updatePhotosWindowContent(windowController) {
     refs.emptyState.textContent = buildMissingCatalogFieldMessage(currentEvidence, "Photo image", "photoPath", languageCode);
     refs.image.removeAttribute("src");
     refs.counter.textContent = `${currentIndex + 1}/${photoEvidences.length}`;
+    refs.captionText.textContent = photoCaptionText;
     refs.descriptionText.textContent = descriptionText || "Description unavailable.";
     refs.descriptionText.scrollTop = 0;
 
@@ -3223,6 +3269,7 @@ async function updatePhotosWindowContent(windowController) {
     }
 
     syncEvidenceTitleWidth(refs, refs.photoPaperWrap);
+    syncPhotoCaptionWidth(refs, refs.photoPaperWrap);
     syncPhotoDescriptionHeight(refs, refs.photoPaperWrap);
     return;
   }
@@ -3230,8 +3277,9 @@ async function updatePhotosWindowContent(windowController) {
   refs.image.classList.remove("d-none");
   refs.emptyState.classList.add("d-none");
   refs.image.src = currentItem;
-  refs.image.alt = `${localize("photos", languageCode)} ${currentIndex + 1}`;
+  refs.image.alt = photoCaptionText || `${localize("photos", languageCode)} ${currentIndex + 1}`;
   refs.counter.textContent = `${currentIndex + 1}/${photoEvidences.length}`;
+  refs.captionText.textContent = photoCaptionText;
   refs.descriptionText.textContent = descriptionText || "Description unavailable.";
   refs.descriptionText.scrollTop = 0;
 
@@ -3239,9 +3287,7 @@ async function updatePhotosWindowContent(windowController) {
     layoutPhotoMount(refs);
   };
 
-  if (refs.image.complete && refs.image.naturalWidth > 0 && refs.image.naturalHeight > 0) {
-    applyLayout();
-  }
+  applyLayout();
 
   refs.image.onload = applyLayout;
 
@@ -3261,6 +3307,7 @@ async function updatePhotosWindowContent(windowController) {
   };
 
   syncEvidenceTitleWidth(refs, refs.photoPaperWrap);
+  syncPhotoCaptionWidth(refs, refs.photoPaperWrap);
   syncPhotoDescriptionHeight(refs, refs.photoPaperWrap);
 }
 
@@ -3433,6 +3480,7 @@ function openPhotosWindow() {
     contentRefs.resizeObserver = new ResizeObserver(() => {
       layoutPhotoMount(contentRefs);
       syncEvidenceTitleWidth(contentRefs, contentRefs.photoPaperWrap);
+      syncPhotoCaptionWidth(contentRefs, contentRefs.photoPaperWrap);
       syncPhotoDescriptionHeight(contentRefs, contentRefs.photoPaperWrap);
     });
     contentRefs.resizeObserver.observe(contentRefs.mediaViewport);

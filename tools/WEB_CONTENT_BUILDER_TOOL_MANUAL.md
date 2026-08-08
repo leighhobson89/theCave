@@ -52,6 +52,8 @@ Controls:
 - `Name` text field
 - `Default Title String` text field
 - `Paper Style` dropdown
+- `Description` text area
+- `Photo Caption (optional)` text field
 
 Supported presets:
 - `report`
@@ -70,20 +72,26 @@ All presets also emit:
 - `source.entryId = evidence.name`
 
 ## Important
-This tool does not create report or photo content files by itself.
-If `Awards Evidence` is enabled, matching localized catalog content must exist in:
+When `Awards Evidence` is enabled, Inject now also upserts matching localized evidence catalog entries.
+
+Photo evidence updates:
+- `assets/photos_evidences_en.json`
+- `assets/photos_evidences_de.json`
+- `assets/photos_evidences_es.json`
+- `assets/photos_evidences_fr.json`
+- `assets/photos_evidences_it.json`
+
+Report evidence updates:
 - `assets/reportsEvidences_en.json`
 - `assets/reportsEvidences_de.json`
 - `assets/reportsEvidences_es.json`
 - `assets/reportsEvidences_fr.json`
 - `assets/reportsEvidences_it.json`
 
-For photo evidence, matching entries must exist in:
-- `assets/photos_evidences_en.json`
-- `assets/photos_evidences_de.json`
-- `assets/photos_evidences_es.json`
-- `assets/photos_evidences_fr.json`
-- `assets/photos_evidences_it.json`
+Notes:
+- The entered evidence description/report text is copied to all language catalog entries (`en`, `de`, `es`, `fr`, `it`) as initial placeholder content.
+- For photo evidence, `Photo Caption (optional)` sets `images[].alt` in the created/updated web-content record (browser tooltip on hover).
+- Photo caption text is intended for the evidence carousel caption row, not for visible caption text on web-content pages.
 
 ## Update Rules
 - IDs are slug-normalized.
