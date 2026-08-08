@@ -68,6 +68,59 @@ function createResultEmptyState(text) {
   return createElement("div", ["browser-results-empty"], text);
 }
 
+function createBrowserInlineLink(urlText) {
+  const normalizedUrl = String(urlText ?? "").trim();
+  if (!normalizedUrl) {
+    return document.createTextNode("");
+  }
+
+  const link = document.createElement("a");
+  link.classList.add("browser-inline-content-link");
+  link.href = normalizedUrl;
+  link.textContent = normalizedUrl;
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    link.dispatchEvent(new CustomEvent("caveos-browser-navigate", {
+      bubbles: true,
+      detail: {
+        url: normalizedUrl,
+      },
+    }));
+  });
+
+  return link;
+}
+
+function appendDelimitedLinkText(targetElement, sourceText) {
+  const value = String(sourceText ?? "");
+  const tokenPattern = /\*-\*(.*?)\*-\*/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = tokenPattern.exec(value)) !== null) {
+    const before = value.slice(lastIndex, match.index);
+    if (before) {
+      targetElement.appendChild(document.createTextNode(before));
+    }
+
+    const linkValue = String(match[1] ?? "").trim();
+    if (linkValue) {
+      targetElement.appendChild(createBrowserInlineLink(linkValue));
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  const trailing = value.slice(lastIndex);
+  if (trailing) {
+    targetElement.appendChild(document.createTextNode(trailing));
+  }
+
+  if (!targetElement.childNodes.length) {
+    targetElement.textContent = value;
+  }
+}
+
 function normalizeQuery(query) {
   return String(query ?? "").replace(/\s+/g, " ").trim();
 }
@@ -181,12 +234,15 @@ function setDetailContent(detailBody, contentNode, placeholderText = "Select the
 
 function createTextSection(titleText, content, classNames = []) {
   const section = createElement("section", ["browser-detail-section", ...classNames]);
-  if (titleText) {
+  const suppressHeading = String(titleText ?? "").trim().toLowerCase() === "page content";
+  if (titleText && !suppressHeading) {
     section.appendChild(createElement("h3", ["browser-detail-section-title"], titleText));
   }
 
   normalizeLines(content).forEach((paragraphText) => {
-    section.appendChild(createElement("p", ["browser-detail-paragraph"], paragraphText));
+    const paragraph = createElement("p", ["browser-detail-paragraph"]);
+    appendDelimitedLinkText(paragraph, paragraphText);
+    section.appendChild(paragraph);
   });
 
   return section;
@@ -297,6 +353,17 @@ function makeSelectableResults({
       });
       row.classList.add("is-selected");
       setDetailContent(detailBody, renderDetail(record), detailPrompt);
+
+      const detailUrl = String(record?.url || "").trim();
+      if (detailUrl) {
+        row.dispatchEvent(new CustomEvent("caveos-browser-record-opened", {
+          bubbles: true,
+          detail: {
+            url: detailUrl,
+            recordId: String(record?.id || "").trim(),
+          },
+        }));
+      }
     };
 
     row.addEventListener("click", activate);
@@ -324,7 +391,6 @@ function buildZoomDetail(record) {
   const wrapper = createElement("article", ["browser-record-layout", "browser-record-layout-zoom"]);
   wrapper.appendChild(createElement("div", ["browser-site-banner"], record.websiteName || "ZoomSearch Result"));
   wrapper.appendChild(createElement("h2", ["browser-record-title"], record.pageTitle || record.id));
-  wrapper.appendChild(createElement("div", ["browser-record-url"], record.url || ""));
 
   const grid = createElement("div", ["browser-record-columns", "browser-record-columns-zoom"]);
   const mainColumn = createElement("div", ["browser-record-main"]);
@@ -333,7 +399,9 @@ function buildZoomDetail(record) {
   if (record.summary) {
     mainColumn.appendChild(createElement("p", ["browser-record-summary"], record.summary));
   }
-  mainColumn.appendChild(createTextSection("Page Content", record.pageContent || record.htmlContent || record.body));
+  const pageContentSection = createTextSection("Page Content", record.pageContent || record.htmlContent || record.body);
+  pageContentSection.classList.add("browser-primary-content-section");
+  mainColumn.appendChild(pageContentSection);
 
   const gallery = createImageGallery(record.images, ["browser-image-gallery-zoom"]);
   if (gallery) {
@@ -369,7 +437,9 @@ function buildLibraryDetail(record) {
 
   top.append(mediaColumn, detailColumn);
   wrapper.appendChild(top);
-  wrapper.appendChild(createTextSection("Extract", record.extract || record.body));
+  const extractSection = createTextSection("Extract", record.extract || record.body);
+  extractSection.classList.add("browser-primary-content-section");
+  wrapper.appendChild(extractSection);
 
   const references = createKeyValueList("References", record.references, ["browser-detail-references"]);
   if (references) {
@@ -399,7 +469,9 @@ function buildPoliceDetail(record) {
     wrapper.appendChild(gallery);
   }
 
-  wrapper.appendChild(createTextSection("Report", record.report || record.body));
+  const reportSection = createTextSection("Report", record.report || record.body);
+  reportSection.classList.add("browser-primary-content-section");
+  wrapper.appendChild(reportSection);
 
   const attachments = createKeyValueList("Attachments", record.attachments, ["browser-detail-attachments"]);
   if (attachments) {
@@ -421,7 +493,9 @@ function buildArchiveDetail(record) {
       { label: "Summary", value: record.summary },
     ], ["browser-detail-meta-grid-archives"])
   );
-  wrapper.appendChild(createTextSection("Article", record.article || record.body));
+  const articleSection = createTextSection("Article", record.article || record.body);
+  articleSection.classList.add("browser-primary-content-section");
+  wrapper.appendChild(articleSection);
 
   const gallery = createImageGallery(record.images, ["browser-image-gallery-archives"]);
   if (gallery) {
@@ -450,7 +524,7 @@ function createZoomSearchPage({ searchWebsite }) {
   searchRow.append(createSearchFormRow("Query", queryInput), createSearchFormRow("", searchButton));
 
   const status = createStatusLine("Ready.");
-  const { table, body } = createResultsTable(["Website", "Page", "URL", "Summary"], ["browser-results-zoom"]);
+  const { table, body } = createResultsTable(["Website", "Page", "Summary"], ["browser-results-zoom"]);
   const { host: detailHost, body: detailBody } = createDetailHost("Select the returned webpage entry to inspect its contents.");
 
   async function runSearch() {
@@ -464,10 +538,10 @@ function createZoomSearchPage({ searchWebsite }) {
       tbody: body,
       records: visibleRecords,
       detailBody,
-      emptyColSpan: 4,
+      emptyColSpan: 3,
       emptyText: "Search brings up a lot of unrelated bumph. You move on.",
       detailPrompt: "Select the returned webpage entry to inspect its contents.",
-      getRowValues: (record) => [record.websiteName, record.pageTitle, record.url, record.summary],
+      getRowValues: (record) => [record.websiteName, record.pageTitle, record.summary],
       renderDetail: buildZoomDetail,
     });
   }

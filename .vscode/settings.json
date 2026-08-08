@@ -17,6 +17,10 @@
             "approve": true,
             "matchCommandLine": true
         },
-        "ForEach-Object": true
+        "ForEach-Object": true,
+        "/^node --check ui\\.js; node --check webContentRegistry\\.js$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

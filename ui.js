@@ -245,7 +245,17 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
     return false;
   }
 
-  createEvidence(evidenceDescriptor);
+  const storedEvidenceDescriptor = {
+    ...evidenceDescriptor,
+    source: evidenceDescriptor?.source ? { ...evidenceDescriptor.source } : evidenceDescriptor?.source,
+  };
+
+  if (isCatalogBackedPhotoEvidence(storedEvidenceDescriptor)) {
+    delete storedEvidenceDescriptor.description;
+    delete storedEvidenceDescriptor.photoCaption;
+  }
+
+  createEvidence(storedEvidenceDescriptor);
 
   const websiteId = String(context?.websiteId || "").trim().toLowerCase();
   const isWebService = websiteId === "zoomsearch"
@@ -1707,6 +1717,97 @@ function createComputerNetscapeWindowContentElements() {
       .filter(Boolean);
   };
 
+  const createBrowserInlineLink = (urlText) => {
+    const normalizedUrl = String(urlText ?? "").trim();
+    if (!normalizedUrl) {
+      return document.createTextNode("");
+    }
+
+    const link = document.createElement("a");
+    link.classList.add("browser-inline-content-link");
+    link.href = normalizedUrl;
+    link.textContent = normalizedUrl;
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      link.dispatchEvent(new CustomEvent("caveos-browser-navigate", {
+        bubbles: true,
+        detail: {
+          url: normalizedUrl,
+        },
+      }));
+    });
+
+    return link;
+  };
+
+  const appendDelimitedLinkText = (targetElement, sourceText) => {
+    const value = String(sourceText ?? "");
+    const tokenPattern = /\*-\*(.*?)\*-\*/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = tokenPattern.exec(value)) !== null) {
+      const before = value.slice(lastIndex, match.index);
+      if (before) {
+        targetElement.appendChild(document.createTextNode(before));
+      }
+
+      const linkValue = String(match[1] ?? "").trim();
+      if (linkValue) {
+        targetElement.appendChild(createBrowserInlineLink(linkValue));
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    const trailing = value.slice(lastIndex);
+    if (trailing) {
+      targetElement.appendChild(document.createTextNode(trailing));
+    }
+
+    if (!targetElement.childNodes.length) {
+      targetElement.textContent = value;
+    }
+  };
+
+  const normalizeStandaloneImages = (value) => {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((image) => {
+        if (!image) {
+          return null;
+        }
+
+        if (typeof image === "string") {
+          const src = String(image).trim();
+          if (!src) {
+            return null;
+          }
+
+          return {
+            src,
+            alt: "",
+            caption: "",
+          };
+        }
+
+        const src = String(image.src ?? "").trim();
+        if (!src) {
+          return null;
+        }
+
+        return {
+          src,
+          alt: String(image.alt ?? "").trim(),
+          caption: String(image.caption ?? "").trim(),
+        };
+      })
+      .filter(Boolean);
+  };
+
   const createMissingPage = (attemptedUrl) => {
     const page = document.createElement("div");
     page.classList.add("caveos-browser-page", "browser-page-welcome", "browser-page-missing");
@@ -1726,14 +1827,8 @@ function createComputerNetscapeWindowContentElements() {
     const shell = document.createElement("div");
     shell.classList.add("browser-page-shell", "browser-page-shell-gray", "browser-page-shell-standalone");
 
-    const sourceLabel = pageRecord.sourceLabel
-      ? `<p class="browser-standalone-source">Source: ${pageRecord.sourceLabel}</p>`
-      : "";
-
     shell.innerHTML = `
       <h1 class="browser-page-title">${pageRecord.title || pageRecord.id || "Recovered Page"}</h1>
-      <p class="browser-cosmic-copy browser-cosmic-plain-url">${pageRecord.url}</p>
-      ${sourceLabel}
     `;
 
     const styleSettings = pageRecord?.style && typeof pageRecord.style === "object"
@@ -1742,8 +1837,40 @@ function createComputerNetscapeWindowContentElements() {
     if (styleSettings?.backgroundColor) {
       shell.style.background = String(styleSettings.backgroundColor);
     }
+    if (styleSettings?.textColor) {
+      shell.style.color = String(styleSettings.textColor);
+    }
     if (styleSettings?.fontFamily) {
       shell.style.fontFamily = String(styleSettings.fontFamily);
+    }
+
+    const standaloneImages = normalizeStandaloneImages(pageRecord.images);
+    if (standaloneImages.length) {
+      const gallery = document.createElement("div");
+      gallery.classList.add("browser-image-gallery", "browser-image-gallery-zoom");
+
+      standaloneImages.forEach((image) => {
+        const figure = document.createElement("figure");
+        figure.classList.add("browser-image-figure");
+
+        const img = document.createElement("img");
+        img.classList.add("browser-detail-image");
+        img.src = image.src;
+        img.alt = image.alt;
+        img.title = image.alt;
+        figure.appendChild(img);
+
+        if (image.caption) {
+          const caption = document.createElement("figcaption");
+          caption.classList.add("browser-image-caption");
+          caption.textContent = image.caption;
+          figure.appendChild(caption);
+        }
+
+        gallery.appendChild(figure);
+      });
+
+      shell.appendChild(gallery);
     }
 
     const contentLines = normalizeStandaloneContent(pageRecord.content);
@@ -1756,7 +1883,7 @@ function createComputerNetscapeWindowContentElements() {
       contentLines.forEach((line) => {
         const paragraph = document.createElement("p");
         paragraph.classList.add("browser-standalone-paragraph");
-        paragraph.textContent = line;
+        appendDelimitedLinkText(paragraph, line);
         shell.appendChild(paragraph);
       });
     }
@@ -1862,19 +1989,34 @@ function createComputerNetscapeWindowContentElements() {
   const backButton = document.createElement("button");
   backButton.type = "button";
   backButton.classList.add("caveos-browser-nav-button");
-  backButton.textContent = "Back";
+  backButton.textContent = "←";
   backButton.setAttribute("aria-label", "Back");
+
+  const forwardButton = document.createElement("button");
+  forwardButton.type = "button";
+  forwardButton.classList.add("caveos-browser-nav-button");
+  forwardButton.textContent = "→";
+  forwardButton.setAttribute("aria-label", "Forward");
 
   const homeButton = document.createElement("button");
   homeButton.type = "button";
   homeButton.classList.add("caveos-browser-nav-button");
-  homeButton.textContent = "Home";
+  homeButton.textContent = "⌂";
   homeButton.setAttribute("aria-label", "Home");
 
-  addressRow.append(label, addressInputShell, backButton, homeButton);
+  addressRow.append(label, addressInputShell, backButton, forwardButton, homeButton);
 
   const pageHost = document.createElement("div");
   pageHost.classList.add("caveos-browser-body", "caveos-browser-page-host");
+  pageHost.addEventListener("caveos-browser-navigate", (event) => {
+    const targetUrl = String(event?.detail?.url ?? "").trim();
+    if (!targetUrl) {
+      return;
+    }
+
+    browserAddress.value = targetUrl;
+    void navigateToAddress({ pushHistory: true });
+  });
 
   const browserViews = {
     welcome: {
@@ -1935,8 +2077,9 @@ function createComputerNetscapeWindowContentElements() {
     registerViewRoute(viewKey, view.url);
   });
 
-  const updateBackButtonState = () => {
+  const updateNavigationButtonsState = () => {
     backButton.disabled = historyIndex <= 0;
+    forwardButton.disabled = historyIndex < 0 || historyIndex >= navigationHistory.length - 1;
   };
 
   const pushHistoryEntry = (entry) => {
@@ -1951,7 +2094,7 @@ function createComputerNetscapeWindowContentElements() {
     const previousEntry = navigationHistory[navigationHistory.length - 1];
     if (previousEntry && previousEntry.url === entry.url) {
       historyIndex = navigationHistory.length - 1;
-      updateBackButtonState();
+      updateNavigationButtonsState();
       return;
     }
 
@@ -1961,7 +2104,7 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     historyIndex = navigationHistory.length - 1;
-    updateBackButtonState();
+    updateNavigationButtonsState();
   };
 
   const navigateToBrowserView = (viewKey, { pushHistory = true, overrideUrl = "" } = {}) => {
@@ -1971,14 +2114,16 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     const finalUrl = overrideUrl || nextView.url;
+    const renderedPageNode = nextView.render();
     browserAddress.value = finalUrl;
-    pageHost.replaceChildren(nextView.render());
+    pageHost.replaceChildren(renderedPageNode);
 
     if (pushHistory) {
       pushHistoryEntry({
         type: "view",
         viewKey,
         url: finalUrl,
+        pageNode: renderedPageNode,
       });
     }
   };
@@ -1992,8 +2137,9 @@ function createComputerNetscapeWindowContentElements() {
       awardWebContentEvidence(pageRecord.evidence);
     }
 
+    const renderedPageNode = createStandaloneTextPage(pageRecord);
     browserAddress.value = pageRecord.url;
-    pageHost.replaceChildren(createStandaloneTextPage(pageRecord));
+    pageHost.replaceChildren(renderedPageNode);
 
     if (pushHistory) {
       pushHistoryEntry({
@@ -2001,12 +2147,19 @@ function createComputerNetscapeWindowContentElements() {
         pageId: pageRecord.id,
         sourceSiteId: pageRecord.sourceSiteId,
         url: pageRecord.url,
+        pageNode: renderedPageNode,
       });
     }
   };
 
   const renderHistoryEntry = (entry) => {
     if (!entry) {
+      return;
+    }
+
+    if (entry.pageNode instanceof HTMLElement) {
+      browserAddress.value = entry.url || "about:missing";
+      pageHost.replaceChildren(entry.pageNode);
       return;
     }
 
@@ -2040,7 +2193,17 @@ function createComputerNetscapeWindowContentElements() {
 
     historyIndex -= 1;
     renderHistoryEntry(navigationHistory[historyIndex]);
-    updateBackButtonState();
+    updateNavigationButtonsState();
+  };
+
+  const navigateForward = () => {
+    if (historyIndex < 0 || historyIndex >= navigationHistory.length - 1) {
+      return;
+    }
+
+    historyIndex += 1;
+    renderHistoryEntry(navigationHistory[historyIndex]);
+    updateNavigationButtonsState();
   };
 
   const ensureStandaloneRoutesLoaded = async () => {
@@ -2080,6 +2243,7 @@ function createComputerNetscapeWindowContentElements() {
               title: String(pageRecord.title ?? id).trim() || id,
               url,
               content: pageRecord.content ?? pageRecord.body ?? "",
+              images: pageRecord.images,
               style: pageRecord.style && typeof pageRecord.style === "object" ? pageRecord.style : null,
               awardsEvidence: pageRecord.awardsEvidence === true,
               evidence: pageRecord.evidence && typeof pageRecord.evidence === "object"
@@ -2128,14 +2292,31 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     browserAddress.value = enteredValue;
-    pageHost.replaceChildren(createMissingPage(enteredValue));
+    const missingPageNode = createMissingPage(enteredValue);
+    pageHost.replaceChildren(missingPageNode);
     if (pushHistory) {
       pushHistoryEntry({
         type: "missing",
         url: enteredValue,
+        pageNode: missingPageNode,
       });
     }
   };
+
+  pageHost.addEventListener("caveos-browser-record-opened", (event) => {
+    const openedUrl = String(event?.detail?.url || "").trim();
+    const currentPageNode = pageHost.firstElementChild;
+    if (!openedUrl || !(currentPageNode instanceof HTMLElement)) {
+      return;
+    }
+
+    browserAddress.value = openedUrl;
+    pushHistoryEntry({
+      type: "record",
+      url: openedUrl,
+      pageNode: currentPageNode,
+    });
+  });
 
   const quickLinkConfigs = [
     {
@@ -2192,12 +2373,16 @@ function createComputerNetscapeWindowContentElements() {
     navigateBack();
   });
 
+  forwardButton.addEventListener("click", () => {
+    navigateForward();
+  });
+
   homeButton.addEventListener("click", () => {
     navigateToBrowserView("welcome");
   });
 
   navigateToBrowserView("welcome");
-  updateBackButtonState();
+  updateNavigationButtonsState();
   void ensureStandaloneRoutesLoaded();
 
   container.append(quickLinksBar, addressRow, pageHost);
@@ -2443,15 +2628,22 @@ function buildEvidenceWithCatalogDefaults(evidence, catalogEntry) {
   return nextEvidence;
 }
 
-function getPhotoCaptionByEvidence(evidence, catalogEntry) {
-  const directCaption = String(evidence?.photoCaption || "").trim();
-  if (directCaption) {
-    return directCaption;
-  }
+function isCatalogBackedPhotoEvidence(evidence) {
+  return String(evidence?.type || "").trim() === "photo"
+    && String(evidence?.source?.kind || "").trim() === "photo-localized-catalog-entry";
+}
 
+function getPhotoCaptionByEvidence(evidence, catalogEntry) {
   const catalogCaption = String(catalogEntry?.captionText || catalogEntry?.caption || "").trim();
   if (catalogCaption) {
     return sanitizeCatalogText(catalogCaption).trim();
+  }
+
+  if (!isCatalogBackedPhotoEvidence(evidence)) {
+    const directCaption = String(evidence?.photoCaption || "").trim();
+    if (directCaption) {
+      return directCaption;
+    }
   }
 
   return "";
@@ -2580,16 +2772,16 @@ async function getDescriptionTextByEvidence(
   forceReload = false,
   preloadedCatalogEntry = null
 ) {
-  const explicitDescription = String(evidence?.description || "")
-    .replace(/\r\n/g, "\n")
-    .trim();
-  if (explicitDescription) {
-    return explicitDescription;
-  }
-
   const evidenceType = String(evidence?.type || "").trim();
 
   if (evidenceType === "report") {
+    const explicitDescription = String(evidence?.description || "")
+      .replace(/\r\n/g, "\n")
+      .trim();
+    if (explicitDescription) {
+      return explicitDescription;
+    }
+
     const reportEntry = preloadedCatalogEntry
       || await getReportCatalogEntry(evidence, languageCode, forceReload);
     if (!reportEntry) {
@@ -2615,6 +2807,13 @@ async function getDescriptionTextByEvidence(
     }
 
     return buildMissingCatalogFieldMessage(evidence, "Photo description", "descriptionText", languageCode);
+  }
+
+  const explicitDescription = String(evidence?.description || "")
+    .replace(/\r\n/g, "\n")
+    .trim();
+  if (explicitDescription) {
+    return explicitDescription;
   }
 
   return "Description unavailable.";

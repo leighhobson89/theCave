@@ -285,6 +285,23 @@
           <span>Image paths (one path per line)</span>
           <textarea id="imagesInput" spellcheck="false" placeholder="./assets/photos/example.png"></textarea>
         </label>
+
+        <label class="field full">
+          <span>Standalone Image Caption / Alt Text</span>
+          <input id="standaloneImageCaptionAltInput" type="text" placeholder="Optional text used for caption and/or alt" spellcheck="false">
+        </label>
+
+        <div class="field full">
+          <span>Standalone Image Text Application</span>
+          <label class="check-row" for="standaloneApplyCaptionInput">
+            <input id="standaloneApplyCaptionInput" type="checkbox">
+            Apply as on-page caption
+          </label>
+          <label class="check-row" for="standaloneApplyAltInput">
+            <input id="standaloneApplyAltInput" type="checkbox">
+            Apply as image alt text
+          </label>
+        </div>
       </div>
 
       <div class="two-col">
@@ -367,12 +384,22 @@
               </div>
             </label>
             <label class="field">
+              <span>Text Color</span>
+              <div class="input-with-button">
+                <input id="standaloneTextColorInput" type="text" placeholder="#0f1b2a" spellcheck="false" value="#0f1b2a">
+                <button id="standaloneTextColorPickButton" class="icon-button secondary" type="button" aria-label="Pick text color" title="Pick text color">
+                  <span class="pipette-icon" aria-hidden="true"></span>
+                </button>
+                <input id="standaloneTextColorPicker" type="color" value="#0f1b2a" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;">
+              </div>
+            </label>
+            <label class="field">
               <span>Font Family</span>
               <select id="standaloneFontSelect">
                 <option value="Arial, Helvetica, sans-serif">Arial</option>
-                <option value="\"Comic Sans MS\", \"Comic Sans\", cursive">Comic Sans</option>
-                <option value="\"Courier New\", \"Lucida Console\", monospace">Courier New</option>
-                <option value="\"Times New Roman\", Times, serif">Times New Roman</option>
+                <option value="Comic Sans MS, Comic Sans, cursive">Comic Sans</option>
+                <option value="Courier New, Lucida Console, monospace">Courier New</option>
+                <option value="Times New Roman, Times, serif">Times New Roman</option>
               </select>
             </label>
           </div>

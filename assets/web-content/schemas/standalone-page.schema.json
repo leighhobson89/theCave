@@ -19,11 +19,30 @@
         }
       ]
     },
+    "images": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string", "minLength": 1 },
+          {
+            "type": "object",
+            "required": ["src"],
+            "properties": {
+              "src": { "type": "string", "minLength": 1 },
+              "alt": { "type": "string" },
+              "caption": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
     "style": {
       "type": "object",
       "required": ["backgroundColor", "fontFamily"],
       "properties": {
         "backgroundColor": { "type": "string" },
+        "textColor": { "type": "string" },
         "fontFamily": { "type": "string" }
       },
       "additionalProperties": false
@@ -47,6 +66,8 @@
         "name": { "type": "string" },
         "defaultTitleString": { "type": "string" },
         "paperStyle": { "type": "string" },
+        "description": { "type": "string" },
+        "photoCaption": { "type": "string" },
         "source": {
           "type": "object",
           "required": ["kind", "languageAware", "catalogPathTemplate", "entryId"],

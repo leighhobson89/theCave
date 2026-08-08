@@ -33,7 +33,6 @@
         "titleKey": "photos",
         "name": "No More!",
         "defaultTitleString": "No More!",
-        "description": "1st of July 1851 - The Silver Mine at Black Pine was officially declared 'Exhausted' today after no further seams have been discovered for over two months of digging. Work is set to dismantle the extraction machinery and rails, and move along to dig out a new extraction shaft, where more seams of Silver Ore were discovered during prospecting.",
         "paperStyle": "photo-mounted",
         "source": {
           "kind": "photo-localized-catalog-entry",
@@ -68,16 +67,48 @@
         "storageKey": "photos",
         "titleKey": "photos",
         "name": "Search Party outside Black Pine Silver Mine Shaft B",
-        "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft BSearch Party outside Black Pine Silver Mine Shaft B",
+        "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft B",
         "paperStyle": "photo-mounted",
-        "photoCaption": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, July 1901",
         "source": {
           "kind": "photo-localized-catalog-entry",
           "languageAware": true,
           "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
           "entryId": "Search Party outside Black Pine Silver Mine Shaft B"
-        },
-        "description": "Here we can see John in a rare photo with the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!"
+        }
+      }
+    },
+    {
+      "id": "minecart",
+      "websiteName": "Wacky Miners",
+      "pageTitle": "We put the Wackiness in Gold Mining!",
+      "url": "http://wackyMiners.com",
+      "keywords": [
+        "mine cart",
+        "minecart"
+      ],
+      "summary": "We are anything but serious!",
+      "pageContent": [
+        "If you want to mine gold, then don't buy nothing from us!  In all seriousness, don't!  We don't even sell mining equipment haha!  In fact, seeing as though you made the effort to visit us, we will give you one bit of good advice.  We are clowns, buy from the Whitmore & Sons Iron & Machinery website instead, now they are a good outfit, top quality they have been going for years!",
+        "Now if you don't mind I am going back to clowning around!  Oh before I forget, here is their website URL don't lose it!",
+        "*-*http://www.whitmore-sons-iron-machinery-co.com/mining*-*"
+      ],
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
       }
     }
   ]

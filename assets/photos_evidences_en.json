@@ -13,7 +13,7 @@
       "photoPath": "./assets/photos/insideCaveLookingBack.png",
       "defaultTitleString": "Inside Cave Looking Back",
       "paperStyle": "photo-mounted-linen",
-      "descriptionText": "﻿insideCaveLookingBack description (en)\r\n\r\nNotes recorded by investigator.\r\n",
+      "descriptionText": "---\r\n\r\nInside Cave Looking Back description (en)\r\n\r\nNotes recorded by investigator.\r\n---\r\n",
       "captionText": "Inside the cave looking back towards the entrance, August 1901"
     },
     {
@@ -21,7 +21,7 @@
       "photoPath": "./assets/photos/caveEntrance1851.png",
       "defaultTitleString": "No More!",
       "paperStyle": "photo-mounted",
-      "descriptionText": "No More! description (en)",
+      "descriptionText": "---\r\n\r\nBlack Pine Silver Mine exhausted, 1st of July 1851.\r\n\r\n---\r\n",
       "captionText": "No More!"
     },
     {
@@ -29,8 +29,8 @@
       "photoPath": "./assets/photos/searchParty.png",
       "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft B",
       "paperStyle": "photo-mounted",
-      "descriptionText": "Here we can see John in a rare photo with the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!",
-      "captionText": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, July 1901"
+      "descriptionText": "---\r\n\r\nHere we can see John Baxley (bottom left) in a rare photo with the rest of the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!\r\n\r\n---\r\n",
+      "captionText": "Mounties search party outside Black Pine Silver Mine Shaft B, July 1901"
     }
   ]
 }

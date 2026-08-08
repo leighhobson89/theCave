@@ -291,6 +291,30 @@ function mergeCatalogEntriesForLanguage(existingEntry, incomingEntry, evidenceTy
   return merged;
 }
 
+function sanitizeEvidenceForWebContentStorage(entry) {
+  if (!entry || typeof entry !== "object" || !entry.evidence || typeof entry.evidence !== "object") {
+    return entry;
+  }
+
+  const sanitizedEntry = {
+    ...entry,
+    evidence: {
+      ...entry.evidence,
+      source: entry.evidence?.source ? { ...entry.evidence.source } : entry.evidence?.source,
+    },
+  };
+
+  const isCatalogBackedPhoto = String(sanitizedEntry.evidence?.type || "").trim() === "photo"
+    && String(sanitizedEntry.evidence?.source?.kind || "").trim() === "photo-localized-catalog-entry";
+
+  if (isCatalogBackedPhoto) {
+    delete sanitizedEntry.evidence.description;
+    delete sanitizedEntry.evidence.photoCaption;
+  }
+
+  return sanitizedEntry;
+}
+
 function upsertEvidenceCatalogEntries(normalizedEntry) {
   const shouldAwardEvidence = Boolean(normalizedEntry?.awardsEvidence);
   if (!shouldAwardEvidence || !normalizedEntry?.evidence || typeof normalizedEntry.evidence !== "object") {
@@ -386,9 +410,10 @@ function handleUpsert(rawPayload) {
   const json = readJsonFile(filePath);
   ensureArrayBucket(json, payload.bucket);
 
-  const action = upsertById(json[payload.bucket], payload.entry);
-  writeJsonFile(filePath, json);
   const evidenceCatalogUpdates = upsertEvidenceCatalogEntries(payload.entry);
+  const persistedEntry = sanitizeEvidenceForWebContentStorage(payload.entry);
+  const action = upsertById(json[payload.bucket], persistedEntry);
+  writeJsonFile(filePath, json);
 
   return {
     ok: true,

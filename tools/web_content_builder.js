@@ -39,9 +39,15 @@ const evidencePhotoCaptionInput = document.getElementById("evidencePhotoCaptionI
 const evidenceFieldsGrid = document.getElementById("evidenceFieldsGrid");
 const standaloneBgColorPickButton = document.getElementById("standaloneBgColorPickButton");
 const standaloneBgColorPicker = document.getElementById("standaloneBgColorPicker");
+const standaloneTextColorPickButton = document.getElementById("standaloneTextColorPickButton");
+const standaloneTextColorPicker = document.getElementById("standaloneTextColorPicker");
 
 const standaloneBgColorInput = document.getElementById("standaloneBgColorInput");
+const standaloneTextColorInput = document.getElementById("standaloneTextColorInput");
 const standaloneFontSelect = document.getElementById("standaloneFontSelect");
+const standaloneImageCaptionAltInput = document.getElementById("standaloneImageCaptionAltInput");
+const standaloneApplyCaptionInput = document.getElementById("standaloneApplyCaptionInput");
+const standaloneApplyAltInput = document.getElementById("standaloneApplyAltInput");
 
 const previewButton = document.getElementById("previewButton");
 const injectButton = document.getElementById("injectButton");
@@ -210,6 +216,22 @@ function buildEntryImages(images, evidence) {
   }));
 }
 
+function buildStandaloneImages(images) {
+  const normalizedImages = Array.isArray(images)
+    ? images.map((image) => ({ ...image }))
+    : [];
+
+  const sharedText = String(standaloneImageCaptionAltInput.value || "").trim();
+  const applyCaption = Boolean(standaloneApplyCaptionInput.checked && sharedText);
+  const applyAlt = Boolean(standaloneApplyAltInput.checked && sharedText);
+
+  return normalizedImages.map((image) => ({
+    ...image,
+    caption: applyCaption ? sharedText : "",
+    alt: applyAlt ? sharedText : "",
+  }));
+}
+
 function toNumberOrDefault(value, fallback = 0) {
   const parsed = Number(String(value || "").trim());
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -251,6 +273,28 @@ function getCommonFields() {
 
 function buildEvidence(siteId, common, fallbackTitle) {
   const awardsEvidence = Boolean(awardsEvidenceInput.checked);
+  if (!awardsEvidence) {
+    return {
+      awardsEvidence: false,
+      evidence: {
+        type: "",
+        storageKey: "",
+        titleKey: "",
+        name: "",
+        defaultTitleString: "",
+        paperStyle: "",
+        description: "",
+        photoCaption: "",
+        source: {
+          kind: "",
+          languageAware: false,
+          catalogPathTemplate: "",
+          entryId: "",
+        },
+      },
+    };
+  }
+
   const preset = getEvidencePreset();
   const selectedEvidenceType = getSelectedEvidenceType();
   const evidenceName = String(evidenceNameInput.value || "").trim() || `${siteId}-${common.id}`;
@@ -291,6 +335,7 @@ function buildEvidence(siteId, common, fallbackTitle) {
 
 function buildStandaloneEntry(common) {
   const evidenceFields = buildEvidence("standalone", common, common.title || common.id);
+  const images = buildStandaloneImages(common.images);
 
   return {
     siteId: "standalone",
@@ -299,10 +344,11 @@ function buildStandaloneEntry(common) {
       id: common.id,
       title: common.title || common.id,
       url: common.url,
-      source: "Standalone route",
       content: common.bodyLines.length ? common.bodyLines : [""],
+      images,
       style: {
         backgroundColor: String(standaloneBgColorInput.value || "").trim() || "#eceff3",
+        textColor: String(standaloneTextColorInput.value || "").trim() || "#0f1b2a",
         fontFamily: String(standaloneFontSelect.value || "").trim() || "Arial, Helvetica, sans-serif",
       },
       awardsEvidence: evidenceFields.awardsEvidence,
@@ -509,6 +555,7 @@ function clearForm() {
     archivesKeywordsInput,
     publicationInput,
     requiredAccessInput,
+    standaloneImageCaptionAltInput,
     evidenceNameInput,
     evidenceDefaultTitleInput,
     evidenceDescriptionInput,
@@ -518,14 +565,62 @@ function clearForm() {
   });
 
   awardsEvidenceInput.checked = false;
-  evidenceTypeInput.value = "report";
   standaloneBgColorInput.value = "#eceff3";
   standaloneBgColorPicker.value = "#eceff3";
+  standaloneTextColorInput.value = "#0f1b2a";
+  standaloneTextColorPicker.value = "#0f1b2a";
+  standaloneApplyCaptionInput.checked = false;
+  standaloneApplyAltInput.checked = false;
   standaloneFontSelect.selectedIndex = 0;
   contentTypeSelect.selectedIndex = 0;
   previewOutput.textContent = "{}";
   setStatus("Cleared.");
   syncFieldStates();
+}
+
+function setEvidenceFieldsDisabledState(disabled) {
+  evidenceFieldsGrid.querySelectorAll("input, select, textarea").forEach((element) => {
+    element.disabled = disabled;
+  });
+}
+
+function setSelectEmptyValue(selectElement) {
+  if (!selectElement) {
+    return;
+  }
+
+  let emptyOption = selectElement.querySelector('option[value=""]');
+  if (!emptyOption) {
+    emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "";
+    selectElement.insertBefore(emptyOption, selectElement.firstChild);
+  }
+
+  selectElement.value = "";
+}
+
+function clearEvidenceFieldsForUncheckedState() {
+  setSelectEmptyValue(evidenceTypeInput);
+  fillSelectOptions(evidenceStorageKeyInput, [""], "");
+  fillSelectOptions(evidenceTitleKeyInput, [""], "");
+  fillSelectOptions(evidencePaperStyleInput, [""], "");
+  evidenceNameInput.value = "";
+  evidenceDefaultTitleInput.value = "";
+  evidenceDescriptionInput.value = "";
+  evidencePhotoCaptionInput.value = "";
+}
+
+function prepareEvidenceFieldsForCheckedState() {
+  const typeEmptyOption = evidenceTypeInput.querySelector('option[value=""]');
+  if (typeEmptyOption) {
+    typeEmptyOption.remove();
+  }
+
+  if (!String(evidenceTypeInput.value || "").trim()) {
+    evidenceTypeInput.value = "report";
+  }
+
   syncEvidenceFieldPresets(true);
 }
 
@@ -544,9 +639,13 @@ function syncFieldStates() {
   standaloneStylePanel.classList.remove("is-hidden");
 
   const evidenceEnabled = awardsEvidenceInput.checked;
-  evidenceFieldsGrid.querySelectorAll("input, select, textarea").forEach((element) => {
-    element.disabled = !evidenceEnabled;
-  });
+  if (evidenceEnabled) {
+    prepareEvidenceFieldsForCheckedState();
+  } else {
+    clearEvidenceFieldsForUncheckedState();
+  }
+
+  setEvidenceFieldsDisabledState(!evidenceEnabled);
 }
 
 previewButton.addEventListener("click", () => {
@@ -578,6 +677,10 @@ awardsEvidenceInput.addEventListener("change", () => {
 });
 
 evidenceTypeInput.addEventListener("change", () => {
+  if (!awardsEvidenceInput.checked) {
+    return;
+  }
+
   syncEvidenceFieldPresets(true);
 });
 
@@ -601,5 +704,24 @@ standaloneBgColorInput.addEventListener("input", () => {
   }
 });
 
-syncEvidenceFieldPresets(true);
+standaloneTextColorPickButton.addEventListener("click", () => {
+  if (typeof standaloneTextColorPicker.showPicker === "function") {
+    standaloneTextColorPicker.showPicker();
+    return;
+  }
+
+  standaloneTextColorPicker.click();
+});
+
+standaloneTextColorPicker.addEventListener("input", () => {
+  standaloneTextColorInput.value = standaloneTextColorPicker.value;
+});
+
+standaloneTextColorInput.addEventListener("input", () => {
+  const value = String(standaloneTextColorInput.value || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+    standaloneTextColorPicker.value = value;
+  }
+});
+
 syncFieldStates();

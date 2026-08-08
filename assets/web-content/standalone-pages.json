@@ -1,5 +1,44 @@
 {
   "siteId": "standalone",
   "displayName": "Standalone Pages",
-  "records": []
+  "records": [
+    {
+      "id": "whitmoresonsironmachineryco",
+      "title": "Buy your Mining Machinery from Whitmore & Sons",
+      "url": "http://www.whitmore-sons-iron-machinery-co.com/mining",
+      "content": [
+        "Welcome to the Whitmore & Sons Mining Machinery information page!  Brian Whitmore, your head of company wishes to give you a warm salute and welcome to our space on the world wide web.  Every generation of Whitmore right back to the company's founding in 1798 has contributed to the company you see today, and the quality of our products are thanks in great part to these tireless efforts from our family, and the best products of all are in our mining range.  Try our Mine Carts, the best materials are used, right from today, as far back as 1840 to the Black Pine Silver Mine, its all thanks to us and our superior machinery!",
+        "The only family member who can not claim this accolade is Grandpa Arthur!  The irony is though, he did work in a mine that used our machinery, but after it had closed, as a Police Sergeant, leading a search party investigation.  Still, he is one of us and he excelled at what he did!"
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/whitmoreSonsIronCo.png",
+          "alt": "Whitmore & Sons Foundry c. 1877",
+          "caption": "Whitmore & Sons Foundry c. 1877"
+        }
+      ],
+      "style": {
+        "backgroundColor": "#0566e6",
+        "textColor": "#fafafa",
+        "fontFamily": "Courier New, Lucida Console, monospace"
+      },
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    }
+  ]
 }
