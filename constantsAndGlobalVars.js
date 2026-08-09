@@ -23,7 +23,8 @@ export const GAME_CANVAS_HEIGHT = 720;
 export const GAME_ASPECT_RATIO = GAME_CANVAS_WIDTH / GAME_CANVAS_HEIGHT;
 
 export const MENU_STATE = "menuState";
-export const GAME_VISIBLE_ACTIVE = "gameVisibleActive";
+export const DESKTOP_STATE = "desktopState";
+export const NOTICEBOARD_STATE = "noticeboardState";
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
 export const NOTES_PAGE_COUNT = 10;
 export const PAINT_PAGE_COUNT = 10;
@@ -48,6 +49,7 @@ let paintActivePageIndex = 0;
 let ashtrayHasLitCigarette = true;
 let ashtrayHasExtraButt = false;
 let browserAddressHistory = [];
+let activeGameplayState = DESKTOP_STATE;
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
@@ -83,6 +85,7 @@ export function setElements() {
     textAreaLabel: document.getElementById("textAreaLabel"),
     gameArea: document.getElementById("gameArea"),
     desktopViewport: document.getElementById("desktopViewport"),
+    noticeboardScene: document.getElementById("noticeboardScene"),
     deskParallax: document.getElementById("deskParallax"),
     deskWorld: document.getElementById("deskWorld"),
     deskTable: document.getElementById("deskTable"),
@@ -105,6 +108,7 @@ export function setElements() {
     desktopComputerRig: document.getElementById("desktopComputerRig"),
     desktopComputerHotspot: document.getElementById("desktopComputerHotspot"),
     settingsToggle: document.getElementById("settingsToggle"),
+    noticeboardButton: document.getElementById("noticeboardButton"),
     settingsItems: document.getElementById("settingsItems"),
     muteToggleButton: document.getElementById("muteToggleButton"),
     musicPlayPauseButton: document.getElementById("musicPlayPauseButton"),
@@ -124,6 +128,7 @@ export function setElements() {
     pasteButtonLoadPopup: document.getElementById("pasteButtonLoadPopup"),
     closeButtonSavePopup: document.getElementById("closeButtonSavePopup"),
     overlay: document.getElementById("overlay"),
+    sceneFadeOverlay: document.getElementById("sceneFadeOverlay"),
   };
 }
 
@@ -174,6 +179,8 @@ export function captureGameStatusForSaving() {
   gameState.ashtrayHasLitCigarette = getAshtrayHasLitCigarette();
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
   gameState.browserAddressHistory = getBrowserAddressHistory();
+  gameState.activeGameplayState = getActiveGameplayState();
+  gameState.currentScene = getActiveGameplayState();
 
   return gameState;
 }
@@ -199,6 +206,11 @@ export function restoreGameStatus(gameState) {
       setAshtrayHasLitCigarette(gameState.ashtrayHasLitCigarette);
       setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
       setBrowserAddressHistory(gameState.browserAddressHistory);
+      setActiveGameplayState(
+        gameState.activeGameplayState
+        || gameState.currentScene
+        || DESKTOP_STATE
+      );
 
       if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
         initializeEvidenceStoreForNewGame();
@@ -328,8 +340,29 @@ export function getMenuState() {
   return MENU_STATE;
 }
 
-export function getGameVisibleActive() {
-  return GAME_VISIBLE_ACTIVE;
+export function getDesktopState() {
+  return DESKTOP_STATE;
+}
+
+export function getNoticeboardState() {
+  return NOTICEBOARD_STATE;
+}
+
+export function isGameplayState(value) {
+  return value === DESKTOP_STATE || value === NOTICEBOARD_STATE;
+}
+
+export function getActiveGameplayState() {
+  return activeGameplayState;
+}
+
+export function setActiveGameplayState(value) {
+  if (!isGameplayState(value)) {
+    activeGameplayState = DESKTOP_STATE;
+    return;
+  }
+
+  activeGameplayState = value;
 }
 
 export function getLanguageSelected() {

@@ -3,21 +3,24 @@ import { audioManager } from "./audioManager.js";
 import {
   setGameStateVariable,
   getMenuState,
-  getGameVisibleActive,
+  getDesktopState,
+  getNoticeboardState,
+  getActiveGameplayState,
+  setActiveGameplayState,
+  isGameplayState,
   getElements,
   getLanguage,
   getGameInProgress,
   gameState,
 } from "./constantsAndGlobalVars.js";
 
-//--------------------------------------------------------------------------------------------------------
-
 const ZOOM_LEVELS = [0.60, 0.65, 0.85, 1];
 const WORLD_WIDTH = 2600;
 const WORLD_HEIGHT = 1800;
 const PARALLAX_FACTOR = 0.1;
+const SCENE_FADE_DURATION_MS = 750;
 
-let desktopInitialized = false;
+let gameplayInteractionsInitialized = false;
 let currentZoomIndex = 0;
 let panX = 0;
 let panY = 0;
@@ -28,6 +31,13 @@ let dragOriginPanX = 0;
 let dragOriginPanY = 0;
 let desktopObjectAudioBound = false;
 let zoomReadoutFadeTimeoutId = null;
+let sceneTransitionInProgress = false;
+
+function waitForMs(duration) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, duration);
+  });
+}
 
 function clampNumber(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -136,17 +146,73 @@ function updateTableLegPerspective(zoom) {
   });
 }
 
-function applyDesktopTransform() {
-  if (!getElements().deskWorld || !getElements().deskParallax) {
+function updateNoticeboardButtonLabel() {
+  const noticeboardButton = getElements().noticeboardButton;
+  if (!noticeboardButton) {
+    return;
+  }
+
+  const activeGameplayState = getActiveGameplayState();
+  if (activeGameplayState === getDesktopState()) {
+    noticeboardButton.setAttribute("aria-label", "Go To Noticeboard");
+    noticeboardButton.title = "Go To Noticeboard";
+    return;
+  }
+
+  noticeboardButton.setAttribute("aria-label", "Go To Desktop");
+  noticeboardButton.title = "Go To Desktop";
+}
+
+function updateSceneVisibility() {
+  const desktopViewport = getElements().desktopViewport;
+  const desktopWorld = getElements().deskWorld;
+  const desktopParallax = getElements().deskParallax;
+  const noticeboardScene = getElements().noticeboardScene;
+
+  const activeGameplayState = getActiveGameplayState();
+  const isDesktopSceneActive = activeGameplayState === getDesktopState();
+  const isNoticeboardSceneActive = activeGameplayState === getNoticeboardState();
+
+  if (desktopViewport) {
+    desktopViewport.dataset.activeScene = isNoticeboardSceneActive ? "noticeboard" : "desktop";
+  }
+
+  if (desktopWorld) {
+    desktopWorld.classList.toggle("is-scene-hidden", !isDesktopSceneActive);
+  }
+
+  if (desktopParallax) {
+    desktopParallax.classList.toggle("is-scene-hidden", !isDesktopSceneActive);
+  }
+
+  if (noticeboardScene) {
+    noticeboardScene.classList.toggle("is-scene-hidden", !isNoticeboardSceneActive);
+  }
+
+  updateNoticeboardButtonLabel();
+}
+
+function applySceneTransform() {
+  const desktopWorld = getElements().deskWorld;
+  const desktopParallax = getElements().deskParallax;
+  const noticeboardScene = getElements().noticeboardScene;
+
+  if (!desktopWorld || !desktopParallax || !noticeboardScene) {
     return;
   }
 
   const zoom = ZOOM_LEVELS[currentZoomIndex];
   clampPan();
 
-  getElements().deskWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-  getElements().deskParallax.style.transform = `translate(${panX * PARALLAX_FACTOR}px, ${panY * PARALLAX_FACTOR}px) scale(${0.9 + zoom * 0.03})`;
-  updateTableLegPerspective(zoom);
+  const activeGameplayState = getActiveGameplayState();
+  if (activeGameplayState === getDesktopState()) {
+    desktopWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    desktopParallax.style.transform = `translate(${panX * PARALLAX_FACTOR}px, ${panY * PARALLAX_FACTOR}px) scale(${0.9 + zoom * 0.03})`;
+    updateTableLegPerspective(zoom);
+  } else if (activeGameplayState === getNoticeboardState()) {
+    noticeboardScene.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  }
+
   updateZoomReadout();
 }
 
@@ -187,7 +253,7 @@ function handleWheelZoom(event) {
   panX = cx - worldX * nextZoom;
   panY = cy - worldY * nextZoom;
   showZoomReadoutTransient();
-  applyDesktopTransform();
+  applySceneTransform();
 }
 
 function handlePointerDown(event) {
@@ -217,7 +283,7 @@ function handlePointerMove(event) {
   const deltaY = event.clientY - dragStartY;
   panX = dragOriginPanX + deltaX;
   panY = dragOriginPanY + deltaY;
-  applyDesktopTransform();
+  applySceneTransform();
 }
 
 function cancelDrag() {
@@ -264,6 +330,22 @@ function toggleSettingsMenu() {
   audioManager.playSfx("clickSwitch");
 }
 
+async function handleNoticeboardButtonClick() {
+  if (sceneTransitionInProgress) {
+    return;
+  }
+
+  audioManager.onUserGesture();
+  audioManager.playSfx("clickSwitch");
+
+  const currentScene = getActiveGameplayState();
+  const nextScene = currentScene === getDesktopState()
+    ? getNoticeboardState()
+    : getDesktopState();
+
+  await transitionGameplayScene(nextScene);
+}
+
 function bindDesktopObjectAudio() {
   if (desktopObjectAudioBound) {
     return;
@@ -282,8 +364,8 @@ function bindDesktopObjectAudio() {
   desktopObjectAudioBound = true;
 }
 
-function initializeDesktopInteractions() {
-  if (desktopInitialized || !getElements().desktopViewport) {
+function initializeGameplayInteractions() {
+  if (gameplayInteractionsInitialized || !getElements().desktopViewport) {
     return;
   }
 
@@ -295,34 +377,50 @@ function initializeDesktopInteractions() {
   getElements().desktopViewport.addEventListener("pointercancel", handlePointerCancel);
   window.addEventListener("blur", handleWindowBlur);
   document.addEventListener("visibilitychange", handleVisibilityChange);
-  window.addEventListener("resize", applyDesktopTransform);
+  window.addEventListener("resize", applySceneTransform);
 
   if (getElements().settingsToggle) {
     getElements().settingsToggle.addEventListener("click", toggleSettingsMenu);
   }
 
+  if (getElements().noticeboardButton) {
+    getElements().noticeboardButton.addEventListener("click", () => {
+      void handleNoticeboardButtonClick();
+    });
+  }
+
   bindDesktopObjectAudio();
 
-  desktopInitialized = true;
+  gameplayInteractionsInitialized = true;
 }
 
 export function startGame(resetView = false) {
-  initializeDesktopInteractions();
+  initializeGameplayInteractions();
 
   if (resetView) {
     currentZoomIndex = 0;
     focusWorldAtCenter();
   }
 
-  applyDesktopTransform();
+  updateSceneVisibility();
+  applySceneTransform();
 }
 
 export function gameLoop() {
-  applyDesktopTransform();
+  applySceneTransform();
 }
 
 export function setGameState(newState) {
   console.log("Setting game state to " + newState);
+
+  if (newState === getMenuState() && isGameplayState(gameState)) {
+    setActiveGameplayState(gameState);
+  }
+
+  if (newState === getDesktopState() || newState === getNoticeboardState()) {
+    setActiveGameplayState(newState);
+  }
+
   setGameStateVariable(newState);
 
   switch (newState) {
@@ -343,8 +441,7 @@ export function setGameState(newState) {
         button.classList.remove("active");
       });
 
-      const currentLanguage = getLanguage();
-      switch (currentLanguage) {
+      switch (getLanguage()) {
         case "en":
           getElements().btnEnglish.classList.add("active");
           break;
@@ -377,13 +474,57 @@ export function setGameState(newState) {
         )}`;
       }
       break;
-    case getGameVisibleActive():
+
+    case getDesktopState():
+    case getNoticeboardState():
       getElements().menu.classList.remove("d-flex");
       getElements().menu.classList.add("d-none");
       getElements().gameArea.classList.remove("d-none");
       getElements().gameArea.classList.add("d-flex");
+      updateSceneVisibility();
       break;
   }
 
   updateZoomReadout();
+}
+
+export async function transitionGameplayScene(targetState) {
+  if (!isGameplayState(targetState) || sceneTransitionInProgress) {
+    return;
+  }
+
+  if (targetState === getActiveGameplayState()) {
+    return;
+  }
+
+  sceneTransitionInProgress = true;
+
+  try {
+    cancelDrag();
+
+    const fadeOverlay = getElements().sceneFadeOverlay;
+    if (!(fadeOverlay instanceof HTMLElement)) {
+      setGameState(targetState);
+      startGame(false);
+      return;
+    }
+
+    fadeOverlay.classList.add("is-active");
+    // Kick opacity transition on next frame so the browser can animate from 0 -> 1.
+    requestAnimationFrame(() => {
+      fadeOverlay.classList.add("is-opaque");
+    });
+
+    await waitForMs(SCENE_FADE_DURATION_MS);
+
+    setGameState(targetState);
+    startGame(false);
+
+    fadeOverlay.classList.remove("is-opaque");
+    await waitForMs(SCENE_FADE_DURATION_MS);
+
+    fadeOverlay.classList.remove("is-active");
+  } finally {
+    sceneTransitionInProgress = false;
+  }
 }

@@ -220,12 +220,22 @@
                     </div>
                 </div>
 
+                <div id="noticeboardScene" class="noticeboard-scene is-scene-hidden" aria-label="Noticeboard workspace">
+                    <div class="noticeboard-brick-wall" aria-hidden="true"></div>
+                    <div class="noticeboard-board-frame" aria-hidden="true">
+                        <div class="noticeboard-corkboard"></div>
+                    </div>
+                </div>
+
                 <div id="zoomReadout" class="zoom-readout">Zoom 3/5</div>
             </div>
 
             <div id="floatingSettings" class="floating-settings" aria-label="Settings menu">
-                <button id="settingsToggle" class="settings-toggle" aria-expanded="false" aria-controls="settingsItems">
+                <button id="settingsToggle" class="settings-toggle" aria-expanded="false" aria-controls="settingsItems" aria-label="Music Settings" title="Music Settings">
                     <span class="settings-cog">♫</span>
+                </button>
+                <button id="noticeboardButton" class="settings-toggle scene-nav-toggle" aria-label="Go To Noticeboard" title="Go To Noticeboard">
+                    <span class="scene-nav-openmoji" aria-hidden="true">&#xE202;</span>
                 </button>
                 <div id="settingsItems" class="settings-items d-none">
                     <button id="muteToggleButton" class="settings-item settings-toggle-item">Mute: Off</button>
@@ -245,6 +255,8 @@
                     </div>
                 </div>
             </div>
+
+            <div id="sceneFadeOverlay" class="scene-fade-overlay" aria-hidden="true"></div>
         </div>
     </div>
     <!--Save Load Game Input Field-->

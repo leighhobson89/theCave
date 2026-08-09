@@ -23,7 +23,9 @@ import {
   setBeginGameStatus,
   getGameInProgress,
   setGameInProgress,
-  getGameVisibleActive,
+  getDesktopState,
+  getActiveGameplayState,
+  isGameplayState,
   getMenuState,
   getLanguageSelected,
   setLanguageSelected,
@@ -308,7 +310,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       "active",
       "btn-primary"
     );
-    setGameState(getGameVisibleActive());
+    setGameState(getDesktopState());
     startGame(true);
     audioManager.startBackgroundMusicForGame();
     refreshAudioControlsDisplay();
@@ -317,7 +319,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   getElements().resumeGameMenuButton.addEventListener("click", () => {
     audioManager.onUserGesture();
     if (gameState === getMenuState()) {
-      setGameState(getGameVisibleActive());
+      setGameState(getActiveGameplayState());
     }
     startGame(false);
   });
@@ -325,7 +327,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("keydown", (event) => {
     if (
       isEvidenceDebugToggleKey(event) &&
-      gameState === getGameVisibleActive() &&
+      isGameplayState(gameState) &&
       !isTypingIntoField(event)
     ) {
       event.preventDefault();
@@ -333,7 +335,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    if (event.key === "Escape" && gameState === getGameVisibleActive()) {
+    if (event.key === "Escape" && isGameplayState(gameState)) {
       setGameState(getMenuState());
     }
   });
@@ -407,7 +409,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         getElements().saveLoadPopup.classList.add("d-none");
         document.getElementById("overlay").classList.add("d-none");
         setGameInProgress(true);
-        setGameState(getGameVisibleActive());
+        setGameState(getActiveGameplayState());
         startGame(false);
         audioManager.startBackgroundMusicForGame();
       })
