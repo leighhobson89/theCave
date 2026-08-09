@@ -32,6 +32,8 @@ import {
   setNotesPages,
   setPaintActivePageIndex,
   setPaintPages,
+  getBrowserAddressHistory,
+  setBrowserAddressHistory,
   getNextDesktopWindowZIndex,
 } from "./constantsAndGlobalVars.js";
 import {
@@ -1686,6 +1688,7 @@ function createComputerPaintWindowContentElements() {
 
 function createComputerNetscapeWindowContentElements() {
   const HISTORY_LIMIT = 5;
+  const ADDRESS_HISTORY_LIMIT = 10;
 
   const normalizeBrowserUrl = (value) => {
     const trimmed = String(value ?? "").trim();
@@ -1988,7 +1991,11 @@ function createComputerNetscapeWindowContentElements() {
   addressSubmitButton.setAttribute("aria-label", "Go to URL");
   addressSubmitButton.title = "Go";
 
-  addressInputShell.append(browserAddress, addressSubmitButton);
+  const addressHistorySuggestions = document.createElement("datalist");
+  addressHistorySuggestions.id = `caveos-browser-history-${Math.random().toString(36).slice(2, 9)}`;
+  browserAddress.setAttribute("list", addressHistorySuggestions.id);
+
+  addressInputShell.append(browserAddress, addressSubmitButton, addressHistorySuggestions);
 
   const backButton = document.createElement("button");
   backButton.type = "button";
@@ -2052,8 +2059,41 @@ function createComputerNetscapeWindowContentElements() {
   const urlRouteMap = new Map();
   const standalonePageRouteMap = new Map();
   const navigationHistory = [];
+  const addressHistory = getBrowserAddressHistory();
   let historyIndex = -1;
   let standalonePagesPromise = null;
+
+  const updateAddressHistorySuggestions = () => {
+    addressHistorySuggestions.replaceChildren();
+    for (let index = addressHistory.length - 1; index >= 0; index -= 1) {
+      const itemValue = String(addressHistory[index] ?? "").trim();
+      if (!itemValue) {
+        continue;
+      }
+
+      const option = document.createElement("option");
+      option.value = itemValue;
+      addressHistorySuggestions.appendChild(option);
+    }
+  };
+
+  const pushAddressHistoryEntry = (urlValue) => {
+    const normalized = normalizeBrowserUrl(urlValue);
+    if (!normalized) {
+      return;
+    }
+
+    const trimmedValue = String(urlValue ?? "").trim();
+    const deduped = addressHistory.filter(
+      (item) => normalizeBrowserUrl(item) !== normalized
+    );
+
+    deduped.push(trimmedValue || normalized);
+    const truncated = deduped.slice(-ADDRESS_HISTORY_LIMIT);
+    addressHistory.splice(0, addressHistory.length, ...truncated);
+    setBrowserAddressHistory(addressHistory);
+    updateAddressHistorySuggestions();
+  };
 
   const registerViewRoute = (viewKey, url) => {
     const normalized = normalizeBrowserUrl(url);
@@ -2120,6 +2160,7 @@ function createComputerNetscapeWindowContentElements() {
     const finalUrl = overrideUrl || nextView.url;
     const renderedPageNode = nextView.render();
     browserAddress.value = finalUrl;
+    pushAddressHistoryEntry(finalUrl);
     pageHost.replaceChildren(renderedPageNode);
 
     if (pushHistory) {
@@ -2143,6 +2184,7 @@ function createComputerNetscapeWindowContentElements() {
 
     const renderedPageNode = createStandaloneTextPage(pageRecord);
     browserAddress.value = pageRecord.url;
+    pushAddressHistoryEntry(pageRecord.url);
     pageHost.replaceChildren(renderedPageNode);
 
     if (pushHistory) {
@@ -2163,6 +2205,7 @@ function createComputerNetscapeWindowContentElements() {
 
     if (entry.pageNode instanceof HTMLElement) {
       browserAddress.value = entry.url || "about:missing";
+      pushAddressHistoryEntry(browserAddress.value);
       pageHost.replaceChildren(entry.pageNode);
       return;
     }
@@ -2296,6 +2339,7 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     browserAddress.value = enteredValue;
+    pushAddressHistoryEntry(enteredValue);
     const missingPageNode = createMissingPage(enteredValue);
     pageHost.replaceChildren(missingPageNode);
     if (pushHistory) {
@@ -2315,6 +2359,7 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     browserAddress.value = openedUrl;
+    pushAddressHistoryEntry(openedUrl);
     pushHistoryEntry({
       type: "record",
       url: openedUrl,
@@ -2369,6 +2414,17 @@ function createComputerNetscapeWindowContentElements() {
     }
   });
 
+  browserAddress.addEventListener("focus", () => {
+    updateAddressHistorySuggestions();
+    if (typeof browserAddress.showPicker === "function") {
+      try {
+        browserAddress.showPicker();
+      } catch (error) {
+        // Ignore unsupported picker implementations.
+      }
+    }
+  });
+
   addressSubmitButton.addEventListener("click", () => {
     void navigateToAddress();
   });
@@ -2385,6 +2441,7 @@ function createComputerNetscapeWindowContentElements() {
     navigateToBrowserView("welcome");
   });
 
+  updateAddressHistorySuggestions();
   navigateToBrowserView("welcome");
   updateNavigationButtonsState();
   void ensureStandaloneRoutesLoaded();
@@ -3192,6 +3249,277 @@ function createNotesWindowContentElements() {
   return refs;
 }
 
+function createEvidenceMagnifierToggleButton() {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.classList.add("evidence-magnifier-toggle");
+  button.setAttribute("aria-label", "Magnifier");
+  button.setAttribute("aria-pressed", "false");
+  button.title = "Magnifier";
+
+  const icon = document.createElement("span");
+  icon.classList.add("evidence-magnifier-icon");
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = "⌕";
+
+  button.appendChild(icon);
+  return button;
+}
+
+function createEvidenceMagnifierController({ interactionElement, overlayHostElement, sourceElement, previewType }) {
+  if (!(interactionElement instanceof HTMLElement) || !(overlayHostElement instanceof HTMLElement) || !(sourceElement instanceof HTMLElement)) {
+    return null;
+  }
+
+  const lens = document.createElement("div");
+  lens.classList.add("evidence-magnifier-lens");
+  lens.setAttribute("aria-hidden", "true");
+  lens.style.opacity = "0";
+
+  const preview = document.createElement("div");
+  preview.classList.add("evidence-magnifier-preview");
+
+  const previewSurface = document.createElement("div");
+  previewSurface.classList.add("evidence-magnifier-preview-surface");
+
+  preview.appendChild(previewSurface);
+  lens.appendChild(preview);
+
+  overlayHostElement.appendChild(lens);
+
+  let isEnabled = false;
+  let isVisible = false;
+  let pointerInside = false;
+  let fallbackHideTimer = null;
+  let frameRequest = null;
+  let pendingClientX = 0;
+  let pendingClientY = 0;
+
+  const clearHideTimer = () => {
+    if (fallbackHideTimer !== null) {
+      window.clearTimeout(fallbackHideTimer);
+      fallbackHideTimer = null;
+    }
+  };
+
+  const cancelFrame = () => {
+    if (frameRequest !== null) {
+      window.cancelAnimationFrame(frameRequest);
+      frameRequest = null;
+    }
+  };
+
+  const updateLensFrame = () => {
+    if (!isEnabled || !pointerInside) {
+      return;
+    }
+
+    const hostRect = overlayHostElement.getBoundingClientRect();
+    const sourceRect = sourceElement.getBoundingClientRect();
+    const lensDiameter = 175;
+    const lensRadius = lensDiameter / 2;
+    const zoomScale = 3;
+
+    const pointerX = Math.min(Math.max(pendingClientX - hostRect.left, 0), hostRect.width);
+    const pointerY = Math.min(Math.max(pendingClientY - hostRect.top, 0), hostRect.height);
+
+    const lensLeft = Math.min(Math.max(pointerX - lensRadius, 0), Math.max(0, hostRect.width - lensDiameter));
+    const lensTop = Math.min(Math.max(pointerY, 0), Math.max(0, hostRect.height - lensDiameter));
+
+    lens.style.left = `${lensLeft}px`;
+    lens.style.top = `${lensTop}px`;
+
+    const sourceScrollX = sourceElement instanceof HTMLElement ? sourceElement.scrollLeft || 0 : 0;
+    const sourceScrollY = sourceElement instanceof HTMLElement ? sourceElement.scrollTop || 0 : 0;
+    let sourcePointX = Math.max(0, pendingClientX - sourceRect.left + sourceScrollX);
+    let sourcePointY = Math.max(0, pendingClientY - sourceRect.top + sourceScrollY);
+    let contentWidth = sourceRect.width;
+    let contentHeight = sourceRect.height;
+    let contentOffsetX = 0;
+    let contentOffsetY = 0;
+
+    if (previewType === "photo" && sourceElement instanceof HTMLImageElement) {
+      const naturalWidth = sourceElement.naturalWidth || 0;
+      const naturalHeight = sourceElement.naturalHeight || 0;
+      if (naturalWidth > 0 && naturalHeight > 0 && sourceRect.width > 0 && sourceRect.height > 0) {
+        const fitScale = Math.min(sourceRect.width / naturalWidth, sourceRect.height / naturalHeight);
+        contentWidth = naturalWidth * fitScale;
+        contentHeight = naturalHeight * fitScale;
+        contentOffsetX = (sourceRect.width - contentWidth) / 2;
+        contentOffsetY = (sourceRect.height - contentHeight) / 2;
+        sourcePointX = Math.min(Math.max(sourcePointX - contentOffsetX, 0), contentWidth);
+        sourcePointY = Math.min(Math.max(sourcePointY - contentOffsetY, 0), contentHeight);
+        contentOffsetX = 0;
+        contentOffsetY = 0;
+      }
+    } else if (sourceElement instanceof HTMLElement) {
+      contentWidth = Math.max(sourceRect.width, sourceElement.scrollWidth || 0);
+      contentHeight = Math.max(sourceRect.height, sourceElement.scrollHeight || 0);
+      sourcePointX = Math.min(sourcePointX, contentWidth);
+      sourcePointY = Math.min(sourcePointY, contentHeight);
+    }
+
+    const rawTranslateX = lensRadius - sourcePointX * zoomScale;
+    const rawTranslateY = lensRadius - sourcePointY * zoomScale;
+    const scaledContentWidth = contentWidth * zoomScale;
+    const scaledContentHeight = contentHeight * zoomScale;
+    const minTranslateX = lensDiameter - (contentOffsetX * zoomScale) - scaledContentWidth;
+    const maxTranslateX = -(contentOffsetX * zoomScale);
+    const minTranslateY = lensDiameter - (contentOffsetY * zoomScale) - scaledContentHeight;
+    const maxTranslateY = -(contentOffsetY * zoomScale);
+    const translateX = Math.min(Math.max(rawTranslateX, minTranslateX), maxTranslateX);
+    const translateY = Math.min(Math.max(rawTranslateY, minTranslateY), maxTranslateY);
+
+    const previewTransform = `translate(${translateX}px, ${translateY}px) scale(${zoomScale})`;
+    previewSurface.style.width = `${contentWidth}px`;
+    previewSurface.style.height = `${contentHeight}px`;
+    previewSurface.style.transform = previewTransform;
+    previewSurface.style.transformOrigin = "top left";
+  };
+
+  const renderPreviewContent = (imageElement = null, reportTextElement = null) => {
+    previewSurface.replaceChildren();
+
+    if (previewType === "photo" && imageElement instanceof HTMLImageElement && imageElement.src) {
+      const photoPreview = document.createElement("img");
+      photoPreview.classList.add("evidence-magnifier-photo-preview");
+      photoPreview.src = imageElement.src;
+      photoPreview.alt = imageElement.alt || "";
+      photoPreview.style.width = "100%";
+      photoPreview.style.height = "100%";
+      photoPreview.style.objectFit = "contain";
+      previewSurface.appendChild(photoPreview);
+      return;
+    }
+
+    if (previewType === "report" && reportTextElement instanceof HTMLElement) {
+      const reportPreview = sourceElement.cloneNode(true);
+      reportPreview.className = "evidence-magnifier-report-preview";
+      reportPreview.style.position = "static";
+      reportPreview.style.inset = "auto";
+      reportPreview.style.overflow = "visible";
+      reportPreview.style.width = `${Math.max(sourceElement.scrollWidth || 0, sourceElement.clientWidth || 0)}px`;
+      reportPreview.style.height = `${Math.max(sourceElement.scrollHeight || 0, sourceElement.clientHeight || 0)}px`;
+      reportPreview.style.maxWidth = "none";
+      reportPreview.style.maxHeight = "none";
+      reportPreview.style.pointerEvents = "none";
+      previewSurface.appendChild(reportPreview);
+    }
+  };
+
+  const scheduleFrame = () => {
+    cancelFrame();
+    frameRequest = window.requestAnimationFrame(() => {
+      frameRequest = null;
+      updateLensFrame();
+    });
+  };
+
+  const showLens = () => {
+    clearHideTimer();
+    isVisible = true;
+    lens.style.opacity = "1";
+    lens.style.transition = "none";
+    lens.classList.add("is-visible");
+    lens.classList.remove("is-hidden");
+    scheduleFrame();
+  };
+
+  const hideLens = (animated = true) => {
+    if (!isEnabled) {
+      return;
+    }
+
+    clearHideTimer();
+    if (!animated) {
+      isVisible = false;
+      lens.style.opacity = "0";
+      lens.style.transition = "none";
+      lens.classList.remove("is-visible");
+      lens.classList.add("is-hidden");
+      return;
+    }
+
+    isVisible = false;
+    lens.style.opacity = "0";
+    lens.style.transition = "opacity 0.5s ease";
+    lens.classList.remove("is-visible");
+    lens.classList.add("is-hidden");
+  };
+
+  const handlePointerMove = (event) => {
+    if (!isEnabled) {
+      return;
+    }
+
+    pendingClientX = event.clientX;
+    pendingClientY = event.clientY;
+    scheduleFrame();
+  };
+
+  const handlePointerEnter = (event) => {
+    pointerInside = true;
+    pendingClientX = event.clientX;
+    pendingClientY = event.clientY;
+    if (isEnabled) {
+      showLens();
+    }
+  };
+
+  const handlePointerLeave = () => {
+    pointerInside = false;
+    if (isEnabled) {
+      hideLens(true);
+    }
+  };
+
+  const setEnabled = (enabled) => {
+    isEnabled = enabled;
+    if (!enabled) {
+      cancelFrame();
+      clearHideTimer();
+      pointerInside = false;
+      lens.style.opacity = "0";
+      lens.style.transition = "none";
+      lens.classList.remove("is-visible");
+      lens.classList.add("is-hidden");
+      return;
+    }
+
+    if (pointerInside) {
+      showLens();
+    }
+  };
+
+  const refreshContent = ({ imageElement = null, reportTextElement = null }) => {
+    renderPreviewContent(imageElement, reportTextElement);
+    if (isEnabled && pointerInside) {
+      scheduleFrame();
+    }
+  };
+
+  const handleSourceScroll = () => {
+    if (isEnabled && pointerInside) {
+      scheduleFrame();
+    }
+  };
+
+  interactionElement.addEventListener("pointerenter", handlePointerEnter);
+  interactionElement.addEventListener("pointermove", handlePointerMove);
+  interactionElement.addEventListener("pointerleave", handlePointerLeave);
+  sourceElement.addEventListener("scroll", handleSourceScroll, { passive: true });
+
+  return {
+    lens,
+    preview,
+    previewSurface,
+    setEnabled,
+    refreshContent,
+    show: showLens,
+    hide: () => hideLens(false),
+  };
+}
+
 function createPhotosWindowContentElements() {
   const container = document.createElement("div");
   container.classList.add("photos-carousel-container");
@@ -3210,8 +3538,17 @@ function createPhotosWindowContentElements() {
   const emptyState = document.createElement("div");
   emptyState.classList.add("photos-carousel-empty", "d-none");
 
+  const controlsHost = document.createElement("div");
+  controlsHost.classList.add("evidence-controls-host");
+
+  const magnifierToggle = createEvidenceMagnifierToggleButton();
+  const magnifierOverlayHost = document.createElement("div");
+  magnifierOverlayHost.classList.add("evidence-magnifier-overlay-host");
+
   const counter = document.createElement("div");
   counter.classList.add("photos-carousel-counter");
+
+  controlsHost.append(magnifierToggle, counter);
 
   const captionOuter = document.createElement("div");
   captionOuter.classList.add("photo-caption-outer");
@@ -3236,7 +3573,14 @@ function createPhotosWindowContentElements() {
 
   photoPaperWrap.appendChild(image);
   mediaViewport.append(photoPaperWrap, captionOuter, emptyState);
-  container.append(titleEditorRefs.titleBar, counter, mediaViewport, descriptionOuter);
+  container.append(titleEditorRefs.titleBar, controlsHost, mediaViewport, descriptionOuter, magnifierOverlayHost);
+
+  const magnifierController = createEvidenceMagnifierController({
+    interactionElement: mediaViewport,
+    overlayHostElement: magnifierOverlayHost,
+    sourceElement: image,
+    previewType: "photo",
+  });
 
   return {
     container,
@@ -3253,6 +3597,9 @@ function createPhotosWindowContentElements() {
     descriptionText,
     titleInput: titleEditorRefs.titleInput,
     commitButton: titleEditorRefs.commitButton,
+    magnifierToggle,
+    magnifierController,
+    controlsHost,
     currentEvidenceId: titleEditorRefs.currentEvidenceId,
     currentCommittedTitle: titleEditorRefs.currentCommittedTitle,
     resizeObserver: null,
@@ -3353,8 +3700,17 @@ function createReportsWindowContentElements() {
   const emptyState = document.createElement("div");
   emptyState.classList.add("report-carousel-empty", "d-none");
 
+  const controlsHost = document.createElement("div");
+  controlsHost.classList.add("evidence-controls-host");
+
+  const magnifierToggle = createEvidenceMagnifierToggleButton();
+  const magnifierOverlayHost = document.createElement("div");
+  magnifierOverlayHost.classList.add("evidence-magnifier-overlay-host");
+
   const counter = document.createElement("div");
   counter.classList.add("report-carousel-counter");
+
+  controlsHost.append(magnifierToggle, counter);
 
   const descriptionOuter = document.createElement("div");
   descriptionOuter.classList.add("evidence-description-outer");
@@ -3372,7 +3728,14 @@ function createReportsWindowContentElements() {
   reportDocumentContent.append(reportDocumentText, emptyState);
   reportPaperWrap.appendChild(reportDocumentContent);
   reportViewport.append(reportPaperWrap);
-  container.append(titleEditorRefs.titleBar, counter, reportViewport, descriptionOuter);
+  container.append(titleEditorRefs.titleBar, controlsHost, reportViewport, descriptionOuter, magnifierOverlayHost);
+
+  const magnifierController = createEvidenceMagnifierController({
+    interactionElement: reportViewport,
+    overlayHostElement: magnifierOverlayHost,
+    sourceElement: reportDocumentContent,
+    previewType: "report",
+  });
 
   return {
     container,
@@ -3388,6 +3751,9 @@ function createReportsWindowContentElements() {
     descriptionText,
     titleInput: titleEditorRefs.titleInput,
     commitButton: titleEditorRefs.commitButton,
+    magnifierToggle,
+    magnifierController,
+    controlsHost,
     currentEvidenceId: titleEditorRefs.currentEvidenceId,
     currentCommittedTitle: titleEditorRefs.currentCommittedTitle,
     resizeObserver: null,
@@ -3492,7 +3858,16 @@ async function updatePhotosWindowContent(windowController) {
 
   applyLayout();
 
-  refs.image.onload = applyLayout;
+  if (refs.magnifierController) {
+    refs.magnifierController.refreshContent({ imageElement: refs.image });
+  }
+
+  refs.image.onload = () => {
+    applyLayout();
+    if (refs.magnifierController) {
+      refs.magnifierController.refreshContent({ imageElement: refs.image });
+    }
+  };
 
   if (windowController.previousButtonElement) {
     windowController.previousButtonElement.disabled = false;
@@ -3591,6 +3966,9 @@ async function updateReportsWindowContent(windowController) {
   syncEvidenceTitleWidth(refs, refs.reportPaperWrap);
 
   refs.reportDocumentText.textContent = reportText;
+  if (refs.magnifierController) {
+    refs.magnifierController.refreshContent({ reportTextElement: refs.reportDocumentText });
+  }
   refs.counter.textContent = `${currentIndex + 1}/${reportEvidences.length}`;
   refs.reportDocumentContent.scrollTop = 0;
   refs.descriptionText.textContent = descriptionText || "Description unavailable.";
@@ -3635,6 +4013,22 @@ function showNextReport() {
   }
 
   stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, 1);
+}
+
+function wireEvidenceMagnifierToggle(refs) {
+  if (!refs?.magnifierToggle || !refs?.magnifierController) {
+    return;
+  }
+
+  refs.magnifierToggle.addEventListener("click", () => {
+    const nextEnabled = refs.magnifierController && !refs.magnifierToggle.classList.contains("is-active");
+    refs.magnifierToggle.classList.toggle("is-active", nextEnabled);
+    refs.magnifierToggle.setAttribute("aria-pressed", String(nextEnabled));
+    refs.magnifierController.setEnabled(nextEnabled);
+    if (!nextEnabled) {
+      refs.magnifierController.hide();
+    }
+  });
 }
 
 function openPhotosWindow() {
@@ -3692,6 +4086,7 @@ function openPhotosWindow() {
   }
   photosWindowContentRefs.set(photosWindowController, contentRefs);
   registerDesktopWindow(photosWindowController, "photos");
+  wireEvidenceMagnifierToggle(contentRefs);
 
   updatePhotosWindowContent(photosWindowController);
   photosWindowController.open({ resizable: true, showScrollbar: false });
@@ -3750,6 +4145,7 @@ function openReportsWindow() {
   }
   reportsWindowContentRefs.set(reportsWindowController, contentRefs);
   registerDesktopWindow(reportsWindowController, "reports");
+  wireEvidenceMagnifierToggle(contentRefs);
 
   updateReportsWindowContent(reportsWindowController);
   reportsWindowController.open({ resizable: true, showScrollbar: false });

@@ -47,6 +47,7 @@ let paintPages = buildDefaultPaintPages();
 let paintActivePageIndex = 0;
 let ashtrayHasLitCigarette = true;
 let ashtrayHasExtraButt = false;
+let browserAddressHistory = [];
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
@@ -172,6 +173,7 @@ export function captureGameStatusForSaving() {
   gameState.paintActivePageIndex = getPaintActivePageIndex();
   gameState.ashtrayHasLitCigarette = getAshtrayHasLitCigarette();
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
+  gameState.browserAddressHistory = getBrowserAddressHistory();
 
   return gameState;
 }
@@ -196,6 +198,7 @@ export function restoreGameStatus(gameState) {
       setPaintActivePageIndex(gameState.paintActivePageIndex ?? 0);
       setAshtrayHasLitCigarette(gameState.ashtrayHasLitCigarette);
       setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
+      setBrowserAddressHistory(gameState.browserAddressHistory);
 
       if (!setEvidenceStoreSnapshot(gameState.evidenceStore)) {
         initializeEvidenceStoreForNewGame();
@@ -264,6 +267,34 @@ export function setSfxVolumePreference(value) {
 
 export function getSfxVolumePreference() {
   return sfxVolumePreference;
+}
+
+export function setBrowserAddressHistory(value) {
+  if (!Array.isArray(value)) {
+    browserAddressHistory = [];
+    return;
+  }
+
+  const deduped = [];
+  const seen = new Set();
+
+  value.forEach((entry) => {
+    const normalized = String(entry ?? "").trim();
+    if (!normalized || seen.has(normalized)) {
+      return;
+    }
+
+    seen.add(normalized);
+    deduped.push(normalized);
+  });
+
+  browserAddressHistory = deduped.slice(-10);
+}
+
+export function getBrowserAddressHistory() {
+  return Array.isArray(browserAddressHistory)
+    ? [...browserAddressHistory]
+    : [];
 }
 
 export function getMenuState() {

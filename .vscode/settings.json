@@ -25,6 +25,25 @@
         "/^node --check tools/web_content_builder\\.js; node --check webContentRegistry\\.js$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^node --check ui\\.js$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "printf": true,
+        "/^node --check ui\\.js && printf '\\\\nOK\\\\n'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^node --check constantsAndGlobalVars\\.js && printf '\\\\nOK_CONST\\\\n'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "npm install": true,
+        "npx playwright": true,
+        "/^node --check ui\\.js && node --check constantsAndGlobalVars\\.js && printf '\\\\nJS_OK\\\\n'$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
