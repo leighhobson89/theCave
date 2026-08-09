@@ -31,6 +31,14 @@
       "paperStyle": "photo-mounted",
       "descriptionText": "---\r\n\r\nHere we can see John Baxley (bottom left) in a rare photo with the rest of the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!\r\n\r\n---\r\n",
       "captionText": "Mounties search party outside Black Pine Silver Mine Shaft B, July 1901"
+    },
+    {
+      "id": "mysteriesOfTheOldNorthWest",
+      "defaultTitleString": "Preface of Mysteries of the Old North West",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/mysteriesOldNW.png",
+      "captionText": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\"",
+      "descriptionText": "---\r\n\r\nThe preface of Hannah Fletcher's Investigative book \"The Mysteries of the Old North West\" is shown in this photo.  It looks an interesting book from what you gleam from this introduction.\r\n\r\n---\r\n"
     }
   ]
 }

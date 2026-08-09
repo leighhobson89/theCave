@@ -4,159 +4,38 @@
   "homeUrl": "http://library.intra",
   "records": [
     {
-      "id": "vale-notebook",
-      "author": "Edith Vale",
-      "title": "Notebook of River Marks",
-      "publisher": "Prairie Survey Press",
-      "publicationYear": 1918,
-      "province": "Saskatchewan",
+      "id": "mysteryoldnw",
+      "author": "Hannah Fletcher",
+      "title": "Mysteries of the Old North West",
       "keywords": [
-        "river marks",
-        "survey notebook",
-        "askew waterline"
+        "Mysteries of the Old North West"
       ],
-      "summary": "A slim survey notebook listing flood markers and route annotations.",
+      "summary": "Unsolved Cases of the North West territories get brought back to the Public Eye",
       "extract": [
-        "Vale records a chain of river marks beside the old cave road and suggests that several were reused as emergency trail signs decades later.",
-        "One entry cross-references a sketched lantern symbol that matches the modern investigation notes."
+        "Local author Hannah Fletcher interviews many witnesses and members of search parties sent out to investigate homicides and accidents.  It is both a great read and a great education in to the minds of some of the criminals unfortunately absconding within our lands, as well as unfortunate tragedies that have occurred in past and recent times.",
+        "Taken from the Gray Stacks Herald in her home town in Alberta:",
+        "\"One such example was from her own husband, who, during the summer of 1901 was part of the search party that went out to Black Pine's former Silver Mine in Saskatchewan, to try and find a missing nine year old boy.  During the interview, he mentioned his surprise to find that there were no less than four sets of footprints made at roughly the same time, two of which were adult.  Four, in a place that had laid undisturbed for at least a couple of decades, yet witness accounts all insisted that two boys went out alone exploring and found the cave leading to one of the shafts.  A mystery indeed!\""
       ],
       "images": [
         {
-          "src": "./assets/photos/caveEntrance.png",
-          "alt": "A weathered cover image used to represent the notebook scan.",
-          "caption": "Cover scan attached to the archive entry."
+          "src": "./assets/photos/mysteriesOldNW.png",
+          "alt": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\"",
+          "caption": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\""
         }
-      ],
-      "references": [
-        "Shelf: Prairie Surveys / Cabinet 2 / Drawer 4",
-        "Acquired from the Vale estate donation ledger"
       ],
       "awardsEvidence": true,
       "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "library-notebook-river-marks",
-        "defaultTitleString": "Notebook of River Marks",
-        "paperStyle": "report-parchment",
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "mysteriesOfTheOldNorthWest",
+        "defaultTitleString": "Preface of Mysteries of the Old North West",
+        "paperStyle": "photo-mounted",
         "source": {
-          "kind": "report-localized-catalog-entry",
+          "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "library-notebook-river-marks"
-        }
-      }
-    },
-    {
-      "id": "morton-lantern-guide",
-      "author": "M. A. Morton",
-      "title": "Field Guide to Lanterns",
-      "publisher": "Northern Equipment Quarterly",
-      "publicationYear": 1926,
-      "province": "Alberta",
-      "keywords": [
-        "field lantern",
-        "lantern maintenance",
-        "guide book"
-      ],
-      "summary": "A practical maintenance guide for expedition lanterns.",
-      "extract": [
-        "Morton describes wick trimming, lens storage, and the safest way to shield lanterns during narrow-corridor travel.",
-        "A short appendix recommends tagging lantern crates by route and weather risk."
-      ],
-      "images": [],
-      "references": [
-        "Reference copy held in Equipment Annex / Shelf 7"
-      ],
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "library-morton-lantern-guide",
-        "defaultTitleString": "Field Guide to Lanterns",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "library-morton-lantern-guide"
-        }
-      }
-    },
-    {
-      "id": "haskins-catalogue",
-      "author": "R. Haskins",
-      "title": "Catalogue of Northern Rooms",
-      "publisher": "Territory Records Office",
-      "publicationYear": 1909,
-      "province": "Ontario",
-      "keywords": [
-        "northern rooms",
-        "catalogue index",
-        "district architecture"
-      ],
-      "summary": "An inventory of isolated rooms and storage buildings across the district.",
-      "extract": [
-        "The catalogue organizes buildings by access route, supply risk, and seasonal occupancy.",
-        "A marginal note mentions a temporary records room being moved after repeated cave moisture damage."
-      ],
-      "images": [
-        {
-          "src": "./assets/photos/insideCaveLookingBack.png",
-          "alt": "Illustration page showing a dark interior corridor.",
-          "caption": "Illustration plate included with the catalogue entry."
-        }
-      ],
-      "references": [
-        "Cross-listed with District Building Ledger 14",
-        "Annotated by archivist N. Shepherd in 1947"
-      ],
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "library-haskins-catalogue",
-        "defaultTitleString": "Catalogue of Northern Rooms",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "library-haskins-catalogue"
-        }
-      }
-    },
-    {
-      "id": "test-library-alpha",
-      "author": "Test Archivist",
-      "title": "Publication Test Alpha",
-      "publisher": "",
-      "publicationYear": 0,
-      "province": "",
-      "keywords": [
-        "publication test alpha"
-      ],
-      "summary": "Temporary test record for library author and publication title matching.",
-      "extract": [
-        "This record validates author + publication title exact matching."
-      ],
-      "images": [],
-      "references": [],
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "library-test-library-alpha",
-        "defaultTitleString": "Publication Test Alpha",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "library-test-library-alpha"
+          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "entryId": "mysteriesOfTheOldNorthWest"
         }
       }
     }

@@ -19,151 +19,42 @@
   ],
   "records": [
     {
-      "id": "frontier-press-dispatch",
-      "province": "Saskatchewan",
-      "headline": "Frontier Press Dispatch",
-      "publication": "Frontier Press",
-      "edition": "Late Edition",
-      "date": "1996-10-12",
-      "keywords": [
-        "frontier",
-        "rescue drill",
-        "mine road"
-      ],
-      "summary": "A public article about a cave rescue drill and a road closure.",
-      "article": [
-        "The Frontier Press reports that a stretch of the mine road was closed while volunteers staged a rescue drill near the old cave trail.",
-        "Witnesses describe lantern signals on the ridge and a temporary relay post set up to coordinate the exercise."
-      ],
-      "images": [
-        {
-          "src": "./assets/photos/caveEntrance.png",
-          "alt": "Archived newspaper photo of the cave entrance.",
-          "caption": "Printed alongside the rescue drill article."
-        }
-      ],
-      "requiredAccessLevel": 0,
-      "awardsEvidence": true,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "archives-frontier-press-dispatch",
-        "defaultTitleString": "Frontier Press Dispatch",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "archives-frontier-press-dispatch"
-        }
-      }
-    },
-    {
-      "id": "prairie-telegram",
+      "id": "hannahfletcher",
       "province": "Alberta",
-      "headline": "Prairie Telegram",
-      "publication": "Prairie Ledger",
-      "edition": "Subscriber Archive",
-      "date": "1997-02-18",
+      "headline": "Local Author Hannah Fletcher publishes Husbands Career Mysteries",
+      "publication": "The Gray Stacks Herald",
       "keywords": [
-        "telegram",
-        "winter freight",
-        "subscriber archive"
+        "hannah fletcher",
+        "hannah",
+        "mysteries of the old north west"
       ],
-      "summary": "A subscriber-only freight article without photographs.",
+      "summary": "Unsolved Cases get brought back to the Public Eye",
       "article": [
-        "The Prairie Ledger covers delayed winter freight and a weather bulletin passed between relay crews after midnight.",
-        "An editorial note mentions that the archived subscriber edition includes extra logistics details omitted from the public print."
+        "Local author Hannah Fletcher, the wife of a distinguished Police Constable from Saskatchewan has published a book that reviews a lot of the cold unsolved cases from the last few decades across the North West Territories both before and after the formation of the modern provinces (Alberta, Saskatchewan) In the publication, she interviews many members of search parties sent out to investigate homicides and accidents, and witnesses.  It is both a great read and a great education in to the minds of some of the criminals unfortunately absconding within our lands.",
+        "One such example was from her own husband, who, during the summer of 1901 was part of the search party that went out to Black Pine's former Silver Mine in Saskatchewan, to try and find a missing nine year old boy.  During the interview, he mentioned his surprise to find that there were no less than four sets of footprints made at roughly the same time, two of which were adult.  Four, in a place that had laid undisturbed for at least a couple of decades, yet witness accounts all insisted that two boys went out alone exploring and found the cave leading to one of the shafts.  A mystery indeed!",
+        "Hannah Fletcher's New Book \"Mysteries of the Old North West\" is available in all good book stores across Canada."
       ],
-      "images": [],
-      "requiredAccessLevel": 1,
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "archives-prairie-telegram",
-        "defaultTitleString": "Prairie Telegram",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "archives-prairie-telegram"
-        }
-      }
-    },
-    {
-      "id": "red-river-bulletin",
-      "province": "Ontario",
-      "headline": "Red River Bulletin",
-      "publication": "Northern Review",
-      "edition": "Morning Edition",
-      "date": "1997-06-04",
-      "keywords": [
-        "bulletin",
-        "river levels",
-        "market notes"
-      ],
-      "summary": "A public clipping with a small accompanying photo.",
-      "article": [
-        "The Northern Review prints a short bulletin on river levels and market notes for northern supply stations.",
-        "A later paragraph remarks on how recent trail repairs may change shipping times to the district outbuildings."
-      ],
+      "requiredAccessLevel": 0,
       "images": [
         {
-          "src": "./assets/photos/insideCaveLookingBack.png",
-          "alt": "Inset image archived with the bulletin.",
-          "caption": "Inset print reproduced from the original paper archive."
+          "src": "./assets/photos/mysteryoldnw2.png",
+          "alt": "",
+          "caption": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\""
         }
       ],
-      "requiredAccessLevel": 0,
       "awardsEvidence": false,
       "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "archives-red-river-bulletin",
-        "defaultTitleString": "Red River Bulletin",
-        "paperStyle": "report-parchment",
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
         "source": {
-          "kind": "report-localized-catalog-entry",
+          "kind": "",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "archives-red-river-bulletin"
-        }
-      }
-    },
-    {
-      "id": "test-archives-alpha",
-      "province": "Saskatchewan",
-      "headline": "Newspaper Test Alpha",
-      "publication": "",
-      "edition": "",
-      "date": "",
-      "keywords": [
-        "test archives alpha"
-      ],
-      "summary": "Temporary test record for newspaper province and keyword matching.",
-      "article": [
-        "This article validates combined province and keyword lookup behavior."
-      ],
-      "images": [],
-      "requiredAccessLevel": 0,
-      "awardsEvidence": false,
-      "evidence": {
-        "type": "report",
-        "storageKey": "reports",
-        "titleKey": "reports",
-        "name": "archives-test-archives-alpha",
-        "defaultTitleString": "Newspaper Test Alpha",
-        "paperStyle": "report-parchment",
-        "source": {
-          "kind": "report-localized-catalog-entry",
-          "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
-          "entryId": "archives-test-archives-alpha"
+          "catalogPathTemplate": "",
+          "entryId": ""
         }
       }
     }
