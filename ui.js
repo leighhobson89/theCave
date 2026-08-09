@@ -1991,11 +1991,12 @@ function createComputerNetscapeWindowContentElements() {
   addressSubmitButton.setAttribute("aria-label", "Go to URL");
   addressSubmitButton.title = "Go";
 
-  const addressHistorySuggestions = document.createElement("datalist");
-  addressHistorySuggestions.id = `caveos-browser-history-${Math.random().toString(36).slice(2, 9)}`;
-  browserAddress.setAttribute("list", addressHistorySuggestions.id);
+  const addressHistoryPanel = document.createElement("div");
+  addressHistoryPanel.classList.add("caveos-browser-address-history");
+  addressHistoryPanel.setAttribute("role", "listbox");
+  addressHistoryPanel.hidden = true;
 
-  addressInputShell.append(browserAddress, addressSubmitButton, addressHistorySuggestions);
+  addressInputShell.append(browserAddress, addressSubmitButton, addressHistoryPanel);
 
   const backButton = document.createElement("button");
   backButton.type = "button";
@@ -2060,36 +2061,125 @@ function createComputerNetscapeWindowContentElements() {
   const standalonePageRouteMap = new Map();
   const navigationHistory = [];
   const addressHistory = getBrowserAddressHistory();
+  const webViewBySiteId = {
+    zoomsearch: "zoomsearch",
+    library: "library",
+    police: "police",
+    archives: "archives",
+  };
   let historyIndex = -1;
   let standalonePagesPromise = null;
+  let ignoreNextInputBlur = false;
+
+  const getAddressEntryUrl = (entry) => {
+    if (entry && typeof entry === "object") {
+      return String(entry.url ?? "").trim();
+    }
+
+    return String(entry ?? "").trim();
+  };
+
+  const getAddressEntryReplay = (entry) => {
+    if (!entry || typeof entry !== "object" || !entry.replay || typeof entry.replay !== "object") {
+      return null;
+    }
+
+    return entry.replay;
+  };
+
+  const resolveAddressHistoryEntry = (entry) => {
+    const url = getAddressEntryUrl(entry);
+    if (!url) {
+      return null;
+    }
+
+    const replay = getAddressEntryReplay(entry);
+    if (replay) {
+      return {
+        url,
+        replay: { ...replay },
+      };
+    }
+
+    return url;
+  };
 
   const updateAddressHistorySuggestions = () => {
-    addressHistorySuggestions.replaceChildren();
+    addressHistoryPanel.replaceChildren();
+
+    let hasItems = false;
     for (let index = addressHistory.length - 1; index >= 0; index -= 1) {
-      const itemValue = String(addressHistory[index] ?? "").trim();
+      const itemValue = getAddressEntryUrl(addressHistory[index]);
       if (!itemValue) {
         continue;
       }
 
-      const option = document.createElement("option");
-      option.value = itemValue;
-      addressHistorySuggestions.appendChild(option);
+      const itemButton = document.createElement("button");
+      itemButton.type = "button";
+      itemButton.classList.add("caveos-browser-address-history-item");
+      itemButton.textContent = itemValue;
+      itemButton.dataset.entryIndex = String(index);
+      itemButton.setAttribute("role", "option");
+      itemButton.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        ignoreNextInputBlur = true;
+      });
+      itemButton.addEventListener("click", () => {
+        const selectedIndex = Number.parseInt(String(itemButton.dataset.entryIndex ?? ""), 10);
+        if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= addressHistory.length) {
+          return;
+        }
+
+        const selectedEntry = resolveAddressHistoryEntry(addressHistory[selectedIndex]);
+        if (!selectedEntry) {
+          return;
+        }
+
+        browserAddress.value = getAddressEntryUrl(selectedEntry);
+        hideAddressHistoryPanel();
+        void navigateToAddressHistoryEntry(selectedEntry, { pushHistory: true });
+      });
+
+      addressHistoryPanel.appendChild(itemButton);
+      hasItems = true;
+    }
+
+    if (!hasItems) {
+      addressHistoryPanel.hidden = true;
     }
   };
 
-  const pushAddressHistoryEntry = (urlValue) => {
+  const showAddressHistoryPanel = () => {
+    if (!addressHistoryPanel.childElementCount) {
+      addressHistoryPanel.hidden = true;
+      return;
+    }
+
+    addressHistoryPanel.hidden = false;
+  };
+
+  const hideAddressHistoryPanel = () => {
+    addressHistoryPanel.hidden = true;
+  };
+
+  const pushAddressHistoryEntry = (urlValue, replay = null) => {
     const normalized = normalizeBrowserUrl(urlValue);
     if (!normalized) {
       return;
     }
 
     const trimmedValue = String(urlValue ?? "").trim();
-    const deduped = addressHistory.filter(
-      (item) => normalizeBrowserUrl(item) !== normalized
-    );
+    const normalizedUrl = trimmedValue || normalized;
+    if (replay && typeof replay === "object") {
+      addressHistory.push({
+        url: normalizedUrl,
+        replay: { ...replay },
+      });
+    } else {
+      addressHistory.push(normalizedUrl);
+    }
 
-    deduped.push(trimmedValue || normalized);
-    const truncated = deduped.slice(-ADDRESS_HISTORY_LIMIT);
+    const truncated = addressHistory.slice(-ADDRESS_HISTORY_LIMIT);
     addressHistory.splice(0, addressHistory.length, ...truncated);
     setBrowserAddressHistory(addressHistory);
     updateAddressHistorySuggestions();
@@ -2151,7 +2241,10 @@ function createComputerNetscapeWindowContentElements() {
     updateNavigationButtonsState();
   };
 
-  const navigateToBrowserView = (viewKey, { pushHistory = true, overrideUrl = "" } = {}) => {
+  const navigateToBrowserView = (
+    viewKey,
+    { pushHistory = true, pushAddressHistory = true, overrideUrl = "" } = {}
+  ) => {
     const nextView = browserViews[viewKey];
     if (!nextView) {
       return;
@@ -2160,7 +2253,9 @@ function createComputerNetscapeWindowContentElements() {
     const finalUrl = overrideUrl || nextView.url;
     const renderedPageNode = nextView.render();
     browserAddress.value = finalUrl;
-    pushAddressHistoryEntry(finalUrl);
+    if (pushAddressHistory) {
+      pushAddressHistoryEntry(finalUrl);
+    }
     pageHost.replaceChildren(renderedPageNode);
 
     if (pushHistory) {
@@ -2226,6 +2321,11 @@ function createComputerNetscapeWindowContentElements() {
         browserAddress.value = entry.url || "about:missing";
         pageHost.replaceChildren(createMissingPage(entry.url || "Unknown URL"));
       }
+      return;
+    }
+
+    if (entry.type === "record" && entry.replay && typeof entry.replay === "object") {
+      void replayAddressHistoryEntry(entry, { pushHistory: false });
       return;
     }
 
@@ -2313,6 +2413,56 @@ function createComputerNetscapeWindowContentElements() {
     return standalonePagesPromise;
   };
 
+  const replayAddressHistoryEntry = async (entry, { pushHistory = true } = {}) => {
+    const replay = getAddressEntryReplay(entry);
+    if (!replay) {
+      return false;
+    }
+
+    const siteId = String(replay.siteId ?? "").trim().toLowerCase();
+    const viewKey = webViewBySiteId[siteId];
+    if (!viewKey || !browserViews[viewKey]) {
+      return false;
+    }
+
+    navigateToBrowserView(viewKey, {
+      pushHistory,
+      pushAddressHistory: false,
+      overrideUrl: browserViews[viewKey].url,
+    });
+
+    const activePage = pageHost.firstElementChild;
+    if (!(activePage instanceof HTMLElement)) {
+      return false;
+    }
+
+    activePage.dispatchEvent(new CustomEvent("caveos-browser-replay", {
+      bubbles: true,
+      detail: {
+        ...replay,
+        url: getAddressEntryUrl(entry),
+      },
+    }));
+
+    return true;
+  };
+
+  const navigateToAddressHistoryEntry = async (entry, { pushHistory = true } = {}) => {
+    const targetUrl = getAddressEntryUrl(entry);
+    if (!targetUrl) {
+      return;
+    }
+
+    browserAddress.value = targetUrl;
+
+    const replayed = await replayAddressHistoryEntry(entry, { pushHistory });
+    if (replayed) {
+      return;
+    }
+
+    await navigateToAddress({ pushHistory });
+  };
+
   const navigateToAddress = async ({ pushHistory = true } = {}) => {
     const enteredValue = String(browserAddress.value ?? "").trim();
     const normalized = normalizeBrowserUrl(enteredValue);
@@ -2353,16 +2503,20 @@ function createComputerNetscapeWindowContentElements() {
 
   pageHost.addEventListener("caveos-browser-record-opened", (event) => {
     const openedUrl = String(event?.detail?.url || "").trim();
+    const replay = event?.detail?.replay && typeof event.detail.replay === "object"
+      ? event.detail.replay
+      : null;
     const currentPageNode = pageHost.firstElementChild;
     if (!openedUrl || !(currentPageNode instanceof HTMLElement)) {
       return;
     }
 
     browserAddress.value = openedUrl;
-    pushAddressHistoryEntry(openedUrl);
+    pushAddressHistoryEntry(openedUrl, replay);
     pushHistoryEntry({
       type: "record",
       url: openedUrl,
+      replay,
       pageNode: currentPageNode,
     });
   });
@@ -2410,22 +2564,42 @@ function createComputerNetscapeWindowContentElements() {
   browserAddress.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
+      hideAddressHistoryPanel();
       void navigateToAddress();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      hideAddressHistoryPanel();
     }
   });
 
   browserAddress.addEventListener("focus", () => {
     updateAddressHistorySuggestions();
-    if (typeof browserAddress.showPicker === "function") {
-      try {
-        browserAddress.showPicker();
-      } catch (error) {
-        // Ignore unsupported picker implementations.
-      }
+    showAddressHistoryPanel();
+  });
+
+  browserAddress.addEventListener("blur", () => {
+    if (ignoreNextInputBlur) {
+      ignoreNextInputBlur = false;
+      return;
+    }
+
+    hideAddressHistoryPanel();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Node)) {
+      return;
+    }
+
+    if (!addressInputShell.contains(event.target)) {
+      hideAddressHistoryPanel();
     }
   });
 
   addressSubmitButton.addEventListener("click", () => {
+    hideAddressHistoryPanel();
     void navigateToAddress();
   });
 

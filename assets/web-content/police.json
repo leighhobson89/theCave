@@ -60,6 +60,121 @@
           "entryId": ""
         }
       }
+    },
+    {
+      "id": "emilebeaulieu",
+      "title": "Corporal Emile Beaulieu",
+      "keywords": [
+        "emile",
+        "emile beaulieu",
+        "rock climber"
+      ],
+      "summary": "Corporal turned Professional Climber",
+      "report": [
+        "Corporal Emile Beaulieu of the North West Mounties had a distinguished career.  After retiring from the force in 1915, she went on to pursue a remarkable career as a professional climber, earning recognition and several awards for her achievements on some of Canada's most challenging peaks.  Her climbing career made her a celebrated figure across the country, and she was later featured on the cover of Rockface Monthly.  Beaulieu continued climbing and enjoying the outdoors well into her later years before retiring from professional climbing.  She passed away in 1955 at the age of 84.  At the time of producing this article, the only known photograph of Beaulieu is the magazine cover on which she was featured post humously in 1972 after the magazine interviewed her daughter about her famous career."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/emile.png",
+          "alt": "Cpl. Emile Beaulieu post humously featured on the cover of Rockface Monthly in 1972 after the magazine interviewed her daughter about her famous career.",
+          "caption": "Cpl. Emile Beaulieu post humously featured on the cover of Rockface Monthly in 1972 after the magazine interviewed her daughter about her famous career."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "williammcleod",
+      "title": "Lieutenant William McLeod",
+      "keywords": [
+        "william",
+        "william mcleod"
+      ],
+      "summary": "Lieutenant Retires with Honor",
+      "report": [
+        "Lieutenant William McLeod served with distinction in the North West Mounted Police, spending much of his career on the frontier during a period of immense change across the North West Territories. Known for his quiet authority, discipline and dedication to his men, McLeod rose to the rank of Lieutenant before eventually retiring from the Force.",
+        "After leaving active service, McLeod and his wife settled into a quieter life in rural Ontario. Far removed from the wide-open frontier, he devoted his later years to his home, family and local community. The couple remained together until McLeod's death in 1957, bringing to a close the life of a man whose early years had been spent serving in one of Canada's most demanding and isolated regions."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/williamMcLeod.png",
+          "alt": "Excerpt from the book \"Guardians of the North\", published in 1988, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920.",
+          "caption": "Excerpt from the book \"Guardians of the North\", published in 1988, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "georgemackenzie",
+      "title": "Corporal George Mackenzie",
+      "keywords": [
+        "george",
+        "george mackenzie",
+        "moustache"
+      ],
+      "summary": "George will always be one of us!",
+      "report": [
+        "Corporal George Mackenzie served quietly with the North West Mounted Police, earning the respect of his colleagues through years of dependable service rather than dramatic exploits. He remained with the Force until his retirement in 1931, after which he settled into civilian life. Mackenzie died in 1954.",
+        "He is remembered, however, for a rather extraordinary distinction outside his official career: he was reputed to have grown the longest moustache in Canada. In his later years, his spectacular white moustache became something of a local curiosity, attracting considerable attention wherever he went."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/georgemackenzie.png",
+          "alt": "George Mackenzie, aged 80, proudly displays his extraordinary moustache while its length is measured before an amused crowd at a local sports hall. The unusual spectacle became one of the more memorable stories associated with the former NWMP corporal, 1952.",
+          "caption": "George Mackenzie, aged 80, proudly displays his extraordinary moustache while its length is measured before an amused crowd at a local sports hall. The unusual spectacle became one of the more memorable stories associated with the former NWMP corporal, 1952."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
     }
   ]
 }

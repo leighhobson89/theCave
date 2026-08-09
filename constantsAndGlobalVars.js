@@ -275,26 +275,53 @@ export function setBrowserAddressHistory(value) {
     return;
   }
 
-  const deduped = [];
-  const seen = new Set();
+  const sanitized = value
+    .map((entry) => {
+      if (entry && typeof entry === "object") {
+        const url = String(entry.url ?? "").trim();
+        if (!url) {
+          return null;
+        }
 
-  value.forEach((entry) => {
-    const normalized = String(entry ?? "").trim();
-    if (!normalized || seen.has(normalized)) {
-      return;
-    }
+        const normalizedEntry = { url };
+        if (entry.replay && typeof entry.replay === "object") {
+          normalizedEntry.replay = { ...entry.replay };
+        }
 
-    seen.add(normalized);
-    deduped.push(normalized);
-  });
+        return normalizedEntry;
+      }
 
-  browserAddressHistory = deduped.slice(-10);
+      const normalized = String(entry ?? "").trim();
+      return normalized || null;
+    })
+    .filter(Boolean);
+
+  browserAddressHistory = sanitized.slice(-10);
 }
 
 export function getBrowserAddressHistory() {
-  return Array.isArray(browserAddressHistory)
-    ? [...browserAddressHistory]
-    : [];
+  if (!Array.isArray(browserAddressHistory)) {
+    return [];
+  }
+
+  return browserAddressHistory.map((entry) => {
+    if (entry && typeof entry === "object") {
+      return {
+        ...entry,
+        replay: entry.replay && typeof entry.replay === "object"
+          ? { ...entry.replay }
+          : entry.replay,
+      };
+    }
+
+    return String(entry ?? "").trim();
+  }).filter((entry) => {
+    if (entry && typeof entry === "object") {
+      return Boolean(String(entry.url ?? "").trim());
+    }
+
+    return Boolean(String(entry ?? "").trim());
+  });
 }
 
 export function getMenuState() {

@@ -110,6 +110,42 @@
           "entryId": ""
         }
       }
+    },
+    {
+      "id": "margaretmcleod",
+      "websiteName": "McLeod Apples",
+      "pageTitle": "Apples for All!",
+      "url": "http://www.zoomsearch.net/manual/margaretmcleod",
+      "keywords": [
+        "margaret",
+        "margaret mcleod",
+        "apples",
+        "maple grove"
+      ],
+      "summary": "",
+      "pageContent": [
+        "Margaret McLeod lived a quiet and practical life in rural Ontario following her husband's retirement from the North West Mounted Police. The couple settled near Maple Grove, where Margaret became closely involved in the running of their small property.",
+        "She maintained a modest apple orchard and, during the autumn months, sold apples, preserves and other produce directly to families in the surrounding communities. The orchard was never a large commercial operation, but it became a familiar local source of fresh fruit and a modest supplement to the household income.",
+        "Margaret and William remained together on the property for the rest of their lives. She continued tending the orchard and garden after William's death in 1943, maintaining the simple rural life they had built together away from his former career on the frontier."
+      ],
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
     }
   ]
 }

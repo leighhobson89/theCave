@@ -2636,8 +2636,48 @@ button.disabled {
 
 .caveos-browser-address-shell {
     position: relative;
-    width: 95%;
+    width: 100%;
     min-width: 0;
+}
+
+.caveos-browser-address-history {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 2px);
+    display: grid;
+    grid-auto-rows: minmax(1.6rem, auto);
+    background: #000;
+    border: 1px solid rgba(89, 209, 79, 0.65);
+    border-radius: 0;
+    box-sizing: border-box;
+    z-index: 15;
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.caveos-browser-address-history-item {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid rgba(89, 209, 79, 0.35);
+    border-radius: 0;
+    background: #000;
+    color: #80ff6e;
+    text-align: left;
+    font: inherit;
+    line-height: 1.2;
+    padding: 0.36rem 0.42rem;
+    cursor: pointer;
+}
+
+.caveos-browser-address-history-item:last-child {
+    border-bottom: 0;
+}
+
+.caveos-browser-address-history-item:hover,
+.caveos-browser-address-history-item:focus-visible {
+    background: rgba(18, 38, 18, 0.95);
+    color: #94ff86;
 }
 
 .caveos-browser-address-submit {

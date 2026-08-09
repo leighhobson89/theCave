@@ -328,6 +328,8 @@ function makeSelectableResults({
   detailPrompt,
   getRowValues,
   renderDetail,
+  autoSelectRecordId = "",
+  getReplayDetail = null,
 }) {
   tbody.replaceChildren();
   setDetailContent(detailBody, null, detailPrompt);
@@ -342,11 +344,15 @@ function makeSelectableResults({
     return;
   }
 
+  const normalizedAutoSelectRecordId = String(autoSelectRecordId || "").trim().toLowerCase();
+  let autoActivate = null;
+
   records.forEach((record) => {
     const row = document.createElement("tr");
     row.classList.add("browser-results-row", "is-selectable");
     row.tabIndex = 0;
     row.setAttribute("role", "button");
+    row.dataset.recordId = String(record?.id || "").trim();
 
     getRowValues(record).forEach((value) => {
       const cell = document.createElement("td");
@@ -363,11 +369,15 @@ function makeSelectableResults({
 
       const detailUrl = String(record?.url || "").trim();
       if (detailUrl) {
+        const replay = typeof getReplayDetail === "function"
+          ? getReplayDetail(record)
+          : null;
         row.dispatchEvent(new CustomEvent("caveos-browser-record-opened", {
           bubbles: true,
           detail: {
             url: detailUrl,
             recordId: String(record?.id || "").trim(),
+            replay: replay && typeof replay === "object" ? replay : null,
           },
         }));
       }
@@ -382,7 +392,20 @@ function makeSelectableResults({
     });
 
     tbody.appendChild(row);
+
+    const normalizedRecordId = String(record?.id || "").trim().toLowerCase();
+    if (
+      normalizedAutoSelectRecordId
+      && normalizedRecordId
+      && normalizedRecordId === normalizedAutoSelectRecordId
+    ) {
+      autoActivate = activate;
+    }
   });
+
+  if (typeof autoActivate === "function") {
+    autoActivate();
+  }
 }
 
 function formatFoundMessage(label, awardedEvidence = 0) {
@@ -413,8 +436,6 @@ function buildZoomDetail(record) {
   const gallery = createImageGallery(record.images, ["browser-image-gallery-zoom"]);
   if (gallery) {
     sideColumn.appendChild(gallery);
-  } else {
-    sideColumn.appendChild(createResultEmptyState("No page images are attached to this result."));
   }
 
   grid.append(mainColumn, sideColumn);
@@ -429,7 +450,9 @@ function buildLibraryDetail(record) {
   const detailColumn = createElement("div", ["browser-record-main"]);
 
   const gallery = createImageGallery(record.images, ["browser-image-gallery-library"]);
-  mediaColumn.appendChild(gallery || createResultEmptyState("No scanned cover or illustration is attached."));
+  if (gallery) {
+    mediaColumn.appendChild(gallery);
+  }
 
   detailColumn.appendChild(createElement("h2", ["browser-record-title"], record.title || record.id));
   detailColumn.appendChild(
@@ -534,8 +557,13 @@ function createZoomSearchPage({ searchWebsite }) {
   const { table, body } = createResultsTable(["Website", "Page", "Summary"], ["browser-results-zoom"]);
   const { host: detailHost, body: detailBody } = createDetailHost("Select the returned webpage entry to inspect its contents.");
 
-  async function runSearch() {
-    const result = await searchWebsite({ query: queryInput.value });
+  async function runSearch({ queryOverride = "", autoSelectRecordId = "" } = {}) {
+    const nextQuery = normalizeQuery(queryOverride || queryInput.value);
+    if (queryOverride) {
+      queryInput.value = queryOverride;
+    }
+
+    const result = await searchWebsite({ query: nextQuery });
     const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
     status.textContent = visibleRecords.length
       ? formatFoundMessage("result", result.awardedEvidence.length)
@@ -550,8 +578,26 @@ function createZoomSearchPage({ searchWebsite }) {
       detailPrompt: "Select the returned webpage entry to inspect its contents.",
       getRowValues: (record) => [record.websiteName, record.pageTitle, record.summary],
       renderDetail: buildZoomDetail,
+      autoSelectRecordId,
+      getReplayDetail: (record) => ({
+        siteId: "zoomsearch",
+        query: nextQuery,
+        recordId: String(record?.id || "").trim(),
+      }),
     });
   }
+
+  root.addEventListener("caveos-browser-replay", (event) => {
+    const replay = event?.detail;
+    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "zoomsearch") {
+      return;
+    }
+
+    void runSearch({
+      queryOverride: String(replay.query || "").trim(),
+      autoSelectRecordId: String(replay.recordId || "").trim(),
+    });
+  });
 
   queryInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -583,10 +629,19 @@ function createLibraryPage({ searchWebsite }) {
   const { table, body } = createResultsTable(["Author", "Title", "Publisher", "Year"], ["browser-results-library"]);
   const { host: detailHost, body: detailBody } = createDetailHost("Select the returned library entry to inspect it.");
 
-  async function runSearch() {
+  async function runSearch({ authorOverride = "", titleOverride = "", autoSelectRecordId = "" } = {}) {
+    const authorValue = authorOverride || authorInput.value;
+    const titleValue = titleOverride || titleInput.value;
+    if (authorOverride) {
+      authorInput.value = authorOverride;
+    }
+    if (titleOverride) {
+      titleInput.value = titleOverride;
+    }
+
     const result = await searchWebsite({
-      author: authorInput.value,
-      title: titleInput.value,
+      author: authorValue,
+      title: titleValue,
     });
     const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
     status.textContent = visibleRecords.length
@@ -602,8 +657,28 @@ function createLibraryPage({ searchWebsite }) {
       detailPrompt: "Select the returned library entry to inspect it.",
       getRowValues: (record) => [record.author, record.title, record.publisher, record.publicationYear],
       renderDetail: buildLibraryDetail,
+      autoSelectRecordId,
+      getReplayDetail: (record) => ({
+        siteId: "library",
+        author: normalizeQuery(authorValue),
+        title: normalizeQuery(titleValue),
+        recordId: String(record?.id || "").trim(),
+      }),
     });
   }
+
+  root.addEventListener("caveos-browser-replay", (event) => {
+    const replay = event?.detail;
+    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "library") {
+      return;
+    }
+
+    void runSearch({
+      authorOverride: String(replay.author || "").trim(),
+      titleOverride: String(replay.title || "").trim(),
+      autoSelectRecordId: String(replay.recordId || "").trim(),
+    });
+  });
 
   const searchButton = createButton("Search Catalog", runSearch);
   const clearButton = createButton("Clear", () => {
@@ -667,9 +742,14 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
     status.textContent = `Logged in as: ${session.accessLabel || "Public"} (Level ${session.accessLevel ?? 0})`;
   }
 
-  async function runSearch() {
+  async function runSearch({ queryOverride = "", autoSelectRecordId = "" } = {}) {
+    const queryValue = queryOverride || queryInput.value;
+    if (queryOverride) {
+      queryInput.value = queryOverride;
+    }
+
     const session = getSession();
-    const result = await searchWebsite({ query: queryInput.value, session });
+    const result = await searchWebsite({ query: queryValue, session });
     const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
     status.textContent = visibleRecords.length
       ? formatFoundMessage("record", result.awardedEvidence.length)
@@ -684,8 +764,26 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
       detailPrompt: "Select the returned police record to inspect it.",
       getRowValues: (record) => [record.caseNumber, record.title, record.date, record.summary],
       renderDetail: buildPoliceDetail,
+      autoSelectRecordId,
+      getReplayDetail: (record) => ({
+        siteId: "police",
+        query: normalizeQuery(queryValue),
+        recordId: String(record?.id || "").trim(),
+      }),
     });
   }
+
+  root.addEventListener("caveos-browser-replay", (event) => {
+    const replay = event?.detail;
+    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "police") {
+      return;
+    }
+
+    void runSearch({
+      queryOverride: String(replay.query || "").trim(),
+      autoSelectRecordId: String(replay.recordId || "").trim(),
+    });
+  });
 
   queryInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -757,11 +855,19 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
     status.textContent = `Logged in as: ${session.accessLabel || "Free"}`;
   }
 
-  async function runSearch() {
-    const selectedProvince = provinceSelect.value;
+  async function runSearch({ queryOverride = "", provinceOverride = "", autoSelectRecordId = "" } = {}) {
+    const selectedProvince = provinceOverride || provinceSelect.value;
+    const queryValue = queryOverride || queryInput.value;
+    if (provinceOverride) {
+      provinceSelect.value = provinceOverride;
+    }
+    if (queryOverride) {
+      queryInput.value = queryOverride;
+    }
+
     lastSelectedArchiveProvince = selectedProvince;
     const session = getSession();
-    const result = await searchWebsite({ query: queryInput.value, province: selectedProvince, session });
+    const result = await searchWebsite({ query: queryValue, province: selectedProvince, session });
     const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
     status.textContent = visibleRecords.length
       ? formatFoundMessage("article", result.awardedEvidence.length)
@@ -776,8 +882,28 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
       detailPrompt: "Select the returned newspaper record to inspect it.",
       getRowValues: (record) => [record.date, record.province, record.headline, record.summary],
       renderDetail: buildArchiveDetail,
+      autoSelectRecordId,
+      getReplayDetail: (record) => ({
+        siteId: "archives",
+        query: normalizeQuery(queryValue),
+        province: selectedProvince,
+        recordId: String(record?.id || "").trim(),
+      }),
     });
   }
+
+  root.addEventListener("caveos-browser-replay", (event) => {
+    const replay = event?.detail;
+    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "archives") {
+      return;
+    }
+
+    void runSearch({
+      queryOverride: String(replay.query || "").trim(),
+      provinceOverride: String(replay.province || "").trim(),
+      autoSelectRecordId: String(replay.recordId || "").trim(),
+    });
+  });
 
   provinceSelect.addEventListener("change", () => {
     lastSelectedArchiveProvince = provinceSelect.value;
