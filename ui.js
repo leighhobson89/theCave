@@ -1897,10 +1897,14 @@ function createComputerNetscapeWindowContentElements() {
     page.classList.add("caveos-browser-page", "browser-page-welcome");
     page.innerHTML = `
       <div class="browser-welcome-logo" aria-hidden="true">
-        <div class="browser-welcome-logo-glyph">N</div>
+        <div class="browser-netscape-logo-mark">
+          <span class="browser-netscape-logo-ring"></span>
+          <span class="browser-netscape-logo-orbit"></span>
+          <span class="browser-netscape-logo-glyph">N</span>
+        </div>
       </div>
-      <h1 class="browser-welcome-title">Welcome to the World!</h1>
-      <p class="browser-welcome-copy">Use Favorites above to visit web destinations.</p>
+      <h1 class="browser-welcome-title">Netscape Navigator</h1>
+      <p class="browser-welcome-copy">Browse archived destinations from your CaveOS terminal.</p>
     `;
     return page;
   };
@@ -2410,16 +2414,16 @@ function positionWindowWithinParent(
 
   const baseWidth = rootElement.offsetWidth || Math.round(parentWidth * 0.88);
   const scaledWidth = Number.isFinite(normalizedWidthRatio)
-    ? Math.round(parentWidth * Math.max(0.3, Math.min(0.96, normalizedWidthRatio)))
+    ? Math.round(parentWidth * Math.max(0.3, Math.min(1, normalizedWidthRatio)))
     : Math.min(
       Math.round(baseWidth * Math.max(0.5, Number(widthScale) || 1)),
-      Math.round(parentWidth * 0.96)
+      Math.round(parentWidth)
     );
   const nextHeight = Number.isFinite(normalizedHeightRatio)
-    ? Math.round(parentHeight * Math.max(0.3, Math.min(0.94, normalizedHeightRatio)))
+    ? Math.round(parentHeight * Math.max(0.3, Math.min(1, normalizedHeightRatio)))
     : Math.min(
       rootElement.offsetHeight || Math.round(parentHeight * 0.76),
-      Math.round(parentHeight * 0.94)
+      Math.round(parentHeight)
     );
 
   const nextLeft = Math.max(0, Math.round((parentWidth - scaledWidth) / 2));
@@ -3900,8 +3904,8 @@ function openComputerWindow() {
       appWindowSet: contentRefs.appWindows,
       resizable: true,
       showScrollbar: false,
-      widthRatio: 0.8,
-      heightRatio: 0.8,
+      widthRatio: 1,
+      heightRatio: 1,
     });
   });
 

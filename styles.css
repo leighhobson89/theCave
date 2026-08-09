@@ -2145,12 +2145,34 @@ button.disabled {
 }
 
 .computer-icon-netscape-pixel {
-    border-radius: 50%;
+    position: relative;
+    border-radius: 6px 12px 12px 12px;
     border: 2px solid #72ff62;
     background:
-        linear-gradient(90deg, transparent 47%, #72ff62 47% 53%, transparent 53%),
-        linear-gradient(0deg, transparent 47%, #72ff62 47% 53%, transparent 53%);
-    box-shadow: inset 0 0 0 2px rgba(114, 255, 98, 0.2);
+        radial-gradient(circle at 70% 76%, rgba(2, 10, 2, 1) 0 18%, transparent 20%),
+        linear-gradient(180deg, #021002 0%, #000000 100%);
+    box-shadow: inset 0 0 0 1px rgba(114, 255, 98, 0.18);
+}
+
+.computer-icon-netscape-pixel::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 2px solid #72ff62;
+    border-radius: 4px;
+}
+
+.computer-icon-netscape-pixel::after {
+    content: "N";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -54%);
+    color: #72ff62;
+    font-size: 1.05rem;
+    font-family: "Times New Roman", serif;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .computer-clock-panel {
@@ -2286,6 +2308,10 @@ button.disabled {
 
 .caveos-app-window .desktop-window-body {
     padding: 0.35rem;
+}
+
+.caveos-browser-window .desktop-window-body {
+    padding: 0;
 }
 
 .caveos-notes-window .notes-window-container {
@@ -3081,39 +3107,85 @@ button.disabled {
 }
 
 .browser-page-welcome {
-    background: #fbfbfb;
+    background:
+        radial-gradient(circle at 12% 10%, rgba(79, 142, 189, 0.34) 0%, transparent 34%),
+        radial-gradient(circle at 88% 90%, rgba(32, 77, 117, 0.24) 0%, transparent 42%),
+        #000;
     text-align: center;
     padding-top: 2.2rem;
 }
 
 .browser-welcome-logo {
-    width: 102px;
-    height: 102px;
+    width: 132px;
+    height: 132px;
     margin: 0 auto 1rem;
-    border: 2px solid #7a7a7a;
-    background: linear-gradient(180deg, #d2d8df, #f7f7f7);
+    border: 1px solid rgba(138, 196, 240, 0.36);
+    background: radial-gradient(circle at 50% 30%, rgba(16, 33, 49, 0.8) 0%, rgba(3, 8, 14, 0.94) 72%);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 1px 0 #fff;
+    border-radius: 50%;
+    box-shadow:
+        inset 0 0 0 1px rgba(169, 221, 255, 0.2),
+        0 0 28px rgba(95, 170, 229, 0.2);
 }
 
-.browser-welcome-logo-glyph {
-    font-size: 3rem;
+.browser-netscape-logo-mark {
+    position: relative;
+    width: 94px;
+    height: 94px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 25% 20%, rgba(125, 203, 255, 0.45) 0 24%, transparent 25% 100%),
+        radial-gradient(circle at 68% 74%, rgba(13, 58, 94, 0.75) 0 22%, transparent 23% 100%),
+        linear-gradient(180deg, #061523 0%, #030811 100%);
+    border: 2px solid #83c8ff;
+    box-shadow: inset 0 0 0 1px rgba(197, 233, 255, 0.3);
+}
+
+.browser-netscape-logo-ring {
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(140, 214, 255, 0.46);
+}
+
+.browser-netscape-logo-orbit {
+    position: absolute;
+    left: 9px;
+    top: 34px;
+    width: 76px;
+    height: 22px;
+    border: 2px solid rgba(149, 218, 255, 0.88);
+    border-top: none;
+    border-right: none;
+    border-radius: 0 0 0 24px;
+    transform: rotate(-16deg);
+}
+
+.browser-netscape-logo-glyph {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -57%);
+    font-size: 3.4rem;
     line-height: 1;
-    color: #2b4a86;
+    color: #e4f6ff;
+    font-family: "Times New Roman", serif;
     font-weight: 700;
+    text-shadow: 0 0 10px rgba(117, 197, 255, 0.4);
 }
 
 .browser-welcome-title {
     margin: 0 0 0.55rem;
     font-size: 1.7rem;
-    color: #1d2f4f;
+    color: #d5eeff;
+    letter-spacing: 0.04em;
 }
 
 .browser-welcome-copy {
     margin: 0;
-    color: #4f4f4f;
+    color: #97c6e8;
 }
 
 .browser-page-cosmic {

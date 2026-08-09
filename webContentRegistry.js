@@ -1,5 +1,7 @@
 import { textEquals } from "./webContentManager.js";
 
+let lastSelectedArchiveProvince = "Saskatchewan";
+
 function createElement(tagName, classNames = [], textContent = "") {
   const element = document.createElement(tagName);
   classNames.filter(Boolean).forEach((className) => element.classList.add(className));
@@ -725,13 +727,16 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
   const queryInput = createInput({ ariaLabel: "Archive keyword search", placeholder: "Enter full keyword" });
   const provinceSelect = createSelect(
     [
-      { value: "Saskatchewan", label: "Saskatchewan", selected: true },
+      "Saskatchewan",
       "Ontario",
       "Quebec",
       "Alberta",
     ],
     "Province selector"
   );
+  if (lastSelectedArchiveProvince) {
+    provinceSelect.value = lastSelectedArchiveProvince;
+  }
   const searchButton = createButton("Find Records", runSearch);
   form.append(
     createSearchFormRow("Province", provinceSelect),
@@ -754,6 +759,7 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
 
   async function runSearch() {
     const selectedProvince = provinceSelect.value;
+    lastSelectedArchiveProvince = selectedProvince;
     const session = getSession();
     const result = await searchWebsite({ query: queryInput.value, province: selectedProvince, session });
     const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
@@ -771,9 +777,11 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
       getRowValues: (record) => [record.date, record.province, record.headline, record.summary],
       renderDetail: buildArchiveDetail,
     });
-
-    provinceSelect.value = "Saskatchewan";
   }
+
+  provinceSelect.addEventListener("change", () => {
+    lastSelectedArchiveProvince = provinceSelect.value;
+  });
 
   queryInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {

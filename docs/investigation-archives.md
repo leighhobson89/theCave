@@ -71,7 +71,6 @@ Example:
 - Matching rule: both fields must match exactly
 - Partial keywords do not match
 - Province selector defaults to `Saskatchewan`
-- Province selector resets to `Saskatchewan` after every search
 - Matching fields in JSON: `province`, `headline`, `keywords`
 
 Example:
