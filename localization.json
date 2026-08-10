@@ -32,7 +32,10 @@
     "closeButton": "Close",
     "headerStringSave": "Copy This String To A Text File:",
     "headerStringLoad": "Paste String Below and click Load:",
-    "textAreaLabel": "Paste Save String Here..."
+    "textAreaLabel": "Paste Save String Here...",
+    "evidenceTypePhoto": "Photo",
+    "evidenceTypeReport": "Report",
+    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
   },
   "es": {
     "newGame": "Nuevo Juego",
@@ -67,7 +70,10 @@
     "closeButton": "Cerrar",
     "headerStringSave": "Copiar esta cadena a un archivo de texto:",
     "headerStringLoad": "Pega la cadena a continuación y haz clic en Cargar:",
-    "textAreaLabel": "Pega la cadena de guardado aquí..."
+    "textAreaLabel": "Pega la cadena de guardado aquí...",
+    "evidenceTypePhoto": "Photo",
+    "evidenceTypeReport": "Report",
+    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
   },
   "de": {
     "newGame": "Neues Spiel",
@@ -102,7 +108,10 @@
     "closeButton": "Schließen",
     "headerStringSave": "Kopiere diesen String in eine Textdatei:",
     "headerStringLoad": "Fügen Sie den String unten ein und klicken Sie auf Laden:",
-    "textAreaLabel": "Speicher-String hier einfügen..."
+    "textAreaLabel": "Speicher-String hier einfügen...",
+    "evidenceTypePhoto": "Photo",
+    "evidenceTypeReport": "Report",
+    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
   },
   "it": {
     "newGame": "Nuovo gioco",
@@ -137,7 +146,10 @@
     "closeButton": "Chiudi",
     "headerStringSave": "Copia questa stringa in un file di testo:",
     "headerStringLoad": "Incolla la stringa qui sotto e clicca Carica:",
-    "textAreaLabel": "Incolla qui la stringa di salvataggio..."
+    "textAreaLabel": "Incolla qui la stringa di salvataggio...",
+    "evidenceTypePhoto": "Photo",
+    "evidenceTypeReport": "Report",
+    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
   },
   "fr": {
     "newGame": "Nouveau jeu",
@@ -172,6 +184,9 @@
     "closeButton": "Fermer",
     "headerStringSave": "Copiez cette chaîne dans un fichier texte :",
     "headerStringLoad": "Collez la chaîne ci-dessous et cliquez sur Charger :",
-    "textAreaLabel": "Collez la chaîne de sauvegarde ici..."
-  }     
+    "textAreaLabel": "Collez la chaîne de sauvegarde ici...",
+    "evidenceTypePhoto": "Photo",
+    "evidenceTypeReport": "Report",
+    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
+  }
 }

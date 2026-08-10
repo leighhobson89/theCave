@@ -55,6 +55,7 @@
         },
         "Copy-Item": true,
         "Test-Path": true,
-        "Get-Item": true
+        "Get-Item": true,
+        "honey": true
     }
 }

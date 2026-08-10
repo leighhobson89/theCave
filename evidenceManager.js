@@ -40,6 +40,8 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
 ];
 
 let evidenceStore = createEmptyEvidenceStore();
+const evidenceTriggers = new Map();
+let nextEvidenceTriggerId = 1;
 
 function createEmptyEvidenceStore() {
   return {
@@ -125,7 +127,50 @@ function addEvidenceToStore(evidence) {
     evidenceStore.collections[evidence.storageKey].length
   );
 
-  return cloneJson(storedEvidence);
+  const clonedEvidence = cloneJson(storedEvidence);
+  runEvidenceTriggers(clonedEvidence);
+  return clonedEvidence;
+}
+
+function runEvidenceTriggers(evidence) {
+  if (!evidence || typeof evidence !== "object") {
+    return;
+  }
+
+  evidenceTriggers.forEach((trigger, triggerId) => {
+    if (!trigger || typeof trigger !== "object") {
+      return;
+    }
+
+    const predicate = trigger.predicate;
+    if (typeof predicate !== "function") {
+      return;
+    }
+
+    let matches = false;
+    try {
+      matches = predicate(cloneJson(evidence)) === true;
+    } catch (error) {
+      console.error("Evidence trigger predicate failed:", error);
+      return;
+    }
+
+    if (!matches) {
+      return;
+    }
+
+    try {
+      if (typeof trigger.action === "function") {
+        trigger.action(cloneJson(evidence));
+      }
+    } catch (error) {
+      console.error("Evidence trigger action failed:", error);
+    }
+
+    if (trigger.once !== false) {
+      evidenceTriggers.delete(triggerId);
+    }
+  });
 }
 
 export function resetEvidenceStore() {
@@ -376,4 +421,30 @@ export function setEvidenceStoreSnapshot(snapshot) {
 
 export function getEvidenceStorageKeys() {
   return { ...STORAGE_KEYS };
+}
+
+export function addEvidenceTrigger({ predicate, action, once = true } = {}) {
+  if (typeof predicate !== "function" || typeof action !== "function") {
+    return null;
+  }
+
+  const triggerId = `evidence-trigger-${nextEvidenceTriggerId}`;
+  nextEvidenceTriggerId += 1;
+
+  evidenceTriggers.set(triggerId, {
+    predicate,
+    action,
+    once: once !== false,
+  });
+
+  return triggerId;
+}
+
+export function removeEvidenceTrigger(triggerId) {
+  const normalizedId = String(triggerId || "").trim();
+  if (!normalizedId) {
+    return false;
+  }
+
+  return evidenceTriggers.delete(normalizedId);
 }

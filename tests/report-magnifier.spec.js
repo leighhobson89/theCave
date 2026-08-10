@@ -518,3 +518,59 @@ test("facsimile next cached message button advances queue and transfers evidence
   const transferred = reportEntries.filter((entry) => String(entry?.name || "").startsWith("facsimile-next-"));
   expect(transferred).toHaveLength(2);
 });
+
+test("minemap photo evidence milestone triggers Whitmore credentials fax", async ({ page }) => {
+  const consoleEntries = [];
+  page.on("console", async (message) => {
+    const values = await Promise.all(message.args().map((arg) => arg.jsonValue().catch(() => null)));
+    consoleEntries.push({ text: message.text(), values });
+  });
+
+  await page.goto("/");
+  await page.locator("#newGame").click();
+  await page.locator("#desktopComputerHotspot").click();
+
+  await page.getByRole("button", { name: "Netscape" }).click();
+  const browserAddress = page.locator("input[aria-label='Browser address']");
+  await browserAddress.fill("http://honeydewcavingclub.com");
+  await browserAddress.press("Enter");
+
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+  await page.getByRole("button", { name: "Close Netscape Navigator 3.0 window" }).click();
+  await page.getByRole("button", { name: "Close computer window" }).click();
+
+  await page.locator("#desktopFacsimileHotspot").click();
+  const facsimileWindow = page.locator(".facsimile-window");
+  await expect(facsimileWindow).toBeVisible();
+  await expect(facsimileWindow.getByRole("heading", { name: "MESSAGE FROM BRIAN WHITMORE" })).toBeVisible();
+  await expect(facsimileWindow.getByText("WHITMORE & SONS IRON MACHINERY CO.")).toBeVisible();
+  await expect(facsimileWindow.getByText("I knew you were investigating the Arnie Spencer tragedy")).toBeVisible();
+  await expect(facsimileWindow.getByText("b.whitmore")).toBeVisible();
+  await expect(facsimileWindow.getByText("ironVeins15")).toBeVisible();
+  await expect(facsimileWindow.getByText("http://www.whitmore-sons-iron-machinery-co.com/mining")).toBeVisible();
+
+  await facsimileWindow.locator(".story-window-close").click();
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  await page.keyboard.press("-");
+  await expect(page.locator(".debug-window")).toBeVisible();
+  await page.locator(".debug-window .debug-window-button").click();
+
+  await expect.poll(async () => consoleEntries.some((entry) => entry.text.includes("Evidence store in memory (raw):"))).toBe(true);
+  const evidenceDebugEntry = consoleEntries
+    .filter((entry) => entry.text.includes("Evidence store in memory (raw):"))
+    .at(-1);
+  expect(evidenceDebugEntry).toBeTruthy();
+
+  const rawStore = evidenceDebugEntry?.values?.[1];
+  const reportEntries = Array.isArray(rawStore?.collections?.reports)
+    ? rawStore.collections.reports
+        .map((id) => rawStore?.evidencesById?.[String(id)])
+        .filter(Boolean)
+    : [];
+
+  const whitmoreFax = reportEntries.find((entry) => entry.name === "facsimile-whitmore-police-credentials");
+  expect(whitmoreFax).toBeTruthy();
+  expect(whitmoreFax.source.kind).toBe("report-localized-catalog-entry");
+  expect(whitmoreFax.source.entryId).toBe("fax-whitmore-police-credentials");
+});

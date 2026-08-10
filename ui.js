@@ -42,6 +42,7 @@ import {
   getNextDesktopWindowZIndex,
 } from "./constantsAndGlobalVars.js";
 import {
+  addEvidenceTrigger,
   createEvidence,
   getCurrentEvidence,
   getEvidenceCollection,
@@ -101,6 +102,7 @@ let debugWindowController = null;
 let computerWindowController = null;
 let ashtrayAnimationTimeoutId = null;
 let facsimileFeedAnimationTimeoutId = null;
+let evidenceMilestoneTriggersInitialized = false;
 const NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS = 3000;
 const notificationQueue = [];
 let notificationReleaseIntervalId = null;
@@ -128,7 +130,14 @@ function ensureNotificationHostElement() {
 
 function normalizeNotificationType(type) {
   const normalizedType = String(type || "info").trim().toLowerCase();
-  if (normalizedType === "error" || normalizedType === "reward") {
+  if (
+    normalizedType === "error"
+    || normalizedType === "reward"
+    || normalizedType === "fax-system"
+    || normalizedType === "fax-intel"
+    || normalizedType === "fax-credentials"
+    || normalizedType === "fax-urgent"
+  ) {
     return normalizedType;
   }
 
@@ -207,6 +216,14 @@ window.receiveFacsimileReport = function receiveFacsimileReport(reportPayload) {
   return queueFacsimileReport(reportPayload, { animateFeed: true });
 };
 
+window.receiveLocalizedFacsimileReport = function receiveLocalizedFacsimileReport(faxConfig) {
+  return queueConfiguredFacsimileReport(faxConfig, { animateFeed: true });
+};
+
+window.receiveConfiguredFacsimileReport = function receiveConfiguredFacsimileReport(faxConfig) {
+  return queueConfiguredFacsimileReport(faxConfig, { animateFeed: true });
+};
+
 window.addEventListener("cave-facsimile-report", (event) => {
   const reportPayload = event?.detail && typeof event.detail === "object"
     ? event.detail.report || event.detail
@@ -254,11 +271,25 @@ function sanitizeFacsimileReport(report) {
     return null;
   }
 
-  const title = String(report.title || report.defaultTitleString || "Facsimile Report").trim() || "Facsimile Report";
+  const defaultTitle = resolveLocalizedText("facsimileDefaultTitle", "Facsimile Report");
+  const defaultDescription = resolveLocalizedText("facsimileDefaultDescription", "Received via facsimile machine.");
+
+  const title = String(report.title || report.defaultTitleString || defaultTitle).trim() || defaultTitle;
   const reportText = String(report.reportText || report.content || "").replace(/\r\n/g, "\n").trim();
-  const description = String(report.description || "Received via facsimile machine.").trim() || "Received via facsimile machine.";
+  const description = String(report.description || defaultDescription).trim() || defaultDescription;
   const evidenceName = String(report.evidenceName || `facsimile-${id}`).trim() || `facsimile-${id}`;
   const paperStyle = String(report.paperStyle || "report-parchment").trim() || "report-parchment";
+  const source = report?.source && typeof report.source === "object"
+    ? {
+      ...report.source,
+      kind: String(report.source.kind || "").trim(),
+      entryId: String(report.source.entryId || "").trim(),
+      catalogPathTemplate: String(report.source.catalogPathTemplate || "").trim(),
+      languageAware: report.source.languageAware !== false,
+    }
+    : null;
+  const storageKey = String(report.storageKey || EVIDENCE_STORAGE_KEYS.REPORTS).trim() || EVIDENCE_STORAGE_KEYS.REPORTS;
+  const titleKey = String(report.titleKey || "reports").trim() || "reports";
 
   return {
     id,
@@ -267,6 +298,9 @@ function sanitizeFacsimileReport(report) {
     description,
     evidenceName,
     paperStyle,
+    source,
+    storageKey,
+    titleKey,
     createdAt: new Date().toISOString(),
   };
 }
@@ -306,9 +340,245 @@ function queueFacsimileReport(reportPayload, options = {}) {
       : [],
   });
 
+  queueFacsimileArrivalNotification(normalizedReport, options);
+
   syncFacsimileVisualState({ animateFeed: options.animateFeed !== false });
   refreshOpenFacsimileWindows();
   return true;
+}
+
+function resolveFacsimileNotificationTypeByMessageType(messageType) {
+  const normalizedType = String(messageType || "intel").trim().toLowerCase();
+  if (normalizedType === "urgent") {
+    return "fax-urgent";
+  }
+  if (normalizedType === "credentials") {
+    return "fax-credentials";
+  }
+  if (normalizedType === "system") {
+    return "fax-system";
+  }
+
+  return "fax-intel";
+}
+
+function queueFacsimileArrivalNotification(report, options = {}) {
+  if (options?.notify === false) {
+    return;
+  }
+
+  const notificationOptions = options?.notification && typeof options.notification === "object"
+    ? options.notification
+    : report?.notification && typeof report.notification === "object"
+      ? report.notification
+      : {};
+
+  const notificationType = String(notificationOptions.type || "").trim() || resolveFacsimileNotificationTypeByMessageType(
+    notificationOptions.messageType || report?.messageType
+  );
+  const notificationTitle = String(report?.title || "Incoming facsimile").trim() || "Incoming facsimile";
+  const notificationText = String(notificationOptions.text || "").trim() || `Incoming facsimile: ${notificationTitle}`;
+  const notificationDuration = Number(notificationOptions.durationMs);
+  const notificationSound = String(notificationOptions.sound || "").trim() || "newEvidence";
+
+  showNotifcation(
+    notificationType,
+    notificationText,
+    Number.isFinite(notificationDuration) ? notificationDuration : 4200,
+    notificationSound
+  );
+}
+
+function resolveLocalizedText(key, fallback = "") {
+  const localized = String(localize(key, getLanguage()) || "").trim();
+  if (!localized || localized === key) {
+    return fallback || key;
+  }
+
+  return localized;
+}
+
+function buildFacsimileReportFromConfig(config = {}) {
+  if (!config || typeof config !== "object") {
+    return null;
+  }
+
+  const id = String(config.id || "").trim();
+  if (!id) {
+    return null;
+  }
+
+  const source = config?.source && typeof config.source === "object"
+    ? {
+      ...config.source,
+      kind: String(config.source.kind || "").trim(),
+      entryId: String(config.source.entryId || "").trim(),
+      catalogPathTemplate: String(config.source.catalogPathTemplate || "").trim(),
+      languageAware: config.source.languageAware !== false,
+    }
+    : null;
+
+  const title = String(config.title || "").trim() || (
+    source?.kind === "report-localized-catalog-entry"
+      ? ""
+      : config.titleKey
+      ? resolveLocalizedText(config.titleKey, "Facsimile Report")
+      : resolveLocalizedText("facsimileDefaultTitle", "Facsimile Report")
+  );
+
+  let reportText = String(config.reportText || "").replace(/\r\n/g, "\n").trim();
+  if (!reportText && Array.isArray(config.reportTextLineKeys)) {
+    reportText = config.reportTextLineKeys
+      .map((key) => resolveLocalizedText(key, ""))
+      .join("\n")
+      .trim();
+  }
+  if (!reportText && config.reportTextKey) {
+    reportText = resolveLocalizedText(config.reportTextKey, "");
+  }
+
+  const description = String(config.description || "").trim() || (
+    source?.kind === "report-localized-catalog-entry"
+      ? ""
+      : config.descriptionKey
+      ? resolveLocalizedText(config.descriptionKey, "Received via facsimile machine.")
+      : resolveLocalizedText("facsimileDefaultDescription", "Received via facsimile machine.")
+  );
+
+  const evidenceName = String(config.evidenceName || `facsimile-${id}`).trim() || `facsimile-${id}`;
+  const paperStyle = String(config.paperStyle || "report-parchment").trim() || "report-parchment";
+  const storageKey = String(config.storageKey || EVIDENCE_STORAGE_KEYS.REPORTS).trim() || EVIDENCE_STORAGE_KEYS.REPORTS;
+  const titleKey = String(config.titleKey || "reports").trim() || "reports";
+  const messageType = String(config.messageType || "intel").trim().toLowerCase() || "intel";
+  const notification = config?.notification && typeof config.notification === "object"
+    ? {
+      ...config.notification,
+      type: String(config.notification.type || "").trim(),
+      text: String(config.notification.text || "").trim(),
+      sound: String(config.notification.sound || "").trim(),
+      durationMs: Number(config.notification.durationMs),
+    }
+    : null;
+
+  return {
+    id,
+    title,
+    reportText,
+    description,
+    evidenceName,
+    paperStyle,
+    source,
+    storageKey,
+    titleKey,
+    messageType,
+    notification,
+  };
+}
+
+async function queueConfiguredFacsimileReport(faxConfig, options = {}) {
+  const faxReport = buildFacsimileReportFromConfig(faxConfig);
+  if (!faxReport) {
+    return false;
+  }
+
+  if (
+    faxReport.source?.kind === "report-localized-catalog-entry"
+    && faxReport.source.entryId
+    && faxReport.source.catalogPathTemplate
+  ) {
+    const reportCatalogEntry = await getReportCatalogEntry(faxReport, getLanguage(), false);
+    if (reportCatalogEntry) {
+      const catalogTitle = sanitizeCatalogText(reportCatalogEntry?.defaultTitleString).trim();
+      const catalogReportText = sanitizeCatalogText(reportCatalogEntry?.reportText).trim();
+      const catalogDescription = sanitizeCatalogText(reportCatalogEntry?.descriptionText).trim();
+      const catalogPaperStyle = String(reportCatalogEntry?.paperStyle || "").trim();
+
+      if (catalogTitle && !faxReport.title) {
+        faxReport.title = catalogTitle;
+      }
+      if (catalogReportText && !faxReport.reportText) {
+        faxReport.reportText = catalogReportText;
+      }
+      if (catalogDescription && !faxReport.description) {
+        faxReport.description = catalogDescription;
+      }
+      if (catalogPaperStyle && !faxReport.paperStyle) {
+        faxReport.paperStyle = catalogPaperStyle;
+      }
+    }
+  }
+
+  return queueFacsimileReport(faxReport, {
+    ...options,
+    notification: faxReport.notification || options?.notification,
+  });
+}
+
+function registerEvidenceMilestoneFaxTrigger({
+  predicate,
+  faxConfig,
+  once = true,
+  animateFeed = true,
+} = {}) {
+  if (typeof predicate !== "function" || !faxConfig || typeof faxConfig !== "object") {
+    return null;
+  }
+
+  return addEvidenceTrigger({
+    predicate,
+    action: () => {
+      queueConfiguredFacsimileReport(faxConfig, { animateFeed }).catch((error) => {
+        console.error("Failed to queue configured facsimile report:", error);
+      });
+    },
+    once,
+  });
+}
+
+const WHITMORE_MINEMAP_MILESTONE_FAX_CONFIG = {
+  id: "fax-whitmore-police-credentials",
+  source: {
+    kind: "report-localized-catalog-entry",
+    languageAware: true,
+    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    entryId: "fax-whitmore-police-credentials",
+  },
+  storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+  titleKey: "reports",
+  evidenceName: "facsimile-whitmore-police-credentials",
+  messageType: "credentials",
+  notification: {
+    messageType: "credentials",
+  },
+};
+
+function initializeEvidenceMilestoneTriggers() {
+  if (evidenceMilestoneTriggersInitialized) {
+    return;
+  }
+
+  registerEvidenceMilestoneFaxTrigger({
+    predicate: (evidence) => {
+      if (!evidence || typeof evidence !== "object") {
+        return false;
+      }
+
+      const storageKey = String(evidence.storageKey || "").trim();
+      if (storageKey !== EVIDENCE_STORAGE_KEYS.PHOTOS) {
+        return false;
+      }
+
+      const evidenceName = String(evidence.name || "").trim();
+      const photoPath = String(evidence?.source?.photoPath || "").trim();
+      return evidenceName === "standalone-honeydewcavingclub"
+        || photoPath === "./assets/photos/minemap.png";
+    },
+    faxConfig: WHITMORE_MINEMAP_MILESTONE_FAX_CONFIG,
+    once: true,
+    animateFeed: true,
+  });
+
+  evidenceMilestoneTriggersInitialized = true;
 }
 
 function commitReadFacsimileReportToEvidence(report) {
@@ -324,20 +594,31 @@ function commitReadFacsimileReportToEvidence(report) {
   });
 
   if (!alreadyCreated) {
-    createEvidence({
-      type: "report",
-      storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
-      titleKey: "reports",
-      name: normalizedReport.evidenceName,
-      defaultTitleString: normalizedReport.title,
-      paperStyle: normalizedReport.paperStyle,
-      reportText: normalizedReport.reportText,
-      description: normalizedReport.description,
-      source: {
+    const evidenceSource = normalizedReport.source
+      ? { ...normalizedReport.source }
+      : {
         kind: "facsimile-inline-report",
         languageAware: false,
         entryId: normalizedReport.id,
-      },
+      };
+
+    const evidencePayload = {
+      type: "report",
+      storageKey: normalizedReport.storageKey || EVIDENCE_STORAGE_KEYS.REPORTS,
+      titleKey: normalizedReport.titleKey || "reports",
+      name: normalizedReport.evidenceName,
+      defaultTitleString: normalizedReport.title,
+      paperStyle: normalizedReport.paperStyle,
+      source: evidenceSource,
+    };
+
+    if (String(evidenceSource?.kind || "").trim() !== "report-localized-catalog-entry") {
+      evidencePayload.reportText = normalizedReport.reportText;
+      evidencePayload.description = normalizedReport.description;
+    }
+
+    createEvidence({
+      ...evidencePayload,
     });
   }
 
@@ -362,7 +643,7 @@ function commitReadFacsimileReportToEvidence(report) {
   refreshOpenFacsimileWindows();
   showNotifcation(
     "reward",
-    "New Report Evidence unlocked in your Evidence folder!",
+    `New ${resolveLocalizedText("evidenceTypeReport", "Report")} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
     4000,
     "newEvidence"
   );
@@ -479,10 +760,12 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
 
     const evidenceType = String(descriptor?.type || "").trim().toLowerCase();
     if (isWebService && (evidenceType === "photo" || evidenceType === "report")) {
-      const evidenceTypeLabel = evidenceType === "photo" ? "Photo" : "Report";
+      const evidenceTypeLabel = evidenceType === "photo"
+        ? resolveLocalizedText("evidenceTypePhoto", "Photo")
+        : resolveLocalizedText("evidenceTypeReport", "Report");
       showNotifcation(
         "reward",
-        `New ${evidenceTypeLabel} Evidence unlocked in your Evidence folder!`,
+        `New ${evidenceTypeLabel} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
         4000,
         "newEvidence"
       );
@@ -496,6 +779,7 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
+  initializeEvidenceMilestoneTriggers();
   syncAshtrayVisualState();
   syncFacsimileVisualState({ animateFeed: false });
   initializeAudioControls();
@@ -4616,9 +4900,12 @@ function createFacsimileWindowContentElements() {
   const nextMessageButton = document.createElement("button");
   nextMessageButton.type = "button";
   nextMessageButton.classList.add("facsimile-next-message-button");
-  nextMessageButton.textContent = "No Additional Cached Messages";
+  nextMessageButton.textContent = resolveLocalizedText("facsimileNextNoAdditionalCachedMessages", "No Additional Cached Messages");
   nextMessageButton.disabled = true;
-  nextMessageButton.setAttribute("aria-label", "Show next cached facsimile message");
+  nextMessageButton.setAttribute(
+    "aria-label",
+    resolveLocalizedText("facsimileNextButtonAriaLabel", "Show next cached facsimile message")
+  );
 
   page.append(summary, divider, reportTitle, reportText, nextMessageButton);
   container.appendChild(page);
@@ -4660,10 +4947,10 @@ function updateFacsimileWindowContent(windowController) {
   const pendingReport = pendingReports[0] || null;
   const pendingCount = pendingReports.length;
   if (!pendingReport) {
-    refs.summary.textContent = "Transmission monitor online.";
-    refs.reportTitle.textContent = "NO NEW MESSAGES";
+    refs.summary.textContent = resolveLocalizedText("facsimileTransmissionMonitorOnline", "Transmission monitor online.");
+    refs.reportTitle.textContent = resolveLocalizedText("facsimileNoNewMessages", "NO NEW MESSAGES");
     refs.reportText.textContent = "";
-    refs.nextMessageButton.textContent = "No Additional Cached Messages";
+    refs.nextMessageButton.textContent = resolveLocalizedText("facsimileNextNoAdditionalCachedMessages", "No Additional Cached Messages");
     refs.nextMessageButton.disabled = true;
     refs.hasReadPendingMessage = false;
     refs.viewedReportId = "";
@@ -4671,14 +4958,14 @@ function updateFacsimileWindowContent(windowController) {
   }
 
   refs.summary.textContent = pendingCount > 1
-    ? `Incoming transmissions cached (${pendingCount}).`
-    : "Incoming transmission cached.";
-  refs.reportTitle.textContent = pendingReport.title || "FACSIMILE MESSAGE";
-  refs.reportText.textContent = pendingReport.reportText || "[Transmission body unavailable]";
+    ? `${resolveLocalizedText("facsimileIncomingTransmissionsCachedPrefix", "Incoming transmissions cached")} (${pendingCount}).`
+    : resolveLocalizedText("facsimileIncomingTransmissionCached", "Incoming transmission cached.");
+  refs.reportTitle.textContent = pendingReport.title || resolveLocalizedText("facsimileFallbackMessageTitle", "FACSIMILE MESSAGE");
+  refs.reportText.textContent = pendingReport.reportText || resolveLocalizedText("facsimileMessageBodyUnavailable", "[Transmission body unavailable]");
   refs.nextMessageButton.disabled = pendingCount <= 1;
   refs.nextMessageButton.textContent = pendingCount > 1
-    ? `Show Next Cached Message (${pendingCount - 1} queued)`
-    : "No Additional Cached Messages";
+    ? `${resolveLocalizedText("facsimileNextShowNextCachedMessage", "Show Next Cached Message")} (${pendingCount - 1} ${resolveLocalizedText("facsimileQueuedCountSuffix", "queued")})`
+    : resolveLocalizedText("facsimileNextNoAdditionalCachedMessages", "No Additional Cached Messages");
   refs.hasReadPendingMessage = true;
   refs.viewedReportId = String(pendingReport.id || "").trim();
 }

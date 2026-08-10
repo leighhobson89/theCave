@@ -17,6 +17,12 @@
       "privilegeLevel": 1
     },
     {
+      "username": "b.whitmore",
+      "password": "ironVeins15",
+      "label": "Mr Brian Whitmore",
+      "privilegeLevel": 2
+    },
+    {
       "username": "administrator",
       "password": "atlas",
       "label": "Administrator",
