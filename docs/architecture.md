@@ -311,7 +311,7 @@ blank so the localized catalog entry can fill them in
 2. The rig gets `has-pending-message` (flashing alert light) and plays the `is-receiving` paper-feed animation for 1.9 s.
 3. A notification is queued. The type is derived from `messageType`: `urgent → fax-urgent`, `credentials → fax-credentials`, `system → fax-system`, anything else → `fax-intel`.
 4. The player opens FACSIMILE and reads the first pending message. `hasReadPendingMessage` / `viewedReportId` record that it was seen.
-5. Reading is committed either by closing the window or by pressing *Show Next Cached Message*. `commitReadFacsimileReportToEvidence()` creates the report evidence (unless one with the same `evidenceName` already exists), moves the id to `consumedReportIds`, and fires the "New Report … unlocked" reward notification.
+5. Reading is committed either by closing the window or by pressing *Show Next Cached Message*. `commitReadFacsimileReportToEvidence()` creates the report evidence (unless one with the same `evidenceName` already exists), moves the id to `consumedReportIds`, and fires the "New Report … unlocked" reward notification. A fax config carrying `awardsEvidence: false` skips both the evidence creation and the reward notification — it's still read, tracked in `consumedReportIds`, and cleared from the queue, but it never becomes Reports evidence. This is how the new-game welcome fax stays purely informational.
 6. The next queued fax becomes the visible one. When the queue empties, the window shows NO NEW MESSAGES.
 
 ### Milestone triggers
@@ -323,6 +323,26 @@ predicate against every newly created evidence item.
 The one shipped trigger is `WHITMORE_MINEMAP_MILESTONE_FAX_CONFIG`: acquiring
 the mine-map photo (`standalone-honeydewcavingclub`, or any photo whose path is
 `./assets/photos/minemap.png`) sends the Whitmore police-credentials fax.
+
+### New-game intro faxes
+
+The missing person report is no longer a `DEFAULT_EVIDENCE_BLUEPRINTS` entry —
+a new game starts with an empty Reports folder. Instead, `scheduleNewGameIntroFacsimiles()`
+(called from the `#newGame` click handler, after `resetFacsimileState()`) arms two
+`window.setTimeout` calls:
+
+1. At `NEW_GAME_WELCOME_FAX_DELAY_MS` (10 s), `NEW_GAME_WELCOME_FAX_CONFIG` queues —
+   an orientation fax (`awardsEvidence: false`) telling the player to read the
+   background story and explore the desk. It never becomes Reports evidence.
+2. At `NEW_GAME_WELCOME_FAX_DELAY_MS + NEW_GAME_MISSING_REPORT_FAX_DELAY_MS`
+   (40 s), `MISSING_REPORT_FAX_CONFIG` queues — the same `missingReport` catalog
+   entry that used to be seeded directly, now delivered by fax and turned into
+   Reports evidence like any other read fax.
+
+`cancelScheduledNewGameIntroFacsimiles()` clears both timers; it's called at the
+top of `scheduleNewGameIntroFacsimiles()` itself (so re-clicking New Game can't
+stack timers) and from the load-game success path (so a still-pending timer from
+an abandoned New Game can't inject a fax into a just-loaded save).
 
 ---
 

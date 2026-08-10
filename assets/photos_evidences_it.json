@@ -1,6 +1,13 @@
 {
   "entries": [
     {
+      "id": "askewAndrew",
+      "photoPath": "./assets/photos/askewAndrew.png",
+      "defaultTitleString": "Andrew and Arnie Spencer",
+      "paperStyle": "photo-mounted-ivory",
+      "descriptionText": "﻿askewAndrew description (it)\r\n\r\nNotes recorded by investigator.\r\n"
+    },
+    {
       "id": "caveEntrance",
       "photoPath": "./assets/photos/caveEntrance.png",
       "defaultTitleString": "Cave Entrance",

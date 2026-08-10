@@ -100,6 +100,7 @@ Without a catalog source you can still localize by key:
 | `paperStyle` | `report-parchment` | Paper style of the created evidence |
 | `storageKey` | `reports` | Target evidence collection |
 | `messageType` | `intel` | Drives the notification style |
+| `awardsEvidence` | `true` | Set `false` for a purely informational fax that never becomes Reports evidence |
 
 `messageType` maps to a notification type: `urgent` → `fax-urgent`,
 `credentials` → `fax-credentials`, `system` → `fax-system`, anything else →
@@ -116,7 +117,7 @@ notification: { type: "fax-urgent", text: "Priority transmission received", soun
 1. The rig switches to pending-message visuals (flashing alert light) and plays the paper-feed animation for ~1.9 s.
 2. An arrival notification appears, styled by message type.
 3. Opening FACSIMILE shows the title and body of the **oldest** pending fax.
-4. Closing FACSIMILE after viewing creates exactly one Reports evidence entry and shows the "New Report … unlocked" reward notification.
+4. Closing FACSIMILE after viewing creates exactly one Reports evidence entry and shows the "New Report … unlocked" reward notification — unless the fax was sent with `awardsEvidence: false`, in which case it's still consumed but nothing is added to Reports and no reward notification fires.
 5. With several queued, the next one appears on the next open (FIFO). *Show Next Cached Message* commits the current one and advances without closing.
 6. When the queue empties, FACSIMILE returns to NO NEW MESSAGES and the rig stops flashing.
 
@@ -168,6 +169,28 @@ per page load.
 
 ---
 
+## New-game intro faxes (time-based, not evidence-triggered)
+
+A new game opens with two scripted faxes fired off plain timers rather than an
+evidence trigger, arranged by `scheduleNewGameIntroFacsimiles()` in `ui.js`,
+called from the `#newGame` click handler:
+
+1. **10 s in** — `NEW_GAME_WELCOME_FAX_CONFIG`, an orientation message telling
+   the player to read the background story and explore the desk. Sent with
+   `awardsEvidence: false`, so it never lands in Reports.
+2. **40 s in** (30 s after the welcome fax) — `MISSING_REPORT_FAX_CONFIG`, the
+   `missingReport` catalog entry, delivered by fax and turned into Reports
+   evidence on read like any other fax. This replaces the old
+   `DEFAULT_EVIDENCE_BLUEPRINTS` seed, so a fresh game's Reports folder starts
+   empty.
+
+`cancelScheduledNewGameIntroFacsimiles()` clears both timers before rescheduling
+(so New Game can't stack duplicates) and is also called after a successful load,
+so a still-pending timer from an abandoned New Game can't inject a fax into a
+save that was just loaded.
+
+---
+
 ## Automated coverage
 
 `tests/report-magnifier.spec.js`:
@@ -176,6 +199,7 @@ per page load.
 - *facsimile queues and transfers five unique reports* — FIFO batch behaviour.
 - *facsimile next cached message button advances queue and transfers evidence* — the in-window advance path.
 - *minemap photo evidence milestone triggers Whitmore credentials fax* — the evidence-trigger route end to end.
+- *report magnifier renders scrolled bottom content and captures evidence* — queues and reads the `missingReport` catalog entry directly (bypassing the real 40 s new-game delay) so the report is in evidence for the magnifier assertions.
 
 `tests/regression-smoke.spec.js` additionally round-trips a queued-then-read fax
 through save and load.

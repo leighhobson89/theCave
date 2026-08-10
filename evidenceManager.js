@@ -40,15 +40,20 @@ const DEFAULT_EVIDENCE_BLUEPRINTS = [
   },
   {
     kind: EVIDENCE_TYPES.PHOTO,
+    photoPath: "./assets/photos/askewAndrew.png",
+    name: "askewAndrew",
+    paperStyle: PAPER_STYLES.PHOTO_MOUNTED_IVORY,
+  },
+  {
+    kind: EVIDENCE_TYPES.PHOTO,
     photoPath: "./assets/photos/caveEntrance.png",
     name: "caveEntrance",
     paperStyle: PAPER_STYLES.PHOTO_MOUNTED_IVORY,
   },
-  {
-    kind: EVIDENCE_TYPES.REPORT,
-    reportName: "missingReport",
-  }
 ];
+// The missing person report is no longer seeded at new-game time. It now
+// arrives via a scripted facsimile ~40s into a new game — see
+// scheduleNewGameIntroFacsimiles() and MISSING_REPORT_FAX_CONFIG in ui.js.
 
 let evidenceStore = createEmptyEvidenceStore();
 const evidenceTriggers = new Map();

@@ -313,6 +313,10 @@ function sanitizeFacsimileReport(report) {
     source: normalizeFacsimileSource(report.source),
     storageKey: trimmedOr(report.storageKey, EVIDENCE_STORAGE_KEYS.REPORTS),
     titleKey: trimmedOr(report.titleKey, "reports"),
+    // Informational faxes (e.g. the new-game welcome message) can opt out of
+    // becoming Reports evidence by setting `awardsEvidence: false`. Defaults
+    // to true so every existing caller keeps its current behaviour.
+    awardsEvidence: report.awardsEvidence !== false,
     createdAt: new Date().toISOString(),
   };
 }
@@ -460,6 +464,7 @@ function buildFacsimileReportFromConfig(config = {}) {
     source,
     storageKey: trimmedOr(config.storageKey, EVIDENCE_STORAGE_KEYS.REPORTS),
     titleKey: trimmedOr(config.titleKey, "reports"),
+    awardsEvidence: config.awardsEvidence !== false,
     messageType: trimmedOr(config.messageType, "intel").toLowerCase(),
     notification: config?.notification && typeof config.notification === "object"
       ? {
@@ -550,6 +555,79 @@ const WHITMORE_MINEMAP_MILESTONE_FAX_CONFIG = {
   },
 };
 
+// Sent ~10s after a new game starts. Purely informational — it never becomes
+// Reports evidence (see `awardsEvidence: false`), it just orients the player.
+const NEW_GAME_WELCOME_FAX_CONFIG = {
+  id: "fax-welcome-arnie-tragedy",
+  source: {
+    kind: "report-localized-catalog-entry",
+    languageAware: true,
+    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    entryId: "fax-welcome-arnie-tragedy",
+  },
+  storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+  titleKey: "reports",
+  evidenceName: "facsimile-welcome-arnie-tragedy",
+  messageType: "intel",
+  awardsEvidence: false,
+};
+
+// Sent ~30s after the welcome fax (~40s after a new game starts). This is
+// what puts the missing person report into the Reports folder; it is no
+// longer a new-game default (see DEFAULT_EVIDENCE_BLUEPRINTS).
+const MISSING_REPORT_FAX_CONFIG = {
+  id: "fax-missing-person-report",
+  source: {
+    kind: "report-localized-catalog-entry",
+    languageAware: true,
+    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    entryId: "missingReport",
+  },
+  storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+  titleKey: "reports",
+  evidenceName: "missingReport",
+  messageType: "urgent",
+};
+
+const NEW_GAME_WELCOME_FAX_DELAY_MS = 10000;
+const NEW_GAME_MISSING_REPORT_FAX_DELAY_MS = 30000;
+let newGameWelcomeFaxTimeoutId = null;
+let newGameMissingReportFaxTimeoutId = null;
+
+// Cancels any pending intro-fax timers from a previous new-game click so a
+// player who restarts before the sequence completes can't stack duplicates
+// or have a stale timer fire into a fresh evidence store.
+function cancelScheduledNewGameIntroFacsimiles() {
+  if (newGameWelcomeFaxTimeoutId !== null) {
+    window.clearTimeout(newGameWelcomeFaxTimeoutId);
+    newGameWelcomeFaxTimeoutId = null;
+  }
+  if (newGameMissingReportFaxTimeoutId !== null) {
+    window.clearTimeout(newGameMissingReportFaxTimeoutId);
+    newGameMissingReportFaxTimeoutId = null;
+  }
+}
+
+// Schedules the two scripted faxes that open a new game: a welcome/orientation
+// message, followed by the fax that delivers the missing person report.
+function scheduleNewGameIntroFacsimiles() {
+  cancelScheduledNewGameIntroFacsimiles();
+
+  newGameWelcomeFaxTimeoutId = window.setTimeout(() => {
+    newGameWelcomeFaxTimeoutId = null;
+    queueConfiguredFacsimileReport(NEW_GAME_WELCOME_FAX_CONFIG, { animateFeed: true }).catch((error) => {
+      console.error("Failed to queue new-game welcome facsimile:", error);
+    });
+  }, NEW_GAME_WELCOME_FAX_DELAY_MS);
+
+  newGameMissingReportFaxTimeoutId = window.setTimeout(() => {
+    newGameMissingReportFaxTimeoutId = null;
+    queueConfiguredFacsimileReport(MISSING_REPORT_FAX_CONFIG, { animateFeed: true }).catch((error) => {
+      console.error("Failed to queue new-game missing-report facsimile:", error);
+    });
+  }, NEW_GAME_WELCOME_FAX_DELAY_MS + NEW_GAME_MISSING_REPORT_FAX_DELAY_MS);
+}
+
 function initializeEvidenceMilestoneTriggers() {
   if (evidenceMilestoneTriggersInitialized) {
     return;
@@ -585,39 +663,43 @@ function commitReadFacsimileReportToEvidence(report) {
     return false;
   }
 
-  const existingReports = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS);
-  const alreadyCreated = existingReports.some((entry) => {
-    const entryName = String(entry?.name || "").trim();
-    return entryName && entryName === normalizedReport.evidenceName;
-  });
+  const awardsEvidence = normalizedReport.awardsEvidence !== false;
 
-  if (!alreadyCreated) {
-    const evidenceSource = normalizedReport.source
-      ? { ...normalizedReport.source }
-      : {
-        kind: "facsimile-inline-report",
-        languageAware: false,
-        entryId: normalizedReport.id,
+  if (awardsEvidence) {
+    const existingReports = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS);
+    const alreadyCreated = existingReports.some((entry) => {
+      const entryName = String(entry?.name || "").trim();
+      return entryName && entryName === normalizedReport.evidenceName;
+    });
+
+    if (!alreadyCreated) {
+      const evidenceSource = normalizedReport.source
+        ? { ...normalizedReport.source }
+        : {
+          kind: "facsimile-inline-report",
+          languageAware: false,
+          entryId: normalizedReport.id,
+        };
+
+      const evidencePayload = {
+        type: "report",
+        storageKey: normalizedReport.storageKey || EVIDENCE_STORAGE_KEYS.REPORTS,
+        titleKey: normalizedReport.titleKey || "reports",
+        name: normalizedReport.evidenceName,
+        defaultTitleString: normalizedReport.title,
+        paperStyle: normalizedReport.paperStyle,
+        source: evidenceSource,
       };
 
-    const evidencePayload = {
-      type: "report",
-      storageKey: normalizedReport.storageKey || EVIDENCE_STORAGE_KEYS.REPORTS,
-      titleKey: normalizedReport.titleKey || "reports",
-      name: normalizedReport.evidenceName,
-      defaultTitleString: normalizedReport.title,
-      paperStyle: normalizedReport.paperStyle,
-      source: evidenceSource,
-    };
+      if (String(evidenceSource?.kind || "").trim() !== "report-localized-catalog-entry") {
+        evidencePayload.reportText = normalizedReport.reportText;
+        evidencePayload.description = normalizedReport.description;
+      }
 
-    if (String(evidenceSource?.kind || "").trim() !== "report-localized-catalog-entry") {
-      evidencePayload.reportText = normalizedReport.reportText;
-      evidencePayload.description = normalizedReport.description;
+      createEvidence({
+        ...evidencePayload,
+      });
     }
-
-    createEvidence({
-      ...evidencePayload,
-    });
   }
 
   const facsimile = getFacsimileState();
@@ -639,12 +721,15 @@ function commitReadFacsimileReportToEvidence(report) {
 
   syncFacsimileVisualState({ animateFeed: false });
   refreshOpenFacsimileWindows();
-  showNotifcation(
-    "reward",
-    `New ${resolveLocalizedText("evidenceTypeReport", "Report")} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
-    4000,
-    "evidenceGain"
-  );
+
+  if (awardsEvidence) {
+    showNotifcation(
+      "reward",
+      `New ${resolveLocalizedText("evidenceTypeReport", "Report")} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
+      4000,
+      "evidenceGain"
+    );
+  }
 
   return true;
 }
@@ -795,6 +880,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     webContentManager.clearSessions();
     syncAshtrayVisualState();
     syncFacsimileVisualState({ animateFeed: false });
+    scheduleNewGameIntroFacsimiles();
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -879,6 +965,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     audioManager.onUserGesture();
     loadGame()
       .then(() => {
+        // A loaded save carries its own evidence/facsimile state; don't let a
+        // still-pending new-game intro fax timer inject into it.
+        cancelScheduledNewGameIntroFacsimiles();
         setElements();
         syncAshtrayVisualState();
         syncFacsimileVisualState({ animateFeed: false });

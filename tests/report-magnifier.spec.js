@@ -192,6 +192,27 @@ test("report magnifier renders scrolled bottom content and captures evidence", a
   await page.goto("/");
   await page.locator("#newGame").click();
 
+  // The missing person report now arrives via a scripted facsimile ~40s into
+  // a new game rather than being seeded by default. Queue and read the same
+  // catalog entry directly so the report lands in evidence immediately.
+  await page.evaluate(() => window.receiveConfiguredFacsimileReport({
+    id: "test-missing-report-fax",
+    source: {
+      kind: "report-localized-catalog-entry",
+      languageAware: true,
+      catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+      entryId: "missingReport",
+    },
+    storageKey: "reports",
+    titleKey: "reports",
+    evidenceName: "missingReport",
+  }));
+  await page.locator("#desktopFacsimileHotspot").click();
+  const introFacsimileWindow = page.locator(".facsimile-window");
+  await expect(introFacsimileWindow).toBeVisible();
+  await introFacsimileWindow.locator(".story-window-close").click();
+  await expect(introFacsimileWindow).toBeHidden();
+
   await page.locator("#reportsFolder").click();
   const reportsWindow = page.locator(".reports-window");
   await expect(reportsWindow).toBeVisible();

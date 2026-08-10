@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "id": "askewAndrew",
+      "photoPath": "./assets/photos/askewAndrew.png",
+      "defaultTitleString": "Andrew and Arnie Spencer",
+      "paperStyle": "photo-mounted-ivory",
+      "descriptionText": "---\r\n\r\nThe only known photograph of Andrew and Arnie Spencer together, taken at the Spencer family farm in Black Pine during the summer of 1901 - the same fateful summer as the tragedy.\r\n\r\n---\r\n",
+      "captionText": "Andrew and Arnie Spencer, Spencer Farm, Black Pine, summer 1901"
+    },
+    {
       "id": "caveEntrance",
       "photoPath": "./assets/photos/caveEntrance.png",
       "defaultTitleString": "Cave Entrance",

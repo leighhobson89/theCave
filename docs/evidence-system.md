@@ -70,9 +70,14 @@ accident.
 
 1. The background story (`story`, markdown template).
 2. `caveEntrance.png` (photo, `photo-mounted-ivory`).
-3. `missingReport` (report).
 
 Add a blueprint entry to give the player something from the start.
+
+The Reports folder is deliberately empty at this point. The missing person
+report (`missingReport`) is no longer a blueprint — it arrives ~40 s into a new
+game via a scripted facsimile. See "New-game intro faxes" in
+[architecture.md §7](architecture.md#7-the-facsimile-machine) and
+`scheduleNewGameIntroFacsimiles()` in `ui.js`.
 
 ---
 
@@ -191,7 +196,10 @@ standalone-page visit:
 ### 3. Facsimile
 
 Reading a fax and closing the window (or advancing to the next message) commits
-it as report evidence. See
+it as report evidence. A fax config can opt out of this with
+`awardsEvidence: false` — the message still gets read and cleared from the
+queue, it just never creates a Reports entry (used for the purely
+informational new-game welcome fax). See
 [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md).
 
 ---

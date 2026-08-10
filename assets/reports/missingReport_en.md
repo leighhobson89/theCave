@@ -29,7 +29,7 @@ Both boys entered the abandoned B Shaft of the Black Pine Former Silver Mine dur
 
 Andrew John Spencer later returned to Spencer Farm, Black Pine, suffering severe injuries according to witness statements. He later died at the residence from suspected blood loss and shock, confirmed by the local Coroner on 28 July.
 
-The search for Arnold Askew Spencer continues.
+The search for Askew Arnold Spencer continues.
 
 ---
 

@@ -8,6 +8,13 @@
       "descriptionText": "﻿missingReport supplemental notes (fr)\r\n\r\nAdditional context filed with the main report.\r\n"
     },
     {
+      "id": "fax-welcome-arnie-tragedy",
+      "defaultTitleString": "WELCOME TO THE INVESTIGATION",
+      "paperStyle": "report-parchment",
+      "reportText": "\r\n---\r\n\r\n**CASE FILE TRANSMISSION**\r\n\r\n# WELCOME TO THE INVESTIGATION\r\n\r\n---\r\n\r\nYou are now investigating the Arnie Spencer tragedy.\r\n\r\nBefore you do anything else, read through the background story sitting on the desk in front of you - it lays out everything known about the case so far.\r\n\r\nOnce you have read it, take a moment to get to grips with the different items and tools laid out on the desk. Each one will help you dig deeper as the investigation unfolds.\r\n\r\nGood luck.\r\n\r\n---\r\n",
+      "descriptionText": "Fax received welcoming you to the investigation."
+    },
+    {
       "id": "fax-whitmore-police-credentials",
       "defaultTitleString": "MESSAGE FROM BRIAN WHITMORE",
       "paperStyle": "report-parchment",
