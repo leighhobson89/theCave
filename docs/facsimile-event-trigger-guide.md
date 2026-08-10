@@ -106,7 +106,7 @@ Without a catalog source you can still localize by key:
 `fax-intel`. You can override the notification entirely:
 
 ```js
-notification: { type: "fax-urgent", text: "Priority transmission received", sound: "newEvidence", durationMs: 6000 }
+notification: { type: "fax-urgent", text: "Priority transmission received", sound: "fax", durationMs: 6000 }
 ```
 
 ---

@@ -22,6 +22,8 @@ export class AudioManager {
       clickButton: "audio/sfx/clickButton.mp3",
       clickSwitch: "audio/sfx/clickSwitch.mp3",
       newEvidence: "audio/sfx/newEvidence.mp3",
+      fax: "audio/sfx/fax.mp3",
+      evidenceGain: "audio/sfx/evidenceGain.mp3",
     };
 
     this.musicVolume = getMusicVolumePreference();

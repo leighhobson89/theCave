@@ -531,7 +531,7 @@ Types map to CSS classes `game-notification-{type}`: `info` (default), `error`,
 `audioManager.js` exports a single `AudioManager` instance.
 
 - **Music** — six tracks in `audio/music/`. Playback is shuffled; `playRandomTrack({ excludeCurrent: true })` avoids repeating the current track, and each track chains into the next on `ended`. A failed track skips to another.
-- **SFX** — three registered effects (`clickButton`, `clickSwitch`, `newEvidence`). `playSfx()` also accepts a raw path.
+- **SFX** — five registered effects (`clickButton`, `clickSwitch`, `newEvidence`, `fax`, `evidenceGain`). `playSfx()` also accepts a raw path. `fax` plays with a fax's arrival notification; `evidenceGain` plays when a photo or report is unlocked into the Evidence folder.
 - **Gating** — browsers block audio before user interaction, so every click handler calls `audioManager.onUserGesture()` first, which starts music if it is not paused.
 - **Mute and volume** — mute is a saved boolean; music and SFX volumes are saved floats (defaults 0.1 and 0.85). Muting sets music volume to 0 rather than pausing, so the track keeps its position.
 - **Manual pause** — `manuallyPaused` distinguishes "player pressed pause" from "not started yet", so an unrelated gesture never resumes music the player deliberately stopped.

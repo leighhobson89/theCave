@@ -223,6 +223,45 @@
           "entryId": ""
         }
       }
+    },
+    {
+      "id": "arthurwhitmore",
+      "title": "The Iron magnate who chose Policing first!",
+      "keywords": [
+        "whitmore",
+        "arthur",
+        "arthur whitmore"
+      ],
+      "summary": "Sergeant and a man of The People",
+      "report": [
+        "Sergeant Arthur Whitmore was born locally in Saskatchewan, close to the Black Pine district where his family had established its business interests. Although a member of the Whitmore family and closely connected with the Whitmore & Sons Iron & Machinery Company, Arthur chose a career in the police rather than entering the family business himself. By 1905 he was a respected Sergeant and was regarded as a steady and methodical officer, particularly valued for his knowledge of the surrounding country.",
+        "Whitmore played an important part in the early search for Arnie Spencer in 1901, leading members of the search party into the forest and being among the first officers to examine the cave and its surroundings. He was known for keeping unusually careful notes and for taking an interest in the history of the old mine workings in the district. An interesting surviving detail is that Whitmore was also an enthusiastic amateur photographer; the 1901 photograph of the Arnie Spencer Search Party outside the cave they were searching for the boy, is believed to have been taken by him, explaining why he is absent from the group photo despite having organised and accompanied the expedition, instead allowing the usual investigation photographer John Baxley to be in the photo!  That is just the kind of leader Arthur was!"
+      ],
+      "requiredPrivilegeLevel": 2,
+      "images": [
+        {
+          "src": "./assets/photos/arthurWhitmore.png",
+          "alt": "Sgt. Arthur Whitmore family portrait",
+          "caption": "Sgt. Arthur Whitmore family portrait"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
     }
   ]
 }

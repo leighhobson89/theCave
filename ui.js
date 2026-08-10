@@ -391,7 +391,7 @@ function queueFacsimileArrivalNotification(report, options = {}) {
   const notificationTitle = String(report?.title || "Incoming facsimile").trim() || "Incoming facsimile";
   const notificationText = String(notificationOptions.text || "").trim() || `Incoming facsimile: ${notificationTitle}`;
   const notificationDuration = Number(notificationOptions.durationMs);
-  const notificationSound = String(notificationOptions.sound || "").trim() || "newEvidence";
+  const notificationSound = String(notificationOptions.sound || "").trim() || "fax";
 
   showNotifcation(
     notificationType,
@@ -643,7 +643,7 @@ function commitReadFacsimileReportToEvidence(report) {
     "reward",
     `New ${resolveLocalizedText("evidenceTypeReport", "Report")} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
     4000,
-    "newEvidence"
+    "evidenceGain"
   );
 
   return true;
@@ -765,7 +765,7 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
         "reward",
         `New ${evidenceTypeLabel} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
         4000,
-        "newEvidence"
+        "evidenceGain"
       );
     }
 
