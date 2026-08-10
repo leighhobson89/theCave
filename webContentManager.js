@@ -16,60 +16,8 @@ export function normalizeText(value) {
     .toLowerCase();
 }
 
-export function textIncludes(source, query) {
-  const normalizedSource = normalizeText(source);
-  const normalizedQuery = normalizeText(query);
-
-  if (!normalizedQuery) {
-    return false;
-  }
-
-  return normalizedSource.includes(normalizedQuery);
-}
-
 export function textEquals(source, query) {
   return normalizeText(source) === normalizeText(query);
-}
-
-export function recordMatchesAnyText(record, query, fields = []) {
-  const normalizedQuery = normalizeText(query);
-  if (!normalizedQuery) {
-    return false;
-  }
-
-  const values = fields.length ? fields : ["title", "body", "keywords"];
-  return values.some((field) => {
-    const value = record?.[field];
-    if (Array.isArray(value)) {
-      return value.some((item) => textIncludes(item, normalizedQuery));
-    }
-
-    return textIncludes(value, normalizedQuery);
-  });
-}
-
-function getDefaultAccount(data) {
-  const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
-  return accounts.find((account) => account?.default) || accounts[0] || null;
-}
-
-function buildSessionFromAccount(account, fallbackLabel = "Guest") {
-  if (!account) {
-    return { ...DEFAULT_SESSION, accessLabel: fallbackLabel };
-  }
-
-  const accessLevel = Number.isFinite(Number(account.privilegeLevel))
-    ? Number(account.privilegeLevel)
-    : Number.isFinite(Number(account.accessLevel))
-      ? Number(account.accessLevel)
-      : 0;
-
-  return {
-    authenticated: true,
-    account: cloneJson(account),
-    accessLevel,
-    accessLabel: account.label || account.displayName || account.username || fallbackLabel,
-  };
 }
 
 export function createWebContentManager({ awardEvidence } = {}) {
@@ -113,6 +61,16 @@ export function createWebContentManager({ awardEvidence } = {}) {
       throw new Error(`Website definition ${websiteId} requires a dataPath.`);
     }
 
+    // Every site supplies its own exact-match search and (where it has accounts)
+    // its own authenticate, so these are required rather than defaulted.
+    if (typeof definition.search !== "function") {
+      throw new Error(`Website definition ${websiteId} requires a search function.`);
+    }
+
+    if (typeof definition.buildPage !== "function") {
+      throw new Error(`Website definition ${websiteId} requires a buildPage function.`);
+    }
+
     websiteRegistry.set(websiteId, {
       ...definition,
       id: websiteId,
@@ -121,23 +79,6 @@ export function createWebContentManager({ awardEvidence } = {}) {
 
   function getWebsiteDefinition(websiteId) {
     return websiteRegistry.get(normalizeText(websiteId)) || null;
-  }
-
-  function getWebsiteIds() {
-    return Array.from(websiteRegistry.keys());
-  }
-
-  function setActiveWebsite(websiteId) {
-    const normalizedWebsiteId = normalizeText(websiteId);
-    if (!normalizedWebsiteId || !websiteRegistry.has(normalizedWebsiteId)) {
-      return;
-    }
-
-    activeWebsiteId = normalizedWebsiteId;
-  }
-
-  function getActiveWebsite() {
-    return activeWebsiteId;
   }
 
   function getSession(websiteId) {
@@ -160,36 +101,12 @@ export function createWebContentManager({ awardEvidence } = {}) {
     }
 
     const data = await loadWebsiteData(websiteId);
-    const session = await Promise.resolve(
-      definition.authenticate
-        ? definition.authenticate({ data, credentials, manager: api })
-        : defaultAuthenticate(data, credentials, definition)
-    );
+    const session = definition.authenticate
+      ? await Promise.resolve(definition.authenticate({ data, credentials, manager: api }))
+      : DEFAULT_SESSION;
 
     setSession(websiteId, session);
     return getSession(websiteId);
-  }
-
-  function defaultAuthenticate(data, credentials, definition) {
-    const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
-
-    if (credentials?.useDefault) {
-      const account = getDefaultAccount(data);
-      return buildSessionFromAccount(account, definition?.defaultAccessLabel || "Guest");
-    }
-
-    const username = normalizeText(credentials?.username);
-    const password = String(credentials?.password ?? "");
-
-    if (!username || !password) {
-      return DEFAULT_SESSION;
-    }
-
-    const matchedAccount = accounts.find((account) =>
-      normalizeText(account?.username) === username && String(account?.password ?? "") === password
-    );
-
-    return buildSessionFromAccount(matchedAccount, definition?.defaultAccessLabel || "Guest");
   }
 
   async function searchWebsite(websiteId, request = {}) {
@@ -201,9 +118,7 @@ export function createWebContentManager({ awardEvidence } = {}) {
     const data = await loadWebsiteData(websiteId);
     const session = getSession(websiteId);
     const searchResult = await Promise.resolve(
-      definition.search
-        ? definition.search({ data, request, session, manager: api, helpers: buildHelpers(websiteId, data, session) })
-        : defaultSearch({ data, request, session, definition })
+      definition.search({ data, request, session, manager: api })
     );
 
     const results = Array.isArray(searchResult?.results) ? searchResult.results : [];
@@ -223,18 +138,6 @@ export function createWebContentManager({ awardEvidence } = {}) {
       message: String(searchResult?.message || ""),
       deniedCount: Number(searchResult?.deniedCount || 0),
       awardedEvidence,
-    };
-  }
-
-  function defaultSearch({ data, request, session, definition }) {
-    const query = request?.query ?? request?.search ?? "";
-    const records = Array.isArray(data?.records) ? data.records : [];
-    const matches = records.filter((record) => recordMatchesAnyText(record, query, definition?.searchFields || []));
-
-    return {
-      results: matches,
-      message: matches.length ? "" : "No matching records were found.",
-      deniedCount: 0,
     };
   }
 
@@ -258,28 +161,10 @@ export function createWebContentManager({ awardEvidence } = {}) {
     return true;
   }
 
-  function buildHelpers(websiteId, data, session) {
-    return {
-      normalizeText,
-      textIncludes,
-      textEquals,
-      recordMatchesAnyText,
-      getSession: () => getSession(websiteId),
-      getData: () => cloneJson(data),
-      awardEvidence: (record) => awardEvidenceForRecord(websiteId, record, getWebsiteDefinition(websiteId)),
-      session,
-      data,
-    };
-  }
-
   function createWebsitePage(websiteId) {
     const definition = getWebsiteDefinition(websiteId);
     if (!definition) {
       throw new Error(`Unknown website: ${websiteId}`);
-    }
-
-    if (typeof definition.buildPage !== "function") {
-      throw new Error(`Website ${websiteId} does not define a buildPage function.`);
     }
 
     return definition.buildPage({
@@ -290,30 +175,20 @@ export function createWebContentManager({ awardEvidence } = {}) {
       getData: () => loadWebsiteData(websiteId),
       searchWebsite: (request) => searchWebsite(websiteId, request),
       loginWebsite: (credentials) => loginWebsite(websiteId, credentials),
-      setActiveWebsite,
-      getActiveWebsite,
     });
   }
 
   const api = {
     registerWebsite,
     getWebsiteDefinition,
-    getWebsiteIds,
-    getActiveWebsite,
-    setActiveWebsite,
     loadWebsiteData,
     getSession,
-    setSession,
     loginWebsite,
     searchWebsite,
     createWebsitePage,
     normalizeText,
-    textIncludes,
     textEquals,
-    recordMatchesAnyText,
   };
-
-  let activeWebsiteId = "";
 
   return api;
 }

@@ -1,440 +1,261 @@
-# Investigation Archive System
+# Investigation Archives (the in-game web)
 
-This project uses a JSON-driven archive system for four in-game investigation services:
+The four JSON-driven investigation services reachable from Netscape inside
+CaveOS, plus the standalone hidden pages.
 
-- Search Engine
-- Police Records
-- Canada Newspaper Archive
-- Library Archive
+| Service | Site id | URL |
+| --- | --- | --- |
+| ZoomSearch (search engine) | `zoomsearch` | `http://www.zoomsearch.net` |
+| Library Archive | `library` | `http://library.intra` |
+| Police Records | `police` | `http://records.sk-police.gov` |
+| Canada Newspaper Archive | `archives` | `http://archives.canada.news` |
 
-The runtime is split between two files:
+Plus one non-service favourite, Cosmic Forge
+(`https://leighhobson89.github.io/cosmicForge/`), which is a static promo page
+with real outbound links.
 
-- `webContentManager.js`: loads site JSON, stores login sessions, runs site searches, and awards evidence.
-- `webContentRegistry.js`: defines each site, its search rules, and its rendering template.
+Runtime split:
 
-Browser shell behavior for Netscape is handled in:
+- [`webContentManager.js`](../webContentManager.js) — loads site JSON, holds login sessions, runs searches, awards evidence
+- [`webContentRegistry.js`](../webContentRegistry.js) — the four site definitions, their search rules and their detail templates
+- [`ui.js`](../ui.js) — the Netscape shell: quick links, URL bar, address history, back/forward, standalone routing
 
-- `ui.js`: Favorites, editable URL input, manual URL routing, back history, and home navigation.
+See [architecture.md §8–9](architecture.md#8-the-computer-caveos-1996) for the
+browser shell and the manager API.
 
-## Core Behavior
+---
 
-All four services follow the same player flow:
+## Core behaviour
+
+Every service follows the same flow:
 
 1. Enter search criteria.
-2. Press the search button.
-3. The system returns either zero records or exactly one record.
-4. The record appears in the results table.
-5. The player selects the returned row.
-6. The full record renders underneath the table.
+2. Press the search button, or Enter in the keyword field.
+3. The system returns **zero or exactly one** record. The results list is sliced to one row regardless.
+4. The row appears in the results table.
+5. Selecting the row renders the full record below the table, and updates the URL bar to the record's own URL.
 
-The rendering process is standardized:
+Only the detail layout differs per service.
 
-- each service shows a search form
-- each service shows a results table
-- each service shows a detail panel below the table
-- each service uses archive-specific layout classes for the detail panel
+> **All matching is exact and whole-term.** Partial words never match. This is
+> deliberate: the player is meant to learn the exact term elsewhere in the
+> investigation before it will resolve.
 
-Only the visual presentation differs by archive.
+---
 
-## Search Rules
+## Search rules
 
-### Search Engine
+### ZoomSearch
 
-- Search field: keyword only
-- Matching rule: exact full-term match only
-- Partial keywords do not match
-- Matching fields in JSON: `pageTitle`, `keywords`
+- Field: keyword only.
+- Matches against the record's `keywords` array only — **not** `pageTitle`, `summary` or body text.
+- A keyword entry may itself be multi-word (`"black pine mine"`); the whole entry must be typed.
+- Empty-result message: *"Search brings up a lot of unrelated bumph. You move on."*
 
-Example:
+Current data (`assets/web-content/zoomsearch.json`):
 
-- `relay` can match
-- `rela` does not match
-
-### Police Records
-
-- Search field: keyword only
-- Matching rule: exact full-term match only
-- Partial keywords do not match
-- Matching fields in JSON: `title`, `keywords`
-- Login controls visibility by privilege level
-
-Example:
-
-- `director file` can match
-- `director` does not match unless it exists exactly in `keywords`
-
-### Canada Newspaper Archive
-
-- Search fields: province and keyword
-- Province is mandatory
-- Keyword is mandatory
-- Matching rule: both fields must match exactly
-- Partial keywords do not match
-- Province selector defaults to `Saskatchewan`
-- Matching fields in JSON: `province`, `headline`, `keywords`
-
-Example:
-
-- Province `Alberta` + keyword `telegram` can match
-- Province `Saskatchewan` + keyword `telegram` does not match
+| Record | Keywords |
+| --- | --- |
+| `silvermineentrance` | `black pine mine`, `silver mine`, `mine` |
+| `johnbaxley` | `john baxley` |
+| `minecart` | `mine cart`, `minecart`, `truck`, `mine truck` |
+| `margaretmcleod` | `margaret`, `margaret mcleod`, `apples`, `maple grove` |
 
 ### Library Archive
 
-- Search fields: author and title
-- Both are mandatory
-- Both must exactly match the same record
-- Matching fields in JSON: `author`, `title`
+- Fields: author **and** title, both mandatory.
+- Both must exactly match the *same* record.
+- A Clear button resets the form and the results.
 
-Example:
+Current data: `Hannah Fletcher` + `Mysteries of the Old North West`.
 
-- `Edith Vale` + `Notebook of River Marks` can match
-- `Edith` + `Notebook of River Marks` does not match
+### Police Records
 
-## Rendering Templates
+- Field: keyword only, matched against `keywords`.
+- Records declare `requiredPrivilegeLevel`. A match the session cannot see returns no rows and the message *"One or more matching records were hidden by privilege restrictions."* — so the player learns the record exists but is gated.
+- Signed in as the default `public` account (level 0) on open.
 
-### Search Engine Template
+Accounts (`assets/web-content/police.json`):
 
-Detail layout:
+| Username | Password | Level | Label |
+| --- | --- | ---: | --- |
+| `public` | `public` | 0 | Public (default) |
+| `james.f` | `oscar123` | 1 | Constable James Fletcher |
+| `b.whitmore` | `ironVeins15` | 2 | Mr Brian Whitmore |
+| `administrator` | `atlas` | 5 | Administrator |
 
-- website banner
-- page title
-- URL
-- main page content
-- side image column
+Records and their required level:
 
-Primary fields used:
+| Record | Keywords | Level |
+| --- | --- | ---: |
+| `jamesfletcher` | `james fletcher`, `james` | 0 |
+| `emilebeaulieu` | `emile`, `emile beaulieu`, `rock climber` | 0 |
+| `williammcleod` | `william`, `william mcleod` | 0 |
+| `georgemackenzie` | `george`, `george mackenzie`, `moustache` | 0 |
+| `thomasorourke` | `thomas o'rourke`, `thomas orourke`, `thomas` | 1 |
 
-- `websiteName`
-- `pageTitle`
-- `url`
-- `summary`
-- `pageContent`
-- `images[]`
+### Canada Newspaper Archive
 
-### Police Records Template
+- Fields: province (dropdown) **and** keyword, both mandatory, both must match the same record.
+- Province options: Saskatchewan, Ontario, Quebec, Alberta. The selection is remembered across page re-renders for the session (`lastSelectedArchiveProvince`).
+- Records declare `requiredAccessLevel`; gated matches report *"Subscriber-only articles were hidden by access level."*
 
-Detail layout:
+Accounts (`assets/web-content/archives.json`):
 
-- record title
-- metadata grid
-- large evidence image gallery
-- report body
-- attachments list
+| Username | Password | Level | Label |
+| --- | --- | ---: | --- |
+| `free` | `free` | 0 | Free (default) |
+| `subscriber` | `subscribe` | 1 | Subscriber |
 
-Primary fields used:
+Current data: `hannahfletcher`, province **Alberta**, keywords
+`hannah fletcher` / `hannah` / `mysteries of the old north west`, level 0.
 
-- `title`
-- `caseNumber`
-- `province`
-- `officer`
-- `classification`
-- `declassificationStatus`
-- `date`
-- `summary`
-- `report`
-- `images[]`
-- `attachments[]`
+---
 
-### Canada Newspaper Archive Template
+## Detail templates
 
-Detail layout:
+Each service renders its own layout from shared building blocks
+(`createMetadataGrid`, `createTextSection`, `createKeyValueList`,
+`createImageGallery`).
 
-- headline
-- publication metadata
-- article body
-- photographs after the article
+| Service | Layout | Fields used |
+| --- | --- | --- |
+| ZoomSearch | Site banner, page title, then two columns: summary + page content on the left, image gallery on the right | `websiteName`, `pageTitle`, `summary`, `pageContent` (or `htmlContent`/`body`), `images[]` |
+| Library | Two columns: gallery left, title + bibliographic metadata right; then the extract; then references | `title`, `author`, `publisher`, `publicationYear`, `province`, `summary`, `extract` (or `body`), `images[]`, `references[]` |
+| Police | Title, metadata grid, gallery, report body, attachments list | `title`, `caseNumber`, `province`, `officer`, `classification`, `declassificationStatus`, `date`, `summary`, `report` (or `body`), `images[]`, `attachments[]` |
+| Archives | Headline, publication metadata, article body, then photographs | `headline`, `publication`, `edition`, `province`, `date`, `summary`, `article` (or `body`), `images[]` |
 
-Primary fields used:
+### Body text
 
-- `headline`
-- `publication`
-- `edition`
-- `province`
-- `date`
-- `summary`
-- `article`
-- `images[]`
+Body fields accept either a string (split into paragraphs on blank lines) or an
+array of strings. Within body text, an in-game URL wrapped in `*-*` delimiters
+becomes a clickable link that navigates the browser:
 
-### Library Archive Template
+```
+Read more at *-*http://honeydewcavingclub.com*-* for the full story.
+```
 
-Detail layout:
-
-- cover or illustration on the left
-- bibliographic metadata on the right
-- extract below both
-- references below extract
-
-Primary fields used:
-
-- `author`
-- `title`
-- `publisher`
-- `publicationYear`
-- `province`
-- `summary`
-- `extract`
-- `images[]`
-- `references[]`
-
-## Image References
-
-Images are referenced directly from JSON.
-
-Recommended image object shape:
+### Images
 
 ```json
-{
-  "src": "./assets/photos/caveEntrance.png",
+{ "src": "./assets/photos/caveEntrance.png",
   "alt": "Description of the image",
-  "caption": "Optional caption"
-}
+  "caption": "Optional caption" }
 ```
 
-Rules:
+`src` is required and relative to the web app root; `alt` is recommended (it is
+also used as the hover tooltip); `caption` is optional. A bare string is
+accepted and treated as `src` with no alt or caption.
 
-- `src` is required
-- `alt` is recommended
-- `caption` is optional
-- paths are relative to the web app root
+Formal contracts live in `assets/web-content/schemas/`:
+`zoomsearch.schema.json`, `library.schema.json`, `police.schema.json`,
+`archives.schema.json`, `standalone-page.schema.json`.
 
-A plain string is also accepted, but the object format is preferred for maintainability.
+---
 
-## Required and Optional Fields
+## Standalone hidden pages
 
-See the schema files in `assets/web-content/schemas/` for the formal contract.
+Self-contained pages that no search returns; they open only by typing their URL
+(or by following an inline `*-*…*-*` link from another page).
 
-Files:
-
-- `zoomsearch.schema.json`
-- `library.schema.json`
-- `police.schema.json`
-- `archives.schema.json`
-- `standalone-page.schema.json`
-
-## Netscape URL Navigation
-
-The in-game Netscape browser now supports manual URL entry.
-
-Behavior:
-
-- URL input is editable.
-- Press `Enter` in the URL field to navigate.
-- Entering any favorite URL manually opens that favorite page.
-- Hidden routes can be defined in JSON and opened only by direct URL entry.
-- Back button returns to the previous visited page.
-- Browser history stores the last 5 visited pages.
-- Home button always returns to `about:welcome`.
-
-Favorite URLs:
-
-- `http://www.zoomsearch.net`
-- `http://library.intra`
-- `http://records.sk-police.gov`
-- `https://leighhobson89.github.io/cosmicForge/`
-- `http://archives.canada.news`
-
-### Hidden Standalone Pages
-
-Every web-content JSON file can optionally define:
-
-- `standalonePages: []`
-
-These pages are intentionally not part of service search results. They are self-contained text pages rendered only when their URL is entered manually.
-
-Object shape:
+They all live in **one** file, `assets/web-content/standalone-pages.json`, under
+a `records` array:
 
 ```json
 {
-   "id": "relay-maintenance-bulletin",
-   "title": "Relay Maintenance Bulletin",
-   "url": "http://www.zoomsearch.net/internal/relay-maintenance-bulletin",
-   "source": "ZoomSearch hidden route",
-   "content": [
-      "Line one.",
-      "Line two."
-   ]
+  "siteId": "standalone",
+  "displayName": "Standalone Pages",
+  "records": [
+    {
+      "id": "honeydewcavingclub",
+      "title": "Honey Dew Caving Club",
+      "url": "http://honeydewcavingclub.com",
+      "content": ["Paragraph one.", "Paragraph two."],
+      "images": [{ "src": "./assets/photos/minemap.png", "alt": "Mine map" }],
+      "style": {
+        "backgroundColor": "#0566e6",
+        "textColor": "#fafafa",
+        "fontFamily": "Courier New, Lucida Console, monospace"
+      },
+      "awardsEvidence": true,
+      "evidence": [ { "type": "photo", "…": "…" } ]
+    }
+  ]
 }
 ```
 
 Rules:
 
-- `id` is required.
-- `url` is required and should be unique across all standalone pages.
-- `title` is recommended.
-- `content` can be a string or string array.
-- `source` is optional metadata.
+- `id` and `url` are required; `url` must be unique across all standalone pages.
+- `content` may be a string or a string array.
+- `style` is optional and applies only to that page's shell.
+- `awardsEvidence: true` plus an `evidence` object or array awards on first visit.
+- The routes are fetched lazily, once, the first time an unrecognised URL is entered.
 
-### Test Hidden Page URL
+Shipped pages:
 
-The following hidden page is included for testing:
+| Id | URL | Awards evidence |
+| --- | --- | --- |
+| `whitmoresonsironmachineryco` | `http://www.whitmore-sons-iron-machinery-co.com/mining` | No |
+| `honeydewcavingclub` | `http://honeydewcavingclub.com` | Yes — two photos, one of which triggers the Whitmore fax |
 
-- `http://www.zoomsearch.net/internal/relay-maintenance-bulletin`
+---
 
-## Examples
+## Browser navigation
 
-### Login Details
+- The URL bar is editable; Enter or the Go button navigates. Escape closes the suggestion list.
+- Quick links: ZoomSearch, Library, Police Records, Cosmic Forge, Canada Archives.
+- Home returns to `about:welcome`.
+- Back/forward walk an in-window history capped at 5 entries; it is discarded when the window closes.
+- Focusing the URL bar drops down the **address history**: up to 10 previously visited URLs, newest first, persisted in the save. Choosing one whose entry carries replay data re-runs the original search and re-selects the record, rather than just re-opening the site's front page.
+- An unknown URL renders a "Page Not Found" page listing the attempted address.
 
-Police Records:
+---
 
-- Public: `public` / `public` (level 0)
-- Detective: `detective` / `ember` (level 2)
-- Administrator: `administrator` / `atlas` (level 5)
+## Evidence integration
 
-Canada Newspaper Archive:
+A record unlocks evidence with:
 
-- Free: `free` / `free` (level 0)
-- Subscriber: `subscriber` / `subscribe` (level 1)
+```json
+"awardsEvidence": true,
+"evidence": { "type": "photo", "storageKey": "photos", "titleKey": "photos",
+              "name": "standalone-honeydewcavingclub",
+              "defaultTitleString": "Mine Map", "paperStyle": "photo-mounted",
+              "source": { "kind": "photo-localized-catalog-entry",
+                          "languageAware": true,
+                          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+                          "entryId": "standalone-honeydewcavingclub",
+                          "photoPath": "./assets/photos/minemap.png" } }
+```
 
-### Search + URL Examples
+`evidence` may be an array to award several items from one record. The displayed
+text always comes from the localized catalog, never from the web-content JSON —
+see [evidence-system.md](evidence-system.md).
 
-Search Engine:
+Awards are de-duplicated twice: once per `websiteId:recordId` for the session,
+and again against the live evidence collection, so repeat searches and reloaded
+saves never duplicate an item.
 
-- URL: `http://www.zoomsearch.net`
-- Query `relay` returns **Sun Echo Relay**
-- Query `rela` returns no result
+---
 
-Library Archive:
+## Adding records
 
-- URL: `http://library.intra`
-- Author `Edith Vale` + Title `Notebook of River Marks` returns one record
-- Author `Edith` + Title `Notebook of River Marks` returns no result
+Use the [Web Content Builder](../tools/WEB_CONTENT_BUILDER_TOOL_MANUAL.md) — it
+writes the record *and* seeds the localized evidence catalogs. To hand-author,
+add an object to the relevant file with at least:
 
-Police Records:
+| File | Minimum fields |
+| --- | --- |
+| `zoomsearch.json` | `id`, `websiteName`, `pageTitle`, `url`, `keywords`, `summary`, `pageContent` |
+| `library.json` | `id`, `author`, `title`, `publisher`, `publicationYear`, `province`, `keywords`, `summary`, `extract` |
+| `police.json` | `id`, `province`, `title`, `keywords`, `summary`, `report`, `caseNumber`, `officer`, `classification`, `declassificationStatus`, `date`, `requiredPrivilegeLevel` |
+| `archives.json` | `id`, `province`, `headline`, `publication`, `edition`, `date`, `keywords`, `summary`, `article`, `requiredAccessLevel` |
+| `standalone-pages.json` | `id`, `url`, `title`, `content` |
 
-- URL: `http://records.sk-police.gov`
-- Query `station log` returns Station Log 01
-- Query `director file` requires Administrator access level
+No application code changes are needed for new records, provided:
 
-Canada Newspaper Archive:
-
-- URL: `http://archives.canada.news`
-- Province `Alberta` + keyword `telegram` returns Prairie Telegram (subscriber level)
-- Province `Saskatchewan` + keyword `telegram` returns no result
-
-Hidden standalone page:
-
-- URL `http://www.zoomsearch.net/internal/relay-maintenance-bulletin`
-- Opens only by manual URL entry; not listed in favorites; not returned by any archive search.
-
-## Evidence Integration
-
-A record can unlock evidence by including:
-
-- `awardsEvidence: true`
-- `evidence: { ... }`
-
-The evidence payload is passed into the existing evidence system by `webContentManager.js`.
-
-## Adding New Records
-
-### Search Engine
-
-1. Add a new object to `assets/web-content/zoomsearch.json`.
-2. Supply at minimum:
-   - `id`
-   - `websiteName`
-   - `pageTitle`
-   - `url`
-   - `keywords`
-   - `summary`
-   - `pageContent`
-3. If needed, add `images[]`.
-4. If the record should unlock evidence, add `awardsEvidence` and `evidence`.
-
-### Police Records
-
-1. Add a new object to `assets/web-content/police.json`.
-2. Supply at minimum:
-   - `id`
-   - `province`
-   - `title`
-   - `keywords`
-   - `summary`
-   - `report`
-   - `caseNumber`
-   - `officer`
-   - `classification`
-   - `declassificationStatus`
-   - `date`
-   - `requiredPrivilegeLevel`
-3. Add `images[]` and `attachments[]` if available.
-
-### Canada Newspaper Archive
-
-1. Add a new object to `assets/web-content/archives.json`.
-2. Supply at minimum:
-   - `id`
-   - `province`
-   - `headline`
-   - `publication`
-   - `edition`
-   - `date`
-   - `keywords`
-   - `summary`
-   - `article`
-   - `requiredAccessLevel`
-3. Add `images[]` if available.
-4. Ensure the province exactly matches one of the UI options.
-
-### Library Archive
-
-1. Add a new object to `assets/web-content/library.json`.
-2. Supply at minimum:
-   - `id`
-   - `author`
-   - `title`
-   - `publisher`
-   - `publicationYear`
-   - `province`
-   - `keywords`
-   - `summary`
-   - `extract`
-3. Add `images[]` and `references[]` when available.
-
-## Test Data Coverage
-
-The current JSON files already include example scenarios for:
-
-- search engine without images
-- search engine with one image
-- search engine with multiple images
-- police report without photographs
-- police report with one photograph
-- police report with multiple photographs
-- newspaper article without photograph
-- newspaper article with photograph
-- library entry with illustration
-- library entry without illustration
-- successful and unsuccessful search flows for every archive
-
-## Extending the System
-
-No application code changes should be required for new records as long as:
-
-- the record follows the correct schema
-- exact-match search terms remain unique enough to return zero or one record
-- image paths remain valid
-- optional evidence payloads keep the existing evidence contract
-
-## Web Content Builder Tool
-
-Standalone builder files:
-
-- `tools/web_content_builder.html`
-- `tools/web_content_builder.js`
-- `tools/web_content_builder_server.js`
-
-This tool is similar in spirit to the evidence builder and supports:
-
-- Creating records for `zoomsearch`, `library`, `police`, and `archives`
-- Creating hidden standalone text pages
-- Entering text and image paths
-- Entering service-specific fields (for example province, privilege level, access level)
-- Live JSON preview before writing
-- Confirm-and-inject into the target JSON file
-
-ID policy:
-
-- Every record and standalone page must have an `id`.
-- IDs are stable references for future evidence unlock integrations.
-- Builder enforces/normalizes IDs before injection.
+- the record follows the schema for its file;
+- its search terms are unique enough to return zero or one record;
+- image paths resolve;
+- any evidence payload keeps the contract above, and matching catalog entries exist in all five languages;
+- for archives records, `province` exactly matches one of the four dropdown options.

@@ -1,3 +1,14 @@
+// Storage keys for the three evidence collections.
+//
+// KNOWN DEFECT (documented, deliberately not changed): the rest of this module
+// and ui.js address the story collection as `STORAGE_KEYS.BACKGROUND_STORY`,
+// which is not a member of this object. It therefore evaluates to `undefined`
+// and the story collection is keyed by the literal string "undefined" both in
+// memory and in every save file ever written. Behaviour is self-consistent, so
+// the only visible symptom is that the debug window's per-collection view
+// (which iterates Object.values(STORAGE_KEYS)) shows an empty "theArnieTragedy"
+// bucket. Defining BACKGROUND_STORY would orphan the story evidence in existing
+// saves, so a fix needs a save migration. See docs/architecture.md.
 const STORAGE_KEYS = {
   THE_ARNIE_TRAGEDY: "theArnieTragedy",
   PHOTOS: "photos",
@@ -292,12 +303,7 @@ export function getEvidenceCollection(storageKey) {
   return evidenceStore.collections[storageKey]
     .map((id) => evidenceStore.evidencesById[String(id)])
     .filter(Boolean)
-    .map((evidence) => cloneJson(evidence));
-}
-
-export function getEvidenceById(id) {
-  const evidence = evidenceStore.evidencesById[String(id)];
-  return evidence ? cloneJson(evidence) : null;
+    .map(cloneJson);
 }
 
 export function getEvidenceCount(storageKey) {
@@ -320,13 +326,17 @@ export function stepEvidenceIndex(storageKey, delta) {
 }
 
 export function getCurrentEvidence(storageKey) {
-  const collection = getEvidenceCollection(storageKey);
-  if (!collection.length) {
+  ensureCollection(storageKey);
+
+  // Resolve the single active id rather than cloning the whole collection.
+  const ids = evidenceStore.collections[storageKey];
+  if (!ids.length) {
     return null;
   }
 
-  const index = normalizeIndex(getEvidenceIndex(storageKey), collection.length);
-  return collection[index];
+  const activeId = ids[normalizeIndex(getEvidenceIndex(storageKey), ids.length)];
+  const evidence = evidenceStore.evidencesById[String(activeId)];
+  return evidence ? cloneJson(evidence) : null;
 }
 
 export function resolveEvidenceContentPath(evidence, languageCode = "en") {
@@ -438,13 +448,4 @@ export function addEvidenceTrigger({ predicate, action, once = true } = {}) {
   });
 
   return triggerId;
-}
-
-export function removeEvidenceTrigger(triggerId) {
-  const normalizedId = String(triggerId || "").trim();
-  if (!normalizedId) {
-    return false;
-  }
-
-  return evidenceTriggers.delete(normalizedId);
 }

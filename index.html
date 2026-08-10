@@ -301,13 +301,9 @@
         </div>
     </div>
     <div id="overlay" class="d-none overlay"></div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- LZString powers save-string compression in saveLoadGame.js. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-    <script type="module" src="game.js"></script>
-    <script type="module" src="localization.js"></script>
-    <script type="module" src="constantsAndGlobalVars.js"></script>
+    <!-- ui.js is the entry point; it imports game.js, localization.js and constantsAndGlobalVars.js. -->
     <script type="module" src="ui.js"></script>
 </body>
 

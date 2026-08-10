@@ -1,9 +1,5 @@
 {
     "chat.tools.terminal.autoApprove": {
-        "/^node tools/evidence_builder_server\\.js$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
         "/^node tools/web_content_builder_server\\.js$/": {
             "approve": true,
             "matchCommandLine": true

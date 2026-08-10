@@ -46,6 +46,7 @@ import {
   createEvidence,
   getCurrentEvidence,
   getEvidenceCollection,
+  getEvidenceCount,
   getEvidenceIndex,
   getEvidenceStoreSnapshot,
   getEvidenceStorageKeys,
@@ -54,7 +55,7 @@ import {
   setEvidenceIndex,
   stepEvidenceIndex,
 } from "./evidenceManager.js";
-import { setGameState, startGame } from "./game.js";
+import { LANGUAGE_BUTTON_KEYS_BY_CODE, setGameState, startGame } from "./game.js";
 import { audioManager } from "./audioManager.js";
 import { initLocalization, localize } from "./localization.js";
 import { DesktopWindow } from "./desktopWindow.js";
@@ -66,7 +67,13 @@ import {
   copySaveStringToClipBoard,
 } from "./saveLoadGame.js";
 import { createWebContentManager } from "./webContentManager.js";
-import { createContentDivider, registerDefaultWebContentSites } from "./webContentRegistry.js";
+import {
+  appendDelimitedLinkText,
+  createContentDivider,
+  createImageGallery,
+  normalizeLines,
+  registerDefaultWebContentSites,
+} from "./webContentRegistry.js";
 
 const storyTextCacheByLanguage = new Map();
 const reportCatalogCacheByLanguage = new Map();
@@ -99,7 +106,6 @@ const NOTES_TAB_COLORS = [
   "#ffdff0",
 ];
 let debugWindowController = null;
-let computerWindowController = null;
 let ashtrayAnimationTimeoutId = null;
 let facsimileFeedAnimationTimeoutId = null;
 let evidenceMilestoneTriggersInitialized = false;
@@ -256,9 +262,25 @@ function getFacsimilePendingReports() {
     : [];
 }
 
-function getFacsimilePendingReport() {
-  const pendingReports = getFacsimilePendingReports();
-  return pendingReports.length ? pendingReports[0] : null;
+// `String(value).trim()`, falling back to `fallback` when the result is blank.
+function trimmedOr(value, fallback) {
+  return String(value ?? "").trim() || fallback;
+}
+
+// Normalizes the catalog-lookup descriptor carried by a fax payload. Shared by
+// the raw-report and configured-fax entry points, which accept the same shape.
+function normalizeFacsimileSource(source) {
+  if (!source || typeof source !== "object") {
+    return null;
+  }
+
+  return {
+    ...source,
+    kind: String(source.kind || "").trim(),
+    entryId: String(source.entryId || "").trim(),
+    catalogPathTemplate: String(source.catalogPathTemplate || "").trim(),
+    languageAware: source.languageAware !== false,
+  };
 }
 
 function sanitizeFacsimileReport(report) {
@@ -274,33 +296,16 @@ function sanitizeFacsimileReport(report) {
   const defaultTitle = resolveLocalizedText("facsimileDefaultTitle", "Facsimile Report");
   const defaultDescription = resolveLocalizedText("facsimileDefaultDescription", "Received via facsimile machine.");
 
-  const title = String(report.title || report.defaultTitleString || defaultTitle).trim() || defaultTitle;
-  const reportText = String(report.reportText || report.content || "").replace(/\r\n/g, "\n").trim();
-  const description = String(report.description || defaultDescription).trim() || defaultDescription;
-  const evidenceName = String(report.evidenceName || `facsimile-${id}`).trim() || `facsimile-${id}`;
-  const paperStyle = String(report.paperStyle || "report-parchment").trim() || "report-parchment";
-  const source = report?.source && typeof report.source === "object"
-    ? {
-      ...report.source,
-      kind: String(report.source.kind || "").trim(),
-      entryId: String(report.source.entryId || "").trim(),
-      catalogPathTemplate: String(report.source.catalogPathTemplate || "").trim(),
-      languageAware: report.source.languageAware !== false,
-    }
-    : null;
-  const storageKey = String(report.storageKey || EVIDENCE_STORAGE_KEYS.REPORTS).trim() || EVIDENCE_STORAGE_KEYS.REPORTS;
-  const titleKey = String(report.titleKey || "reports").trim() || "reports";
-
   return {
     id,
-    title,
-    reportText,
-    description,
-    evidenceName,
-    paperStyle,
-    source,
-    storageKey,
-    titleKey,
+    title: trimmedOr(report.title || report.defaultTitleString, defaultTitle),
+    reportText: String(report.reportText || report.content || "").replace(/\r\n/g, "\n").trim(),
+    description: trimmedOr(report.description, defaultDescription),
+    evidenceName: trimmedOr(report.evidenceName, `facsimile-${id}`),
+    paperStyle: trimmedOr(report.paperStyle, "report-parchment"),
+    source: normalizeFacsimileSource(report.source),
+    storageKey: trimmedOr(report.storageKey, EVIDENCE_STORAGE_KEYS.REPORTS),
+    titleKey: trimmedOr(report.titleKey, "reports"),
     createdAt: new Date().toISOString(),
   };
 }
@@ -408,23 +413,19 @@ function buildFacsimileReportFromConfig(config = {}) {
     return null;
   }
 
-  const source = config?.source && typeof config.source === "object"
-    ? {
-      ...config.source,
-      kind: String(config.source.kind || "").trim(),
-      entryId: String(config.source.entryId || "").trim(),
-      catalogPathTemplate: String(config.source.catalogPathTemplate || "").trim(),
-      languageAware: config.source.languageAware !== false,
-    }
-    : null;
+  const source = normalizeFacsimileSource(config.source);
 
-  const title = String(config.title || "").trim() || (
-    source?.kind === "report-localized-catalog-entry"
-      ? ""
-      : config.titleKey
-      ? resolveLocalizedText(config.titleKey, "Facsimile Report")
-      : resolveLocalizedText("facsimileDefaultTitle", "Facsimile Report")
-  );
+  // Catalog-backed faxes deliberately leave title/description blank here so the
+  // localized catalog entry can supply them later.
+  const isCatalogBacked = source?.kind === "report-localized-catalog-entry";
+  const resolveOptionalText = (explicitValue, localizationKey, fallbackKey, fallbackText) => {
+    const explicit = String(explicitValue || "").trim();
+    if (explicit || isCatalogBacked) {
+      return explicit;
+    }
+
+    return resolveLocalizedText(localizationKey || fallbackKey, fallbackText);
+  };
 
   let reportText = String(config.reportText || "").replace(/\r\n/g, "\n").trim();
   if (!reportText && Array.isArray(config.reportTextLineKeys)) {
@@ -437,41 +438,31 @@ function buildFacsimileReportFromConfig(config = {}) {
     reportText = resolveLocalizedText(config.reportTextKey, "");
   }
 
-  const description = String(config.description || "").trim() || (
-    source?.kind === "report-localized-catalog-entry"
-      ? ""
-      : config.descriptionKey
-      ? resolveLocalizedText(config.descriptionKey, "Received via facsimile machine.")
-      : resolveLocalizedText("facsimileDefaultDescription", "Received via facsimile machine.")
-  );
-
-  const evidenceName = String(config.evidenceName || `facsimile-${id}`).trim() || `facsimile-${id}`;
-  const paperStyle = String(config.paperStyle || "report-parchment").trim() || "report-parchment";
-  const storageKey = String(config.storageKey || EVIDENCE_STORAGE_KEYS.REPORTS).trim() || EVIDENCE_STORAGE_KEYS.REPORTS;
-  const titleKey = String(config.titleKey || "reports").trim() || "reports";
-  const messageType = String(config.messageType || "intel").trim().toLowerCase() || "intel";
-  const notification = config?.notification && typeof config.notification === "object"
-    ? {
-      ...config.notification,
-      type: String(config.notification.type || "").trim(),
-      text: String(config.notification.text || "").trim(),
-      sound: String(config.notification.sound || "").trim(),
-      durationMs: Number(config.notification.durationMs),
-    }
-    : null;
-
   return {
     id,
-    title,
+    title: resolveOptionalText(config.title, config.titleKey, "facsimileDefaultTitle", "Facsimile Report"),
     reportText,
-    description,
-    evidenceName,
-    paperStyle,
+    description: resolveOptionalText(
+      config.description,
+      config.descriptionKey,
+      "facsimileDefaultDescription",
+      "Received via facsimile machine."
+    ),
+    evidenceName: trimmedOr(config.evidenceName, `facsimile-${id}`),
+    paperStyle: trimmedOr(config.paperStyle, "report-parchment"),
     source,
-    storageKey,
-    titleKey,
-    messageType,
-    notification,
+    storageKey: trimmedOr(config.storageKey, EVIDENCE_STORAGE_KEYS.REPORTS),
+    titleKey: trimmedOr(config.titleKey, "reports"),
+    messageType: trimmedOr(config.messageType, "intel").toLowerCase(),
+    notification: config?.notification && typeof config.notification === "object"
+      ? {
+        ...config.notification,
+        type: String(config.notification.type || "").trim(),
+        text: String(config.notification.text || "").trim(),
+        sound: String(config.notification.sound || "").trim(),
+        durationMs: Number(config.notification.durationMs),
+      }
+      : null,
   };
 }
 
@@ -840,40 +831,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  getElements().btnEnglish.addEventListener("click", async () => {
-    audioManager.onUserGesture();
-    await handleLanguageChange("en");
-    setGameState(getMenuState());
-  });
-
-  getElements().btnSpanish.addEventListener("click", async () => {
-    audioManager.onUserGesture();
-    await handleLanguageChange("es");
-    setGameState(getMenuState());
-  });
-
-  getElements().btnGerman.addEventListener("click", async () => {
-    audioManager.onUserGesture();
-    await handleLanguageChange("de");
-    setGameState(getMenuState());
-  });
-
-  getElements().btnItalian.addEventListener("click", async () => {
-    audioManager.onUserGesture();
-    await handleLanguageChange("it");
-    setGameState(getMenuState());
-  });
-
-  getElements().btnFrench.addEventListener("click", async () => {
-    audioManager.onUserGesture();
-    await handleLanguageChange("fr");
-    setGameState(getMenuState());
+  LANGUAGE_BUTTON_KEYS_BY_CODE.forEach((elementKey, languageCode) => {
+    getElements()[elementKey].addEventListener("click", async () => {
+      audioManager.onUserGesture();
+      await handleLanguageChange(languageCode);
+      setGameState(getMenuState());
+    });
   });
 
   getElements().saveGameButton.addEventListener("click", function () {
     audioManager.onUserGesture();
     getElements().overlay.classList.remove("d-none");
-    saveGame(true);
+    saveGame();
   });
 
   getElements().loadGameButton.addEventListener("click", function () {
@@ -900,7 +869,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   getElements().loadStringButton.addEventListener("click", function () {
     audioManager.onUserGesture();
-    loadGame(true)
+    loadGame()
       .then(() => {
         setElements();
         syncAshtrayVisualState();
@@ -922,67 +891,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   setGameState(getMenuState());
 });
 
-async function setElementsLanguageText() {
-  // Localization text
-  getElements().menuTitle.innerHTML = `${localize(
-    "menuTitle",
-    getLanguage()
-  )}`;
-  getElements().newGameMenuButton.innerHTML = `${localize(
-    "newGame",
-    getLanguage()
-  )}`;
-  getElements().resumeGameMenuButton.innerHTML = `${localize(
-    "resumeGame",
-    getLanguage()
-  )}`;
-  getElements().loadGameButton.innerHTML = `${localize(
-    "loadGame",
-    getLanguage()
-  )}`;
-  getElements().saveGameButton.innerHTML = `${localize(
-    "saveGame",
-    getLanguage()
-  )}`;
-  getElements().loadStringButton.innerHTML = `${localize(
-    "loadButton",
-    getLanguage()
-  )}`;
-  if (getElements().pasteButtonLoadPopup) {
-    getElements().pasteButtonLoadPopup.textContent = localize(
-      "pasteButton",
-      getLanguage()
-    );
-  }
-  getElements().copyButtonSavePopup.innerHTML = `${localize(
-    "copyButton",
-    getLanguage()
-  )}`;
-  getElements().closeButtonSavePopup.innerHTML = `${localize(
-    "closeButton",
-    getLanguage()
-  )}`;
-  getElements().zoomReadout.innerHTML = `${localize(
-    "zoomLabel",
-    getLanguage()
-  )} 3/5`;
-  getElements().backgroundFolderLabel.textContent = localize(
-    "theArnieTragedy",
-    getLanguage(),
-  );
+// Static chrome whose text is a straight localization lookup, keyed by the
+// getElements() property to write into.
+const LOCALIZED_STATIC_TEXT_BY_ELEMENT_KEY = {
+  menuTitle: "menuTitle",
+  newGameMenuButton: "newGame",
+  resumeGameMenuButton: "resumeGame",
+  loadGameButton: "loadGame",
+  saveGameButton: "saveGame",
+  loadStringButton: "loadButton",
+  pasteButtonLoadPopup: "pasteButton",
+  copyButtonSavePopup: "copyButton",
+  closeButtonSavePopup: "closeButton",
+  backgroundFolderLabel: "theArnieTragedy",
+  reportsFolderLabel: "reports",
+  photosFolderLabel: "photos",
+  notesLabel: "notes",
+  musicVolumeLabel: "musicVolume",
+  sfxVolumeLabel: "sfxVolume",
+};
 
-  getElements().reportsFolderLabel.textContent = localize(
-    "reports",
-    getLanguage(),
-  );
+function setElementsLanguageText() {
+  const elements = getElements();
+  const languageCode = getLanguage();
 
-  getElements().photosFolderLabel.textContent = localize("photos", getLanguage());
-  getElements().notesLabel.textContent = localize("notes", getLanguage());
-  getElements().musicVolumeLabel.innerHTML = `${localize(
-    "musicVolume",
-    getLanguage()
-  )}`;
-  getElements().sfxVolumeLabel.innerHTML = `${localize("sfxVolume", getLanguage())}`;
+  Object.entries(LOCALIZED_STATIC_TEXT_BY_ELEMENT_KEY).forEach(([elementKey, localizationKey]) => {
+    const element = elements[elementKey];
+    if (element) {
+      element.textContent = localize(localizationKey, languageCode);
+    }
+  });
+
+  elements.zoomReadout.textContent = `${localize("zoomLabel", languageCode)} 3/5`;
+
   refreshMuteButtonLabel();
   refreshMusicTransportControls();
   refreshOpenWindowLocalization();
@@ -998,7 +939,7 @@ function updateDesktopCalendarDate() {
   }
 
   const now = new Date();
-  const monthText = new Intl.DateTimeFormat(undefined, { month: "short" })
+  const monthText = DESKTOP_CALENDAR_MONTH_FORMATTER
     .format(now)
     .replace(/\./g, "")
     .toUpperCase();
@@ -1271,39 +1212,25 @@ function initializeStoryWindowControls() {
     return;
   }
 
-  getElements().backgroundFolder.addEventListener("click", () => {
-    audioManager.onUserGesture();
-    audioManager.playSfx("clickButton");
+  [
+    { element: getElements().backgroundFolder, kind: "story", open: () => openStoryWindow(false, false) },
+    { element: getElements().photosFolder, kind: "photos", open: openPhotosWindow },
+    { element: getElements().reportsFolder, kind: "reports", open: openReportsWindow },
+  ].forEach(({ element, kind, open }) => {
+    element.addEventListener("click", () => {
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickButton");
 
-    if (toggleExistingWindowsByKind("story")) {
-      return;
-    }
+      if (toggleExistingWindowsByKind(kind)) {
+        return;
+      }
 
-    openStoryWindow(false, false);
+      open();
+    });
   });
 
-  getElements().photosFolder.addEventListener("click", () => {
-    audioManager.onUserGesture();
-    audioManager.playSfx("clickButton");
-
-    if (toggleExistingWindowsByKind("photos")) {
-      return;
-    }
-
-    openPhotosWindow();
-  });
-
-  getElements().reportsFolder.addEventListener("click", () => {
-    audioManager.onUserGesture();
-    audioManager.playSfx("clickButton");
-
-    if (toggleExistingWindowsByKind("reports")) {
-      return;
-    }
-
-    openReportsWindow();
-  });
-
+  // The notes folder deliberately has no click sound of its own: bindDesktopObjectAudio
+  // in game.js already plays one for #notesFolder.
   if (getElements().notesFolder) {
     getElements().notesFolder.addEventListener("click", () => {
       if (toggleExistingWindowsByKind("notes")) {
@@ -1374,53 +1301,46 @@ function initializeStoryWindowControls() {
     getElements().desktopAshtrayHotspot.addEventListener("click", activateAshtray);
   }
 
-  if (getElements().desktopFacsimileHotspot || getElements().desktopFacsimileRig) {
-    const facsimileTrigger = getElements().desktopFacsimileHotspot || getElements().desktopFacsimileRig;
-    const openFacsimileRig = () => {
-      audioManager.onUserGesture();
-      audioManager.playSfx("clickButton");
+  wireDesktopObjectTrigger({
+    triggerElement: getElements().desktopFacsimileHotspot || getElements().desktopFacsimileRig,
+    windowKind: "facsimile",
+    openWindow: openFacsimileWindow,
+  });
 
-      if (toggleExistingWindowsByKind("facsimile")) {
-        return;
-      }
+  wireDesktopObjectTrigger({
+    triggerElement: getElements().desktopComputerHotspot || getElements().desktopComputerRig,
+    windowKind: "computer",
+    openWindow: openComputerWindow,
+  });
+}
 
-      openFacsimileWindow();
-    };
-
-    facsimileTrigger.addEventListener("click", openFacsimileRig);
-    facsimileTrigger.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") {
-        return;
-      }
-
-      event.preventDefault();
-      openFacsimileRig();
-    });
+// Desk objects (facsimile, computer) toggle their window on click or on
+// Enter/Space when focused.
+function wireDesktopObjectTrigger({ triggerElement, windowKind, openWindow }) {
+  if (!triggerElement) {
+    return;
   }
 
-  if (getElements().desktopComputerHotspot || getElements().desktopComputerRig) {
-    const computerTrigger = getElements().desktopComputerHotspot || getElements().desktopComputerRig;
-    const openComputerRig = () => {
-      audioManager.onUserGesture();
-      audioManager.playSfx("clickButton");
+  const toggleWindow = () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
 
-      if (toggleExistingWindowsByKind("computer")) {
-        return;
-      }
+    if (toggleExistingWindowsByKind(windowKind)) {
+      return;
+    }
 
-      openComputerWindow();
-    };
+    openWindow();
+  };
 
-    computerTrigger.addEventListener("click", openComputerRig);
-    computerTrigger.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") {
-        return;
-      }
+  triggerElement.addEventListener("click", toggleWindow);
+  triggerElement.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
 
-      event.preventDefault();
-      openComputerRig();
-    });
-  }
+    event.preventDefault();
+    toggleWindow();
+  });
 }
 
 function toggleExistingWindowsByKind(kind) {
@@ -1467,61 +1387,49 @@ function bringDesktopWindowToFront(windowController) {
   windowController.rootElement.style.zIndex = String(nextZIndex);
 }
 
+// How each open desktop window re-titles and re-renders itself after a language
+// change. `titleKey` goes through localize(); `title` is a fixed product name.
+// Kinds absent from this table (currently "debug") are left untouched.
+const DESKTOP_WINDOW_LOCALIZATION_BY_KIND = {
+  story: { titleKey: "theArnieTragedy", refresh: updateStoryWindowContent },
+  photos: { titleKey: "photos", refresh: updatePhotosWindowContent },
+  reports: { titleKey: "reports", refresh: updateReportsWindowContent },
+  notes: { titleKey: "notes" },
+  "computer-notes": { titleKey: "notes" },
+  "computer-paint": { title: "Paint" },
+  "computer-netscape": { title: "Netscape Navigator 3.0" },
+  facsimile: { title: "FACSIMILE", refresh: updateFacsimileWindowContent },
+  computer: { title: "Computer" },
+};
+
 function refreshOpenWindowLocalization() {
+  const languageCode = getLanguage();
+
   activeDesktopWindows.forEach((windowController) => {
     const windowKind = desktopWindowKinds.get(windowController);
-
-    if (windowKind === "story") {
-      windowController.setTitle(
-        localize("backgrotheArnieTragedyundStory", getLanguage()),
-      );
-      updateStoryWindowContent(windowController);
+    const localization = DESKTOP_WINDOW_LOCALIZATION_BY_KIND[windowKind];
+    if (!localization) {
       return;
     }
 
-    if (windowKind === "photos") {
-      windowController.setTitle(localize("photos", getLanguage()));
-      updatePhotosWindowContent(windowController);
-      return;
-    }
-
-    if (windowKind === "reports") {
-      windowController.setTitle(localize("reports", getLanguage()));
-      updateReportsWindowContent(windowController);
-      return;
-    }
-
-    if (windowKind === "notes") {
-      windowController.setTitle(localize("notes", getLanguage()));
-      return;
-    }
-
-    if (windowKind === "computer-notes") {
-      windowController.setTitle(localize("notes", getLanguage()));
-      return;
-    }
-
-    if (windowKind === "computer-paint") {
-      windowController.setTitle("Paint");
-      return;
-    }
-
-    if (windowKind === "computer-netscape") {
-      windowController.setTitle("Netscape Navigator 3.0");
-      return;
-    }
-
-    if (windowKind === "facsimile") {
-      windowController.setTitle("FACSIMILE");
-      updateFacsimileWindowContent(windowController);
-      return;
-    }
-
-    if (windowKind === "computer") {
-      windowController.setTitle("Computer");
-    }
+    windowController.setTitle(
+      localization.titleKey
+        ? localize(localization.titleKey, languageCode)
+        : localization.title
+    );
+    localization.refresh?.(windowController);
   });
 }
+
+// Built once: the clock ticks every second and Intl formatter construction is
+// comparatively expensive.
+const COMPUTER_CLOCK_DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  year: "numeric",
+  month: "short",
+  day: "2-digit",
+});
+
+const DESKTOP_CALENDAR_MONTH_FORMATTER = new Intl.DateTimeFormat(undefined, { month: "short" });
 
 function updateComputerDesktopClock(refs) {
   if (!refs?.minuteHand || !refs?.hourHand || !refs?.secondHand || !refs?.dateText) {
@@ -1533,20 +1441,11 @@ function updateComputerDesktopClock(refs) {
   const minutes = now.getMinutes();
   const seconds = now.getSeconds();
 
-  const secondAngle = seconds * 6;
-  const minuteAngle = (minutes + seconds / 60) * 6;
-  const hourAngle = ((hours % 12) + minutes / 60) * 30;
+  refs.secondHand.style.transform = `rotate(${seconds * 6}deg)`;
+  refs.minuteHand.style.transform = `rotate(${(minutes + seconds / 60) * 6}deg)`;
+  refs.hourHand.style.transform = `rotate(${((hours % 12) + minutes / 60) * 30}deg)`;
 
-  refs.secondHand.style.transform = `rotate(${secondAngle}deg)`;
-  refs.minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
-  refs.hourHand.style.transform = `rotate(${hourAngle}deg)`;
-
-  const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
-  refs.dateText.textContent = dateFormatter.format(now);
+  refs.dateText.textContent = COMPUTER_CLOCK_DATE_FORMATTER.format(now);
 }
 
 function createComputerWindowContentElements() {
@@ -1750,70 +1649,86 @@ function createComputerPaintWindowContentElements() {
     ];
   };
 
-  const colorsEqual = (data, index, target) => (
-    data[index] === target[0]
-    && data[index + 1] === target[1]
-    && data[index + 2] === target[2]
-    && data[index + 3] === target[3]
-  );
-
-  const setPixelColor = (data, index, color) => {
-    data[index] = color[0];
-    data[index + 1] = color[1];
-    data[index + 2] = color[2];
-    data[index + 3] = color[3];
+  // Packs an [r, g, b, a] quad into the same native 32-bit word layout that
+  // ImageData uses, so pixel tests become one integer compare instead of four
+  // byte compares. Going through a shared buffer keeps this endian-correct.
+  const packRgba = (rgba) => {
+    const word = new Uint32Array(1);
+    new Uint8ClampedArray(word.buffer).set(rgba);
+    return word[0];
   };
 
+  // Scanline flood fill over a Uint32 view of the bitmap. The previous
+  // implementation pushed a fresh [x, y] array for every visited pixel, so
+  // filling a large region of the 1024x640 canvas allocated millions of small
+  // arrays. This walks whole horizontal spans and queues plain integer indices.
   const floodFill = (startXCoord, startYCoord, fillColorHex) => {
     if (!context) {
       return;
     }
 
-    const boundedX = Math.max(0, Math.min(canvas.width - 1, Math.floor(startXCoord)));
-    const boundedY = Math.max(0, Math.min(canvas.height - 1, Math.floor(startYCoord)));
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const { data } = imageData;
-    const fillColor = parseColor(fillColorHex);
-    const startIndex = (boundedY * canvas.width + boundedX) * 4;
-    const targetColor = [
-      data[startIndex],
-      data[startIndex + 1],
-      data[startIndex + 2],
-      data[startIndex + 3],
-    ];
+    const { width, height } = canvas;
+    const startX = Math.max(0, Math.min(width - 1, Math.floor(startXCoord)));
+    const startY = Math.max(0, Math.min(height - 1, Math.floor(startYCoord)));
 
-    if (
-      targetColor[0] === fillColor[0]
-      && targetColor[1] === fillColor[1]
-      && targetColor[2] === fillColor[2]
-      && targetColor[3] === fillColor[3]
-    ) {
+    const imageData = context.getImageData(0, 0, width, height);
+    // Uint8ClampedArray and Uint32Array share the buffer, so writes through the
+    // 32-bit view land straight back in the ImageData.
+    const pixels = new Uint32Array(imageData.data.buffer);
+
+    const fillColor = packRgba(parseColor(fillColorHex));
+    const targetColor = pixels[startY * width + startX];
+    if (targetColor === fillColor) {
       return;
     }
 
-    const stack = [[boundedX, boundedY]];
+    const stack = [startY * width + startX];
+
     while (stack.length) {
-      const next = stack.pop();
-      if (!next) {
+      const seed = stack.pop();
+      if (pixels[seed] !== targetColor) {
         continue;
       }
 
-      const x = next[0];
-      const y = next[1];
-      if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
-        continue;
+      const rowStart = Math.floor(seed / width) * width;
+      const rowEnd = rowStart + width;
+
+      let spanStart = seed;
+      while (spanStart > rowStart && pixels[spanStart - 1] === targetColor) {
+        spanStart -= 1;
       }
 
-      const pixelIndex = (y * canvas.width + x) * 4;
-      if (!colorsEqual(data, pixelIndex, targetColor)) {
-        continue;
+      let spanEnd = seed;
+      while (spanEnd + 1 < rowEnd && pixels[spanEnd + 1] === targetColor) {
+        spanEnd += 1;
       }
 
-      setPixelColor(data, pixelIndex, fillColor);
-      stack.push([x + 1, y]);
-      stack.push([x - 1, y]);
-      stack.push([x, y + 1]);
-      stack.push([x, y - 1]);
+      let aboveQueued = false;
+      let belowQueued = false;
+
+      for (let index = spanStart; index <= spanEnd; index += 1) {
+        pixels[index] = fillColor;
+
+        const above = index - width;
+        if (above >= 0 && pixels[above] === targetColor) {
+          if (!aboveQueued) {
+            stack.push(above);
+            aboveQueued = true;
+          }
+        } else {
+          aboveQueued = false;
+        }
+
+        const below = index + width;
+        if (below < pixels.length && pixels[below] === targetColor) {
+          if (!belowQueued) {
+            stack.push(below);
+            belowQueued = true;
+          }
+        } else {
+          belowQueued = false;
+        }
+      }
     }
 
     context.putImageData(imageData, 0, 0);
@@ -1917,75 +1832,7 @@ function createComputerPaintWindowContentElements() {
   };
 
   const persistActivePaintPageContent = () => {
-    const pages = getPaintPages();
-    if (!pages.length) {
-      return;
-    }
-
-    const activeIndex = Math.min(
-      pages.length - 1,
-      Math.max(0, Number.parseInt(getPaintActivePageIndex(), 10) || 0)
-    );
-    const existingPage = pages[activeIndex] || {
-      title: `Sketch ${activeIndex + 1}`,
-      snapshot: "",
-    };
-    const nextSnapshot = snapshotCurrentCanvas();
-
-    if (String(existingPage.snapshot || "") === nextSnapshot) {
-      return;
-    }
-
-    pages[activeIndex] = {
-      ...existingPage,
-      snapshot: nextSnapshot,
-    };
-
-    setPaintPages(pages);
-  };
-
-  const refreshPaintPageCommitState = (pageRowRefs) => {
-    if (!pageRowRefs?.titleInput || !pageRowRefs?.commitButton) {
-      return;
-    }
-
-    const normalizedInput = String(pageRowRefs.titleInput.value || "").trim();
-    const normalizedCommitted = String(pageRowRefs.committedTitle || "").trim();
-    pageRowRefs.commitButton.disabled = !normalizedInput || normalizedInput === normalizedCommitted;
-  };
-
-  const commitPaintPageTitle = (pageRowRefs) => {
-    if (!pageRowRefs) {
-      return;
-    }
-
-    const nextTitle = String(pageRowRefs.titleInput.value || "").trim();
-    if (!nextTitle) {
-      pageRowRefs.titleInput.value = pageRowRefs.committedTitle;
-      refreshPaintPageCommitState(pageRowRefs);
-      return;
-    }
-
-    if (nextTitle === String(pageRowRefs.committedTitle || "").trim()) {
-      pageRowRefs.commitButton.disabled = true;
-      return;
-    }
-
-    const pages = getPaintPages();
-    const existingPage = pages[pageRowRefs.pageIndex] || {
-      title: `Sketch ${pageRowRefs.pageIndex + 1}`,
-      snapshot: "",
-    };
-
-    pages[pageRowRefs.pageIndex] = {
-      ...existingPage,
-      title: nextTitle,
-    };
-
-    setPaintPages(pages);
-    pageRowRefs.committedTitle = nextTitle;
-    pageRowRefs.titleInput.value = nextTitle;
-    pageRowRefs.commitButton.disabled = true;
+    persistActivePageBody(PAINT_PAGE_MODEL, snapshotCurrentCanvas());
   };
 
   const renderPaintWindowContent = async () => {
@@ -1995,106 +1842,24 @@ function createComputerPaintWindowContentElements() {
       return;
     }
 
-    const activeIndex = Math.min(
-      pages.length - 1,
-      Math.max(0, Number.parseInt(getPaintActivePageIndex(), 10) || 0)
-    );
-
+    const activeIndex = resolveActivePageIndex(PAINT_PAGE_MODEL, pages);
     setPaintActivePageIndex(activeIndex);
     refs.activePageIndex = activeIndex;
 
-    refs.pageRows.forEach((pageRowRefs) => {
-      const pageData = pages[pageRowRefs.pageIndex] || {
-        title: `Sketch ${pageRowRefs.pageIndex + 1}`,
-        snapshot: "",
-      };
-      const normalizedTitle = String(pageData.title || "").trim() || `Sketch ${pageRowRefs.pageIndex + 1}`;
-      const isActive = pageRowRefs.pageIndex === activeIndex;
-
-      pageRowRefs.root.classList.toggle("is-active", isActive);
-      pageRowRefs.activateButton.setAttribute("aria-pressed", String(isActive));
-      pageRowRefs.activateButton.setAttribute("aria-label", `Open ${normalizedTitle}`);
-      pageRowRefs.committedTitle = normalizedTitle;
-      pageRowRefs.titleInput.value = normalizedTitle;
-      pageRowRefs.commitButton.disabled = true;
-    });
+    syncPageTabRows(PAINT_PAGE_MODEL, refs.pageRows, pages, activeIndex);
 
     await restoreCanvasSnapshot(String(pages[activeIndex]?.snapshot || ""));
   };
 
   const setActivePaintPage = async (requestedIndex) => {
-    const boundedIndex = Math.min(
-      PAINT_PAGE_COUNT - 1,
-      Math.max(0, Number.parseInt(requestedIndex, 10) || 0)
-    );
-
     persistActivePaintPageContent();
-    setPaintActivePageIndex(boundedIndex);
+    setPaintActivePageIndex(clampToPageCount(PAINT_PAGE_MODEL, requestedIndex));
     await renderPaintWindowContent();
   };
 
-  for (let index = 0; index < PAINT_PAGE_COUNT; index += 1) {
-    const row = document.createElement("div");
-    row.classList.add("notes-page-tab-row", "caveos-paint-page-row");
-    row.style.setProperty("--notes-tab-color", NOTES_TAB_COLORS[index % NOTES_TAB_COLORS.length]);
-
-    const activateButton = document.createElement("button");
-    activateButton.type = "button";
-    activateButton.classList.add("notes-page-tab-activate", "caveos-paint-page-activate");
-    activateButton.textContent = String(index + 1);
-
-    const titleBar = document.createElement("div");
-    titleBar.classList.add("evidence-title-bar", "notes-page-title-bar");
-
-    const titleInput = document.createElement("input");
-    titleInput.type = "text";
-    titleInput.classList.add("evidence-title-input", "notes-page-title-input", "caveos-paint-page-title-input");
-    titleInput.placeholder = `Sketch ${index + 1}`;
-    titleInput.setAttribute("aria-label", `Title for sketch ${index + 1}`);
-
-    const commitButton = document.createElement("button");
-    commitButton.type = "button";
-    commitButton.classList.add("evidence-title-commit", "notes-page-title-commit");
-    commitButton.textContent = "✓";
-    commitButton.setAttribute("aria-label", `Apply title for sketch ${index + 1}`);
-    commitButton.disabled = true;
-
-    titleBar.append(titleInput, commitButton);
-    row.append(activateButton, titleBar);
-    tabsList.appendChild(row);
-
-    const pageRowRefs = {
-      pageIndex: index,
-      root: row,
-      activateButton,
-      titleInput,
-      commitButton,
-      committedTitle: `Sketch ${index + 1}`,
-    };
-
-    activateButton.addEventListener("click", async () => {
-      await setActivePaintPage(index);
-    });
-
-    titleInput.addEventListener("input", () => {
-      refreshPaintPageCommitState(pageRowRefs);
-    });
-
-    titleInput.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter") {
-        return;
-      }
-
-      event.preventDefault();
-      commitPaintPageTitle(pageRowRefs);
-    });
-
-    commitButton.addEventListener("click", () => {
-      commitPaintPageTitle(pageRowRefs);
-    });
-
-    refs.pageRows.push(pageRowRefs);
-  }
+  refs.pageRows = createPageTabRows(PAINT_PAGE_MODEL, tabsList, (pageIndex) => {
+    void setActivePaintPage(pageIndex);
+  });
 
   toolButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -2237,113 +2002,6 @@ function createComputerNetscapeWindowContentElements() {
     return lowered;
   };
 
-  const normalizeStandaloneContent = (value) => {
-    if (Array.isArray(value)) {
-      return value.map((item) => String(item ?? "").trim()).filter(Boolean);
-    }
-
-    const textValue = String(value ?? "").trim();
-    if (!textValue) {
-      return [];
-    }
-
-    return textValue
-      .split(/\n\s*\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-  };
-
-  const createBrowserInlineLink = (urlText) => {
-    const normalizedUrl = String(urlText ?? "").trim();
-    if (!normalizedUrl) {
-      return document.createTextNode("");
-    }
-
-    const link = document.createElement("a");
-    link.classList.add("browser-inline-content-link");
-    link.href = normalizedUrl;
-    link.textContent = normalizedUrl;
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      link.dispatchEvent(new CustomEvent("caveos-browser-navigate", {
-        bubbles: true,
-        detail: {
-          url: normalizedUrl,
-        },
-      }));
-    });
-
-    return link;
-  };
-
-  const appendDelimitedLinkText = (targetElement, sourceText) => {
-    const value = String(sourceText ?? "");
-    const tokenPattern = /\*-\*(.*?)\*-\*/g;
-    let lastIndex = 0;
-    let match;
-
-    while ((match = tokenPattern.exec(value)) !== null) {
-      const before = value.slice(lastIndex, match.index);
-      if (before) {
-        targetElement.appendChild(document.createTextNode(before));
-      }
-
-      const linkValue = String(match[1] ?? "").trim();
-      if (linkValue) {
-        targetElement.appendChild(createBrowserInlineLink(linkValue));
-      }
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    const trailing = value.slice(lastIndex);
-    if (trailing) {
-      targetElement.appendChild(document.createTextNode(trailing));
-    }
-
-    if (!targetElement.childNodes.length) {
-      targetElement.textContent = value;
-    }
-  };
-
-  const normalizeStandaloneImages = (value) => {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value
-      .map((image) => {
-        if (!image) {
-          return null;
-        }
-
-        if (typeof image === "string") {
-          const src = String(image).trim();
-          if (!src) {
-            return null;
-          }
-
-          return {
-            src,
-            alt: "",
-            caption: "",
-          };
-        }
-
-        const src = String(image.src ?? "").trim();
-        if (!src) {
-          return null;
-        }
-
-        return {
-          src,
-          alt: String(image.alt ?? "").trim(),
-          caption: String(image.caption ?? "").trim(),
-        };
-      })
-      .filter(Boolean);
-  };
-
   const createMissingPage = (attemptedUrl) => {
     const page = document.createElement("div");
     page.classList.add("caveos-browser-page", "browser-page-welcome", "browser-page-missing");
@@ -2380,41 +2038,12 @@ function createComputerNetscapeWindowContentElements() {
       shell.style.fontFamily = String(styleSettings.fontFamily);
     }
 
-    const standaloneImages = normalizeStandaloneImages(pageRecord.images);
-    if (standaloneImages.length) {
-      const media = document.createElement("section");
-      media.classList.add("browser-media-section");
-      media.appendChild(createContentDivider());
-
-      const gallery = document.createElement("div");
-      gallery.classList.add("browser-image-gallery", "browser-image-gallery-zoom");
-
-      standaloneImages.forEach((image) => {
-        const figure = document.createElement("figure");
-        figure.classList.add("browser-image-figure");
-
-        const img = document.createElement("img");
-        img.classList.add("browser-detail-image");
-        img.src = image.src;
-        img.alt = image.alt;
-        img.title = image.alt;
-        figure.appendChild(img);
-
-        if (image.caption) {
-          const caption = document.createElement("figcaption");
-          caption.classList.add("browser-image-caption");
-          caption.textContent = image.caption;
-          figure.appendChild(caption);
-        }
-
-        gallery.appendChild(figure);
-      });
-
-      media.appendChild(gallery);
-      shell.appendChild(media);
+    const gallery = createImageGallery(pageRecord.images, ["browser-image-gallery-zoom"]);
+    if (gallery) {
+      shell.appendChild(gallery);
     }
 
-    const contentLines = normalizeStandaloneContent(pageRecord.content);
+    const contentLines = normalizeLines(pageRecord.content);
     if (!contentLines.length) {
       const empty = document.createElement("p");
       empty.classList.add("browser-welcome-copy");
@@ -2456,18 +2085,6 @@ function createComputerNetscapeWindowContentElements() {
     return page;
   };
 
-  const createZoomSearchPage = () => {
-    return webContentManager.createWebsitePage("zoomsearch");
-  };
-
-  const createLibraryPage = () => {
-    return webContentManager.createWebsitePage("library");
-  };
-
-  const createPoliceRecordsPage = () => {
-    return webContentManager.createWebsitePage("police");
-  };
-
   const createCosmicForgePage = () => {
     const page = document.createElement("div");
     page.classList.add("caveos-browser-page", "browser-page-cosmic");
@@ -2484,10 +2101,6 @@ function createComputerNetscapeWindowContentElements() {
       </div>
     `;
     return page;
-  };
-
-  const createArchivesPage = () => {
-    return webContentManager.createWebsitePage("archives");
   };
 
   const createQuickLinkButton = ({ iconClass, label, onClick }) => {
@@ -2574,6 +2187,9 @@ function createComputerNetscapeWindowContentElements() {
     void navigateToAddress({ pushHistory: true });
   });
 
+  // Every destination the in-game browser can reach. `siteId` marks the views
+  // that are backed by a registered web-content site, which are the ones that
+  // can be re-opened by replaying a search from address history.
   const browserViews = {
     welcome: {
       url: "about:welcome",
@@ -2581,15 +2197,15 @@ function createComputerNetscapeWindowContentElements() {
     },
     zoomsearch: {
       url: "http://www.zoomsearch.net",
-      render: createZoomSearchPage,
+      siteId: "zoomsearch",
     },
     library: {
       url: "http://library.intra",
-      render: createLibraryPage,
+      siteId: "library",
     },
     police: {
       url: "http://records.sk-police.gov",
-      render: createPoliceRecordsPage,
+      siteId: "police",
     },
     cosmic: {
       url: "https://leighhobson89.github.io/cosmicForge/",
@@ -2597,20 +2213,24 @@ function createComputerNetscapeWindowContentElements() {
     },
     archives: {
       url: "http://archives.canada.news",
-      render: createArchivesPage,
+      siteId: "archives",
     },
+  };
+
+  const renderBrowserView = (viewKey) => {
+    const view = browserViews[viewKey];
+    return view.render ? view.render() : webContentManager.createWebsitePage(view.siteId);
   };
 
   const urlRouteMap = new Map();
   const standalonePageRouteMap = new Map();
   const navigationHistory = [];
   const addressHistory = getBrowserAddressHistory();
-  const webViewBySiteId = {
-    zoomsearch: "zoomsearch",
-    library: "library",
-    police: "police",
-    archives: "archives",
-  };
+  const webViewBySiteId = Object.fromEntries(
+    Object.entries(browserViews)
+      .filter(([, view]) => view.siteId)
+      .map(([viewKey, view]) => [view.siteId, viewKey])
+  );
   let historyIndex = -1;
   let standalonePagesPromise = null;
   let ignoreNextInputBlur = false;
@@ -2795,7 +2415,7 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     const finalUrl = overrideUrl || nextView.url;
-    const renderedPageNode = nextView.render();
+    const renderedPageNode = renderBrowserView(viewKey);
     browserAddress.value = finalUrl;
     if (pushAddressHistory) {
       pushAddressHistoryEntry(finalUrl);
@@ -3354,19 +2974,37 @@ async function updateStoryWindowContent(windowController, forceReload = false) {
   refs.storyDocumentContent.scrollTop = 0;
 }
 
-function applyReportPaperStyle(reportPaperWrapElement, paperStyle) {
-  if (!reportPaperWrapElement) {
+// Resets the wrapper to its base class and re-applies the single paper-style
+// modifier for the supplied style name.
+function applyPaperStyle(wrapElement, paperStyle, { baseClass, classPrefix, defaultStyle }) {
+  if (!wrapElement) {
     return;
   }
 
-  reportPaperWrapElement.className = "report-paper-wrap";
+  wrapElement.className = baseClass;
 
-  const styleSuffix = String(paperStyle || "report-parchment").trim();
+  const styleSuffix = String(paperStyle || defaultStyle).trim();
   if (!styleSuffix) {
     return;
   }
 
-  reportPaperWrapElement.classList.add(`${REPORT_PAPER_STYLE_CLASS_PREFIX}${styleSuffix}`);
+  wrapElement.classList.add(`${classPrefix}${styleSuffix}`);
+}
+
+function applyReportPaperStyle(reportPaperWrapElement, paperStyle) {
+  applyPaperStyle(reportPaperWrapElement, paperStyle, {
+    baseClass: "report-paper-wrap",
+    classPrefix: REPORT_PAPER_STYLE_CLASS_PREFIX,
+    defaultStyle: "report-parchment",
+  });
+}
+
+function applyPhotoPaperStyle(photoPaperWrapElement, paperStyle) {
+  applyPaperStyle(photoPaperWrapElement, paperStyle, {
+    baseClass: "photo-paper-wrap",
+    classPrefix: PHOTO_PAPER_STYLE_CLASS_PREFIX,
+    defaultStyle: "photo-mounted",
+  });
 }
 
 function getEvidenceDefaultTitle(evidence) {
@@ -3519,30 +3157,30 @@ function buildMissingCatalogFieldMessage(evidence, label, fieldName, languageCod
   return `${label} unavailable for '${title}'. Catalog entry '${entryId}' is missing '${fieldName}' for language '${normalizeLanguageCode(languageCode)}'.`;
 }
 
-async function getReportCatalogEntry(evidence, languageCode, forceReload = false) {
-  const catalogPathTemplate = String(evidence?.source?.catalogPathTemplate || "").trim();
+async function getCatalogEntryForEvidence(evidence, languageCode, forceReload, { cacheMap, catalogLabel }) {
   const catalogIndex = await loadEvidenceCatalogByLanguage({
-    cacheMap: reportCatalogCacheByLanguage,
+    cacheMap,
     languageCode,
-    pathTemplate: catalogPathTemplate,
-    catalogLabel: "report evidence",
+    pathTemplate: String(evidence?.source?.catalogPathTemplate || "").trim(),
+    catalogLabel,
     forceReload,
   });
 
   return catalogIndex.get(getCatalogEntryIdFromEvidence(evidence)) || null;
 }
 
-async function getPhotoCatalogEntry(evidence, languageCode, forceReload = false) {
-  const catalogPathTemplate = String(evidence?.source?.catalogPathTemplate || "").trim();
-  const catalogIndex = await loadEvidenceCatalogByLanguage({
-    cacheMap: photoCatalogCacheByLanguage,
-    languageCode,
-    pathTemplate: catalogPathTemplate,
-    catalogLabel: "photo evidence",
-    forceReload,
+function getReportCatalogEntry(evidence, languageCode, forceReload = false) {
+  return getCatalogEntryForEvidence(evidence, languageCode, forceReload, {
+    cacheMap: reportCatalogCacheByLanguage,
+    catalogLabel: "report evidence",
   });
+}
 
-  return catalogIndex.get(getCatalogEntryIdFromEvidence(evidence)) || null;
+function getPhotoCatalogEntry(evidence, languageCode, forceReload = false) {
+  return getCatalogEntryForEvidence(evidence, languageCode, forceReload, {
+    cacheMap: photoCatalogCacheByLanguage,
+    catalogLabel: "photo evidence",
+  });
 }
 
 async function getDescriptionTextByEvidence(
@@ -3552,50 +3190,36 @@ async function getDescriptionTextByEvidence(
   preloadedCatalogEntry = null
 ) {
   const evidenceType = String(evidence?.type || "").trim();
-
-  if (evidenceType === "report") {
-    const explicitDescription = String(evidence?.description || "")
-      .replace(/\r\n/g, "\n")
-      .trim();
-    if (explicitDescription) {
-      return explicitDescription;
-    }
-
-    const reportEntry = preloadedCatalogEntry
-      || await getReportCatalogEntry(evidence, languageCode, forceReload);
-    if (!reportEntry) {
-      return buildMissingCatalogEntryMessage(evidence, "Report description", languageCode);
-    }
-    const descriptionText = sanitizeCatalogText(reportEntry?.descriptionText).trim();
-    if (descriptionText) {
-      return descriptionText;
-    }
-
-    return buildMissingCatalogFieldMessage(evidence, "Report description", "descriptionText", languageCode);
-  }
-
-  if (evidenceType === "photo") {
-    const photoEntry = preloadedCatalogEntry
-      || await getPhotoCatalogEntry(evidence, languageCode, forceReload);
-    if (!photoEntry) {
-      return buildMissingCatalogEntryMessage(evidence, "Photo description", languageCode);
-    }
-    const descriptionText = sanitizeCatalogText(photoEntry?.descriptionText).trim();
-    if (descriptionText) {
-      return descriptionText;
-    }
-
-    return buildMissingCatalogFieldMessage(evidence, "Photo description", "descriptionText", languageCode);
-  }
-
   const explicitDescription = String(evidence?.description || "")
     .replace(/\r\n/g, "\n")
     .trim();
-  if (explicitDescription) {
+
+  // Photos always defer to the catalog; reports and everything else may carry
+  // an inline description (used by faxes) that wins over the catalog.
+  if (evidenceType !== "photo" && explicitDescription) {
     return explicitDescription;
   }
 
-  return "Description unavailable.";
+  if (evidenceType !== "report" && evidenceType !== "photo") {
+    return "Description unavailable.";
+  }
+
+  const label = evidenceType === "report" ? "Report description" : "Photo description";
+  const catalogEntry = preloadedCatalogEntry
+    || (evidenceType === "report"
+      ? await getReportCatalogEntry(evidence, languageCode, forceReload)
+      : await getPhotoCatalogEntry(evidence, languageCode, forceReload));
+
+  if (!catalogEntry) {
+    return buildMissingCatalogEntryMessage(evidence, label, languageCode);
+  }
+
+  const descriptionText = sanitizeCatalogText(catalogEntry?.descriptionText).trim();
+  if (descriptionText) {
+    return descriptionText;
+  }
+
+  return buildMissingCatalogFieldMessage(evidence, label, "descriptionText", languageCode);
 }
 
 function getDescriptionPaperStyleFromEvidence(evidence) {
@@ -3623,31 +3247,35 @@ function getDescriptionPaperStyleFromEvidence(evidence) {
   }
 }
 
-function syncEvidenceTitleWidth(refs, sourceElement) {
-  if (!refs?.titleBarElement || !sourceElement) {
+// Copies one measured dimension of `sourceElement` onto a sibling element so the
+// title bar, caption row and description panel stay flush with the paper mount.
+function syncMeasuredDimension(targetElement, sourceElement, dimension) {
+  if (!targetElement || !sourceElement) {
     return;
   }
 
-  const width = Math.max(1, Math.round(sourceElement.getBoundingClientRect().width));
-  refs.titleBarElement.style.width = `${width}px`;
+  const measured = Math.max(1, Math.round(sourceElement.getBoundingClientRect()[dimension]));
+  targetElement.style[dimension] = `${measured}px`;
 }
 
-function syncPhotoDescriptionHeight(refs, sourceElement) {
-  if (!refs?.descriptionOuterElement || !sourceElement) {
-    return;
-  }
-
-  const height = Math.max(1, Math.round(sourceElement.getBoundingClientRect().height));
-  refs.descriptionOuterElement.style.height = `${height}px`;
+function syncEvidenceTitleWidth(refs, sourceElement) {
+  syncMeasuredDimension(refs?.titleBarElement, sourceElement, "width");
 }
 
 function syncPhotoCaptionWidth(refs, sourceElement) {
-  if (!refs?.captionOuterElement || !sourceElement) {
-    return;
-  }
+  syncMeasuredDimension(refs?.captionOuterElement, sourceElement, "width");
+}
 
-  const width = Math.max(1, Math.round(sourceElement.getBoundingClientRect().width));
-  refs.captionOuterElement.style.width = `${width}px`;
+function syncPhotoDescriptionHeight(refs, sourceElement) {
+  syncMeasuredDimension(refs?.descriptionOuterElement, sourceElement, "height");
+}
+
+// The photo mount's title bar, caption row and description panel all track the
+// paper wrapper, so they are always refreshed together.
+function syncPhotoMountChrome(refs) {
+  syncEvidenceTitleWidth(refs, refs?.photoPaperWrap);
+  syncPhotoCaptionWidth(refs, refs?.photoPaperWrap);
+  syncPhotoDescriptionHeight(refs, refs?.photoPaperWrap);
 }
 
 function createEvidenceTitleBarElements() {
@@ -3745,36 +3373,86 @@ function wireEvidenceTitleEditor({ refs, storageKey, onCommitted }) {
   });
 }
 
-function persistActiveNotesPageContent(refs) {
-  if (!refs?.textarea) {
-    return;
-  }
+// ---------------------------------------------------------------------------
+// Paged documents (Notes and Paint)
+//
+// Notes and Paint present the same UI: a numbered, colour-coded tab strip down
+// the side where each tab carries an editable page title, plus one editor pane.
+// They differ only in the field that stores the page body, the default title
+// noun, and a few extra CSS classes. Both are described by a page model below
+// and share every helper in this section.
+// ---------------------------------------------------------------------------
 
-  const pages = getNotesPages();
+const NOTES_PAGE_MODEL = {
+  pageCount: NOTES_PAGE_COUNT,
+  titlePrefix: "Page",
+  ariaNoun: "notes page",
+  bodyKey: "content",
+  getPages: getNotesPages,
+  setPages: setNotesPages,
+  getActivePageIndex: getNotesActivePageIndex,
+  setActivePageIndex: setNotesActivePageIndex,
+  rowClassNames: [],
+  activateClassNames: [],
+  titleInputClassNames: [],
+};
+
+const PAINT_PAGE_MODEL = {
+  pageCount: PAINT_PAGE_COUNT,
+  titlePrefix: "Sketch",
+  ariaNoun: "sketch",
+  bodyKey: "snapshot",
+  getPages: getPaintPages,
+  setPages: setPaintPages,
+  getActivePageIndex: getPaintActivePageIndex,
+  setActivePageIndex: setPaintActivePageIndex,
+  rowClassNames: ["caveos-paint-page-row"],
+  activateClassNames: ["caveos-paint-page-activate"],
+  titleInputClassNames: ["caveos-paint-page-title-input"],
+};
+
+function buildDefaultPageTitle(model, pageIndex) {
+  return `${model.titlePrefix} ${pageIndex + 1}`;
+}
+
+function readPageOrDefault(model, pages, pageIndex) {
+  return pages[pageIndex] || {
+    title: buildDefaultPageTitle(model, pageIndex),
+    [model.bodyKey]: "",
+  };
+}
+
+function clampToPageCount(model, requestedIndex) {
+  return Math.min(model.pageCount - 1, Math.max(0, Number.parseInt(requestedIndex, 10) || 0));
+}
+
+function resolveActivePageIndex(model, pages) {
+  return Math.min(
+    pages.length - 1,
+    Math.max(0, Number.parseInt(model.getActivePageIndex(), 10) || 0)
+  );
+}
+
+// Writes `bodyValue` into the active page, skipping the store update when the
+// body is unchanged so Paint does not re-encode an identical canvas snapshot.
+function persistActivePageBody(model, bodyValue) {
+  const pages = model.getPages();
   if (!pages.length) {
     return;
   }
 
-  const activeIndex = Math.min(
-    pages.length - 1,
-    Math.max(0, Number.parseInt(getNotesActivePageIndex(), 10) || 0)
-  );
-  const existingPage = pages[activeIndex] || { title: `Page ${activeIndex + 1}`, content: "" };
-  const nextContent = String(refs.textarea.value || "");
+  const activeIndex = resolveActivePageIndex(model, pages);
+  const existingPage = readPageOrDefault(model, pages, activeIndex);
 
-  if (String(existingPage.content || "") === nextContent) {
+  if (String(existingPage[model.bodyKey] || "") === bodyValue) {
     return;
   }
 
-  pages[activeIndex] = {
-    ...existingPage,
-    content: nextContent,
-  };
-
-  setNotesPages(pages);
+  pages[activeIndex] = { ...existingPage, [model.bodyKey]: bodyValue };
+  model.setPages(pages);
 }
 
-function refreshNotesPageCommitState(pageRowRefs) {
+function refreshPageTitleCommitState(pageRowRefs) {
   if (!pageRowRefs?.titleInput || !pageRowRefs?.commitButton) {
     return;
   }
@@ -3784,15 +3462,15 @@ function refreshNotesPageCommitState(pageRowRefs) {
   pageRowRefs.commitButton.disabled = !normalizedInput || normalizedInput === normalizedCommitted;
 }
 
-function commitNotesPageTitle(refs, pageRowRefs) {
-  if (!refs || !pageRowRefs) {
+function commitPageTitle(model, pageRowRefs) {
+  if (!pageRowRefs) {
     return;
   }
 
   const nextTitle = String(pageRowRefs.titleInput.value || "").trim();
   if (!nextTitle) {
     pageRowRefs.titleInput.value = pageRowRefs.committedTitle;
-    refreshNotesPageCommitState(pageRowRefs);
+    refreshPageTitleCommitState(pageRowRefs);
     return;
   }
 
@@ -3801,21 +3479,113 @@ function commitNotesPageTitle(refs, pageRowRefs) {
     return;
   }
 
-  const pages = getNotesPages();
-  const existingPage = pages[pageRowRefs.pageIndex] || {
-    title: `Page ${pageRowRefs.pageIndex + 1}`,
-    content: "",
-  };
-
+  const pages = model.getPages();
   pages[pageRowRefs.pageIndex] = {
-    ...existingPage,
+    ...readPageOrDefault(model, pages, pageRowRefs.pageIndex),
     title: nextTitle,
   };
 
-  setNotesPages(pages);
+  model.setPages(pages);
   pageRowRefs.committedTitle = nextTitle;
   pageRowRefs.titleInput.value = nextTitle;
   pageRowRefs.commitButton.disabled = true;
+}
+
+function createPageTabRow(model, pageIndex, onActivate) {
+  const row = document.createElement("div");
+  row.classList.add("notes-page-tab-row", ...model.rowClassNames);
+  row.style.setProperty("--notes-tab-color", NOTES_TAB_COLORS[pageIndex % NOTES_TAB_COLORS.length]);
+
+  const activateButton = document.createElement("button");
+  activateButton.type = "button";
+  activateButton.classList.add("notes-page-tab-activate", ...model.activateClassNames);
+  activateButton.textContent = String(pageIndex + 1);
+
+  const titleBar = document.createElement("div");
+  titleBar.classList.add("evidence-title-bar", "notes-page-title-bar");
+
+  const defaultTitle = buildDefaultPageTitle(model, pageIndex);
+
+  const titleInput = document.createElement("input");
+  titleInput.type = "text";
+  titleInput.classList.add("evidence-title-input", "notes-page-title-input", ...model.titleInputClassNames);
+  titleInput.placeholder = defaultTitle;
+  titleInput.setAttribute("aria-label", `Title for ${model.ariaNoun} ${pageIndex + 1}`);
+
+  const commitButton = document.createElement("button");
+  commitButton.type = "button";
+  commitButton.classList.add("evidence-title-commit", "notes-page-title-commit");
+  commitButton.textContent = "✓";
+  commitButton.setAttribute("aria-label", `Apply title for ${model.ariaNoun} ${pageIndex + 1}`);
+  commitButton.disabled = true;
+
+  titleBar.append(titleInput, commitButton);
+  row.append(activateButton, titleBar);
+
+  const pageRowRefs = {
+    pageIndex,
+    root: row,
+    activateButton,
+    titleInput,
+    commitButton,
+    committedTitle: defaultTitle,
+  };
+
+  activateButton.addEventListener("click", () => {
+    onActivate(pageIndex);
+  });
+
+  titleInput.addEventListener("input", () => {
+    refreshPageTitleCommitState(pageRowRefs);
+  });
+
+  titleInput.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    commitPageTitle(model, pageRowRefs);
+  });
+
+  commitButton.addEventListener("click", () => {
+    commitPageTitle(model, pageRowRefs);
+  });
+
+  return pageRowRefs;
+}
+
+// Builds the whole tab strip and appends it to `tabsList`.
+function createPageTabRows(model, tabsList, onActivate) {
+  return Array.from({ length: model.pageCount }, (_, pageIndex) => {
+    const pageRowRefs = createPageTabRow(model, pageIndex, onActivate);
+    tabsList.appendChild(pageRowRefs.root);
+    return pageRowRefs;
+  });
+}
+
+function syncPageTabRows(model, pageRows, pages, activeIndex) {
+  pageRows.forEach((pageRowRefs) => {
+    const pageData = readPageOrDefault(model, pages, pageRowRefs.pageIndex);
+    const normalizedTitle = String(pageData.title || "").trim()
+      || buildDefaultPageTitle(model, pageRowRefs.pageIndex);
+    const isActive = pageRowRefs.pageIndex === activeIndex;
+
+    pageRowRefs.root.classList.toggle("is-active", isActive);
+    pageRowRefs.activateButton.setAttribute("aria-pressed", String(isActive));
+    pageRowRefs.activateButton.setAttribute("aria-label", `Open ${normalizedTitle}`);
+    pageRowRefs.committedTitle = normalizedTitle;
+    pageRowRefs.titleInput.value = normalizedTitle;
+    pageRowRefs.commitButton.disabled = true;
+  });
+}
+
+function persistActiveNotesPageContent(refs) {
+  if (!refs?.textarea) {
+    return;
+  }
+
+  persistActivePageBody(NOTES_PAGE_MODEL, String(refs.textarea.value || ""));
 }
 
 function renderNotesWindowContent(refs) {
@@ -3829,29 +3599,12 @@ function renderNotesWindowContent(refs) {
     return;
   }
 
-  const activeIndex = Math.min(
-    pages.length - 1,
-    Math.max(0, Number.parseInt(getNotesActivePageIndex(), 10) || 0)
-  );
+  const activeIndex = resolveActivePageIndex(NOTES_PAGE_MODEL, pages);
   setNotesActivePageIndex(activeIndex);
   refs.activePageIndex = activeIndex;
   refs.textarea.value = String(pages[activeIndex]?.content || "");
 
-  refs.pageRows.forEach((pageRowRefs) => {
-    const pageData = pages[pageRowRefs.pageIndex] || {
-      title: `Page ${pageRowRefs.pageIndex + 1}`,
-      content: "",
-    };
-    const normalizedTitle = String(pageData.title || "").trim() || `Page ${pageRowRefs.pageIndex + 1}`;
-    const isActive = pageRowRefs.pageIndex === activeIndex;
-
-    pageRowRefs.root.classList.toggle("is-active", isActive);
-    pageRowRefs.activateButton.setAttribute("aria-pressed", String(isActive));
-    pageRowRefs.activateButton.setAttribute("aria-label", `Open ${normalizedTitle}`);
-    pageRowRefs.committedTitle = normalizedTitle;
-    pageRowRefs.titleInput.value = normalizedTitle;
-    pageRowRefs.commitButton.disabled = true;
-  });
+  syncPageTabRows(NOTES_PAGE_MODEL, refs.pageRows, pages, activeIndex);
 }
 
 function setActiveNotesPage(refs, requestedIndex) {
@@ -3859,9 +3612,8 @@ function setActiveNotesPage(refs, requestedIndex) {
     return;
   }
 
-  const boundedIndex = Math.min(NOTES_PAGE_COUNT - 1, Math.max(0, Number.parseInt(requestedIndex, 10) || 0));
   persistActiveNotesPageContent(refs);
-  setNotesActivePageIndex(boundedIndex);
+  setNotesActivePageIndex(clampToPageCount(NOTES_PAGE_MODEL, requestedIndex));
   renderNotesWindowContent(refs);
   refs.textarea.focus();
 }
@@ -3896,68 +3648,9 @@ function createNotesWindowContentElements() {
     activePageIndex: 0,
   };
 
-  for (let index = 0; index < NOTES_PAGE_COUNT; index += 1) {
-    const row = document.createElement("div");
-    row.classList.add("notes-page-tab-row");
-    row.style.setProperty("--notes-tab-color", NOTES_TAB_COLORS[index % NOTES_TAB_COLORS.length]);
-
-    const activateButton = document.createElement("button");
-    activateButton.type = "button";
-    activateButton.classList.add("notes-page-tab-activate");
-    activateButton.textContent = String(index + 1);
-
-    const titleBar = document.createElement("div");
-    titleBar.classList.add("evidence-title-bar", "notes-page-title-bar");
-
-    const titleInput = document.createElement("input");
-    titleInput.type = "text";
-    titleInput.classList.add("evidence-title-input", "notes-page-title-input");
-    titleInput.placeholder = `Page ${index + 1}`;
-    titleInput.setAttribute("aria-label", `Title for notes page ${index + 1}`);
-
-    const commitButton = document.createElement("button");
-    commitButton.type = "button";
-    commitButton.classList.add("evidence-title-commit", "notes-page-title-commit");
-    commitButton.textContent = "✓";
-    commitButton.setAttribute("aria-label", `Apply title for notes page ${index + 1}`);
-    commitButton.disabled = true;
-
-    titleBar.append(titleInput, commitButton);
-    row.append(activateButton, titleBar);
-    tabsList.appendChild(row);
-
-    const pageRowRefs = {
-      pageIndex: index,
-      root: row,
-      activateButton,
-      titleInput,
-      commitButton,
-      committedTitle: `Page ${index + 1}`,
-    };
-
-    activateButton.addEventListener("click", () => {
-      setActiveNotesPage(refs, index);
-    });
-
-    titleInput.addEventListener("input", () => {
-      refreshNotesPageCommitState(pageRowRefs);
-    });
-
-    titleInput.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter") {
-        return;
-      }
-
-      event.preventDefault();
-      commitNotesPageTitle(refs, pageRowRefs);
-    });
-
-    commitButton.addEventListener("click", () => {
-      commitNotesPageTitle(refs, pageRowRefs);
-    });
-
-    refs.pageRows.push(pageRowRefs);
-  }
+  refs.pageRows = createPageTabRows(NOTES_PAGE_MODEL, tabsList, (pageIndex) => {
+    setActiveNotesPage(refs, pageIndex);
+  });
 
   textarea.addEventListener("focusout", () => {
     persistActiveNotesPageContent(refs);
@@ -4238,11 +3931,54 @@ function createEvidenceMagnifierController({ interactionElement, overlayHostElem
   };
 }
 
+// The magnifier toggle and "n/total" counter that sit above every evidence
+// carousel.
+function createEvidenceControlsHost(counterClassName) {
+  const controlsHost = document.createElement("div");
+  controlsHost.classList.add("evidence-controls-host");
+
+  const magnifierToggle = createEvidenceMagnifierToggleButton();
+
+  const counter = document.createElement("div");
+  counter.classList.add(counterClassName);
+
+  controlsHost.append(magnifierToggle, counter);
+
+  return { controlsHost, magnifierToggle, counter };
+}
+
+// The parchment description panel shown under every evidence carousel.
+function createEvidenceDescriptionPanel() {
+  const descriptionOuter = document.createElement("div");
+  descriptionOuter.classList.add("evidence-description-outer");
+
+  const descriptionPaperWrap = document.createElement("div");
+  descriptionPaperWrap.classList.add("report-paper-wrap", "evidence-description-paper-wrap");
+
+  const descriptionText = document.createElement("div");
+  descriptionText.classList.add("evidence-description-text", "scrollbars-hidden");
+  descriptionText.textContent = "Loading description...";
+
+  descriptionPaperWrap.appendChild(descriptionText);
+  descriptionOuter.appendChild(descriptionPaperWrap);
+
+  return { descriptionOuter, descriptionPaperWrap, descriptionText };
+}
+
+function createEvidenceMagnifierOverlayHost() {
+  const magnifierOverlayHost = document.createElement("div");
+  magnifierOverlayHost.classList.add("evidence-magnifier-overlay-host");
+  return magnifierOverlayHost;
+}
+
 function createPhotosWindowContentElements() {
   const container = document.createElement("div");
   container.classList.add("photos-carousel-container");
 
   const titleEditorRefs = createEvidenceTitleBarElements();
+  const { controlsHost, magnifierToggle, counter } = createEvidenceControlsHost("photos-carousel-counter");
+  const { descriptionOuter, descriptionPaperWrap, descriptionText } = createEvidenceDescriptionPanel();
+  const magnifierOverlayHost = createEvidenceMagnifierOverlayHost();
 
   const mediaViewport = document.createElement("div");
   mediaViewport.classList.add("photos-media-viewport");
@@ -4256,18 +3992,6 @@ function createPhotosWindowContentElements() {
   const emptyState = document.createElement("div");
   emptyState.classList.add("photos-carousel-empty", "d-none");
 
-  const controlsHost = document.createElement("div");
-  controlsHost.classList.add("evidence-controls-host");
-
-  const magnifierToggle = createEvidenceMagnifierToggleButton();
-  const magnifierOverlayHost = document.createElement("div");
-  magnifierOverlayHost.classList.add("evidence-magnifier-overlay-host");
-
-  const counter = document.createElement("div");
-  counter.classList.add("photos-carousel-counter");
-
-  controlsHost.append(magnifierToggle, counter);
-
   const captionOuter = document.createElement("div");
   captionOuter.classList.add("photo-caption-outer");
 
@@ -4275,19 +3999,6 @@ function createPhotosWindowContentElements() {
   captionText.classList.add("photo-caption-text", "scrollbars-hidden");
   captionText.textContent = "";
   captionOuter.appendChild(captionText);
-
-  const descriptionOuter = document.createElement("div");
-  descriptionOuter.classList.add("evidence-description-outer");
-
-  const descriptionPaperWrap = document.createElement("div");
-  descriptionPaperWrap.classList.add("report-paper-wrap", "evidence-description-paper-wrap");
-
-  const descriptionText = document.createElement("div");
-  descriptionText.classList.add("evidence-description-text", "scrollbars-hidden");
-  descriptionText.textContent = "Loading description...";
-
-  descriptionPaperWrap.appendChild(descriptionText);
-  descriptionOuter.appendChild(descriptionPaperWrap);
 
   photoPaperWrap.appendChild(image);
   mediaViewport.append(photoPaperWrap, captionOuter, emptyState);
@@ -4377,24 +4088,7 @@ function layoutPhotoMount(refs) {
   refs.photoPaperWrap.style.height = `${frameHeight + padTop + padBottom + borderTop + borderBottom}px`;
   refs.image.style.width = `${frameWidth}px`;
   refs.image.style.height = `${frameHeight}px`;
-  syncEvidenceTitleWidth(refs, refs.photoPaperWrap);
-  syncPhotoCaptionWidth(refs, refs.photoPaperWrap);
-  syncPhotoDescriptionHeight(refs, refs.photoPaperWrap);
-}
-
-function applyPhotoPaperStyle(photoPaperWrapElement, paperStyle) {
-  if (!photoPaperWrapElement) {
-    return;
-  }
-
-  photoPaperWrapElement.className = "photo-paper-wrap";
-
-  const styleSuffix = String(paperStyle || "photo-mounted").trim();
-  if (!styleSuffix) {
-    return;
-  }
-
-  photoPaperWrapElement.classList.add(`${PHOTO_PAPER_STYLE_CLASS_PREFIX}${styleSuffix}`);
+  syncPhotoMountChrome(refs);
 }
 
 function createReportsWindowContentElements() {
@@ -4402,6 +4096,9 @@ function createReportsWindowContentElements() {
   container.classList.add("reports-carousel-container");
 
   const titleEditorRefs = createEvidenceTitleBarElements();
+  const { controlsHost, magnifierToggle, counter } = createEvidenceControlsHost("report-carousel-counter");
+  const { descriptionOuter, descriptionPaperWrap, descriptionText } = createEvidenceDescriptionPanel();
+  const magnifierOverlayHost = createEvidenceMagnifierOverlayHost();
 
   const reportViewport = document.createElement("div");
   reportViewport.classList.add("reports-content-viewport");
@@ -4417,31 +4114,6 @@ function createReportsWindowContentElements() {
 
   const emptyState = document.createElement("div");
   emptyState.classList.add("report-carousel-empty", "d-none");
-
-  const controlsHost = document.createElement("div");
-  controlsHost.classList.add("evidence-controls-host");
-
-  const magnifierToggle = createEvidenceMagnifierToggleButton();
-  const magnifierOverlayHost = document.createElement("div");
-  magnifierOverlayHost.classList.add("evidence-magnifier-overlay-host");
-
-  const counter = document.createElement("div");
-  counter.classList.add("report-carousel-counter");
-
-  controlsHost.append(magnifierToggle, counter);
-
-  const descriptionOuter = document.createElement("div");
-  descriptionOuter.classList.add("evidence-description-outer");
-
-  const descriptionPaperWrap = document.createElement("div");
-  descriptionPaperWrap.classList.add("report-paper-wrap", "evidence-description-paper-wrap");
-
-  const descriptionText = document.createElement("div");
-  descriptionText.classList.add("evidence-description-text", "scrollbars-hidden");
-  descriptionText.textContent = "Loading description...";
-
-  descriptionPaperWrap.appendChild(descriptionText);
-  descriptionOuter.appendChild(descriptionPaperWrap);
 
   reportDocumentContent.append(reportDocumentText, emptyState);
   reportPaperWrap.appendChild(reportDocumentContent);
@@ -4555,9 +4227,7 @@ async function updatePhotosWindowContent(windowController) {
       windowController.nextButtonElement.disabled = false;
     }
 
-    syncEvidenceTitleWidth(refs, refs.photoPaperWrap);
-    syncPhotoCaptionWidth(refs, refs.photoPaperWrap);
-    syncPhotoDescriptionHeight(refs, refs.photoPaperWrap);
+    syncPhotoMountChrome(refs);
     return;
   }
 
@@ -4602,9 +4272,7 @@ async function updatePhotosWindowContent(windowController) {
     refs.emptyState.textContent = `Missing image: ${currentItem}`;
   };
 
-  syncEvidenceTitleWidth(refs, refs.photoPaperWrap);
-  syncPhotoCaptionWidth(refs, refs.photoPaperWrap);
-  syncPhotoDescriptionHeight(refs, refs.photoPaperWrap);
+  syncPhotoMountChrome(refs);
 }
 
 async function getReportTextByEvidence(
@@ -4708,36 +4376,14 @@ async function updateReportsWindowContent(windowController) {
   }
 }
 
-function showPreviousCarouselImage() {
-  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).length) {
+// Advances a carousel by `delta`, doing nothing when the collection is empty.
+// Uses the count rather than the collection so no evidence is cloned.
+function stepEvidenceCarousel(storageKey, delta) {
+  if (!getEvidenceCount(storageKey)) {
     return;
   }
 
-  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, -1);
-}
-
-function showNextCarouselImage() {
-  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.PHOTOS).length) {
-    return;
-  }
-
-  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.PHOTOS, 1);
-}
-
-function showPreviousReport() {
-  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).length) {
-    return;
-  }
-
-  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, -1);
-}
-
-function showNextReport() {
-  if (!getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS).length) {
-    return;
-  }
-
-  stepEvidenceIndex(EVIDENCE_STORAGE_KEYS.REPORTS, 1);
+  stepEvidenceIndex(storageKey, delta);
 }
 
 function wireEvidenceMagnifierToggle(refs) {
@@ -4756,126 +4402,117 @@ function wireEvidenceMagnifierToggle(refs) {
   });
 }
 
-function openPhotosWindow() {
+// Photos and Reports are the same window: a carousel with prev/next navigation,
+// an editable evidence title, a magnifier, and a description panel. The config
+// below is everything that actually differs between them.
+const EVIDENCE_CAROUSEL_WINDOWS = {
+  photos: {
+    kind: "photos",
+    titleKey: "photos",
+    classNames: ["story-window", "photos-window"],
+    closeButtonAriaLabel: "Close photos window",
+    storageKey: () => EVIDENCE_STORAGE_KEYS.PHOTOS,
+    contentRefsMap: () => photosWindowContentRefs,
+    createContentElements: createPhotosWindowContentElements,
+    updateWindowContent: (windowController) => updatePhotosWindowContent(windowController),
+    initialHeightRatio: 0.646,
+    getScrollContainer: (refs) => refs.container,
+    getResizeTargets: (refs) => [refs.mediaViewport, refs.photoPaperWrap],
+    onResize: (refs) => {
+      layoutPhotoMount(refs);
+      syncPhotoMountChrome(refs);
+    },
+  },
+  reports: {
+    kind: "reports",
+    titleKey: "reports",
+    classNames: ["story-window", "reports-window"],
+    closeButtonAriaLabel: "Close reports window",
+    storageKey: () => EVIDENCE_STORAGE_KEYS.REPORTS,
+    contentRefsMap: () => reportsWindowContentRefs,
+    createContentElements: createReportsWindowContentElements,
+    updateWindowContent: (windowController) => updateReportsWindowContent(windowController),
+    getScrollContainer: (refs) => refs.reportDocumentContent,
+    getResizeTargets: (refs) => [refs.reportViewport, refs.reportPaperWrap],
+    onResize: (refs) => {
+      syncEvidenceTitleWidth(refs, refs.reportPaperWrap);
+    },
+  },
+};
+
+function openEvidenceCarouselWindow(config) {
   if (!getElements().gameArea) {
     return;
   }
 
-  let photosWindowController = null;
-  photosWindowController = new DesktopWindow({
+  const storageKey = config.storageKey();
+  const contentRefsMap = config.contentRefsMap();
+
+  let windowController = null;
+  windowController = new DesktopWindow({
     parentElement: getElements().gameArea,
-    classNames: ["story-window", "photos-window"],
-    title: localize("photos", getLanguage()),
+    classNames: config.classNames,
+    title: localize(config.titleKey, getLanguage()),
     showCarouselNavigation: true,
-    initialHeightRatio: 0.646,
+    ...(config.initialHeightRatio ? { initialHeightRatio: config.initialHeightRatio } : {}),
     onNavigatePrevious: () => {
-      showPreviousCarouselImage();
-      updatePhotosWindowContent(photosWindowController);
+      stepEvidenceCarousel(storageKey, -1);
+      config.updateWindowContent(windowController);
     },
     onNavigateNext: () => {
-      showNextCarouselImage();
-      updatePhotosWindowContent(photosWindowController);
+      stepEvidenceCarousel(storageKey, 1);
+      config.updateWindowContent(windowController);
     },
-    closeButtonAriaLabel: "Close photos window",
+    closeButtonAriaLabel: config.closeButtonAriaLabel,
     onClose: () => {
-      const refs = photosWindowContentRefs.get(photosWindowController);
+      const refs = contentRefsMap.get(windowController);
       if (refs?.resizeObserver) {
         refs.resizeObserver.disconnect();
         refs.resizeObserver = null;
       }
 
-      unregisterDesktopWindow(photosWindowController);
+      unregisterDesktopWindow(windowController);
       audioManager.playSfx("clickSwitch");
     },
   });
 
-  const contentRefs = createPhotosWindowContentElements();
+  const contentRefs = config.createContentElements();
   wireEvidenceTitleEditor({
     refs: contentRefs,
-    storageKey: EVIDENCE_STORAGE_KEYS.PHOTOS,
+    storageKey,
     onCommitted: () => {
-      updatePhotosWindowContent(photosWindowController);
+      config.updateWindowContent(windowController);
     },
   });
-  photosWindowController.setContent(contentRefs.container);
-  photosWindowController.scrollContainerElement = contentRefs.container;
+
+  windowController.setContent(contentRefs.container);
+  windowController.scrollContainerElement = config.getScrollContainer(contentRefs);
+
   if (typeof ResizeObserver !== "undefined") {
     contentRefs.resizeObserver = new ResizeObserver(() => {
-      layoutPhotoMount(contentRefs);
-      syncEvidenceTitleWidth(contentRefs, contentRefs.photoPaperWrap);
-      syncPhotoCaptionWidth(contentRefs, contentRefs.photoPaperWrap);
-      syncPhotoDescriptionHeight(contentRefs, contentRefs.photoPaperWrap);
+      config.onResize(contentRefs);
     });
-    contentRefs.resizeObserver.observe(contentRefs.mediaViewport);
-    contentRefs.resizeObserver.observe(contentRefs.photoPaperWrap);
+    config.getResizeTargets(contentRefs).forEach((target) => {
+      contentRefs.resizeObserver.observe(target);
+    });
   }
-  photosWindowContentRefs.set(photosWindowController, contentRefs);
-  registerDesktopWindow(photosWindowController, "photos");
+
+  contentRefsMap.set(windowController, contentRefs);
+  registerDesktopWindow(windowController, config.kind);
   wireEvidenceMagnifierToggle(contentRefs);
 
-  updatePhotosWindowContent(photosWindowController);
-  photosWindowController.open({ resizable: true, showScrollbar: false });
-  bringDesktopWindowToFront(photosWindowController);
+  config.updateWindowContent(windowController);
+  windowController.open({ resizable: true, showScrollbar: false });
+  bringDesktopWindowToFront(windowController);
   audioManager.playSfx("clickSwitch");
 }
 
+function openPhotosWindow() {
+  openEvidenceCarouselWindow(EVIDENCE_CAROUSEL_WINDOWS.photos);
+}
+
 function openReportsWindow() {
-  if (!getElements().gameArea) {
-    return;
-  }
-
-  let reportsWindowController = null;
-  reportsWindowController = new DesktopWindow({
-    parentElement: getElements().gameArea,
-    classNames: ["story-window", "reports-window"],
-    title: localize("reports", getLanguage()),
-    showCarouselNavigation: true,
-    onNavigatePrevious: () => {
-      showPreviousReport();
-      updateReportsWindowContent(reportsWindowController);
-    },
-    onNavigateNext: () => {
-      showNextReport();
-      updateReportsWindowContent(reportsWindowController);
-    },
-    closeButtonAriaLabel: "Close reports window",
-    onClose: () => {
-      const refs = reportsWindowContentRefs.get(reportsWindowController);
-      if (refs?.resizeObserver) {
-        refs.resizeObserver.disconnect();
-        refs.resizeObserver = null;
-      }
-
-      unregisterDesktopWindow(reportsWindowController);
-      audioManager.playSfx("clickSwitch");
-    },
-  });
-
-  const contentRefs = createReportsWindowContentElements();
-  wireEvidenceTitleEditor({
-    refs: contentRefs,
-    storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
-    onCommitted: () => {
-      updateReportsWindowContent(reportsWindowController);
-    },
-  });
-  reportsWindowController.setContent(contentRefs.container);
-  reportsWindowController.scrollContainerElement = contentRefs.reportDocumentContent;
-  if (typeof ResizeObserver !== "undefined") {
-    contentRefs.resizeObserver = new ResizeObserver(() => {
-      syncEvidenceTitleWidth(contentRefs, contentRefs.reportPaperWrap);
-    });
-    contentRefs.resizeObserver.observe(contentRefs.reportViewport);
-    contentRefs.resizeObserver.observe(contentRefs.reportPaperWrap);
-  }
-  reportsWindowContentRefs.set(reportsWindowController, contentRefs);
-  registerDesktopWindow(reportsWindowController, "reports");
-  wireEvidenceMagnifierToggle(contentRefs);
-
-  updateReportsWindowContent(reportsWindowController);
-  reportsWindowController.open({ resizable: true, showScrollbar: false });
-  bringDesktopWindowToFront(reportsWindowController);
-  audioManager.playSfx("clickSwitch");
+  openEvidenceCarouselWindow(EVIDENCE_CAROUSEL_WINDOWS.reports);
 }
 
 function createFacsimileWindowContentElements() {
@@ -5191,9 +4828,6 @@ function openComputerWindow() {
         refs.clockIntervalId = null;
       }
       unregisterDesktopWindow(nextController);
-      if (computerWindowController === nextController) {
-        computerWindowController = null;
-      }
       audioManager.playSfx("clickSwitch");
     },
   });
@@ -5214,23 +4848,6 @@ function openComputerWindow() {
   }
 
   bringDesktopWindowToFront(nextController);
-  computerWindowController = nextController;
   audioManager.playSfx("clickSwitch");
-}
-
-export function refreshAllPhotosWindows() {
-  activeDesktopWindows.forEach((windowController) => {
-    if (desktopWindowKinds.get(windowController) === "photos") {
-      updatePhotosWindowContent(windowController);
-    }
-  });
-}
-
-export function refreshAllReportsWindows() {
-  activeDesktopWindows.forEach((windowController) => {
-    if (desktopWindowKinds.get(windowController) === "reports") {
-      updateReportsWindowContent(windowController);
-    }
-  });
 }
   

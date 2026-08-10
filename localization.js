@@ -6,15 +6,26 @@ import {
 } from './constantsAndGlobalVars.js';
 
 let localizationData = {};
+// localization.json is static, so it is fetched once and reused for every
+// subsequent language change instead of re-downloading per switch.
+let localizationFetch = null;
 
-async function fetchLocalization() {
-    try {
-        const response = await fetch('localization.json');
-        localizationData = await response.json();
-    } catch (error) {
-        console.error('Error loading localization:', error);
+function fetchLocalization() {
+    if (!localizationFetch) {
+        localizationFetch = fetch('localization.json')
+            .then((response) => response.json())
+            .then((data) => {
+                localizationData = data;
+                return localizationData;
+            })
+            .catch((error) => {
+                console.error('Error loading localization:', error);
+                localizationFetch = null;
+                return localizationData;
+            });
     }
-    return localizationData;
+
+    return localizationFetch;
 }
 
 export async function initLocalization(language) {

@@ -101,7 +101,8 @@ function createBrowserInlineLink(urlText) {
   return link;
 }
 
-function appendDelimitedLinkText(targetElement, sourceText) {
+// Body text may embed navigable in-game URLs as *-*http://example*-*.
+export function appendDelimitedLinkText(targetElement, sourceText) {
   const value = String(sourceText ?? "");
   const tokenPattern = /\*-\*(.*?)\*-\*/g;
   let lastIndex = 0;
@@ -146,29 +147,23 @@ function normalizeImages(images) {
         return null;
       }
 
-      if (typeof image === "string") {
-        return {
-          src: image,
-          alt: "",
-          caption: "",
-        };
-      }
-
-      const src = String(image.src ?? "").trim();
+      const src = String((typeof image === "string" ? image : image.src) ?? "").trim();
       if (!src) {
         return null;
       }
 
       return {
         src,
-        alt: String(image.alt ?? "").trim(),
-        caption: String(image.caption ?? "").trim(),
+        alt: typeof image === "string" ? "" : String(image.alt ?? "").trim(),
+        caption: typeof image === "string" ? "" : String(image.caption ?? "").trim(),
       };
     })
     .filter(Boolean);
 }
 
-function normalizeLines(value) {
+// Splits authored body text into paragraphs on blank lines, or passes an
+// already-split array through.
+export function normalizeLines(value) {
   if (Array.isArray(value)) {
     return value.map((item) => String(item ?? "").trim()).filter(Boolean);
   }
@@ -307,7 +302,7 @@ function createKeyValueList(titleText, items, classNames = []) {
   return section;
 }
 
-function createImageGallery(images, classNames = []) {
+export function createImageGallery(images, classNames = []) {
   const normalizedImages = normalizeImages(images);
   if (!normalizedImages.length) {
     return null;
@@ -433,6 +428,86 @@ function formatFoundMessage(label, awardedEvidence = 0) {
   }
 
   return `${baseMessage} Evidence unlocked: ${awardedEvidence}.`;
+}
+
+// Re-opening a page from browser address history dispatches a replay event
+// carrying the original search terms, so the page can restore its own result.
+function wireReplayListener(root, siteId, applyReplay) {
+  root.addEventListener("caveos-browser-replay", (event) => {
+    const replay = event?.detail;
+    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== siteId) {
+      return;
+    }
+
+    applyReplay(replay);
+  });
+}
+
+function wireEnterKeySubmit(inputElement, onSubmit) {
+  inputElement.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    onSubmit();
+  });
+}
+
+// Username/password panel used by the sites that gate records behind an access
+// level. Signs in with the site's default guest account on first render.
+function createAuthPanel({
+  panelClassNames,
+  titleText,
+  usernameAriaLabel,
+  passwordAriaLabel,
+  loginWebsite,
+  formatSession,
+  invalidMessage,
+}) {
+  const panel = createElement("div", panelClassNames);
+  panel.appendChild(createElement("div", ["browser-archives-auth-title"], titleText));
+
+  const usernameInput = createInput({ ariaLabel: usernameAriaLabel, placeholder: "Username" });
+  const passwordInput = createInput({ type: "password", ariaLabel: passwordAriaLabel, placeholder: "Password" });
+  const status = createStatusLine("Logged out.");
+
+  const loginButton = createButton("Login", async () => {
+    const session = await loginWebsite({ username: usernameInput.value, password: passwordInput.value });
+    status.textContent = session.authenticated ? formatSession(session) : invalidMessage;
+  });
+
+  panel.append(usernameInput, passwordInput, loginButton, status);
+
+  void loginWebsite({ useDefault: true }).then((session) => {
+    status.textContent = formatSession(session);
+  });
+
+  return { panel, status };
+}
+
+// Runs a site search, updates the status line, and rebuilds the result table.
+// Every site shows at most one match, so the result list is sliced to one row.
+async function runSiteSearch({
+  searchWebsite,
+  request,
+  status,
+  foundLabel,
+  emptyText,
+  ...selectableOptions
+}) {
+  const result = await searchWebsite(request);
+  const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
+
+  status.textContent = visibleRecords.length
+    ? formatFoundMessage(foundLabel, result.awardedEvidence.length)
+    : result.message || emptyText;
+
+  makeSelectableResults({
+    ...selectableOptions,
+    records: visibleRecords,
+    emptyText,
+  });
 }
 
 function buildZoomDetail(record) {
@@ -581,18 +656,15 @@ function createZoomSearchPage({ searchWebsite }) {
       queryInput.value = queryOverride;
     }
 
-    const result = await searchWebsite({ query: nextQuery });
-    const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
-    status.textContent = visibleRecords.length
-      ? formatFoundMessage("result", result.awardedEvidence.length)
-      : result.message || "Search brings up a lot of unrelated bumph. You move on.";
-
-    makeSelectableResults({
+    await runSiteSearch({
+      searchWebsite,
+      request: { query: nextQuery },
+      status,
+      foundLabel: "result",
+      emptyText: "Search brings up a lot of unrelated bumph. You move on.",
       tbody: body,
-      records: visibleRecords,
       detailBody,
       emptyColSpan: 3,
-      emptyText: "Search brings up a lot of unrelated bumph. You move on.",
       detailPrompt: "Select the returned webpage entry to inspect its contents.",
       getRowValues: (record) => [record.websiteName, record.pageTitle, record.summary],
       renderDetail: buildZoomDetail,
@@ -605,23 +677,15 @@ function createZoomSearchPage({ searchWebsite }) {
     });
   }
 
-  root.addEventListener("caveos-browser-replay", (event) => {
-    const replay = event?.detail;
-    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "zoomsearch") {
-      return;
-    }
-
+  wireReplayListener(root, "zoomsearch", (replay) => {
     void runSearch({
       queryOverride: String(replay.query || "").trim(),
       autoSelectRecordId: String(replay.recordId || "").trim(),
     });
   });
 
-  queryInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void runSearch();
-    }
+  wireEnterKeySubmit(queryInput, () => {
+    void runSearch();
   });
 
   shell.append(title, intro, searchRow, status, table, detailHost);
@@ -657,21 +721,15 @@ function createLibraryPage({ searchWebsite }) {
       titleInput.value = titleOverride;
     }
 
-    const result = await searchWebsite({
-      author: authorValue,
-      title: titleValue,
-    });
-    const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
-    status.textContent = visibleRecords.length
-      ? formatFoundMessage("record", result.awardedEvidence.length)
-      : result.message || "Nothing found.";
-
-    makeSelectableResults({
+    await runSiteSearch({
+      searchWebsite,
+      request: { author: authorValue, title: titleValue },
+      status,
+      foundLabel: "record",
+      emptyText: "Nothing found.",
       tbody: body,
-      records: visibleRecords,
       detailBody,
       emptyColSpan: 4,
-      emptyText: "Nothing found.",
       detailPrompt: "Select the returned library entry to inspect it.",
       getRowValues: (record) => [record.author, record.title, record.publisher, record.publicationYear],
       renderDetail: buildLibraryDetail,
@@ -685,12 +743,7 @@ function createLibraryPage({ searchWebsite }) {
     });
   }
 
-  root.addEventListener("caveos-browser-replay", (event) => {
-    const replay = event?.detail;
-    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "library") {
-      return;
-    }
-
+  wireReplayListener(root, "library", (replay) => {
     void runSearch({
       authorOverride: String(replay.author || "").trim(),
       titleOverride: String(replay.title || "").trim(),
@@ -733,13 +786,15 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
     "⭐ 50 Years of Declassified and Not So Declassified Police Archives! ⭐"
   );
 
-  const loginPanel = createElement("div", ["browser-auth-panel", "browser-auth-panel-police"]);
-  loginPanel.appendChild(createElement("div", ["browser-archives-auth-title"], "Login"));
-  const usernameInput = createInput({ ariaLabel: "Police username", placeholder: "Username" });
-  const passwordInput = createInput({ type: "password", ariaLabel: "Police password", placeholder: "Password" });
-  const loginButton = createButton("Login", runLogin);
-  const status = createStatusLine("Logged out.");
-  loginPanel.append(usernameInput, passwordInput, loginButton, status);
+  const { panel: loginPanel, status } = createAuthPanel({
+    panelClassNames: ["browser-auth-panel", "browser-auth-panel-police"],
+    titleText: "Login",
+    usernameAriaLabel: "Police username",
+    passwordAriaLabel: "Police password",
+    loginWebsite,
+    formatSession: (session) => `Logged in as: ${session.accessLabel || "Public"} (Level ${session.accessLevel ?? 0})`,
+    invalidMessage: "Invalid login. Access remains Public (Level 0).",
+  });
 
   const form = document.createElement("table");
   form.classList.add("browser-form-table", "browser-grid-table");
@@ -750,35 +805,21 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
   const { table, body } = createResultsTable(["Case", "Title", "Date", "Summary"], ["browser-results-police"]);
   const { host: detailHost, body: detailBody } = createDetailHost("Select the returned police record to inspect it.");
 
-  async function runLogin() {
-    const session = await loginWebsite({ username: usernameInput.value, password: passwordInput.value });
-    if (!session.authenticated) {
-      status.textContent = "Invalid login. Access remains Public (Level 0).";
-      return;
-    }
-
-    status.textContent = `Logged in as: ${session.accessLabel || "Public"} (Level ${session.accessLevel ?? 0})`;
-  }
-
   async function runSearch({ queryOverride = "", autoSelectRecordId = "" } = {}) {
     const queryValue = queryOverride || queryInput.value;
     if (queryOverride) {
       queryInput.value = queryOverride;
     }
 
-    const session = getSession();
-    const result = await searchWebsite({ query: queryValue, session });
-    const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
-    status.textContent = visibleRecords.length
-      ? formatFoundMessage("record", result.awardedEvidence.length)
-      : result.message || "Nothing found.";
-
-    makeSelectableResults({
+    await runSiteSearch({
+      searchWebsite,
+      request: { query: queryValue, session: getSession() },
+      status,
+      foundLabel: "record",
+      emptyText: "Nothing found.",
       tbody: body,
-      records: visibleRecords,
       detailBody,
       emptyColSpan: 4,
-      emptyText: "Nothing found.",
       detailPrompt: "Select the returned police record to inspect it.",
       getRowValues: (record) => [record.caseNumber, record.title, record.date, record.summary],
       renderDetail: buildPoliceDetail,
@@ -791,31 +832,19 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
     });
   }
 
-  root.addEventListener("caveos-browser-replay", (event) => {
-    const replay = event?.detail;
-    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "police") {
-      return;
-    }
-
+  wireReplayListener(root, "police", (replay) => {
     void runSearch({
       queryOverride: String(replay.query || "").trim(),
       autoSelectRecordId: String(replay.recordId || "").trim(),
     });
   });
 
-  queryInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void runSearch();
-    }
+  wireEnterKeySubmit(queryInput, () => {
+    void runSearch();
   });
 
   shell.append(header, subtitle, loginPanel, form, table, detailHost);
   root.appendChild(shell);
-
-  void loginWebsite({ useDefault: true }).then((session) => {
-    status.textContent = `Logged in as: ${session.accessLabel || "Public"} (Level ${session.accessLevel ?? 0})`;
-  });
 
   return root;
 }
@@ -830,13 +859,15 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
     createElement("p", ["browser-page-intro", "browser-page-intro-archives"], "Province and keyword must both exactly match the same archive entry."),
   );
 
-  const authPanel = createElement("div", ["browser-archives-auth"]);
-  authPanel.appendChild(createElement("div", ["browser-archives-auth-title"], "Archive Access"));
-  const usernameInput = createInput({ ariaLabel: "Archive username", placeholder: "Username" });
-  const passwordInput = createInput({ type: "password", ariaLabel: "Archive password", placeholder: "Password" });
-  const loginButton = createButton("Login", runLogin);
-  const status = createStatusLine("Logged out.");
-  authPanel.append(usernameInput, passwordInput, loginButton, status);
+  const { panel: authPanel, status } = createAuthPanel({
+    panelClassNames: ["browser-archives-auth"],
+    titleText: "Archive Access",
+    usernameAriaLabel: "Archive username",
+    passwordAriaLabel: "Archive password",
+    loginWebsite,
+    formatSession: (session) => `Logged in as: ${session.accessLabel || "Free"}`,
+    invalidMessage: "Invalid login. Access remains Free.",
+  });
 
   const form = document.createElement("table");
   form.classList.add("browser-form-table", "browser-grid-table");
@@ -863,16 +894,6 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
   const { table, body } = createResultsTable(["Date", "Province", "Headline", "Summary"], ["browser-results-archives"]);
   const { host: detailHost, body: detailBody } = createDetailHost("Select the returned newspaper record to inspect it.");
 
-  async function runLogin() {
-    const session = await loginWebsite({ username: usernameInput.value, password: passwordInput.value });
-    if (!session.authenticated) {
-      status.textContent = "Invalid login. Access remains Free.";
-      return;
-    }
-
-    status.textContent = `Logged in as: ${session.accessLabel || "Free"}`;
-  }
-
   async function runSearch({ queryOverride = "", provinceOverride = "", autoSelectRecordId = "" } = {}) {
     const selectedProvince = provinceOverride || provinceSelect.value;
     const queryValue = queryOverride || queryInput.value;
@@ -884,19 +905,16 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
     }
 
     lastSelectedArchiveProvince = selectedProvince;
-    const session = getSession();
-    const result = await searchWebsite({ query: queryValue, province: selectedProvince, session });
-    const visibleRecords = Array.isArray(result.results) ? result.results.slice(0, 1) : [];
-    status.textContent = visibleRecords.length
-      ? formatFoundMessage("article", result.awardedEvidence.length)
-      : result.message || "Nothing found.";
 
-    makeSelectableResults({
+    await runSiteSearch({
+      searchWebsite,
+      request: { query: queryValue, province: selectedProvince, session: getSession() },
+      status,
+      foundLabel: "article",
+      emptyText: "Nothing found.",
       tbody: body,
-      records: visibleRecords,
       detailBody,
       emptyColSpan: 4,
-      emptyText: "Nothing found.",
       detailPrompt: "Select the returned newspaper record to inspect it.",
       getRowValues: (record) => [record.date, record.province, record.headline, record.summary],
       renderDetail: buildArchiveDetail,
@@ -910,12 +928,7 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
     });
   }
 
-  root.addEventListener("caveos-browser-replay", (event) => {
-    const replay = event?.detail;
-    if (!replay || String(replay.siteId || "").trim().toLowerCase() !== "archives") {
-      return;
-    }
-
+  wireReplayListener(root, "archives", (replay) => {
     void runSearch({
       queryOverride: String(replay.query || "").trim(),
       provinceOverride: String(replay.province || "").trim(),
@@ -927,19 +940,12 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
     lastSelectedArchiveProvince = provinceSelect.value;
   });
 
-  queryInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void runSearch();
-    }
+  wireEnterKeySubmit(queryInput, () => {
+    void runSearch();
   });
 
   shell.append(authPanel, form, table, detailHost);
   root.appendChild(shell);
-
-  void loginWebsite({ useDefault: true }).then((session) => {
-    status.textContent = `Logged in as: ${session.accessLabel || "Free"}`;
-  });
 
   return root;
 }

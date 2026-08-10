@@ -4,30 +4,63 @@ import {
   setEvidenceStoreSnapshot,
 } from "./evidenceManager.js";
 
-//DEBUG
-export let debugFlag = false;
-export let debugOptionFlag = false;
-export let stateLoading = false;
-
 //ELEMENTS
 let elements;
 let localization = {};
 let language = "en";
 let languageSelected = "en";
-let oldLanguage = "en";
 
 //CONSTANTS
 export let gameState;
-export const GAME_CANVAS_WIDTH = 1280;
-export const GAME_CANVAS_HEIGHT = 720;
-export const GAME_ASPECT_RATIO = GAME_CANVAS_WIDTH / GAME_CANVAS_HEIGHT;
 
 export const MENU_STATE = "menuState";
 export const DESKTOP_STATE = "desktopState";
 export const NOTICEBOARD_STATE = "noticeboardState";
 export const DESKTOP_WINDOW_BASE_Z_INDEX = 45;
+const BROWSER_ADDRESS_HISTORY_LIMIT = 10;
 export const NOTES_PAGE_COUNT = 10;
 export const PAINT_PAGE_COUNT = 10;
+
+// Notes and Paint share one paged-document model; they differ only in how many
+// pages they hold, the default page title, and the field that stores the body.
+const NOTES_PAGE_SPEC = { count: NOTES_PAGE_COUNT, titlePrefix: "Page", bodyKey: "content" };
+const PAINT_PAGE_SPEC = { count: PAINT_PAGE_COUNT, titlePrefix: "Sketch", bodyKey: "snapshot" };
+
+function buildDefaultPages({ count, titlePrefix, bodyKey }) {
+  return Array.from({ length: count }, (_, index) => ({
+    title: `${titlePrefix} ${index + 1}`,
+    [bodyKey]: "",
+  }));
+}
+
+function readPages(pages, { bodyKey }) {
+  return pages.map((page) => ({
+    title: String(page?.title || "").trim(),
+    [bodyKey]: String(page?.[bodyKey] || ""),
+  }));
+}
+
+function writePages(value, spec) {
+  const sourcePages = Array.isArray(value) ? value : [];
+
+  return buildDefaultPages(spec).map((defaultPage, index) => {
+    const inputPage = sourcePages[index] || {};
+
+    return {
+      title: String(inputPage?.title || "").trim() || defaultPage.title,
+      [spec.bodyKey]: String(inputPage?.[spec.bodyKey] || ""),
+    };
+  });
+}
+
+function clampPageIndex(value, pageCount) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.min(pageCount - 1, Math.max(0, parsed));
+}
 
 //GLOBAL VARIABLES
 
@@ -35,16 +68,13 @@ export const PAINT_PAGE_COUNT = 10;
 let audioMuted;
 let musicVolumePreference = 0.1;
 let sfxVolumePreference = 0.85;
-let languageChangedFlag;
 let beginGameState = true;
 let gameInProgress = false;
 
-let autoSaveOn = false;
-export let pauseAutoSaveCountdown = true;
 let evidenceCustomNames = {};
-let notesPages = buildDefaultNotesPages();
+let notesPages = buildDefaultPages(NOTES_PAGE_SPEC);
 let notesActivePageIndex = 0;
-let paintPages = buildDefaultPaintPages();
+let paintPages = buildDefaultPages(PAINT_PAGE_SPEC);
 let paintActivePageIndex = 0;
 let ashtrayHasLitCigarette = true;
 let ashtrayHasExtraButt = false;
@@ -56,20 +86,6 @@ let browserAddressHistory = [];
 let activeGameplayState = DESKTOP_STATE;
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
-
-function buildDefaultNotesPages() {
-  return Array.from({ length: NOTES_PAGE_COUNT }, (_, index) => ({
-    title: `Page ${index + 1}`,
-    content: "",
-  }));
-}
-
-function buildDefaultPaintPages() {
-  return Array.from({ length: PAINT_PAGE_COUNT }, (_, index) => ({
-    title: `Sketch ${index + 1}`,
-    snapshot: "",
-  }));
-}
 
 //GETTER SETTER METHODS
 export function setElements() {
@@ -143,25 +159,8 @@ export function setGameStateVariable(value) {
   gameState = value;
 }
 
-export function getGameStateVariable() {
-  return gameState;
-}
-
 export function getElements() {
   return elements;
-}
-
-export function getLanguageChangedFlag() {
-  return languageChangedFlag;
-}
-
-export function setLanguageChangedFlag(value) {
-  languageChangedFlag = value;
-}
-
-export function resetAllVariables() {
-  // GLOBAL VARIABLES
-  // FLAGS
 }
 
 export function captureGameStatusForSaving() {
@@ -248,14 +247,6 @@ export function getLanguage() {
   return language;
 }
 
-export function setOldLanguage(value) {
-  oldLanguage = value;
-}
-
-export function getOldLanguage() {
-  return oldLanguage;
-}
-
 export function setAudioMuted(value) {
   audioMuted = value;
 }
@@ -290,34 +281,28 @@ export function getSfxVolumePreference() {
   return sfxVolumePreference;
 }
 
-export function setBrowserAddressHistory(value) {
-  if (!Array.isArray(value)) {
-    browserAddressHistory = [];
-    return;
+// A history entry is either a bare URL string or `{ url, replay }` when the page
+// can be re-opened by replaying a site search. Returns null for unusable entries.
+function cloneBrowserAddressEntry(entry) {
+  if (entry && typeof entry === "object") {
+    const url = String(entry.url ?? "").trim();
+    if (!url) {
+      return null;
+    }
+
+    return entry.replay && typeof entry.replay === "object"
+      ? { url, replay: { ...entry.replay } }
+      : { url };
   }
 
-  const sanitized = value
-    .map((entry) => {
-      if (entry && typeof entry === "object") {
-        const url = String(entry.url ?? "").trim();
-        if (!url) {
-          return null;
-        }
+  return String(entry ?? "").trim() || null;
+}
 
-        const normalizedEntry = { url };
-        if (entry.replay && typeof entry.replay === "object") {
-          normalizedEntry.replay = { ...entry.replay };
-        }
-
-        return normalizedEntry;
-      }
-
-      const normalized = String(entry ?? "").trim();
-      return normalized || null;
-    })
-    .filter(Boolean);
-
-  browserAddressHistory = sanitized.slice(-10);
+export function setBrowserAddressHistory(value) {
+  browserAddressHistory = (Array.isArray(value) ? value : [])
+    .map(cloneBrowserAddressEntry)
+    .filter(Boolean)
+    .slice(-BROWSER_ADDRESS_HISTORY_LIMIT);
 }
 
 export function getBrowserAddressHistory() {
@@ -325,24 +310,7 @@ export function getBrowserAddressHistory() {
     return [];
   }
 
-  return browserAddressHistory.map((entry) => {
-    if (entry && typeof entry === "object") {
-      return {
-        ...entry,
-        replay: entry.replay && typeof entry.replay === "object"
-          ? { ...entry.replay }
-          : entry.replay,
-      };
-    }
-
-    return String(entry ?? "").trim();
-  }).filter((entry) => {
-    if (entry && typeof entry === "object") {
-      return Boolean(String(entry.url ?? "").trim());
-    }
-
-    return Boolean(String(entry ?? "").trim());
-  });
+  return browserAddressHistory.map(cloneBrowserAddressEntry).filter(Boolean);
 }
 
 export function getMenuState() {
@@ -398,38 +366,9 @@ export function setGameInProgress(value) {
   gameInProgress = value;
 }
 
-export function getDesktopWindowBaseZIndex() {
-  return DESKTOP_WINDOW_BASE_Z_INDEX;
-}
-
-export function getCurrentDesktopWindowZIndex() {
-  return currentDesktopWindowZIndex;
-}
-
-export function setCurrentDesktopWindowZIndex(value) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) {
-    return;
-  }
-
-  currentDesktopWindowZIndex = Math.max(parsed, DESKTOP_WINDOW_BASE_Z_INDEX);
-}
-
 export function getNextDesktopWindowZIndex() {
   currentDesktopWindowZIndex += 1;
   return currentDesktopWindowZIndex;
-}
-
-export function getCanvasWidth() {
-  return GAME_CANVAS_WIDTH;
-}
-
-export function getCanvasHeight() {
-  return GAME_CANVAS_HEIGHT;
-}
-
-export function getCanvasAspectRatio() {
-  return GAME_ASPECT_RATIO;
 }
 
 export function setEvidenceCustomNames(value) {
@@ -478,56 +417,36 @@ export function getEvidenceCustomName(evidenceId) {
 }
 
 export function getNotesPages() {
-  return notesPages.map((page) => ({
-    title: String(page?.title || "").trim(),
-    content: String(page?.content || ""),
-  }));
+  return readPages(notesPages, NOTES_PAGE_SPEC);
 }
 
 export function setNotesPages(value) {
-  const sourcePages = Array.isArray(value) ? value : [];
-  const defaults = buildDefaultNotesPages();
-
-  notesPages = defaults.map((defaultPage, index) => {
-    const inputPage = sourcePages[index] || {};
-    const normalizedTitle = String(inputPage?.title || "").trim();
-
-    return {
-      title: normalizedTitle || defaultPage.title,
-      content: String(inputPage?.content || ""),
-    };
-  });
+  notesPages = writePages(value, NOTES_PAGE_SPEC);
 }
 
 export function resetNotesPagesState() {
-  notesPages = buildDefaultNotesPages();
+  notesPages = buildDefaultPages(NOTES_PAGE_SPEC);
   notesActivePageIndex = 0;
 }
 
+export function getNotesActivePageIndex() {
+  return notesActivePageIndex;
+}
+
+export function setNotesActivePageIndex(value) {
+  notesActivePageIndex = clampPageIndex(value, NOTES_PAGE_COUNT);
+}
+
 export function getPaintPages() {
-  return paintPages.map((page) => ({
-    title: String(page?.title || "").trim(),
-    snapshot: String(page?.snapshot || ""),
-  }));
+  return readPages(paintPages, PAINT_PAGE_SPEC);
 }
 
 export function setPaintPages(value) {
-  const sourcePages = Array.isArray(value) ? value : [];
-  const defaults = buildDefaultPaintPages();
-
-  paintPages = defaults.map((defaultPage, index) => {
-    const inputPage = sourcePages[index] || {};
-    const normalizedTitle = String(inputPage?.title || "").trim();
-
-    return {
-      title: normalizedTitle || defaultPage.title,
-      snapshot: String(inputPage?.snapshot || ""),
-    };
-  });
+  paintPages = writePages(value, PAINT_PAGE_SPEC);
 }
 
 export function resetPaintPagesState() {
-  paintPages = buildDefaultPaintPages();
+  paintPages = buildDefaultPages(PAINT_PAGE_SPEC);
   paintActivePageIndex = 0;
 }
 
@@ -536,27 +455,7 @@ export function getPaintActivePageIndex() {
 }
 
 export function setPaintActivePageIndex(value) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) {
-    paintActivePageIndex = 0;
-    return;
-  }
-
-  paintActivePageIndex = Math.min(PAINT_PAGE_COUNT - 1, Math.max(0, parsed));
-}
-
-export function getNotesActivePageIndex() {
-  return notesActivePageIndex;
-}
-
-export function setNotesActivePageIndex(value) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) {
-    notesActivePageIndex = 0;
-    return;
-  }
-
-  notesActivePageIndex = Math.min(NOTES_PAGE_COUNT - 1, Math.max(0, parsed));
+  paintActivePageIndex = clampPageIndex(value, PAINT_PAGE_COUNT);
 }
 
 export function getAshtrayHasLitCigarette() {
@@ -580,52 +479,52 @@ export function resetAshtrayState() {
   ashtrayHasExtraButt = false;
 }
 
-export function setFacsimileState(value) {
-  const rawPendingReports = value && typeof value === "object"
-    ? Array.isArray(value.pendingReports)
-      ? value.pendingReports
-      : value.pendingReport && typeof value.pendingReport === "object"
-        ? [value.pendingReport]
-        : []
-    : [];
+// Accepts either the current `pendingReports` array or the legacy single
+// `pendingReport` field written by older saves.
+function readPendingReportsInput(value) {
+  if (!value || typeof value !== "object") {
+    return [];
+  }
 
+  if (Array.isArray(value.pendingReports)) {
+    return value.pendingReports;
+  }
+
+  return value.pendingReport && typeof value.pendingReport === "object"
+    ? [value.pendingReport]
+    : [];
+}
+
+export function setFacsimileState(value) {
   const pendingReportsById = new Map();
-  rawPendingReports.forEach((item) => {
+
+  readPendingReportsInput(value).forEach((item) => {
     if (!item || typeof item !== "object") {
       return;
     }
 
-    const normalizedItem = {
+    const id = String(item.id || "").trim();
+    if (!id || pendingReportsById.has(id)) {
+      return;
+    }
+
+    pendingReportsById.set(id, {
       ...item,
-      id: String(item.id || "").trim(),
+      id,
       title: String(item.title || "").trim(),
       reportText: String(item.reportText || ""),
       description: String(item.description || ""),
       paperStyle: String(item.paperStyle || "").trim(),
       evidenceName: String(item.evidenceName || "").trim(),
       createdAt: String(item.createdAt || "").trim(),
-    };
-
-    if (!normalizedItem.id) {
-      return;
-    }
-
-    if (!pendingReportsById.has(normalizedItem.id)) {
-      pendingReportsById.set(normalizedItem.id, normalizedItem);
-    }
+    });
   });
 
-  const pendingReports = Array.from(pendingReportsById.values());
-
-  const consumedReportIds = value && typeof value === "object" && Array.isArray(value.consumedReportIds)
-    ? value.consumedReportIds
-      .map((id) => String(id || "").trim())
-      .filter(Boolean)
-    : [];
-
   facsimileState = {
-    pendingReports,
-    consumedReportIds,
+    pendingReports: Array.from(pendingReportsById.values()),
+    consumedReportIds: Array.isArray(value?.consumedReportIds)
+      ? value.consumedReportIds.map((id) => String(id || "").trim()).filter(Boolean)
+      : [],
   };
 }
 

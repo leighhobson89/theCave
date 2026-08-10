@@ -1,14 +1,30 @@
 # Web Content Builder Tool Manual
 
+The Web Content Generator is the **only** content authoring tool in this
+repository. It creates records for the four in-game web services and standalone
+hidden pages, and — when a record awards evidence — it also writes the matching
+localized evidence catalog entries.
+
+> The former Evidence JSON Builder (`debug_json_string_tool.html`, its script and
+> its `evidence_builder_server.js` API) was removed in the August 2026 audit.
+> This tool had already absorbed evidence-catalog writing. Hand-editing
+> `assets/reportsEvidences_{lang}.json` and `assets/photos_evidences_{lang}.json`
+> is still fine; they are plain `{ "entries": [ … ] }` files.
+
 ## Files
-- UI: [tools/web_content_builder.html](tools/web_content_builder.html)
-- Logic: [tools/web_content_builder.js](tools/web_content_builder.js)
-- Inject API: [tools/web_content_builder_server.js](tools/web_content_builder_server.js)
+- UI: [web_content_builder.html](web_content_builder.html)
+- Logic: [web_content_builder.js](web_content_builder.js)
+- Inject API: [web_content_builder_server.js](web_content_builder_server.js)
 
 ## Start Inject API
+Run from the repository root; the server writes to that root, so there is no
+folder picker.
+
 ```bash
-node tools/web_content_builder_server.js
+node tools/web_content_builder_server.js     # http://localhost:5058
 ```
+
+Then open `tools/web_content_builder.html` in a browser.
 
 ## Writes To
 - `assets/web-content/zoomsearch.json`
@@ -16,6 +32,8 @@ node tools/web_content_builder_server.js
 - `assets/web-content/police.json`
 - `assets/web-content/archives.json`
 - `assets/web-content/standalone-pages.json`
+
+All records are written into each file's `records` array.
 
 ## Workflow
 1. Choose content type.

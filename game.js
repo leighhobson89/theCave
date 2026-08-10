@@ -14,6 +14,15 @@ import {
   gameState,
 } from "./constantsAndGlobalVars.js";
 
+// Menu language flag buttons, keyed by the language code they select.
+export const LANGUAGE_BUTTON_KEYS_BY_CODE = new Map([
+  ["en", "btnEnglish"],
+  ["es", "btnSpanish"],
+  ["de", "btnGerman"],
+  ["it", "btnItalian"],
+  ["fr", "btnFrench"],
+]);
+
 const ZOOM_LEVELS = [0.60, 0.65, 0.85, 1];
 const WORLD_WIDTH = 2600;
 const WORLD_HEIGHT = 1800;
@@ -406,10 +415,6 @@ export function startGame(resetView = false) {
   applySceneTransform();
 }
 
-export function gameLoop() {
-  applySceneTransform();
-}
-
 export function setGameState(newState) {
   console.log("Setting game state to " + newState);
 
@@ -423,64 +428,37 @@ export function setGameState(newState) {
 
   setGameStateVariable(newState);
 
-  switch (newState) {
-    case getMenuState():
-      getElements().menu.classList.remove("d-none");
-      getElements().menu.classList.add("d-flex");
-      getElements().gameArea.classList.remove("d-flex");
-      getElements().gameArea.classList.add("d-none");
+  const elements = getElements();
 
-      const languageButtons = [
-        getElements().btnEnglish,
-        getElements().btnSpanish,
-        getElements().btnGerman,
-        getElements().btnItalian,
-        getElements().btnFrench,
-      ];
-      languageButtons.forEach((button) => {
-        button.classList.remove("active");
+  switch (newState) {
+    case getMenuState(): {
+      elements.menu.classList.remove("d-none");
+      elements.menu.classList.add("d-flex");
+      elements.gameArea.classList.remove("d-flex");
+      elements.gameArea.classList.add("d-none");
+
+      const activeLanguage = getLanguage();
+      LANGUAGE_BUTTON_KEYS_BY_CODE.forEach((elementKey, languageCode) => {
+        elements[elementKey].classList.toggle("active", languageCode === activeLanguage);
       });
 
-      switch (getLanguage()) {
-        case "en":
-          getElements().btnEnglish.classList.add("active");
-          break;
-        case "es":
-          getElements().btnSpanish.classList.add("active");
-          break;
-        case "de":
-          getElements().btnGerman.classList.add("active");
-          break;
-        case "it":
-          getElements().btnItalian.classList.add("active");
-          break;
-        case "fr":
-          getElements().btnFrench.classList.add("active");
-          break;
-      }
-
       if (getGameInProgress()) {
-        getElements().resumeGameMenuButton.classList.remove("disabled");
-        getElements().resumeGameMenuButton.classList.add("btn-primary");
-        getElements().saveGameButton.classList.remove("disabled");
-        getElements().saveGameButton.classList.add("btn-primary");
-        getElements().copyButtonSavePopup.innerHTML = `${localize(
-          "copyButton",
-          getLanguage()
-        )}`;
-        getElements().closeButtonSavePopup.innerHTML = `${localize(
-          "closeButton",
-          getLanguage()
-        )}`;
+        elements.resumeGameMenuButton.classList.remove("disabled");
+        elements.resumeGameMenuButton.classList.add("btn-primary");
+        elements.saveGameButton.classList.remove("disabled");
+        elements.saveGameButton.classList.add("btn-primary");
+        elements.copyButtonSavePopup.innerHTML = localize("copyButton", activeLanguage);
+        elements.closeButtonSavePopup.innerHTML = localize("closeButton", activeLanguage);
       }
       break;
+    }
 
     case getDesktopState():
     case getNoticeboardState():
-      getElements().menu.classList.remove("d-flex");
-      getElements().menu.classList.add("d-none");
-      getElements().gameArea.classList.remove("d-none");
-      getElements().gameArea.classList.add("d-flex");
+      elements.menu.classList.remove("d-flex");
+      elements.menu.classList.add("d-none");
+      elements.gameArea.classList.remove("d-none");
+      elements.gameArea.classList.add("d-flex");
       updateSceneVisibility();
       break;
   }
