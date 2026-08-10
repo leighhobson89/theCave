@@ -73,7 +73,7 @@ Current data: `Hannah Fletcher` + `Mysteries of the Old North West`.
 
 - Field: keyword only, matched against `keywords`.
 - Records declare `requiredPrivilegeLevel`. A match the session cannot see returns no rows and the message *"One or more matching records were hidden by privilege restrictions."* — so the player learns the record exists but is gated.
-- Signed in as the default `public` account (level 0) on open.
+- Signed in as the default `public` account (level 0) the first time the page is built. After that the existing session is kept — see [Logins and sessions](#logins-and-sessions).
 
 Accounts (`assets/web-content/police.json`):
 
@@ -109,6 +109,62 @@ Accounts (`assets/web-content/archives.json`):
 
 Current data: `hannahfletcher`, province **Alberta**, keywords
 `hannah fletcher` / `hannah` / `mysteries of the old north west`, level 0.
+
+---
+
+## Logins and sessions
+
+Police Records and the Canada Newspaper Archive both gate records behind an
+access level, and both use the same login panel
+(`createAuthPanel` in `webContentRegistry.js`).
+
+### Credentials are case sensitive
+
+Both the **username and the password** are compared exactly against the values
+stored in the site JSON. `JAMES.F` will not sign in as `james.f`. Surrounding
+whitespace is trimmed from the typed username; the password is taken verbatim.
+Both fields must be non-empty.
+
+### Sessions persist
+
+Sessions live in `webContentManager`, which is created once when the game
+loads — not per page, per browser window or per computer window. So the signed-in
+account survives:
+
+- navigating away to another site and back,
+- closing and reopening the Netscape window,
+- closing and reopening the whole computer.
+
+The site's default guest account (`public` for Police, `free` for Archives) is
+signed in only when there is no session yet, i.e. the very first time that page
+is built in a play session.
+
+> Sessions are written to the save string (`webContentSessions`), keyed by
+> website id. Loading a save reproduces exactly the logins that existed when it
+> was made — restoring **replaces** the current sessions rather than merging, so
+> a save made before you ever logged in restores back to the guest level, same
+> as address history.
+
+### The Log Out button
+
+Each panel has **Login** and **Log Out**. Log Out does not clear the session —
+it signs back in as the site's default guest account, which is what "logged out"
+means for these sites:
+
+| Site | Log Out results in |
+| --- | --- |
+| Police Records | `Public`, privilege level 0 |
+| Canada Newspaper Archive | `Free`, access level 0 |
+
+It also clears the username and password fields. Gated records immediately go
+back to reporting that they were hidden, and — like logging in — the logged-out
+state persists across a computer close and through save/load.
+
+### New Game
+
+Starting a new game clears every session
+(`webContentManager.clearSessions()`), so both sites start at their guest
+level regardless of what was logged in before.
 
 ---
 
@@ -207,8 +263,21 @@ Shipped pages:
 - Quick links: ZoomSearch, Library, Police Records, Cosmic Forge, Canada Archives.
 - Home returns to `about:welcome`.
 - Back/forward walk an in-window history capped at 5 entries; it is discarded when the window closes.
-- Focusing the URL bar drops down the **address history**: up to 10 previously visited URLs, newest first, persisted in the save. Choosing one whose entry carries replay data re-runs the original search and re-selects the record, rather than just re-opening the site's front page.
 - An unknown URL renders a "Page Not Found" page listing the attempted address.
+
+### Address history
+
+Focusing the URL bar drops down the **address history**: up to 10 previously
+visited URLs, newest first. Choosing an entry that carries replay data re-runs
+the original search and re-selects the record, rather than just re-opening the
+site's front page.
+
+It is deliberately durable:
+
+- **De-duplicated by URL.** Revisiting a page moves its entry to the most-recent position (carrying the newer replay data) instead of adding a second copy, so one URL can never eat several of the ten slots.
+- **The welcome page is never recorded.** `about:welcome` is rendered on every browser open and is always one click away on Home, so recording it would crowd out real history.
+- **Survives closing the browser and the computer.** The canonical list lives in `constantsAndGlobalVars.js`, not in the browser window.
+- **Saved and restored** as `browserAddressHistory` in the save payload, replay data included.
 
 ---
 

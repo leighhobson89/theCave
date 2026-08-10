@@ -378,9 +378,9 @@ first visit (`awardsEvidence: true`).
 
 | | Back/forward history | Address dropdown history |
 | --- | --- | --- |
-| Storage | `navigationHistory` (in-window) | `browserAddressHistory` (saved) |
-| Limit | `HISTORY_LIMIT` = 5 | 10 entries |
-| Lifetime | Lost when the window closes | Persisted in the save |
+| Storage | `navigationHistory` (in-window) | `browserAddressHistory` (global, saved) |
+| Limit | `HISTORY_LIMIT` = 5 | `BROWSER_ADDRESS_HISTORY_LIMIT` = 10 |
+| Lifetime | Lost when the window closes | Survives the window, the computer, and save/load |
 
 Address history entries are either a plain URL string or
 `{ url, replay }`. A `replay` records the site id and the exact query that
@@ -388,6 +388,15 @@ produced a record, so choosing that entry from the dropdown re-runs the search
 and re-selects the record — the page's `caveos-browser-replay` listener does
 this. That is why opening a record updates the address bar to the record's own
 URL.
+
+`setBrowserAddressHistory()` is the canonical writer and **de-duplicates by
+URL**: revisiting a page moves its entry to the most-recent position, carrying
+the newer replay data, rather than appending a duplicate. This applies to live
+pushes and to restored saves alike, so a repeatedly visited URL can never
+consume several of the ten slots. `pushAddressHistoryEntry()` skips
+`about:welcome` entirely — it is rendered on every browser open and is one click
+away on Home — and re-reads the canonical list afterwards so the window's copy
+never drifts.
 
 ---
 
@@ -409,9 +418,38 @@ A factory returning a small API over a registry of site definitions:
 | `searchWebsite(id, request)` | Runs the site's own `search`, then awards evidence for each returned record |
 | `createWebsitePage(id)` | Calls the site's `buildPage` with bound helpers |
 
-Sessions default to `{ authenticated: false, accessLevel: 0, accessLabel: "Guest" }`.
 Evidence awards are de-duplicated per `websiteId:recordId` in
 `awardedEvidenceKeys`, so re-running the same search never awards twice.
+
+### Sessions
+
+`websiteSessions` lives in the manager's closure, and the manager is created
+**once** at module load. A login therefore outlives the page, the Netscape
+window and the computer window: navigating away and back, or closing and
+reopening the computer, keeps whoever was signed in.
+
+`createAuthPanel()` only signs in the site's default guest account when
+`getSession()` reports no session at all — the first time that page is ever
+built. Its **Log Out** button does not clear the session; it signs back in as
+the default guest account (`public` level 0 for Police, `free` for Archives),
+which is what "logged out" means for these sites, and clears the input fields.
+
+Credentials are matched **exactly** by `findAccountForCredentials()` in
+`webContentRegistry.js`: username and password are both case sensitive, and both
+must be non-empty. Only surrounding whitespace is trimmed from the username.
+
+Sessions are part of the save payload (`webContentSessions`), keyed by
+website id. `webContentManager.js` exposes `getSessionsSnapshot()` and
+`restoreSessionsSnapshot()` for this; because the manager is created via a
+factory rather than being a singleton module, `ui.js` registers those two
+functions with `constantsAndGlobalVars.js` at startup
+(`registerWebContentSessionsProvider()`), and `captureGameStatusForSaving()` /
+`restoreGameStatus()` call through that registration rather than importing
+`ui.js` directly, which would create a circular import. Restoring **replaces**
+every session rather than merging, so loading a save always reproduces exactly
+the logins that existed when it was made — including "logged out," for a save
+made before this feature existed. New Game calls `webContentManager.clearSessions()`
+directly, since `ui.js` already holds the instance.
 
 ### `webContentRegistry.js`
 
@@ -547,7 +585,8 @@ The payload:
 | `paintPages`, `paintActivePageIndex` | Ten sketches, each a data-URL snapshot |
 | `ashtrayHasLitCigarette`, `ashtrayHasExtraButt` | Ashtray state |
 | `facsimileState` | Pending and consumed faxes |
-| `browserAddressHistory` | Up to 10 address entries with replay data |
+| `browserAddressHistory` | Up to 10 address entries with replay data, de-duplicated by URL |
+| `webContentSessions` | Police Records and Canada Archives logins, by website id |
 | `activeGameplayState` / `currentScene` | Which scene to restore |
 
 `restoreGameStatus()` is defensive throughout: every setter re-validates and
@@ -599,7 +638,7 @@ npx playwright test tests/report-magnifier.spec.js
 | Spec | Covers |
 | --- | --- |
 | `tests/report-magnifier.spec.js` | Report and photo magnifier geometry, standalone-page evidence awards, the full facsimile lifecycle (single, batch of five, next-message button), and the mine-map milestone fax |
-| `tests/regression-smoke.spec.js` | Notes and Paint paged documents (tabs, titles, per-page bodies, flood fill), all four web services including privilege gating, address-history replay, language switching, story-window retitling, and a save/load round trip |
+| `tests/regression-smoke.spec.js` | Notes and Paint paged documents (tabs, titles, per-page bodies, flood fill), all four web services including privilege gating, case-sensitive credentials, session persistence across a computer close, the Log Out button, address-history de-duplication and persistence, address-history replay, language switching, story-window retitling, and a save/load round trip |
 
 `playwright.facsimile-video.config.js` is the same config with `video: "on"`,
 for capturing fax behaviour.

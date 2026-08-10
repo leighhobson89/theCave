@@ -455,13 +455,22 @@ function wireEnterKeySubmit(inputElement, onSubmit) {
 }
 
 // Username/password panel used by the sites that gate records behind an access
-// level. Signs in with the site's default guest account on first render.
+// level.
+//
+// The session lives in webContentManager and outlives this panel, so re-opening
+// the page (or the whole computer) keeps whoever was signed in. The site's
+// default guest account is only signed in when there is no session at all, i.e.
+// the first time the page is ever built.
+//
+// "Log Out" does not clear the session; it signs back in as the site's default
+// guest account, which is what "logged out" means for these sites.
 function createAuthPanel({
   panelClassNames,
   titleText,
   usernameAriaLabel,
   passwordAriaLabel,
   loginWebsite,
+  getSession,
   formatSession,
   invalidMessage,
 }) {
@@ -477,13 +486,51 @@ function createAuthPanel({
     status.textContent = session.authenticated ? formatSession(session) : invalidMessage;
   });
 
-  panel.append(usernameInput, passwordInput, loginButton, status);
-
-  void loginWebsite({ useDefault: true }).then((session) => {
+  const logoutButton = createButton("Log Out", async () => {
+    const session = await loginWebsite({ useDefault: true });
+    usernameInput.value = "";
+    passwordInput.value = "";
     status.textContent = formatSession(session);
   });
+  logoutButton.classList.add("browser-button-logout");
+
+  const actionsRow = createElement("div", ["browser-auth-actions"]);
+  actionsRow.append(loginButton, logoutButton);
+
+  panel.append(usernameInput, passwordInput, actionsRow, status);
+
+  const existingSession = getSession();
+  if (existingSession?.authenticated) {
+    status.textContent = formatSession(existingSession);
+  } else {
+    void loginWebsite({ useDefault: true }).then((session) => {
+      status.textContent = formatSession(session);
+    });
+  }
 
   return { panel, status };
+}
+
+// Resolves credentials to an account. Both the username and the password are
+// matched EXACTLY against the stored values, so both are case sensitive; only
+// surrounding whitespace is trimmed from the typed username.
+function findAccountForCredentials(data, credentials) {
+  const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
+
+  if (credentials?.useDefault) {
+    return accounts.find((account) => account?.default) || accounts[0] || null;
+  }
+
+  const username = String(credentials?.username ?? "").trim();
+  const password = String(credentials?.password ?? "");
+  if (!username || !password) {
+    return null;
+  }
+
+  return accounts.find((account) => (
+    String(account?.username ?? "") === username
+    && String(account?.password ?? "") === password
+  )) || null;
 }
 
 // Runs a site search, updates the status line, and rebuilds the result table.
@@ -792,6 +839,7 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
     usernameAriaLabel: "Police username",
     passwordAriaLabel: "Police password",
     loginWebsite,
+    getSession,
     formatSession: (session) => `Logged in as: ${session.accessLabel || "Public"} (Level ${session.accessLevel ?? 0})`,
     invalidMessage: "Invalid login. Access remains Public (Level 0).",
   });
@@ -865,6 +913,7 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
     usernameAriaLabel: "Archive username",
     passwordAriaLabel: "Archive password",
     loginWebsite,
+    getSession,
     formatSession: (session) => `Logged in as: ${session.accessLabel || "Free"}`,
     invalidMessage: "Invalid login. Access remains Free.",
   });
@@ -1008,13 +1057,7 @@ export function registerDefaultWebContentSites(manager) {
     defaultAccessLabel: "Public",
     buildPage: createPoliceRecordsPage,
     authenticate: ({ data, credentials }) => {
-      const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
-      const useDefault = credentials?.useDefault;
-      const username = normalizeQuery(credentials?.username ?? "");
-      const password = String(credentials?.password ?? "");
-      const account = useDefault
-        ? accounts.find((item) => item?.default) || accounts[0] || null
-        : accounts.find((item) => textEquals(item?.username, username) && String(item?.password ?? "") === password) || null;
+      const account = findAccountForCredentials(data, credentials);
 
       return account
         ? {
@@ -1067,13 +1110,7 @@ export function registerDefaultWebContentSites(manager) {
     defaultAccessLabel: "Free",
     buildPage: createArchivesPage,
     authenticate: ({ data, credentials }) => {
-      const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
-      const useDefault = credentials?.useDefault;
-      const username = normalizeQuery(credentials?.username ?? "");
-      const password = String(credentials?.password ?? "");
-      const account = useDefault
-        ? accounts.find((item) => item?.default) || accounts[0] || null
-        : accounts.find((item) => textEquals(item?.username, username) && String(item?.password ?? "") === password) || null;
+      const account = findAccountForCredentials(data, credentials);
 
       return account
         ? {

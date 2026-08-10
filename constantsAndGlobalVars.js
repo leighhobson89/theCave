@@ -87,6 +87,20 @@ let activeGameplayState = DESKTOP_STATE;
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
+// webContentManager is a factory (createWebContentManager), not a singleton
+// module like evidenceManager, and its one instance is owned by ui.js. ui.js
+// registers a snapshot/restore provider here once at startup so save/load can
+// reach it without ui.js and constantsAndGlobalVars.js importing each other.
+let webContentSessionsProvider = null;
+
+export function registerWebContentSessionsProvider(provider) {
+  webContentSessionsProvider = provider
+    && typeof provider.getSnapshot === "function"
+    && typeof provider.restoreSnapshot === "function"
+    ? provider
+    : null;
+}
+
 //GETTER SETTER METHODS
 export function setElements() {
   elements = {
@@ -186,6 +200,9 @@ export function captureGameStatusForSaving() {
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
   gameState.facsimileState = getFacsimileState();
   gameState.browserAddressHistory = getBrowserAddressHistory();
+  gameState.webContentSessions = webContentSessionsProvider
+    ? webContentSessionsProvider.getSnapshot()
+    : {};
   gameState.activeGameplayState = getActiveGameplayState();
   gameState.currentScene = getActiveGameplayState();
 
@@ -214,6 +231,9 @@ export function restoreGameStatus(gameState) {
       setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
       setFacsimileState(gameState.facsimileState);
       setBrowserAddressHistory(gameState.browserAddressHistory);
+      if (webContentSessionsProvider) {
+        webContentSessionsProvider.restoreSnapshot(gameState.webContentSessions || {});
+      }
       setActiveGameplayState(
         gameState.activeGameplayState
         || gameState.currentScene
@@ -298,11 +318,25 @@ function cloneBrowserAddressEntry(entry) {
   return String(entry ?? "").trim() || null;
 }
 
+// Stores the history newest-last, de-duplicated by URL: revisiting a page moves
+// its entry to the most-recent position (carrying the newer replay data) rather
+// than appending a second copy. Without this a repeatedly visited URL would eat
+// several of the limited slots and push real history out.
 export function setBrowserAddressHistory(value) {
-  browserAddressHistory = (Array.isArray(value) ? value : [])
-    .map(cloneBrowserAddressEntry)
-    .filter(Boolean)
-    .slice(-BROWSER_ADDRESS_HISTORY_LIMIT);
+  const entriesByUrl = new Map();
+
+  (Array.isArray(value) ? value : []).forEach((rawEntry) => {
+    const entry = cloneBrowserAddressEntry(rawEntry);
+    if (!entry) {
+      return;
+    }
+
+    const url = typeof entry === "object" ? entry.url : entry;
+    entriesByUrl.delete(url);
+    entriesByUrl.set(url, entry);
+  });
+
+  browserAddressHistory = Array.from(entriesByUrl.values()).slice(-BROWSER_ADDRESS_HISTORY_LIMIT);
 }
 
 export function getBrowserAddressHistory() {

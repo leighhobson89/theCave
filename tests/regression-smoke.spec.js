@@ -13,6 +13,12 @@ async function openNetscape(page) {
   await page.getByRole("button", { name: "Netscape" }).click();
 }
 
+// The computer window covers the viewport, so it must be closed from its own
+// title-bar button rather than the desk hotspot.
+async function closeComputer(page) {
+  await page.locator(".computer-window > .desktop-window-header .story-window-close").click();
+}
+
 test("notes window: tabs render, titles commit and content persists per page", async ({ page }) => {
   await startNewGame(page);
   await page.locator("#notesFolder").click();
@@ -180,6 +186,159 @@ test("police site logs in by default, gates records by privilege, and unlocks on
   await expect(page.locator(".browser-results-police tbody .browser-results-row")).toHaveCount(1);
 });
 
+test("credentials are case sensitive for both username and password", async ({ page }) => {
+  await startNewGame(page);
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+
+  const status = page.locator(".browser-page-police .browser-status-line").first();
+  const username = page.locator("input[aria-label='Police username']");
+  const password = page.locator("input[aria-label='Police password']");
+  const login = page.locator(".browser-page-police").getByRole("button", { name: "Login" });
+
+  // Wrong case in the username must be rejected.
+  await username.fill("JAMES.F");
+  await password.fill("oscar123");
+  await login.click();
+  await expect(status).toHaveText("Invalid login. Access remains Public (Level 0).");
+
+  // Wrong case in the password must be rejected.
+  await username.fill("james.f");
+  await password.fill("OSCAR123");
+  await login.click();
+  await expect(status).toHaveText("Invalid login. Access remains Public (Level 0).");
+
+  // Exact case succeeds. Surrounding whitespace is still tolerated.
+  await username.fill("  james.f  ");
+  await password.fill("oscar123");
+  await login.click();
+  await expect(status).toHaveText("Logged in as: Constable James Fletcher (Level 1)");
+
+  // Archives is case sensitive too.
+  await page.getByRole("button", { name: "Canada Archives" }).click();
+  const archiveStatus = page.locator(".browser-page-archives .browser-status-line").first();
+  await page.locator("input[aria-label='Archive username']").fill("Subscriber");
+  await page.locator("input[aria-label='Archive password']").fill("subscribe");
+  await page.locator(".browser-page-archives").getByRole("button", { name: "Login" }).click();
+  await expect(archiveStatus).toHaveText("Invalid login. Access remains Free.");
+
+  await page.locator("input[aria-label='Archive username']").fill("subscriber");
+  await page.locator(".browser-page-archives").getByRole("button", { name: "Login" }).click();
+  await expect(archiveStatus).toHaveText("Logged in as: Subscriber");
+});
+
+test("login survives re-navigation and closing the computer", async ({ page }) => {
+  await startNewGame(page);
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+
+  const status = page.locator(".browser-page-police .browser-status-line").first();
+  await page.locator("input[aria-label='Police username']").fill("b.whitmore");
+  await page.locator("input[aria-label='Police password']").fill("ironVeins15");
+  await page.locator(".browser-page-police").getByRole("button", { name: "Login" }).click();
+  await expect(status).toHaveText("Logged in as: Mr Brian Whitmore (Level 2)");
+
+  // Navigating away and back keeps the session.
+  await page.getByRole("button", { name: "ZoomSearch" }).click();
+  await page.getByRole("button", { name: "Police Records" }).click();
+  await expect(status).toHaveText("Logged in as: Mr Brian Whitmore (Level 2)");
+
+  // Closing the whole computer and reopening keeps it too.
+  await closeComputer(page);
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+  await expect(status).toHaveText("Logged in as: Mr Brian Whitmore (Level 2)");
+
+  // The level is genuinely retained, not just the label.
+  const query = page.locator("input[aria-label='Police search']");
+  await query.fill("thomas orourke");
+  await query.press("Enter");
+  await expect(page.locator(".browser-results-police tbody .browser-results-row")).toHaveCount(1);
+});
+
+test("log out returns to the site's guest account and re-gates records", async ({ page }) => {
+  await startNewGame(page);
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+
+  const status = page.locator(".browser-page-police .browser-status-line").first();
+  await page.locator("input[aria-label='Police username']").fill("james.f");
+  await page.locator("input[aria-label='Police password']").fill("oscar123");
+  await page.locator(".browser-page-police").getByRole("button", { name: "Login" }).click();
+  await expect(status).toHaveText("Logged in as: Constable James Fletcher (Level 1)");
+
+  await page.locator(".browser-page-police").getByRole("button", { name: "Log Out" }).click();
+  await expect(status).toHaveText("Logged in as: Public (Level 0)");
+  await expect(page.locator("input[aria-label='Police username']")).toHaveValue("");
+  await expect(page.locator("input[aria-label='Police password']")).toHaveValue("");
+
+  // The level-1 record is gated again.
+  const query = page.locator("input[aria-label='Police search']");
+  await query.fill("thomas orourke");
+  await query.press("Enter");
+  await expect(status).toHaveText("One or more matching records were hidden by privilege restrictions.");
+
+  // Logging out persists across a computer close, same as logging in.
+  await closeComputer(page);
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+  await expect(status).toHaveText("Logged in as: Public (Level 0)");
+
+  // Archives logs out to Free.
+  await page.getByRole("button", { name: "Canada Archives" }).click();
+  const archiveStatus = page.locator(".browser-page-archives .browser-status-line").first();
+  await page.locator("input[aria-label='Archive username']").fill("subscriber");
+  await page.locator("input[aria-label='Archive password']").fill("subscribe");
+  await page.locator(".browser-page-archives").getByRole("button", { name: "Login" }).click();
+  await expect(archiveStatus).toHaveText("Logged in as: Subscriber");
+  await page.locator(".browser-page-archives").getByRole("button", { name: "Log Out" }).click();
+  await expect(archiveStatus).toHaveText("Logged in as: Free");
+});
+
+test("website logins persist through a real save/load round trip, and New Game clears them", async ({ page }) => {
+  await startNewGame(page);
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+
+  const status = page.locator(".browser-page-police .browser-status-line").first();
+  await page.locator("input[aria-label='Police username']").fill("b.whitmore");
+  await page.locator("input[aria-label='Police password']").fill("ironVeins15");
+  await page.locator(".browser-page-police").getByRole("button", { name: "Login" }).click();
+  await expect(status).toHaveText("Logged in as: Mr Brian Whitmore (Level 2)");
+  await closeComputer(page);
+
+  // Drive the real Save popup, exactly as the player would.
+  await page.keyboard.press("Escape");
+  await page.locator("#saveGame").click();
+  const saveString = await page.locator("#loadSaveGameStringTextArea").inputValue();
+  expect(saveString.length).toBeGreaterThan(0);
+  await page.locator("#closeButtonSavePopup").click();
+
+  // New Game must not leave the previous login behind.
+  await page.locator("#newGame").click();
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+  await expect(status).toHaveText("Logged in as: Public (Level 0)");
+  await closeComputer(page);
+
+  // Loading the earlier save through the real Load popup restores the login.
+  await page.keyboard.press("Escape");
+  await page.locator("#loadGame").click();
+  await page.locator("#loadSaveGameStringTextArea").fill(saveString);
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.locator("#loadStringButton").click();
+
+  await openNetscape(page);
+  await page.getByRole("button", { name: "Police Records" }).click();
+  await expect(status).toHaveText("Logged in as: Mr Brian Whitmore (Level 2)");
+
+  // And the restored level genuinely still gates records.
+  const query = page.locator("input[aria-label='Police search']");
+  await query.fill("thomas orourke");
+  await query.press("Enter");
+  await expect(page.locator(".browser-results-police tbody .browser-results-row")).toHaveCount(1);
+});
+
 test("archives site requires province plus keyword and remembers the province", async ({ page }) => {
   await startNewGame(page);
   await openNetscape(page);
@@ -230,6 +389,66 @@ test("browser address history replays a previous search from the dropdown", asyn
 
   await expect(page.locator(".browser-results-zoom tbody .browser-results-row.is-selected")).toHaveCount(1);
   await expect(zoomQuery).toHaveValue("mine cart");
+});
+
+test("address history survives closing the computer, de-duplicates, and round-trips a save", async ({ page }) => {
+  await startNewGame(page);
+  await openNetscape(page);
+
+  const readHistory = () => page.evaluate(async () => {
+    const module = await import("/constantsAndGlobalVars.js");
+    return module.getBrowserAddressHistory();
+  });
+
+  // Visit three distinct pages, revisiting one of them.
+  const zoomQuery = page.locator("input[aria-label='ZoomSearch query']");
+  await page.getByRole("button", { name: "ZoomSearch" }).click();
+  await zoomQuery.fill("john baxley");
+  await zoomQuery.press("Enter");
+  await page.locator(".browser-results-zoom tbody .browser-results-row").click();
+
+  await page.getByRole("button", { name: "Library" }).click();
+  await page.getByRole("button", { name: "ZoomSearch" }).click();
+  await page.getByRole("button", { name: "Library" }).click();
+
+  const beforeClose = await readHistory();
+  const urls = beforeClose.map((entry) => (typeof entry === "object" ? entry.url : entry));
+
+  // The welcome page is never recorded, and no URL appears twice.
+  expect(urls).not.toContain("about:welcome");
+  expect(new Set(urls).size).toBe(urls.length);
+  expect(urls).toContain("http://www.zoomsearch.net/members/johnbaxley");
+
+  // Revisiting moved zoomsearch's front page earlier than library's.
+  expect(urls[urls.length - 1]).toBe("http://library.intra");
+
+  // Closing and reopening the computer keeps the history and the dropdown.
+  await closeComputer(page);
+  await openNetscape(page);
+  expect(await readHistory()).toEqual(beforeClose);
+
+  await page.locator("input[aria-label='Browser address']").click();
+  const dropdown = await page.locator(".caveos-browser-address-history-item").allTextContents();
+  expect(dropdown).not.toContain("about:welcome");
+  expect(new Set(dropdown).size).toBe(dropdown.length);
+  expect(dropdown[0]).toBe("http://library.intra");
+
+  // And it round-trips through the save payload with its replay data intact.
+  const roundTripped = await page.evaluate(async () => {
+    const module = await import("/constantsAndGlobalVars.js");
+    const wire = JSON.parse(JSON.stringify(module.captureGameStatusForSaving()));
+    module.setBrowserAddressHistory([]);
+    await module.restoreGameStatus(wire);
+    return module.getBrowserAddressHistory();
+  });
+
+  expect(roundTripped).toEqual(beforeClose);
+  const replayEntry = roundTripped.find((entry) => typeof entry === "object");
+  expect(replayEntry.replay).toMatchObject({
+    siteId: "zoomsearch",
+    query: "john baxley",
+    recordId: "johnbaxley",
+  });
 });
 
 test("language buttons localize menu and desktop chrome", async ({ page }) => {

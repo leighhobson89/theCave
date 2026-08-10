@@ -3406,6 +3406,19 @@ button.disabled {
     width: 100%;
 }
 
+/* Login / Log Out sit side by side inside the grid-based auth panels. */
+.browser-auth-actions {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.browser-auth-actions .browser-button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+}
+
 .browser-page-shell-library .browser-status-line,
 .browser-page-shell-zoom .browser-status-line,
 .browser-page-shell-police .browser-status-line {

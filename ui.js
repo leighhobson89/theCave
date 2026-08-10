@@ -40,6 +40,7 @@ import {
   getBrowserAddressHistory,
   setBrowserAddressHistory,
   getNextDesktopWindowZIndex,
+  registerWebContentSessionsProvider,
 } from "./constantsAndGlobalVars.js";
 import {
   addEvidenceTrigger,
@@ -119,6 +120,12 @@ const webContentManager = createWebContentManager({
 });
 
 registerDefaultWebContentSites(webContentManager);
+
+// Website logins (Police Records, Canada Archives) persist into the save file.
+registerWebContentSessionsProvider({
+  getSnapshot: () => webContentManager.getSessionsSnapshot(),
+  restoreSnapshot: (snapshot) => webContentManager.restoreSessionsSnapshot(snapshot),
+});
 
 function ensureNotificationHostElement() {
   if (notificationHostElement?.isConnected) {
@@ -785,6 +792,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     resetPaintPagesState();
     resetAshtrayState();
     resetFacsimileState();
+    webContentManager.clearSessions();
     syncAshtrayVisualState();
     syncFacsimileVisualState({ animateFeed: false });
     setBeginGameStatus(true);
@@ -1986,7 +1994,7 @@ function createComputerPaintWindowContentElements() {
 
 function createComputerNetscapeWindowContentElements() {
   const HISTORY_LIMIT = 5;
-  const ADDRESS_HISTORY_LIMIT = 10;
+  const WELCOME_URL = "about:welcome";
 
   const normalizeBrowserUrl = (value) => {
     const trimmed = String(value ?? "").trim();
@@ -2326,26 +2334,25 @@ function createComputerNetscapeWindowContentElements() {
     addressHistoryPanel.hidden = true;
   };
 
+  // Records a visited URL in the persistent address history. The welcome page is
+  // skipped: it is rendered on every browser open and is always one click away
+  // on the Home button, so recording it would crowd out real history.
   const pushAddressHistoryEntry = (urlValue, replay = null) => {
     const normalized = normalizeBrowserUrl(urlValue);
-    if (!normalized) {
+    if (!normalized || normalized === WELCOME_URL) {
       return;
     }
 
-    const trimmedValue = String(urlValue ?? "").trim();
-    const normalizedUrl = trimmedValue || normalized;
-    if (replay && typeof replay === "object") {
-      addressHistory.push({
-        url: normalizedUrl,
-        replay: { ...replay },
-      });
-    } else {
-      addressHistory.push(normalizedUrl);
-    }
+    const normalizedUrl = String(urlValue ?? "").trim() || normalized;
+    addressHistory.push(
+      replay && typeof replay === "object"
+        ? { url: normalizedUrl, replay: { ...replay } }
+        : normalizedUrl
+    );
 
-    const truncated = addressHistory.slice(-ADDRESS_HISTORY_LIMIT);
-    addressHistory.splice(0, addressHistory.length, ...truncated);
     setBrowserAddressHistory(addressHistory);
+    // Re-read so this window's copy matches the canonical de-duplicated, capped list.
+    addressHistory.splice(0, addressHistory.length, ...getBrowserAddressHistory());
     updateAddressHistorySuggestions();
   };
 

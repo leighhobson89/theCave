@@ -94,6 +94,44 @@ export function createWebContentManager({ awardEvidence } = {}) {
     });
   }
 
+  // Every session ever set (including a guest sign-in) as a plain
+  // websiteId -> session object, for the save payload.
+  function getSessionsSnapshot() {
+    const snapshot = {};
+    websiteSessions.forEach((session, websiteId) => {
+      snapshot[websiteId] = cloneJson(session);
+    });
+    return snapshot;
+  }
+
+  // Replaces every session with the contents of a save payload. The loaded
+  // save is treated as the full source of truth, so this clears sessions that
+  // exist only in the current runtime (e.g. from a save made before login
+  // persistence existed, or one that never touched a given site) rather than
+  // merging on top of them. Entries for sites that are not registered, or that
+  // are not well-formed session objects, are skipped.
+  function restoreSessionsSnapshot(snapshot) {
+    websiteSessions.clear();
+    if (!snapshot || typeof snapshot !== "object") {
+      return;
+    }
+
+    Object.keys(snapshot).forEach((rawWebsiteId) => {
+      const websiteId = normalizeText(rawWebsiteId);
+      const session = snapshot[rawWebsiteId];
+      if (!websiteId || !websiteRegistry.has(websiteId) || !session || typeof session !== "object") {
+        return;
+      }
+
+      setSession(websiteId, session);
+    });
+  }
+
+  // Used by New Game: no site should still appear logged in.
+  function clearSessions() {
+    websiteSessions.clear();
+  }
+
   async function loginWebsite(websiteId, credentials = {}) {
     const definition = getWebsiteDefinition(websiteId);
     if (!definition) {
@@ -186,6 +224,9 @@ export function createWebContentManager({ awardEvidence } = {}) {
     loginWebsite,
     searchWebsite,
     createWebsitePage,
+    getSessionsSnapshot,
+    restoreSessionsSnapshot,
+    clearSessions,
     normalizeText,
     textEquals,
   };
