@@ -48,6 +48,10 @@ let paintPages = buildDefaultPaintPages();
 let paintActivePageIndex = 0;
 let ashtrayHasLitCigarette = true;
 let ashtrayHasExtraButt = false;
+let facsimileState = {
+  pendingReports: [],
+  consumedReportIds: [],
+};
 let browserAddressHistory = [];
 let activeGameplayState = DESKTOP_STATE;
 
@@ -105,6 +109,9 @@ export function setElements() {
     desktopCalendar: document.getElementById("desktopCalendar"),
     desktopAshtray: document.getElementById("desktopAshtray"),
     desktopAshtrayHotspot: document.getElementById("desktopAshtrayHotspot"),
+    desktopFacsimileRig: document.getElementById("desktopFacsimileRig"),
+    desktopFacsimileHotspot: document.getElementById("desktopFacsimileHotspot"),
+    desktopFacsimile: document.getElementById("desktopFacsimile"),
     desktopComputerRig: document.getElementById("desktopComputerRig"),
     desktopComputerHotspot: document.getElementById("desktopComputerHotspot"),
     settingsToggle: document.getElementById("settingsToggle"),
@@ -178,6 +185,7 @@ export function captureGameStatusForSaving() {
   gameState.paintActivePageIndex = getPaintActivePageIndex();
   gameState.ashtrayHasLitCigarette = getAshtrayHasLitCigarette();
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
+  gameState.facsimileState = getFacsimileState();
   gameState.browserAddressHistory = getBrowserAddressHistory();
   gameState.activeGameplayState = getActiveGameplayState();
   gameState.currentScene = getActiveGameplayState();
@@ -205,6 +213,7 @@ export function restoreGameStatus(gameState) {
       setPaintActivePageIndex(gameState.paintActivePageIndex ?? 0);
       setAshtrayHasLitCigarette(gameState.ashtrayHasLitCigarette);
       setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
+      setFacsimileState(gameState.facsimileState);
       setBrowserAddressHistory(gameState.browserAddressHistory);
       setActiveGameplayState(
         gameState.activeGameplayState
@@ -569,4 +578,74 @@ export function setAshtrayHasExtraButt(value) {
 export function resetAshtrayState() {
   ashtrayHasLitCigarette = true;
   ashtrayHasExtraButt = false;
+}
+
+export function setFacsimileState(value) {
+  const rawPendingReports = value && typeof value === "object"
+    ? Array.isArray(value.pendingReports)
+      ? value.pendingReports
+      : value.pendingReport && typeof value.pendingReport === "object"
+        ? [value.pendingReport]
+        : []
+    : [];
+
+  const pendingReportsById = new Map();
+  rawPendingReports.forEach((item) => {
+    if (!item || typeof item !== "object") {
+      return;
+    }
+
+    const normalizedItem = {
+      ...item,
+      id: String(item.id || "").trim(),
+      title: String(item.title || "").trim(),
+      reportText: String(item.reportText || ""),
+      description: String(item.description || ""),
+      paperStyle: String(item.paperStyle || "").trim(),
+      evidenceName: String(item.evidenceName || "").trim(),
+      createdAt: String(item.createdAt || "").trim(),
+    };
+
+    if (!normalizedItem.id) {
+      return;
+    }
+
+    if (!pendingReportsById.has(normalizedItem.id)) {
+      pendingReportsById.set(normalizedItem.id, normalizedItem);
+    }
+  });
+
+  const pendingReports = Array.from(pendingReportsById.values());
+
+  const consumedReportIds = value && typeof value === "object" && Array.isArray(value.consumedReportIds)
+    ? value.consumedReportIds
+      .map((id) => String(id || "").trim())
+      .filter(Boolean)
+    : [];
+
+  facsimileState = {
+    pendingReports,
+    consumedReportIds,
+  };
+}
+
+export function getFacsimileState() {
+  const pendingReports = Array.isArray(facsimileState.pendingReports)
+    ? facsimileState.pendingReports.map((item) => ({ ...item }))
+    : [];
+
+  return {
+    pendingReport: pendingReports[0] ? { ...pendingReports[0] } : null,
+    pendingReports,
+    consumedReportIds: Array.isArray(facsimileState.consumedReportIds)
+      ? [...facsimileState.consumedReportIds]
+      : [],
+  };
+}
+
+export function resetFacsimileState() {
+  facsimileState = {
+    pendingReports: [],
+    consumedReportIds: [],
+  };
 }

@@ -633,6 +633,10 @@ button.disabled {
     --desktop-hover-radius: 18px;
 }
 
+#desktopFacsimileHotspot {
+    --desktop-hover-radius: 20px;
+}
+
 #desktopComputerHotspot.desktop-hoverable::after {
     transform: translate(-3%, 0%) scale(0.885) scaleX(0.95);
 }
@@ -963,11 +967,11 @@ button.disabled {
 .notes-folder {
     position: absolute;
     left: 300px;
-    bottom: 300px;
+    bottom: 650px;
     width: 440px;
     height: 270px;
     top: auto;
-    transform: rotate(20deg);
+    transform: rotate(10deg);
     z-index: 2;
 }
 
@@ -1346,7 +1350,7 @@ button.disabled {
 .desktop-ashtray {
     position: absolute;
     left: 850px;
-    bottom: 248px;
+    bottom: 780px;
     width: 160px;
     height: 210px;
     transform: rotate(-7deg);
@@ -1757,6 +1761,221 @@ button.disabled {
     100% {
         opacity: 1;
         transform: scale(1);
+    }
+}
+
+.facsimile-rig {
+    position: absolute;
+    left: 470px;
+    bottom: 250px;
+    width: 700px;
+    height: 440px;
+    transform: rotate(0deg);
+    z-index: 5;
+}
+
+.facsimile-rig > * {
+    pointer-events: none;
+}
+
+.facsimile-rig > .facsimile-click-target {
+    pointer-events: auto;
+}
+
+.facsimile-click-target {
+    position: absolute;
+    left: 20px;
+    bottom: 12px;
+    width: 645px;
+    height: 364px;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    border-radius: 18px;
+    background: transparent;
+    cursor: pointer;
+    z-index: 14;
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.desktop-facsimile {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: 220px;
+    transform-origin: left bottom;
+    transform: scale(2.5, 2);
+}
+
+.facsimile-shadow {
+    position: absolute;
+    left: 14px;
+    bottom: 4px;
+    width: 248px;
+    height: 36px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.08) 68%, transparent 100%);
+    filter: blur(1.2px);
+}
+
+.facsimile-body {
+    position: absolute;
+    left: 22px;
+    bottom: 18px;
+    width: 238px;
+    height: 138px;
+    border-radius: 20px 20px 14px 14px;
+    border: 2px solid rgba(93, 90, 86, 0.86);
+    background:
+        linear-gradient(164deg, rgba(203, 198, 189, 0.97) 0%, rgba(151, 147, 139, 0.97) 52%, rgba(114, 110, 104, 0.97) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.58),
+        inset 0 -10px 14px rgba(56, 52, 49, 0.34),
+        0 9px 14px rgba(0, 0, 0, 0.3);
+}
+
+.facsimile-panel {
+    position: absolute;
+    left: 18px;
+    top: 14px;
+    width: 124px;
+    height: 74px;
+    border-radius: 11px;
+    border: 1px solid rgba(74, 72, 69, 0.66);
+    background: linear-gradient(180deg, rgba(80, 88, 83, 0.85), rgba(43, 48, 45, 0.9));
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 18px repeat(2, 1fr);
+    gap: 5px;
+    padding: 7px;
+    box-shadow: inset 0 1px 0 rgba(208, 218, 214, 0.2);
+}
+
+.facsimile-display {
+    grid-column: 1 / span 3;
+    border-radius: 3px;
+    border: 1px solid rgba(46, 70, 58, 0.72);
+    background: linear-gradient(180deg, #9bcca8 0%, #6ba17a 100%);
+    box-shadow: inset 0 1px 0 rgba(205, 238, 214, 0.42);
+}
+
+.facsimile-key {
+    border-radius: 4px;
+    border: 1px solid rgba(116, 115, 110, 0.76);
+    background: linear-gradient(180deg, rgba(233, 230, 223, 0.96), rgba(194, 190, 182, 0.96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.facsimile-alert-light {
+    grid-column: 4;
+    grid-row: 1;
+    width: 12px;
+    height: 12px;
+    justify-self: end;
+    border-radius: 50%;
+    border: 1px solid rgba(98, 26, 26, 0.84);
+    background: radial-gradient(circle at 35% 30%, #ffb0a9 0%, #d64031 48%, #7d0f0c 100%);
+    box-shadow: 0 0 4px rgba(224, 52, 39, 0.35);
+}
+
+.desktop-facsimile.has-pending-message .facsimile-alert-light {
+    border-color: rgba(37, 92, 24, 0.84);
+    background: radial-gradient(circle at 35% 30%, #d2ffaf 0%, #59c43c 52%, #1b6919 100%);
+    box-shadow: 0 0 7px rgba(84, 213, 59, 0.6), 0 0 14px rgba(84, 213, 59, 0.3);
+    animation: facsimileSignalBlink 0.82s ease-in-out infinite;
+}
+
+.facsimile-output-tray {
+    position: absolute;
+    right: 10px;
+    top: 20px;
+    width: 76px;
+    height: 88px;
+    border-radius: 8px;
+    border: 1px solid rgba(118, 116, 111, 0.8);
+    background:
+        linear-gradient(180deg, rgba(236, 233, 227, 0.9) 0%, rgba(184, 180, 173, 0.9) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.facsimile-paper {
+    position: absolute;
+    right: 30px;
+    top: 10px;
+    width: 78px;
+    height: 82px;
+    border-radius: 3px;
+    border: 1px solid rgba(166, 160, 151, 0.74);
+    background: linear-gradient(180deg, #fcfbf7 0%, #f0ebe0 100%);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.24);
+    transform-origin: top center;
+    opacity: 0.92;
+}
+
+.facsimile-paper-text {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 10px;
+    bottom: 10px;
+    background: repeating-linear-gradient(180deg,
+            rgba(80, 84, 91, 0.34) 0,
+            rgba(80, 84, 91, 0.34) 1px,
+            transparent 1px,
+            transparent 8px);
+    transform: scaleY(0.4);
+    transform-origin: top;
+    opacity: 0.32;
+}
+
+.desktop-facsimile.has-pending-message .facsimile-paper-text {
+    opacity: 0.66;
+}
+
+.desktop-facsimile.is-receiving .facsimile-paper {
+    animation: facsimilePaperFeed 0.9s cubic-bezier(0.25, 0.74, 0.24, 1) 1;
+}
+
+.desktop-facsimile.is-receiving .facsimile-paper-text {
+    animation: facsimileTextPrint 0.9s linear 1;
+}
+
+@keyframes facsimileSignalBlink {
+    0%,
+    45%,
+    100% {
+        opacity: 1;
+    }
+    62% {
+        opacity: 0.42;
+    }
+}
+
+@keyframes facsimilePaperFeed {
+    0% {
+        transform: translateY(-26px);
+        opacity: 0;
+    }
+    30% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 0.92;
+    }
+}
+
+@keyframes facsimileTextPrint {
+    0% {
+        transform: scaleY(0.05);
+        opacity: 0;
+    }
+    100% {
+        transform: scaleY(1);
+        opacity: 0.66;
     }
 }
 
@@ -3835,6 +4054,86 @@ button.disabled {
 
 .story-window .desktop-window-body {
     padding: 0.75rem 1.35rem 1.35rem;
+}
+
+.facsimile-window {
+    width: min(760px, 78vw);
+    height: min(560px, 68vh);
+}
+
+.facsimile-window-content {
+    height: 100%;
+    padding: 0.25rem;
+    box-sizing: border-box;
+}
+
+.facsimile-page {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(193, 200, 214, 0.42);
+    background: linear-gradient(180deg, rgba(247, 249, 253, 0.96) 0%, rgba(233, 237, 245, 0.96) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    color: #19222f;
+    padding: 1rem 1.2rem;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    gap: 0.6rem;
+}
+
+.facsimile-summary {
+    margin: 0;
+    font-size: 0.88rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(39, 56, 80, 0.74);
+}
+
+.facsimile-report-title {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    color: rgba(13, 28, 50, 0.9);
+}
+
+.facsimile-report-text {
+    margin: 0;
+    padding: 0.9rem;
+    border-radius: 10px;
+    border: 1px solid rgba(153, 169, 195, 0.44);
+    background: rgba(249, 251, 255, 0.95);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    overflow: auto;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: rgba(20, 30, 44, 0.92);
+}
+
+.facsimile-next-message-button {
+    justify-self: start;
+    min-width: 260px;
+    border: 1px solid rgba(120, 160, 220, 0.62);
+    border-radius: 8px;
+    padding: 0.42rem 0.8rem;
+    background: linear-gradient(180deg, rgba(180, 213, 255, 0.92), rgba(123, 170, 239, 0.9));
+    color: rgba(14, 34, 64, 0.95);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.facsimile-next-message-button:hover:not(:disabled) {
+    background: linear-gradient(180deg, rgba(198, 223, 255, 0.95), rgba(136, 182, 246, 0.92));
+}
+
+.facsimile-next-message-button:disabled {
+    opacity: 0.55;
+    cursor: default;
 }
 
 .debug-window {

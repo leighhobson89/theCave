@@ -1,6 +1,7 @@
 import {
   getAshtrayHasExtraButt,
   getAshtrayHasLitCigarette,
+  getFacsimileState,
   captureGameStatusForSaving,
   gameState,
   getEvidenceCustomName,
@@ -12,11 +13,13 @@ import {
   getPaintActivePageIndex,
   getPaintPages,
   resetAshtrayState,
+  resetFacsimileState,
   resetNotesPagesState,
   resetPaintPagesState,
   setElements,
   setAshtrayHasExtraButt,
   setAshtrayHasLitCigarette,
+  setFacsimileState,
   setEvidenceCustomName,
   setEvidenceCustomNames,
   getElements,
@@ -74,6 +77,7 @@ const photosWindowContentRefs = new WeakMap();
 const reportsWindowContentRefs = new WeakMap();
 const notesWindowContentRefs = new WeakMap();
 const computerWindowContentRefs = new WeakMap();
+const facsimileWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
 const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
@@ -96,6 +100,7 @@ const NOTES_TAB_COLORS = [
 let debugWindowController = null;
 let computerWindowController = null;
 let ashtrayAnimationTimeoutId = null;
+let facsimileFeedAnimationTimeoutId = null;
 const NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS = 3000;
 const notificationQueue = [];
 let notificationReleaseIntervalId = null;
@@ -198,6 +203,22 @@ export function showNotifcation(type, text, time, sound = false) {
 
 window.showNotifcation = showNotifcation;
 
+window.receiveFacsimileReport = function receiveFacsimileReport(reportPayload) {
+  return queueFacsimileReport(reportPayload, { animateFeed: true });
+};
+
+window.addEventListener("cave-facsimile-report", (event) => {
+  const reportPayload = event?.detail && typeof event.detail === "object"
+    ? event.detail.report || event.detail
+    : null;
+
+  if (!reportPayload) {
+    return;
+  }
+
+  queueFacsimileReport(reportPayload, { animateFeed: true });
+});
+
 function syncAshtrayVisualState() {
   const ashtrayElement = getElements().desktopAshtray;
   if (!ashtrayElement) {
@@ -207,6 +228,187 @@ function syncAshtrayVisualState() {
   ashtrayElement.classList.toggle("has-lit-cig", getAshtrayHasLitCigarette());
   ashtrayElement.classList.toggle("has-extra-butt", getAshtrayHasExtraButt());
   ashtrayElement.classList.remove("is-extinguishing", "is-relighting");
+}
+
+function getFacsimilePendingReports() {
+  const facsimile = getFacsimileState();
+  return Array.isArray(facsimile?.pendingReports)
+    ? facsimile.pendingReports
+      .filter((item) => item && typeof item === "object")
+      .map((item) => ({ ...item }))
+    : [];
+}
+
+function getFacsimilePendingReport() {
+  const pendingReports = getFacsimilePendingReports();
+  return pendingReports.length ? pendingReports[0] : null;
+}
+
+function sanitizeFacsimileReport(report) {
+  if (!report || typeof report !== "object") {
+    return null;
+  }
+
+  const id = String(report.id || report.name || "").trim();
+  if (!id) {
+    return null;
+  }
+
+  const title = String(report.title || report.defaultTitleString || "Facsimile Report").trim() || "Facsimile Report";
+  const reportText = String(report.reportText || report.content || "").replace(/\r\n/g, "\n").trim();
+  const description = String(report.description || "Received via facsimile machine.").trim() || "Received via facsimile machine.";
+  const evidenceName = String(report.evidenceName || `facsimile-${id}`).trim() || `facsimile-${id}`;
+  const paperStyle = String(report.paperStyle || "report-parchment").trim() || "report-parchment";
+
+  return {
+    id,
+    title,
+    reportText,
+    description,
+    evidenceName,
+    paperStyle,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function isFacsimileReportConsumed(reportId) {
+  const normalizedId = String(reportId || "").trim();
+  if (!normalizedId) {
+    return false;
+  }
+
+  const facsimile = getFacsimileState();
+  const consumed = Array.isArray(facsimile?.consumedReportIds) ? facsimile.consumedReportIds : [];
+  return consumed.includes(normalizedId);
+}
+
+function queueFacsimileReport(reportPayload, options = {}) {
+  const normalizedReport = sanitizeFacsimileReport(reportPayload);
+  if (!normalizedReport) {
+    return false;
+  }
+
+  if (isFacsimileReportConsumed(normalizedReport.id)) {
+    return false;
+  }
+
+  const pendingReports = getFacsimilePendingReports();
+  const isAlreadyPending = pendingReports.some((item) => String(item?.id || "").trim() === normalizedReport.id);
+  if (isAlreadyPending) {
+    return false;
+  }
+
+  const facsimile = getFacsimileState();
+  setFacsimileState({
+    pendingReports: [...pendingReports, normalizedReport],
+    consumedReportIds: Array.isArray(facsimile?.consumedReportIds)
+      ? facsimile.consumedReportIds
+      : [],
+  });
+
+  syncFacsimileVisualState({ animateFeed: options.animateFeed !== false });
+  refreshOpenFacsimileWindows();
+  return true;
+}
+
+function commitReadFacsimileReportToEvidence(report) {
+  const normalizedReport = sanitizeFacsimileReport(report);
+  if (!normalizedReport || isFacsimileReportConsumed(normalizedReport.id)) {
+    return false;
+  }
+
+  const existingReports = getEvidenceCollection(EVIDENCE_STORAGE_KEYS.REPORTS);
+  const alreadyCreated = existingReports.some((entry) => {
+    const entryName = String(entry?.name || "").trim();
+    return entryName && entryName === normalizedReport.evidenceName;
+  });
+
+  if (!alreadyCreated) {
+    createEvidence({
+      type: "report",
+      storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+      titleKey: "reports",
+      name: normalizedReport.evidenceName,
+      defaultTitleString: normalizedReport.title,
+      paperStyle: normalizedReport.paperStyle,
+      reportText: normalizedReport.reportText,
+      description: normalizedReport.description,
+      source: {
+        kind: "facsimile-inline-report",
+        languageAware: false,
+        entryId: normalizedReport.id,
+      },
+    });
+  }
+
+  const facsimile = getFacsimileState();
+  const consumedIds = Array.isArray(facsimile?.consumedReportIds)
+    ? facsimile.consumedReportIds
+    : [];
+  const uniqueConsumedIds = consumedIds.includes(normalizedReport.id)
+    ? consumedIds
+    : [...consumedIds, normalizedReport.id];
+
+  const remainingPendingReports = getFacsimilePendingReports().filter(
+    (item) => String(item?.id || "").trim() !== normalizedReport.id
+  );
+
+  setFacsimileState({
+    pendingReports: remainingPendingReports,
+    consumedReportIds: uniqueConsumedIds,
+  });
+
+  syncFacsimileVisualState({ animateFeed: false });
+  refreshOpenFacsimileWindows();
+  showNotifcation(
+    "reward",
+    "New Report Evidence unlocked in your Evidence folder!",
+    4000,
+    "newEvidence"
+  );
+
+  return true;
+}
+
+function syncFacsimileVisualState(options = {}) {
+  const facsimileElement = getElements().desktopFacsimile;
+  const facsimileRig = getElements().desktopFacsimileRig;
+  const hasPendingMessage = getFacsimilePendingReports().length > 0;
+
+  if (facsimileElement) {
+    facsimileElement.classList.toggle("has-pending-message", hasPendingMessage);
+  }
+
+  if (facsimileRig) {
+    facsimileRig.classList.toggle("has-pending-message", hasPendingMessage);
+  }
+
+  if (!facsimileElement || !options.animateFeed || !hasPendingMessage) {
+    return;
+  }
+
+  facsimileElement.classList.remove("is-receiving");
+  void facsimileElement.offsetWidth;
+  facsimileElement.classList.add("is-receiving");
+
+  if (facsimileFeedAnimationTimeoutId) {
+    window.clearTimeout(facsimileFeedAnimationTimeoutId);
+  }
+
+  facsimileFeedAnimationTimeoutId = window.setTimeout(() => {
+    facsimileElement.classList.remove("is-receiving");
+    facsimileFeedAnimationTimeoutId = null;
+  }, 1900);
+}
+
+function refreshOpenFacsimileWindows() {
+  activeDesktopWindows.forEach((windowController) => {
+    if (desktopWindowKinds.get(windowController) !== "facsimile") {
+      return;
+    }
+
+    updateFacsimileWindowContent(windowController);
+  });
 }
 
 function awardWebContentEvidence(evidenceDescriptor, context = {}) {
@@ -295,6 +497,7 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
   syncAshtrayVisualState();
+  syncFacsimileVisualState({ animateFeed: false });
   initializeAudioControls();
   initializeStoryWindowControls();
   updateDesktopCalendarDate();
@@ -306,7 +509,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     resetNotesPagesState();
     resetPaintPagesState();
     resetAshtrayState();
+    resetFacsimileState();
     syncAshtrayVisualState();
+    syncFacsimileVisualState({ animateFeed: false });
     setBeginGameStatus(true);
     if (!getGameInProgress()) {
       setGameInProgress(true);
@@ -415,6 +620,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .then(() => {
         setElements();
         syncAshtrayVisualState();
+        syncFacsimileVisualState({ animateFeed: false });
         audioManager.syncFromSavedPreferences();
         refreshAudioControlsDisplay();
         getElements().saveLoadPopup.classList.add("d-none");
@@ -884,6 +1090,30 @@ function initializeStoryWindowControls() {
     getElements().desktopAshtrayHotspot.addEventListener("click", activateAshtray);
   }
 
+  if (getElements().desktopFacsimileHotspot || getElements().desktopFacsimileRig) {
+    const facsimileTrigger = getElements().desktopFacsimileHotspot || getElements().desktopFacsimileRig;
+    const openFacsimileRig = () => {
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickButton");
+
+      if (toggleExistingWindowsByKind("facsimile")) {
+        return;
+      }
+
+      openFacsimileWindow();
+    };
+
+    facsimileTrigger.addEventListener("click", openFacsimileRig);
+    facsimileTrigger.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      openFacsimileRig();
+    });
+  }
+
   if (getElements().desktopComputerHotspot || getElements().desktopComputerRig) {
     const computerTrigger = getElements().desktopComputerHotspot || getElements().desktopComputerRig;
     const openComputerRig = () => {
@@ -994,6 +1224,12 @@ function refreshOpenWindowLocalization() {
 
     if (windowKind === "computer-netscape") {
       windowController.setTitle("Netscape Navigator 3.0");
+      return;
+    }
+
+    if (windowKind === "facsimile") {
+      windowController.setTitle("FACSIMILE");
+      updateFacsimileWindowContent(windowController);
       return;
     }
 
@@ -4093,6 +4329,13 @@ async function getReportTextByEvidence(
   forceReload = false,
   preloadedReportEntry = null
 ) {
+  const explicitReportText = String(evidence?.reportText || "")
+    .replace(/\r\n/g, "\n")
+    .trim();
+  if (explicitReportText) {
+    return explicitReportText;
+  }
+
   const reportEntry = preloadedReportEntry
     || await getReportCatalogEntry(evidence, languageCode, forceReload);
   if (!reportEntry) {
@@ -4349,6 +4592,144 @@ function openReportsWindow() {
   reportsWindowController.open({ resizable: true, showScrollbar: false });
   bringDesktopWindowToFront(reportsWindowController);
   audioManager.playSfx("clickSwitch");
+}
+
+function createFacsimileWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("facsimile-window-content");
+
+  const page = document.createElement("article");
+  page.classList.add("facsimile-page");
+
+  const summary = document.createElement("p");
+  summary.classList.add("facsimile-summary");
+  summary.textContent = "Transmission monitor online.";
+
+  const divider = createContentDivider();
+
+  const reportTitle = document.createElement("h3");
+  reportTitle.classList.add("facsimile-report-title");
+
+  const reportText = document.createElement("pre");
+  reportText.classList.add("facsimile-report-text");
+
+  const nextMessageButton = document.createElement("button");
+  nextMessageButton.type = "button";
+  nextMessageButton.classList.add("facsimile-next-message-button");
+  nextMessageButton.textContent = "No Additional Cached Messages";
+  nextMessageButton.disabled = true;
+  nextMessageButton.setAttribute("aria-label", "Show next cached facsimile message");
+
+  page.append(summary, divider, reportTitle, reportText, nextMessageButton);
+  container.appendChild(page);
+
+  return {
+    container,
+    summary,
+    reportTitle,
+    reportText,
+    nextMessageButton,
+    hasReadPendingMessage: false,
+    viewedReportId: "",
+  };
+}
+
+function processFacsimileMessageById(reportId) {
+  const normalizedId = String(reportId || "").trim();
+  if (!normalizedId) {
+    return false;
+  }
+
+  const viewedPending = getFacsimilePendingReports().find(
+    (item) => String(item?.id || "").trim() === normalizedId
+  );
+  if (!viewedPending) {
+    return false;
+  }
+
+  return commitReadFacsimileReportToEvidence(viewedPending);
+}
+
+function updateFacsimileWindowContent(windowController) {
+  const refs = facsimileWindowContentRefs.get(windowController);
+  if (!refs) {
+    return;
+  }
+
+  const pendingReports = getFacsimilePendingReports();
+  const pendingReport = pendingReports[0] || null;
+  const pendingCount = pendingReports.length;
+  if (!pendingReport) {
+    refs.summary.textContent = "Transmission monitor online.";
+    refs.reportTitle.textContent = "NO NEW MESSAGES";
+    refs.reportText.textContent = "";
+    refs.nextMessageButton.textContent = "No Additional Cached Messages";
+    refs.nextMessageButton.disabled = true;
+    refs.hasReadPendingMessage = false;
+    refs.viewedReportId = "";
+    return;
+  }
+
+  refs.summary.textContent = pendingCount > 1
+    ? `Incoming transmissions cached (${pendingCount}).`
+    : "Incoming transmission cached.";
+  refs.reportTitle.textContent = pendingReport.title || "FACSIMILE MESSAGE";
+  refs.reportText.textContent = pendingReport.reportText || "[Transmission body unavailable]";
+  refs.nextMessageButton.disabled = pendingCount <= 1;
+  refs.nextMessageButton.textContent = pendingCount > 1
+    ? `Show Next Cached Message (${pendingCount - 1} queued)`
+    : "No Additional Cached Messages";
+  refs.hasReadPendingMessage = true;
+  refs.viewedReportId = String(pendingReport.id || "").trim();
+}
+
+function openFacsimileWindow() {
+  if (!getElements().gameArea) {
+    return null;
+  }
+
+  let facsimileWindowController = null;
+  facsimileWindowController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["story-window", "facsimile-window"],
+    title: "FACSIMILE",
+    showCarouselNavigation: false,
+    closeButtonAriaLabel: "Close facsimile window",
+    onClose: () => {
+      const refs = facsimileWindowContentRefs.get(facsimileWindowController);
+      if (refs?.hasReadPendingMessage && refs.viewedReportId) {
+        processFacsimileMessageById(refs.viewedReportId);
+      }
+
+      unregisterDesktopWindow(facsimileWindowController);
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  const refs = createFacsimileWindowContentElements();
+  facsimileWindowController.setContent(refs.container);
+  facsimileWindowController.scrollContainerElement = refs.container;
+  facsimileWindowContentRefs.set(facsimileWindowController, refs);
+  registerDesktopWindow(facsimileWindowController, "facsimile");
+
+  refs.nextMessageButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+
+    if (!refs.hasReadPendingMessage || !refs.viewedReportId) {
+      return;
+    }
+
+    processFacsimileMessageById(refs.viewedReportId);
+    updateFacsimileWindowContent(facsimileWindowController);
+  });
+
+  updateFacsimileWindowContent(facsimileWindowController);
+  facsimileWindowController.open({ resizable: false, showScrollbar: false });
+  bringDesktopWindowToFront(facsimileWindowController);
+  audioManager.playSfx("clickSwitch");
+
+  return facsimileWindowController;
 }
 
 function openNotesWindow(options = {}) {

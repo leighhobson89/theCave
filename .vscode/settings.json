@@ -52,6 +52,9 @@
         "/^node --input-type=module -e \"import \\{ setBrowserAddressHistory, getBrowserAddressHistory, captureGameStatusForSaving, restoreGameStatus \\} from '\\./constantsAndGlobalVars\\.js'; const initial=\\[\\{url:'http://wackyMiners\\.com', replay:\\{siteId:'zoomsearch', query:'mine cart', recordId:'minecart'\\}\\},'http://library\\.intra'\\]; setBrowserAddressHistory\\(initial\\); const saved = captureGameStatusForSaving\\(\\); const parsed = JSON\\.parse\\(JSON\\.stringify\\(saved\\)\\); setBrowserAddressHistory\\(\\[\\]\\); await restoreGameStatus\\(parsed\\); const restored = getBrowserAddressHistory\\(\\); console\\.log\\(JSON\\.stringify\\(\\{saved: saved\\.browserAddressHistory, restored\\}, null, 2\\)\\);\"$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "Copy-Item": true,
+        "Test-Path": true,
+        "Get-Item": true
     }
 }

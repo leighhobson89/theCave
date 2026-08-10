@@ -302,3 +302,219 @@ test("honey dew standalone page awards two photo evidences", async ({ page }) =>
     ])
   );
 });
+
+test("facsimile desktop object receives report and awards evidence once", async ({ page }) => {
+  const consoleEntries = [];
+  page.on("console", async (message) => {
+    const values = await Promise.all(message.args().map((arg) => arg.jsonValue().catch(() => null)));
+    consoleEntries.push({ text: message.text(), values });
+  });
+
+  await page.goto("/");
+  await page.locator("#newGame").click();
+
+  await page.locator("#desktopFacsimileHotspot").click();
+  const facsimileWindow = page.locator(".facsimile-window");
+  await expect(facsimileWindow).toBeVisible();
+  await expect(facsimileWindow.getByText("NO NEW MESSAGES")).toBeVisible();
+  await facsimileWindow.locator(".story-window-close").click();
+  await expect(facsimileWindow).toBeHidden();
+
+  const idleSignal = await page.locator("#desktopFacsimile .facsimile-alert-light").evaluate((element) => {
+    const computed = window.getComputedStyle(element);
+    return {
+      animationName: computed.animationName,
+    };
+  });
+  expect(idleSignal.animationName === "none" || idleSignal.animationName === "").toBe(true);
+
+  const queued = await page.evaluate(() => window.receiveFacsimileReport({
+    id: "fax-night-shift-001",
+    title: "CAVERN DISPATCH // NIGHT SHIFT",
+    reportText: "Timestamp 02:17\nGenerator room access attempted by unknown party.",
+    description: "Fax received from security relay.",
+    evidenceName: "facsimile-night-shift-001",
+  }));
+  expect(queued).toBe(true);
+
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+  const pendingSignal = await page.locator("#desktopFacsimile .facsimile-alert-light").evaluate((element) => {
+    const computed = window.getComputedStyle(element);
+    return {
+      animationName: computed.animationName,
+    };
+  });
+  expect(pendingSignal.animationName).toContain("facsimileSignalBlink");
+
+  await page.locator("#desktopFacsimileHotspot").click();
+  await expect(facsimileWindow).toBeVisible();
+  await expect(facsimileWindow.getByText("CAVERN DISPATCH // NIGHT SHIFT")).toBeVisible();
+  await expect(facsimileWindow.getByText("Generator room access attempted by unknown party.")).toBeVisible();
+  await facsimileWindow.locator(".story-window-close").click();
+
+  await expect.poll(async () => page.locator(".notification-host .game-notification-reward").count()).toBe(1);
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+  const consumedSignal = await page.locator("#desktopFacsimile .facsimile-alert-light").evaluate((element) => {
+    const computed = window.getComputedStyle(element);
+    return {
+      animationName: computed.animationName,
+    };
+  });
+  expect(consumedSignal.animationName === "none" || consumedSignal.animationName === "").toBe(true);
+
+  await page.locator("#desktopFacsimileHotspot").click();
+  await expect(facsimileWindow.getByText("NO NEW MESSAGES")).toBeVisible();
+  await facsimileWindow.locator(".story-window-close").click();
+  await expect.poll(async () => page.locator(".notification-host .game-notification-reward").count()).toBe(1);
+
+  await page.keyboard.press("-");
+  await expect(page.locator(".debug-window")).toBeVisible();
+  await page.locator(".debug-window .debug-window-button").click();
+
+  await expect.poll(async () => consoleEntries.some((entry) => entry.text.includes("Evidence store in memory (raw):"))).toBe(true);
+  const evidenceDebugEntry = consoleEntries
+    .filter((entry) => entry.text.includes("Evidence store in memory (raw):"))
+    .at(-1);
+  expect(evidenceDebugEntry).toBeTruthy();
+
+  const rawStore = evidenceDebugEntry?.values?.[1];
+  const reportEntries = Array.isArray(rawStore?.collections?.reports)
+    ? rawStore.collections.reports
+        .map((id) => rawStore?.evidencesById?.[String(id)])
+        .filter(Boolean)
+    : [];
+
+  const faxReports = reportEntries.filter((entry) => entry.name === "facsimile-night-shift-001");
+  expect(faxReports).toHaveLength(1);
+  expect(faxReports[0].reportText).toContain("Generator room access attempted by unknown party.");
+});
+
+test("facsimile queues and transfers five unique reports", async ({ page }) => {
+  const consoleEntries = [];
+  page.on("console", async (message) => {
+    const values = await Promise.all(message.args().map((arg) => arg.jsonValue().catch(() => null)));
+    consoleEntries.push({ text: message.text(), values });
+  });
+
+  await page.goto("/");
+  await page.locator("#newGame").click();
+
+  const faxPayloads = Array.from({ length: 5 }, (_, index) => {
+    const number = index + 1;
+    return {
+      id: `fax-batch-${number}`,
+      title: `BATCH FAX ${number}`,
+      reportText: `Batch transmission ${number}\nTunnel marker ${number} logged.`,
+      description: `Fax batch description ${number}`,
+      evidenceName: `facsimile-batch-${number}`,
+    };
+  });
+
+  const queueResults = await page.evaluate((payloads) => payloads.map((payload) => window.receiveFacsimileReport(payload)), faxPayloads);
+  expect(queueResults).toEqual([true, true, true, true, true]);
+
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+
+  for (const payload of faxPayloads) {
+    await page.locator("#desktopFacsimileHotspot").click();
+    const facsimileWindow = page.locator(".facsimile-window");
+    await expect(facsimileWindow).toBeVisible();
+    await expect(facsimileWindow.getByText(payload.title)).toBeVisible();
+    await expect(facsimileWindow.getByText(`Tunnel marker ${payload.id.split("-").at(-1)} logged.`)).toBeVisible();
+    await facsimileWindow.locator(".story-window-close").click();
+  }
+
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  await page.keyboard.press("-");
+  await expect(page.locator(".debug-window")).toBeVisible();
+  await page.locator(".debug-window .debug-window-button").click();
+
+  await expect.poll(async () => consoleEntries.some((entry) => entry.text.includes("Evidence store in memory (raw):"))).toBe(true);
+  const evidenceDebugEntry = consoleEntries
+    .filter((entry) => entry.text.includes("Evidence store in memory (raw):"))
+    .at(-1);
+  expect(evidenceDebugEntry).toBeTruthy();
+
+  const rawStore = evidenceDebugEntry?.values?.[1];
+  const reportEntries = Array.isArray(rawStore?.collections?.reports)
+    ? rawStore.collections.reports
+        .map((id) => rawStore?.evidencesById?.[String(id)])
+        .filter(Boolean)
+    : [];
+
+  const faxReports = reportEntries.filter((entry) => String(entry?.name || "").startsWith("facsimile-batch-"));
+  expect(faxReports).toHaveLength(5);
+
+  faxPayloads.forEach((payload) => {
+    const match = faxReports.find((entry) => entry.name === payload.evidenceName);
+    expect(match).toBeTruthy();
+    expect(match.reportText).toContain(payload.reportText.split("\n")[1]);
+  });
+});
+
+test("facsimile next cached message button advances queue and transfers evidence", async ({ page }) => {
+  const consoleEntries = [];
+  page.on("console", async (message) => {
+    const values = await Promise.all(message.args().map((arg) => arg.jsonValue().catch(() => null)));
+    consoleEntries.push({ text: message.text(), values });
+  });
+
+  await page.goto("/");
+  await page.locator("#newGame").click();
+
+  const faxPayloads = [
+    {
+      id: "fax-next-1",
+      title: "NEXT BUTTON REPORT 1",
+      reportText: "Line A1\nLine B1",
+      description: "Next button flow one",
+      evidenceName: "facsimile-next-1",
+    },
+    {
+      id: "fax-next-2",
+      title: "NEXT BUTTON REPORT 2",
+      reportText: "Line A2\nLine B2",
+      description: "Next button flow two",
+      evidenceName: "facsimile-next-2",
+    },
+  ];
+
+  const queueResults = await page.evaluate((payloads) => payloads.map((payload) => window.receiveFacsimileReport(payload)), faxPayloads);
+  expect(queueResults).toEqual([true, true]);
+
+  await page.locator("#desktopFacsimileHotspot").click();
+  const facsimileWindow = page.locator(".facsimile-window");
+  await expect(facsimileWindow).toBeVisible();
+  await expect(facsimileWindow.getByText("NEXT BUTTON REPORT 1")).toBeVisible();
+
+  const nextButton = facsimileWindow.locator(".facsimile-next-message-button");
+  await expect(nextButton).toBeEnabled();
+
+  await nextButton.click();
+  await expect(facsimileWindow.getByText("NEXT BUTTON REPORT 2")).toBeVisible();
+  await expect(nextButton).toBeDisabled();
+
+  await facsimileWindow.locator(".story-window-close").click();
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  await page.keyboard.press("-");
+  await expect(page.locator(".debug-window")).toBeVisible();
+  await page.locator(".debug-window .debug-window-button").click();
+
+  await expect.poll(async () => consoleEntries.some((entry) => entry.text.includes("Evidence store in memory (raw):"))).toBe(true);
+  const evidenceDebugEntry = consoleEntries
+    .filter((entry) => entry.text.includes("Evidence store in memory (raw):"))
+    .at(-1);
+  expect(evidenceDebugEntry).toBeTruthy();
+
+  const rawStore = evidenceDebugEntry?.values?.[1];
+  const reportEntries = Array.isArray(rawStore?.collections?.reports)
+    ? rawStore.collections.reports
+        .map((id) => rawStore?.evidencesById?.[String(id)])
+        .filter(Boolean)
+    : [];
+
+  const transferred = reportEntries.filter((entry) => String(entry?.name || "").startsWith("facsimile-next-"));
+  expect(transferred).toHaveLength(2);
+});
