@@ -532,5 +532,6 @@ test("save and load round-trips evidence, notes and browser history", async ({ p
   expect(restored.notes.content).toBe("round trip note");
   expect(restored.reportNames).toContain("facsimile-audit-roundtrip-001");
   expect(restored.storyCount).toBe(1);
-  expect(restored.photoCount).toBe(1);
+  // Two default photos ship with a new game: askewAndrew, then caveEntrance.
+  expect(restored.photoCount).toBe(2);
 });
