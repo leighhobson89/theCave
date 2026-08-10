@@ -62,7 +62,7 @@ import {
   copySaveStringToClipBoard,
 } from "./saveLoadGame.js";
 import { createWebContentManager } from "./webContentManager.js";
-import { registerDefaultWebContentSites } from "./webContentRegistry.js";
+import { createContentDivider, registerDefaultWebContentSites } from "./webContentRegistry.js";
 
 const storyTextCacheByLanguage = new Map();
 const reportCatalogCacheByLanguage = new Map();
@@ -210,75 +210,86 @@ function syncAshtrayVisualState() {
 }
 
 function awardWebContentEvidence(evidenceDescriptor, context = {}) {
-  if (!evidenceDescriptor || typeof evidenceDescriptor !== "object") {
-    return false;
-  }
-
-  const targetStorageKey = String(evidenceDescriptor.storageKey || "").trim() || EVIDENCE_STORAGE_KEYS.REPORTS;
-  const existingCollection = getEvidenceCollection(targetStorageKey);
-  const incomingName = String(evidenceDescriptor.name || "").trim();
-  const incomingType = String(evidenceDescriptor.type || "").trim();
-  const incomingSourceKind = String(evidenceDescriptor?.source?.kind || "").trim();
-  const incomingSourcePath = String(evidenceDescriptor?.source?.path || "").trim();
-  const incomingSourceEntryId = String(evidenceDescriptor?.source?.entryId || "").trim();
-
-  const alreadyExists = existingCollection.some((existingEvidence) => {
-    if (!existingEvidence || typeof existingEvidence !== "object") {
-      return false;
-    }
-
-    const existingName = String(existingEvidence.name || "").trim();
-    const existingType = String(existingEvidence.type || "").trim();
-    const existingSourceKind = String(existingEvidence?.source?.kind || "").trim();
-    const existingSourcePath = String(existingEvidence?.source?.path || "").trim();
-    const existingSourceEntryId = String(existingEvidence?.source?.entryId || "").trim();
-
-    const matchesByEntryId = incomingSourceEntryId && existingSourceEntryId === incomingSourceEntryId;
-    const matchesByPath = incomingSourcePath && existingSourcePath === incomingSourcePath;
-    const matchesByIdentity = incomingName && existingName === incomingName && incomingType && existingType === incomingType;
-    const matchesBySourceKindAndName =
-      incomingSourceKind
-      && existingSourceKind === incomingSourceKind
-      && incomingName
-      && existingName === incomingName;
-
-    return matchesByEntryId || matchesByPath || matchesByIdentity || matchesBySourceKindAndName;
-  });
-
-  if (alreadyExists) {
-    return false;
-  }
-
-  const storedEvidenceDescriptor = {
-    ...evidenceDescriptor,
-    source: evidenceDescriptor?.source ? { ...evidenceDescriptor.source } : evidenceDescriptor?.source,
-  };
-
-  if (isCatalogBackedPhotoEvidence(storedEvidenceDescriptor)) {
-    delete storedEvidenceDescriptor.description;
-    delete storedEvidenceDescriptor.photoCaption;
-  }
-
-  createEvidence(storedEvidenceDescriptor);
+  const evidenceDescriptors = Array.isArray(evidenceDescriptor)
+    ? evidenceDescriptor
+    : [evidenceDescriptor];
 
   const websiteId = String(context?.websiteId || "").trim().toLowerCase();
   const isWebService = websiteId === "zoomsearch"
     || websiteId === "library"
     || websiteId === "police"
-    || websiteId === "archives";
-  const evidenceType = String(evidenceDescriptor?.type || "").trim().toLowerCase();
+    || websiteId === "archives"
+    || websiteId === "standalone";
 
-  if (isWebService && (evidenceType === "photo" || evidenceType === "report")) {
-    const evidenceTypeLabel = evidenceType === "photo" ? "Photo" : "Report";
-    showNotifcation(
-      "reward",
-      `New ${evidenceTypeLabel} Evidence unlocked in your Evidence folder!`,
-      4000,
-      "newEvidence"
-    );
-  }
+  let awardedAny = false;
 
-  return true;
+  evidenceDescriptors.forEach((descriptor) => {
+    if (!descriptor || typeof descriptor !== "object") {
+      return;
+    }
+
+    const targetStorageKey = String(descriptor.storageKey || "").trim() || EVIDENCE_STORAGE_KEYS.REPORTS;
+    const existingCollection = getEvidenceCollection(targetStorageKey);
+    const incomingName = String(descriptor.name || "").trim();
+    const incomingType = String(descriptor.type || "").trim();
+    const incomingSourceKind = String(descriptor?.source?.kind || "").trim();
+    const incomingSourcePath = String(descriptor?.source?.path || "").trim();
+    const incomingSourceEntryId = String(descriptor?.source?.entryId || "").trim();
+
+    const alreadyExists = existingCollection.some((existingEvidence) => {
+      if (!existingEvidence || typeof existingEvidence !== "object") {
+        return false;
+      }
+
+      const existingName = String(existingEvidence.name || "").trim();
+      const existingType = String(existingEvidence.type || "").trim();
+      const existingSourceKind = String(existingEvidence?.source?.kind || "").trim();
+      const existingSourcePath = String(existingEvidence?.source?.path || "").trim();
+      const existingSourceEntryId = String(existingEvidence?.source?.entryId || "").trim();
+
+      const matchesByEntryId = incomingSourceEntryId && existingSourceEntryId === incomingSourceEntryId;
+      const matchesByPath = incomingSourcePath && existingSourcePath === incomingSourcePath;
+      const matchesByIdentity = incomingName && existingName === incomingName && incomingType && existingType === incomingType;
+      const matchesBySourceKindAndName =
+        incomingSourceKind
+        && existingSourceKind === incomingSourceKind
+        && incomingName
+        && existingName === incomingName;
+
+      return matchesByEntryId || matchesByPath || matchesByIdentity || matchesBySourceKindAndName;
+    });
+
+    if (alreadyExists) {
+      return;
+    }
+
+    const storedEvidenceDescriptor = {
+      ...descriptor,
+      source: descriptor?.source ? { ...descriptor.source } : descriptor?.source,
+    };
+
+    if (isCatalogBackedPhotoEvidence(storedEvidenceDescriptor)) {
+      delete storedEvidenceDescriptor.description;
+      delete storedEvidenceDescriptor.photoCaption;
+    }
+
+    createEvidence(storedEvidenceDescriptor);
+
+    const evidenceType = String(descriptor?.type || "").trim().toLowerCase();
+    if (isWebService && (evidenceType === "photo" || evidenceType === "report")) {
+      const evidenceTypeLabel = evidenceType === "photo" ? "Photo" : "Report";
+      showNotifcation(
+        "reward",
+        `New ${evidenceTypeLabel} Evidence unlocked in your Evidence folder!`,
+        4000,
+        "newEvidence"
+      );
+    }
+
+    awardedAny = true;
+  });
+
+  return awardedAny;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1851,6 +1862,10 @@ function createComputerNetscapeWindowContentElements() {
 
     const standaloneImages = normalizeStandaloneImages(pageRecord.images);
     if (standaloneImages.length) {
+      const media = document.createElement("section");
+      media.classList.add("browser-media-section");
+      media.appendChild(createContentDivider());
+
       const gallery = document.createElement("div");
       gallery.classList.add("browser-image-gallery", "browser-image-gallery-zoom");
 
@@ -1875,7 +1890,8 @@ function createComputerNetscapeWindowContentElements() {
         gallery.appendChild(figure);
       });
 
-      shell.appendChild(gallery);
+      media.appendChild(gallery);
+      shell.appendChild(media);
     }
 
     const contentLines = normalizeStandaloneContent(pageRecord.content);
@@ -1885,12 +1901,18 @@ function createComputerNetscapeWindowContentElements() {
       empty.textContent = "This hidden page has no body content.";
       shell.appendChild(empty);
     } else {
+      const content = document.createElement("section");
+      content.classList.add("browser-standalone-content");
+      content.appendChild(createContentDivider());
+
       contentLines.forEach((line) => {
         const paragraph = document.createElement("p");
         paragraph.classList.add("browser-standalone-paragraph");
         appendDelimitedLinkText(paragraph, line);
-        shell.appendChild(paragraph);
+        content.appendChild(paragraph);
       });
+
+      shell.appendChild(content);
     }
 
     page.appendChild(shell);
@@ -2276,7 +2298,7 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     if (pageRecord.awardsEvidence === true && pageRecord.evidence) {
-      awardWebContentEvidence(pageRecord.evidence);
+      awardWebContentEvidence(pageRecord.evidence, { websiteId: "standalone" });
     }
 
     const renderedPageNode = createStandaloneTextPage(pageRecord);
@@ -2395,7 +2417,7 @@ function createComputerNetscapeWindowContentElements() {
               images: pageRecord.images,
               style: pageRecord.style && typeof pageRecord.style === "object" ? pageRecord.style : null,
               awardsEvidence: pageRecord.awardsEvidence === true,
-              evidence: pageRecord.evidence && typeof pageRecord.evidence === "object"
+              evidence: pageRecord.evidence && (typeof pageRecord.evidence === "object" || Array.isArray(pageRecord.evidence))
                 ? pageRecord.evidence
                 : null,
             };

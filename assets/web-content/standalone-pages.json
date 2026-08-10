@@ -39,6 +39,68 @@
           "entryId": ""
         }
       }
+    },
+    {
+      "id": "honeydewcavingclub",
+      "title": "An Important and Historic Club",
+      "url": "http://honeydewcavingclub.com",
+      "content": [
+        "The Honey Dew Caving Club was a small Saskatchewan-based caving society founded in 1902 by Thomas O'Rourke, bringing together a group of enthusiastic amateur explorers interested in the province's underground landscapes. Though modest in size, the club undertook numerous expeditions during its ten years of activity, documenting cave entrances, passages and underground formations that had received little formal attention. Among its most notable achievements was an unofficial survey and hand-drawn mapping of a substantial portion of the Black Pine Cave System, work that later proved useful to subsequent explorers.",
+        "The club's activities came to an abrupt end following the death of O'Rourke in 1911, when he was killed in an abseiling accident while travelling in France. Without its founder and principal organiser, the Honey Dew Caving Club gradually ceased operations and was formally considered defunct by 1912. Despite its short existence, the club left behind a reputation for enthusiastic exploration and careful observation, with surviving notebooks and sketches providing a curious glimpse into Saskatchewan's early amateur caving community.",
+        "They were most famous for the 1912 release of the Black Pine Cave System Collective Map, created through the life of the club by its main members, not least Thomas who had a fixation on the System, largely due to his police work searching for the missing Askew Spencer."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/honeydewcavingclub.png",
+          "alt": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Unknown, Robert Johnstone.  Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood",
+          "caption": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Unknown, Robert Johnstone.  Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood"
+        },
+        {
+          "src": "./assets/photos/minemap.png",
+          "alt": "The Black Pine Cave System Collective Map, 1912",
+          "caption": "The Black Pine Cave System Collective Map, 1912"
+        }
+      ],
+      "style": {
+        "backgroundColor": "#000000",
+        "textColor": "#ffd500",
+        "fontFamily": "Comic Sans MS, Comic Sans, cursive"
+      },
+      "awardsEvidence": true,
+      "evidence": [
+        {
+          "type": "photo",
+          "storageKey": "photos",
+          "titleKey": "photos",
+          "name": "standalone-honeydewcavingclub-team",
+          "defaultTitleString": "The Honey Dew Caving Club Team in 1904",
+          "paperStyle": "photo-mounted",
+          "photoCaption": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Unknown, Robert Johnstone. Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood",
+          "source": {
+            "kind": "photo-localized-catalog-entry",
+            "languageAware": true,
+            "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+            "entryId": "standalone-honeydewcavingclub-team",
+            "photoPath": "./assets/photos/honeydewcavingclub.png"
+          }
+        },
+        {
+          "type": "photo",
+          "storageKey": "photos",
+          "titleKey": "photos",
+          "name": "standalone-honeydewcavingclub",
+          "defaultTitleString": "An Important and Historic Map of Black Pine Cave System",
+          "paperStyle": "photo-mounted",
+          "photoCaption": "The Black Pine Cave System Collective Map, 1912",
+          "source": {
+            "kind": "photo-localized-catalog-entry",
+            "languageAware": true,
+            "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+            "entryId": "standalone-honeydewcavingclub",
+            "photoPath": "./assets/photos/minemap.png"
+          }
+        }
+      ]
     }
   ]
 }

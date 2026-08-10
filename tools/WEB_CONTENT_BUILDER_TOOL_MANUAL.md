@@ -27,6 +27,8 @@ node tools/web_content_builder_server.js
 7. Generate preview.
 8. Confirm and inject.
 
+When a record needs more than one evidence entry, use `Add Another Evidence` to queue the current draft, clear the form, and then fill the next evidence. The builder will emit a single `evidence` object for one entry or an array for multiple entries.
+
 ## Shared Fields
 - Content Type
 - Content ID
@@ -43,6 +45,7 @@ node tools/web_content_builder_server.js
 
 ## Evidence Fields
 The builder always emits a full evidence object for consistent record shape.
+For multi-evidence records, the builder emits an array of full evidence objects in the same order they were queued.
 
 Controls:
 - `Awards Evidence` checkbox

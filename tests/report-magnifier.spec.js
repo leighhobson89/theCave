@@ -235,6 +235,17 @@ test("photo magnifier still renders at center and edge positions", async ({ page
   const photoPaper = photosWindow.locator(".photo-paper-wrap");
   const lens = photosWindow.locator(".evidence-magnifier-lens");
 
+  const lensStyle = await lens.evaluate((element) => {
+    const computed = window.getComputedStyle(element);
+    const preview = element.querySelector(".evidence-magnifier-preview");
+    return {
+      borderRadius: computed.borderRadius,
+      previewInset: preview ? window.getComputedStyle(preview).inset : "",
+    };
+  });
+  expect(lensStyle.borderRadius).toBe("50%");
+  expect(lensStyle.previewInset).toBe("4px");
+
   await photoPaper.hover({ position: { x: 80, y: 80 } });
   await expect(lens).toBeVisible();
   await expect(lens.locator(".evidence-magnifier-photo-preview")).toBeVisible();
@@ -244,4 +255,50 @@ test("photo magnifier still renders at center and edge positions", async ({ page
   await expect(lens).toBeVisible();
   await expect(lens.locator(".evidence-magnifier-photo-preview")).toBeVisible();
   await expectPhotoMagnifierAligned(photoPaper, { x: 70, y: 130 });
+});
+
+test("honey dew standalone page awards two photo evidences", async ({ page }) => {
+  const consoleEntries = [];
+  page.on("console", async (message) => {
+    const values = await Promise.all(message.args().map((arg) => arg.jsonValue().catch(() => null)));
+    consoleEntries.push({ text: message.text(), values });
+  });
+
+  await page.goto("/");
+  await page.locator("#newGame").click();
+  await page.locator("#desktopComputerHotspot").click();
+
+  await page.getByRole("button", { name: "Netscape" }).click();
+  const browserAddress = page.locator("input[aria-label='Browser address']");
+  await browserAddress.fill("http://honeydewcavingclub.com");
+  await browserAddress.press("Enter");
+  await browserAddress.evaluate((element) => element.blur());
+
+  await page.keyboard.press("-");
+  await expect(page.locator(".debug-window")).toBeVisible();
+
+  await page.locator(".debug-window .debug-window-button").click();
+
+  await expect.poll(async () => page.locator(".notification-host .game-notification-reward").count()).toBe(2);
+
+  const rewardTexts = await page.locator(".notification-host .game-notification-reward").allTextContents();
+  expect(rewardTexts.every((text) => text.includes("Evidence unlocked in your Evidence folder!"))).toBe(true);
+
+  await expect.poll(async () => consoleEntries.some((entry) => entry.text.includes("Evidence store in memory (raw):"))).toBe(true);
+  const evidenceDebugEntry = consoleEntries.find((entry) => entry.text.includes("Evidence store in memory (raw):"));
+  expect(evidenceDebugEntry).toBeTruthy();
+
+  const rawStore = evidenceDebugEntry?.values?.[1];
+  const photoEntries = Array.isArray(rawStore?.collections?.photos)
+    ? rawStore.collections.photos
+        .map((id) => rawStore?.evidencesById?.[String(id)])
+        .filter(Boolean)
+    : [];
+
+  expect(photoEntries.map((entry) => entry.name)).toEqual(
+    expect.arrayContaining([
+      "standalone-honeydewcavingclub-team",
+      "standalone-honeydewcavingclub",
+    ])
+  );
 });

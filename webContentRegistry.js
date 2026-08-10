@@ -70,6 +70,14 @@ function createResultEmptyState(text) {
   return createElement("div", ["browser-results-empty"], text);
 }
 
+export function createContentDivider() {
+  return createElement(
+    "p",
+    ["browser-content-divider"],
+    "---------------------------------------------------------------------------------------------"
+  );
+}
+
 function createBrowserInlineLink(urlText) {
   const normalizedUrl = String(urlText ?? "").trim();
   if (!normalizedUrl) {
@@ -237,11 +245,17 @@ function setDetailContent(detailBody, contentNode, placeholderText = "Select the
 function createTextSection(titleText, content, classNames = []) {
   const section = createElement("section", ["browser-detail-section", ...classNames]);
   const suppressHeading = String(titleText ?? "").trim().toLowerCase() === "page content";
+  const paragraphs = normalizeLines(content);
+
+  if (paragraphs.length) {
+    section.appendChild(createContentDivider());
+  }
+
   if (titleText && !suppressHeading) {
     section.appendChild(createElement("h3", ["browser-detail-section-title"], titleText));
   }
 
-  normalizeLines(content).forEach((paragraphText) => {
+  paragraphs.forEach((paragraphText) => {
     const paragraph = createElement("p", ["browser-detail-paragraph"]);
     appendDelimitedLinkText(paragraph, paragraphText);
     section.appendChild(paragraph);
@@ -299,6 +313,9 @@ function createImageGallery(images, classNames = []) {
     return null;
   }
 
+  const section = createElement("section", ["browser-media-section"]);
+  section.appendChild(createContentDivider());
+
   const gallery = createElement("div", ["browser-image-gallery", ...classNames]);
   normalizedImages.forEach((image) => {
     const figure = createElement("figure", ["browser-image-figure"]);
@@ -316,7 +333,8 @@ function createImageGallery(images, classNames = []) {
     gallery.appendChild(figure);
   });
 
-  return gallery;
+  section.appendChild(gallery);
+  return section;
 }
 
 function makeSelectableResults({

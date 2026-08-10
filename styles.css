@@ -3458,6 +3458,23 @@ button.disabled {
     gap: 0.45rem;
 }
 
+.browser-media-section,
+.browser-standalone-content {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.7rem;
+}
+
+.browser-content-divider {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    overflow-wrap: anywhere;
+    user-select: none;
+    opacity: 0.92;
+}
+
 .browser-primary-content-section {
     margin-top: 0.7rem;
 }
@@ -3511,6 +3528,7 @@ button.disabled {
 .browser-image-gallery {
     display: grid;
     gap: 0.75rem;
+    align-items: start;
 }
 
 .browser-image-gallery-police {
@@ -3527,6 +3545,8 @@ button.disabled {
     margin: 0;
     display: grid;
     gap: 0.3rem;
+    align-content: start;
+    justify-items: start;
 }
 
 .browser-detail-image {
@@ -3540,6 +3560,7 @@ button.disabled {
     font-size: 0.8rem;
     line-height: 1.4;
     font-style: italic;
+    text-align: left;
 }
 
 .browser-detail-list {
@@ -4000,8 +4021,18 @@ button.disabled {
     width: 175px;
     height: 175px;
     position: relative;
-    border-radius: 2px;
-    background: none;
+    border-radius: 50%;
+    background:
+        conic-gradient(from 32deg,
+            #6f4f16 0deg,
+            #d8b451 34deg,
+            #8c651c 72deg,
+            #f1da7d 110deg,
+            #a87a24 154deg,
+            #f4e2a3 212deg,
+            #7b5817 270deg,
+            #d6b046 320deg,
+            #6f4f16 360deg);
 }
 
 .evidence-magnifier-lens::before {
@@ -4009,7 +4040,9 @@ button.disabled {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: transparent;
+    background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.28), transparent 36%),
+        radial-gradient(circle at 70% 72%, rgba(90, 62, 14, 0.32), transparent 45%);
     pointer-events: none;
 }
 
@@ -4019,14 +4052,16 @@ button.disabled {
     inset: 0;
     border-radius: inherit;
     box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-        inset 0 0 0 2px rgba(255, 243, 196, 0.24);
+        inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+        inset 0 0 0 4px rgba(73, 50, 10, 0.2),
+        0 0 0 1px rgba(29, 18, 4, 0.2),
+        0 4px 10px rgba(0, 0, 0, 0.28);
     pointer-events: none;
 }
 
 .evidence-magnifier-preview {
     position: absolute;
-    inset: 0;
+    inset: 4px;
     overflow: hidden;
     border-radius: 50%;
     will-change: transform;

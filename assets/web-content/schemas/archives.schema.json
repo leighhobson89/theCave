@@ -7,38 +7,79 @@
     "id",
     "province",
     "headline",
-    "keywords",
-    "summary",
-    "article",
-    "requiredAccessLevel",
-    "images",
-    "awardsEvidence",
-    "evidence"
-  ],
-  "properties": {
-    "id": { "type": "string" },
-    "province": { "type": "string" },
-    "headline": { "type": "string" },
-    "publication": { "type": "string" },
-    "keywords": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "type": "string" }
-    },
-    "summary": { "type": "string" },
-    "article": {
+    "evidence": {
       "oneOf": [
-        { "type": "string" },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "storageKey",
+            "titleKey",
+            "name",
+            "defaultTitleString",
+            "paperStyle",
+            "source"
+          ],
+          "properties": {
+            "type": { "type": "string" },
+            "storageKey": { "type": "string" },
+            "titleKey": { "type": "string" },
+            "name": { "type": "string" },
+            "defaultTitleString": { "type": "string" },
+            "paperStyle": { "type": "string" },
+            "source": {
+              "type": "object",
+              "required": ["kind", "languageAware", "catalogPathTemplate", "entryId"],
+              "properties": {
+                "kind": { "type": "string" },
+                "languageAware": { "type": "boolean" },
+                "catalogPathTemplate": { "type": "string" },
+                "entryId": { "type": "string" },
+                "photoPath": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "storageKey",
+              "titleKey",
+              "name",
+              "defaultTitleString",
+              "paperStyle",
+              "source"
+            ],
+            "properties": {
+              "type": { "type": "string" },
+              "storageKey": { "type": "string" },
+              "titleKey": { "type": "string" },
+              "name": { "type": "string" },
+              "defaultTitleString": { "type": "string" },
+              "paperStyle": { "type": "string" },
+              "source": {
+                "type": "object",
+                "required": ["kind", "languageAware", "catalogPathTemplate", "entryId"],
+                "properties": {
+                  "kind": { "type": "string" },
+                  "languageAware": { "type": "boolean" },
+                  "catalogPathTemplate": { "type": "string" },
+                  "entryId": { "type": "string" },
+                  "photoPath": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
         }
       ]
     },
-    "requiredAccessLevel": { "type": ["integer", "number"] },
-    "images": {
-      "type": "array",
-      "items": {
         "oneOf": [
           { "type": "string" },
           {

@@ -36,6 +36,22 @@
       "photoPath": "./assets/photos/mysteriesOldNW.png",
       "captionText": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\"",
       "descriptionText": "The preface of Hannah Fletcher's Investigative book \"The Mysteries of the Old North West\" is shown in this photo.  It looks an interesting book from what you gleam from this introduction."
+    },
+    {
+      "id": "standalone-honeydewcavingclub-team",
+      "defaultTitleString": "The Honey Dew Caving Club Team in 1904",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/honeydewcavingclub.png",
+      "captionText": "The Honey Dew Caving Club team photo from 1904.",
+      "descriptionText": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Unknown, Robert Johnstone. Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood"
+    },
+    {
+      "id": "standalone-honeydewcavingclub",
+      "defaultTitleString": "An Important and Historic Map of Black Pine Cave System",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/minemap.png",
+      "captionText": "The Black Pine Cave System Collective Map, 1912",
+      "descriptionText": "---\nThe Black Pine Cave System Collective Map, 1912, painstakingly put together through all the collective efforts of the Honey Dew Caving Club from 1902-1911.  Special mention to the main contributor Thomas O'Rourke who tragically lost his life in 1911 abseiling in France was the main contributor, and the founder of the Caving Club.\n---"
     }
   ]
 }

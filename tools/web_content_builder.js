@@ -39,6 +39,8 @@ const evidencePaperStyleInput = document.getElementById("evidencePaperStyleInput
 const evidenceDescriptionInput = document.getElementById("evidenceDescriptionInput");
 const evidencePhotoCaptionInput = document.getElementById("evidencePhotoCaptionInput");
 const evidenceFieldsGrid = document.getElementById("evidenceFieldsGrid");
+const addEvidenceButton = document.getElementById("addEvidenceButton");
+const evidenceQueueStatus = document.getElementById("evidenceQueueStatus");
 const standaloneBgColorPickButton = document.getElementById("standaloneBgColorPickButton");
 const standaloneBgColorPicker = document.getElementById("standaloneBgColorPicker");
 const standaloneTextColorPickButton = document.getElementById("standaloneTextColorPickButton");
@@ -92,6 +94,7 @@ const EVIDENCE_TYPE_PRESETS = {
 };
 
 let lastEvidencePresetType = "report";
+let queuedEvidenceEntries = [];
 
 function setStatus(message) {
   status.textContent = message;
@@ -103,6 +106,17 @@ function getSelectedEvidenceType() {
 
 function getEvidencePreset() {
   return EVIDENCE_TYPE_PRESETS[getSelectedEvidenceType()] || EVIDENCE_TYPE_PRESETS.report;
+}
+
+function updateEvidenceQueueStatus() {
+  if (!evidenceQueueStatus) {
+    return;
+  }
+
+  const queuedCount = queuedEvidenceEntries.length;
+  evidenceQueueStatus.textContent = queuedCount
+    ? `${queuedCount} evidence${queuedCount === 1 ? "" : "s"} queued.`
+    : "No evidence queued.";
 }
 
 function fillSelectOptions(selectElement, values, selectedValue) {
@@ -323,8 +337,59 @@ function buildEvidence(siteId, common, fallbackTitle) {
   };
 }
 
+function clearEvidenceForm() {
+  evidenceNameInput.value = "";
+  evidenceDefaultTitleInput.value = "";
+  evidenceDescriptionInput.value = "";
+  evidencePhotoCaptionInput.value = "";
+  syncEvidenceFieldPresets(true);
+}
+
+function queueCurrentEvidence(common) {
+  if (!awardsEvidenceInput.checked) {
+    throw new Error("Enable Awards Evidence before queueing another evidence.");
+  }
+
+  const evidenceFields = buildEvidence(getCurrentType(), common, common.title || common.id);
+  if (!evidenceFields.evidence || typeof evidenceFields.evidence !== "object") {
+    throw new Error("Fill in the evidence fields before queueing another evidence.");
+  }
+
+  queuedEvidenceEntries.push(evidenceFields.evidence);
+  clearEvidenceForm();
+  updateEvidenceQueueStatus();
+}
+
+function collectEvidenceEntries(siteId, common, fallbackTitle) {
+  const current = buildEvidence(siteId, common, fallbackTitle);
+  if (!current.awardsEvidence) {
+    return current;
+  }
+
+  const evidenceEntries = [...queuedEvidenceEntries];
+  const hasDraftValues = [
+    evidenceNameInput.value,
+    evidenceDefaultTitleInput.value,
+    evidenceDescriptionInput.value,
+    evidencePhotoCaptionInput.value,
+  ].some((value) => String(value || "").trim());
+
+  if (!evidenceEntries.length || hasDraftValues) {
+    evidenceEntries.push(current.evidence);
+  }
+
+  if (!evidenceEntries.length) {
+    throw new Error("Add at least one evidence entry before injecting.");
+  }
+
+  return {
+    awardsEvidence: true,
+    evidence: evidenceEntries.length === 1 ? evidenceEntries[0] : evidenceEntries,
+  };
+}
+
 function buildStandaloneEntry(common) {
-  const evidenceFields = buildEvidence("standalone", common, common.title || common.id);
+  const evidenceFields = collectEvidenceEntries("standalone", common, common.title || common.id);
   const images = buildEntryImages(common.images);
 
   return {
@@ -359,7 +424,7 @@ function buildZoomsearchEntry(common) {
   }
 
   const pageTitle = common.title || common.id;
-  const evidenceFields = buildEvidence("zoomsearch", common, pageTitle);
+  const evidenceFields = collectEvidenceEntries("zoomsearch", common, pageTitle);
   const images = buildEntryImages(common.images);
 
   return {
@@ -386,7 +451,7 @@ function buildLibraryEntry(common) {
     throw new Error("Library Archive requires Author and Publication Title.");
   }
 
-  const evidenceFields = buildEvidence("library", common, publicationTitle);
+  const evidenceFields = collectEvidenceEntries("library", common, publicationTitle);
   const images = buildEntryImages(common.images);
 
   return {
@@ -412,7 +477,7 @@ function buildPoliceEntry(common) {
     throw new Error("Police Records keywords are required.");
   }
 
-  const evidenceFields = buildEvidence("police", common, common.title || common.id);
+  const evidenceFields = collectEvidenceEntries("police", common, common.title || common.id);
   const images = buildEntryImages(common.images);
 
   return {
@@ -439,7 +504,7 @@ function buildArchivesEntry(common) {
   }
 
   const headline = common.title || common.id;
-  const evidenceFields = buildEvidence("archives", common, headline);
+  const evidenceFields = collectEvidenceEntries("archives", common, headline);
   const images = buildEntryImages(common.images);
 
   return {
@@ -555,6 +620,7 @@ function clearForm() {
   });
 
   awardsEvidenceInput.checked = false;
+  queuedEvidenceEntries = [];
   standaloneBgColorInput.value = "#eceff3";
   standaloneBgColorPicker.value = "#eceff3";
   standaloneTextColorInput.value = "#0f1b2a";
@@ -565,6 +631,7 @@ function clearForm() {
   contentTypeSelect.selectedIndex = 0;
   previewOutput.textContent = "{}";
   setStatus("Cleared.");
+  updateEvidenceQueueStatus();
   syncFieldStates();
 }
 
@@ -599,6 +666,8 @@ function clearEvidenceFieldsForUncheckedState() {
   evidenceDefaultTitleInput.value = "";
   evidenceDescriptionInput.value = "";
   evidencePhotoCaptionInput.value = "";
+  queuedEvidenceEntries = [];
+  updateEvidenceQueueStatus();
 }
 
 function prepareEvidenceFieldsForCheckedState() {
@@ -612,6 +681,7 @@ function prepareEvidenceFieldsForCheckedState() {
   }
 
   syncEvidenceFieldPresets(true);
+  updateEvidenceQueueStatus();
 }
 
 function syncFieldStates() {
@@ -645,6 +715,17 @@ previewButton.addEventListener("click", () => {
     setStatus(error.message);
   }
 });
+
+if (addEvidenceButton) {
+  addEvidenceButton.addEventListener("click", () => {
+    try {
+      queueCurrentEvidence(getCommonFields());
+      setStatus("Queued evidence draft.");
+    } catch (error) {
+      setStatus(error.message);
+    }
+  });
+}
 
 injectButton.addEventListener("click", async () => {
   try {
@@ -731,3 +812,4 @@ imagePathsPicker.addEventListener("change", () => {
 });
 
 syncFieldStates();
+updateEvidenceQueueStatus();

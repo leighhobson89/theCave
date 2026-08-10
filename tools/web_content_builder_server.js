@@ -229,7 +229,7 @@ function buildPhotoCatalogEntry(record, evidence) {
     throw new Error("Evidence source.entryId or evidence name is required for photo evidence.");
   }
 
-  const photoPath = inferPhotoPathFromRecord(record);
+  const photoPath = firstNonEmptyString(evidence?.source?.photoPath, inferPhotoPathFromRecord(record));
   if (!photoPath) {
     throw new Error(`Photo evidence '${entryId}' is missing a usable image path. Add an image path in the form or set evidence.source.photoPath.`);
   }
@@ -292,76 +292,95 @@ function mergeCatalogEntriesForLanguage(existingEntry, incomingEntry, evidenceTy
 }
 
 function sanitizeEvidenceForWebContentStorage(entry) {
-  if (!entry || typeof entry !== "object" || !entry.evidence || typeof entry.evidence !== "object") {
+  if (!entry || typeof entry !== "object" || !entry.evidence) {
     return entry;
   }
 
-  const sanitizedEntry = {
-    ...entry,
-    evidence: {
-      ...entry.evidence,
-      source: entry.evidence?.source ? { ...entry.evidence.source } : entry.evidence?.source,
-    },
+  const sanitizeEntry = (evidenceEntry) => {
+    if (!evidenceEntry || typeof evidenceEntry !== "object") {
+      return evidenceEntry;
+    }
+
+    const sanitizedEvidence = {
+      ...evidenceEntry,
+      source: evidenceEntry?.source ? { ...evidenceEntry.source } : evidenceEntry?.source,
+    };
+
+    const isCatalogBackedPhoto = String(sanitizedEvidence?.type || "").trim() === "photo"
+      && String(sanitizedEvidence?.source?.kind || "").trim() === "photo-localized-catalog-entry";
+
+    if (isCatalogBackedPhoto) {
+      delete sanitizedEvidence.description;
+      delete sanitizedEvidence.photoCaption;
+    }
+
+    return sanitizedEvidence;
   };
 
-  const isCatalogBackedPhoto = String(sanitizedEntry.evidence?.type || "").trim() === "photo"
-    && String(sanitizedEntry.evidence?.source?.kind || "").trim() === "photo-localized-catalog-entry";
-
-  if (isCatalogBackedPhoto) {
-    delete sanitizedEntry.evidence.description;
-    delete sanitizedEntry.evidence.photoCaption;
-  }
+  const sanitizedEntry = {
+    ...entry,
+    evidence: Array.isArray(entry.evidence) ? entry.evidence.map(sanitizeEntry) : sanitizeEntry(entry.evidence),
+  };
 
   return sanitizedEntry;
 }
 
 function upsertEvidenceCatalogEntries(normalizedEntry) {
   const shouldAwardEvidence = Boolean(normalizedEntry?.awardsEvidence);
-  if (!shouldAwardEvidence || !normalizedEntry?.evidence || typeof normalizedEntry.evidence !== "object") {
+  if (!shouldAwardEvidence || !normalizedEntry?.evidence) {
     return [];
   }
 
-  const evidence = normalizedEntry.evidence;
-  const evidenceType = String(evidence.type || "").trim().toLowerCase();
-  if (evidenceType !== "photo" && evidenceType !== "report") {
-    return [];
-  }
-
-  const incomingCatalogEntry = evidenceType === "photo"
-    ? buildPhotoCatalogEntry(normalizedEntry, evidence)
-    : buildReportCatalogEntry(normalizedEntry, evidence);
+  const evidenceEntries = Array.isArray(normalizedEntry.evidence)
+    ? normalizedEntry.evidence
+    : [normalizedEntry.evidence];
 
   const updates = [];
 
-  LANGUAGE_CODES.forEach((languageCode) => {
-    const catalogFilePath = resolveEvidenceCatalogFilePath(evidenceType, languageCode);
-    if (!catalogFilePath) {
+  evidenceEntries.forEach((evidence) => {
+    if (!evidence || typeof evidence !== "object") {
       return;
     }
 
-    const catalogJson = ensureEntriesBucket(readJsonFile(catalogFilePath));
-    const existingIndex = catalogJson.entries.findIndex((candidate) => candidate && candidate.id === incomingCatalogEntry.id);
-    const existingEntry = existingIndex >= 0 ? catalogJson.entries[existingIndex] : null;
-
-    const mergedEntry = mergeCatalogEntriesForLanguage(
-      existingEntry,
-      incomingCatalogEntry,
-      evidenceType
-    );
-
-    if (existingIndex >= 0) {
-      catalogJson.entries[existingIndex] = mergedEntry;
-    } else {
-      catalogJson.entries.push(mergedEntry);
+    const evidenceType = String(evidence.type || "").trim().toLowerCase();
+    if (evidenceType !== "photo" && evidenceType !== "report") {
+      return;
     }
 
-    writeJsonFile(catalogFilePath, catalogJson);
-    updates.push({
-      language: languageCode,
-      file: `assets/${path.basename(catalogFilePath)}`,
-      action: existingIndex >= 0 ? "updated" : "created",
-      entryId: incomingCatalogEntry.id,
-      evidenceType,
+    const incomingCatalogEntry = evidenceType === "photo"
+      ? buildPhotoCatalogEntry(normalizedEntry, evidence)
+      : buildReportCatalogEntry(normalizedEntry, evidence);
+
+    LANGUAGE_CODES.forEach((languageCode) => {
+      const catalogFilePath = resolveEvidenceCatalogFilePath(evidenceType, languageCode);
+      if (!catalogFilePath) {
+        return;
+      }
+
+      const catalogJson = ensureEntriesBucket(readJsonFile(catalogFilePath));
+      const existingIndex = catalogJson.entries.findIndex((candidate) => candidate && candidate.id === incomingCatalogEntry.id);
+      const existingEntry = existingIndex >= 0 ? catalogJson.entries[existingIndex] : null;
+
+      const mergedEntry = mergeCatalogEntriesForLanguage(
+        existingEntry,
+        incomingCatalogEntry,
+        evidenceType
+      );
+
+      if (existingIndex >= 0) {
+        catalogJson.entries[existingIndex] = mergedEntry;
+      } else {
+        catalogJson.entries.push(mergedEntry);
+      }
+
+      writeJsonFile(catalogFilePath, catalogJson);
+      updates.push({
+        language: languageCode,
+        file: `assets/${path.basename(catalogFilePath)}`,
+        action: existingIndex >= 0 ? "updated" : "created",
+        entryId: incomingCatalogEntry.id,
+        evidenceType,
+      });
     });
   });
 
