@@ -80,7 +80,7 @@ Accounts (`assets/web-content/police.json`):
 | Username | Password | Level | Label |
 | --- | --- | ---: | --- |
 | `public` | `public` | 0 | Public (default) |
-| `james.f` | `oscar123` | 1 | Constable James Fletcher |
+| `j.fletcher` | `oscar123` | 1 | Constable James Fletcher |
 | `b.whitmore` | `ironVeins15` | 2 | Mr Brian Whitmore |
 | `administrator` | `atlas` | 5 | Administrator |
 

@@ -63,7 +63,7 @@
       "id": "henrywhitmore",
       "province": "Saskatchewan",
       "headline": "Local Author publishes book with interesting topic!",
-      "publication": "Strange Things Found In Even Stranger Places",
+      "publication": "Saskatchewan Daily News",
       "keywords": [
         "henry",
         "harry",
@@ -106,6 +106,7 @@
     },
     {
       "id": "williammcleodfindpendant",
+      "date": "1957",
       "province": "Ontario",
       "headline": "Remembering a great Guardian",
       "publication": "Maple Grove Times",

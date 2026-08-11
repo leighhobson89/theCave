@@ -172,7 +172,7 @@ test("police site logs in by default, gates records by privilege, and unlocks on
   await expect(status).toHaveText("One or more matching records were hidden by privilege restrictions.");
 
   // Bad credentials keep the guest level.
-  await page.locator("input[aria-label='Police username']").fill("james.f");
+  await page.locator("input[aria-label='Police username']").fill("j.fletcher");
   await page.locator("input[aria-label='Police password']").fill("wrong");
   await page.locator(".browser-page-police").getByRole("button", { name: "Login" }).click();
   await expect(status).toHaveText("Invalid login. Access remains Public (Level 0).");
@@ -197,19 +197,19 @@ test("credentials are case sensitive for both username and password", async ({ p
   const login = page.locator(".browser-page-police").getByRole("button", { name: "Login" });
 
   // Wrong case in the username must be rejected.
-  await username.fill("JAMES.F");
+  await username.fill("J. FLETCHER");
   await password.fill("oscar123");
   await login.click();
   await expect(status).toHaveText("Invalid login. Access remains Public (Level 0).");
 
   // Wrong case in the password must be rejected.
-  await username.fill("james.f");
+  await username.fill("j.fletcher");
   await password.fill("OSCAR123");
   await login.click();
   await expect(status).toHaveText("Invalid login. Access remains Public (Level 0).");
 
   // Exact case succeeds. Surrounding whitespace is still tolerated.
-  await username.fill("  james.f  ");
+  await username.fill("  j.fletcher  ");
   await password.fill("oscar123");
   await login.click();
   await expect(status).toHaveText("Logged in as: Constable James Fletcher (Level 1)");
@@ -262,7 +262,7 @@ test("log out returns to the site's guest account and re-gates records", async (
   await page.getByRole("button", { name: "Police Records" }).click();
 
   const status = page.locator(".browser-page-police .browser-status-line").first();
-  await page.locator("input[aria-label='Police username']").fill("james.f");
+  await page.locator("input[aria-label='Police username']").fill("j.fletcher");
   await page.locator("input[aria-label='Police password']").fill("oscar123");
   await page.locator(".browser-page-police").getByRole("button", { name: "Login" }).click();
   await expect(status).toHaveText("Logged in as: Constable James Fletcher (Level 1)");
