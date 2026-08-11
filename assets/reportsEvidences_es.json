@@ -27,6 +27,13 @@
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# MESSAGE FROM BRIAN WHITMORE\r\n\r\n---\r\n\r\nI probably shouldn't be doing this again - if anyone found out I could be in real trouble.\r\n\r\nBut I've been keeping an eye on your work, and it's clear you know what you're doing. I want to help.\r\n\r\nHere are some Level 3 credentials that should open a few more doors for you:\r\n\r\nt.fairchild\r\nmapleLaw91\r\n\r\nUse them wisely, and please don't mention where you got them from!\r\n\r\n---\r\n",
       "descriptionText": "Fax received from Brian Whitmore with Level 3 police database credentials."
+    },
+    {
+      "id": "Insurance Record Template",
+      "defaultTitleString": "Insurance Record Template",
+      "paperStyle": "report-parchment",
+      "reportText": "Protect what matters most! Come to J. & T. Fairchild for careful valuations and dependable insurance against loss, damage, fire, theft, and misfortune. Whether it is your home, your livelihood, or those possessions dearest to you, let us help ensure they are properly valued and securely protected.\n\nJoseph works on the home insurance side, covering your buildings and land against loss by fire, theft, even weather (for the right price) and Therese has worked with some of the country's highest value items, even for the descendants of the British Royals, so her valuations are absolute expert level, and we will cover these items for you too, and provide full records, which are stored on police files for future needs, just in case.\n\nYou can see an example of this on the Open Source Police Database right now to show how serious we are about your belongings of value, try this to see our template:\nBRNZ-STATUE-HOLLINGWORTH-INS-FCHLD",
+      "descriptionText": "---\nJ & T Fairchild Insurance\n\nYou can see an example of our template on the Open Source Police Database right now to show how serious we are about your belongings of value:\n\nBRNZ-STATUE-HOLLINGWORTH-INS-FCHLD\n\n---"
     }
   ]
 }

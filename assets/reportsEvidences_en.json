@@ -27,6 +27,13 @@
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# MESSAGE FROM BRIAN WHITMORE\r\n\r\n---\r\n\r\nI probably shouldn't be doing this again - if anyone found out I could be in real trouble.\r\n\r\nBut I've been keeping an eye on your work, and it's clear you know what you're doing. I want to help.\r\n\r\nHere are some Level 3 credentials that should open a few more doors for you, but dont ask how i know them, I could get in trouble, as could you:\r\n\r\nt.fairchild\r\nmapleLaw91\r\n\r\nUse them wisely, and again you must not mention where you got them from!\r\n\r\n---\r\n",
       "descriptionText": "Fax received from Brian Whitmore with Level 3 police database credentials."
+    },
+    {
+      "id": "Insurance Record Template",
+      "defaultTitleString": "Insurance Record Template",
+      "paperStyle": "report-parchment",
+      "reportText": "You can see an example of our template on the Open Source Police Database right now to show how serious we are about your belongings of value, try this to see our template:\n\nBRNZ-STATUE-HOLLINGWORTH-INS-FCHLD",
+      "descriptionText": "---\nJ & T Fairchild Insurance\n\nYou can see an example of our template on the Open Source Police Database right now to show how serious we are about your belongings of value:\n\nBRNZ-STATUE-HOLLINGWORTH-INS-FCHLD\n\n---"
     }
   ]
 }

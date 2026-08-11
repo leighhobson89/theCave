@@ -79,6 +79,14 @@
       "photoPath": "./assets/photos/strangethingsinevenstrangerplaces.png",
       "captionText": "A missing page relating to a golden pendant found by search party member Lieutenant William McLeod in 1901.",
       "descriptionText": "---\n\nA missing page relating to a golden pendant found by search party member Lieutenant William McLeod in 1901.\n\n---"
+    },
+    {
+      "id": "GOLD PENDANT",
+      "defaultTitleString": "Gold Pendant",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/worthingCross.png",
+      "captionText": "Golden Pendant with inscription P A WORTHING on its rear side connected to a broken section of fine gold chain",
+      "descriptionText": "---\n\nGolden Pendant with inscription:\n\nP A WORTHING\n\non its rear side, connected to a broken section of fine gold chain.\n\n---"
     }
   ]
 }

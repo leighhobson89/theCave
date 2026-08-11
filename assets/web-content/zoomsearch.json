@@ -259,6 +259,54 @@
           "entryId": ""
         }
       }
+    },
+    {
+      "id": "fairchilds",
+      "websiteName": "J & T Fairchild Valuation Experts & Insurance Brokers",
+      "pageTitle": "J & T Fairchild Valuation Experts & Insurance Brokers",
+      "url": "http://www.zoomsearch.net/manual/fairchilds",
+      "keywords": [
+        "fairchild",
+        "fairchilds",
+        "joseph fairchild",
+        "therese fairchild",
+        "broker",
+        "insurance",
+        "valuation",
+        "valuation expert",
+        "valuation experts",
+        "insurance broker",
+        "insurance brokers"
+      ],
+      "summary": "Come and value and Insure your valuables and things dearest to you against loss and misfortune",
+      "pageContent": [
+        "Protect what matters most! Come to J. & T. Fairchild for careful valuations and dependable insurance against loss, damage, fire, theft, and misfortune. Whether it is your home, your livelihood, or those possessions dearest to you, let us help ensure they are properly valued and securely protected.",
+        "Joseph works on the home insurance side, covering your buildings and land against loss by fire, theft, even weather (for the right price) and Therese has worked with some of the country's highest value items, even for the descendants of the British Royals, so her valuations are absolute expert level, and we will cover these items for you too, and provide full records, which are stored on police files for future needs, just in case.",
+        "You can see an example of this on the Open Source Police Database right now to show how serious we are about your belongings of value, try this to see our template:\nBRNZ-STATUE-HOLLINGWORTH-INS-FCHLD"
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/fairchilds.png",
+          "alt": "Joseph Fairchild outside our premises in Black Pine, waiting for your visit today!",
+          "caption": "Joseph Fairchild outside our premises in Black Pine, waiting for your visit today!"
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "Insurance Record Template",
+        "defaultTitleString": "Insurance Record Template",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "entryId": "Insurance Record Template"
+        },
+        "description": "---\nJ & T Fairchild Insurance\n\nYou can see an example of our template on the Open Source Police Database right now to show how serious we are about your belongings of value:\n\nBRNZ-STATUE-HOLLINGWORTH-INS-FCHLD\n\n---"
+      }
     }
   ]
 }

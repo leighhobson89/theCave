@@ -268,6 +268,92 @@
           "entryId": ""
         }
       }
+    },
+    {
+      "id": "goldenpendant",
+      "title": "GOLD PENDANT",
+      "keywords": [
+        "golden pendant",
+        "pendant",
+        "gold pendant",
+        "p a worthing"
+      ],
+      "summary": "Located in shallow water at bottom of Shaft 'B'",
+      "report": [
+        "Case: Askew Spencer Disappearance — 1901\nEvidence No.: 15081901-00\nLocated By: Lieutenant William McLeod\nDate Recovered: 15/08/1901\nLocation: Black Pine Former Silver Mine Shaft 'B', bottom flooded section",
+        "Description:",
+        "A small gold pendant recovered during the third sweep of the search area following the disappearance of Andrew and Askew Spencer.",
+        "The pendant was located on a rock ledge several centimetres beneath the surface of the water within the lower section of the shaft. It was recovered by Lieutenant William McLeod during a manual search of the area.",
+        "The pendant bears an engraved inscription on its rear side and was connected to a broken section of very fine chain, also of gold:",
+        "P. A. WORTHING",
+        "The item was photographed and entered as physical evidence. No matching personal effects were recovered from the immediate area at the time of discovery.",
+        "Additional Notes: Ownership of the pendant was not established at the time of the original search, but follow ups are being carried out to ascertain possible owners."
+      ],
+      "requiredPrivilegeLevel": 3,
+      "images": [
+        {
+          "src": "./assets/photos/worthingCross.png",
+          "alt": "Golden Pendant with inscription P A WORTHING on its rear side connected to a broken section of fine gold chain",
+          "caption": "Golden Pendant with inscription P A WORTHING on its rear side connected to a broken section of fine gold chain"
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "GOLD PENDANT",
+        "defaultTitleString": "Gold Pendant",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "entryId": "GOLD PENDANT"
+        }
+      }
+    },
+    {
+      "id": "fairchildinsurancerecordexampletemplate",
+      "title": "BRNZ-STATUE-HOLLINGWORTH-INS-FCHLD",
+      "keywords": [
+        "BRNZ-STATUE-HOLLINGWORTH-INS-FCHLD"
+      ],
+      "summary": "BRNZ-STATUE-HOLLINGWORTH-INS-FCHLD",
+      "report": [
+        "INSURANCE VALUATION RECORD",
+        "Date of Valuation: 14 March 1901\nInsured: Hollingworth & Co.\nAddress: St. Ann’s Wharf, Quebec",
+        "Item No.: 33\nDescription: Bronze statuette entitled *Education*, depicting a seated woman reading with a child beside her, mounted upon an oval ornamental bronze base.",
+        "Artist / Founder: Eugène Laurent, A.R.\nMaterial: Cast bronze, dark brown patination\nDimensions: Approximately 20 in. high × 18 in. wide × 11 in. deep\nApproximate Weight: 85 lb.\nCondition: Good; minor surface wear and patination consistent with age. No material damage observed.",
+        "Estimated Date of Manufacture: c. 1885–1895\nEstimated Replacement / Insurance Value: $350.00 (Three Hundred And Fifty Dollars)\n",
+        "Policy No.: Q/1901/4427\nClass of Insurance: Fine Art / Household Effects\nRisk: Fire, theft and accidental damage\nLocation of Risk: Hollingworth & Co. premises, St. Ann’s Wharf, Quebec\nTransit Cover: Included for carriage within Canada.",
+        "Remarks:\nThe above-described bronze is considered a decorative nineteenth-century work of moderate size and quality. The casting and surface finish are in good order, with ordinary signs of age. For insurance purposes, the sum of Three Hundred And Fifty Dollars is considered a reasonable value as at the date stated, subject to satisfactory security and care while in transit."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/fairchildsExample.png",
+          "alt": "",
+          "caption": ""
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
     }
   ]
 }
