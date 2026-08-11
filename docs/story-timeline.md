@@ -138,10 +138,6 @@ These are observations, not fixes — flagging them here rather than silently
 editing content that may be intentional or already slated for a rewrite.
 
 None outstanding as of this pass. The two previously listed here —
-`williammcleodfindpendant` missing a `date` field, and
-`archives.schema.json` being invalid JSON — are both fixed
-(`"date": "1957"` added; the schema's `required` array no longer has an
-object literal spliced into it).
 
 ---
 
