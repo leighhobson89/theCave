@@ -217,12 +217,12 @@ test("credentials are case sensitive for both username and password", async ({ p
   // Archives is case sensitive too.
   await page.getByRole("button", { name: "Canada Archives" }).click();
   const archiveStatus = page.locator(".browser-page-archives .browser-status-line").first();
-  await page.locator("input[aria-label='Archive username']").fill("Subscriber");
-  await page.locator("input[aria-label='Archive password']").fill("subscribe");
+  await page.locator("input[aria-label='Archive username']").fill("T.mcleod");
+  await page.locator("input[aria-label='Archive password']").fill("apple1");
   await page.locator(".browser-page-archives").getByRole("button", { name: "Login" }).click();
   await expect(archiveStatus).toHaveText("Invalid login. Access remains Free.");
 
-  await page.locator("input[aria-label='Archive username']").fill("subscriber");
+  await page.locator("input[aria-label='Archive username']").fill("t.mcleod");
   await page.locator(".browser-page-archives").getByRole("button", { name: "Login" }).click();
   await expect(archiveStatus).toHaveText("Logged in as: Subscriber");
 });
@@ -287,8 +287,8 @@ test("log out returns to the site's guest account and re-gates records", async (
   // Archives logs out to Free.
   await page.getByRole("button", { name: "Canada Archives" }).click();
   const archiveStatus = page.locator(".browser-page-archives .browser-status-line").first();
-  await page.locator("input[aria-label='Archive username']").fill("subscriber");
-  await page.locator("input[aria-label='Archive password']").fill("subscribe");
+  await page.locator("input[aria-label='Archive username']").fill("t.mcleod");
+  await page.locator("input[aria-label='Archive password']").fill("apple1");
   await page.locator(".browser-page-archives").getByRole("button", { name: "Login" }).click();
   await expect(archiveStatus).toHaveText("Logged in as: Subscriber");
   await page.locator(".browser-page-archives").getByRole("button", { name: "Log Out" }).click();

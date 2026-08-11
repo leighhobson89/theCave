@@ -41,7 +41,7 @@ career"), that's noted rather than invented.
 | 1904 | Honey Dew Caving Club team photo. Top row: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Bottom row: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood. | photo `honeydewcavingclub.png` |
 | by 1905 | Arthur Whitmore is a respected Sergeant, valued for his knowledge of the surrounding country. | `police.json` (arthurwhitmore) |
 | 1906 | Hannah Fletcher — wife of NWMP search-party member and eventual retiree James Fletcher — publishes *Mysteries of the Old North West*, interviewing search-party witnesses about cold cases. Her husband's interview reveals a detail that contradicts the official account: **four sets of footprints, two of them adult**, found at the cave — versus witness accounts insisting only the two boys went in alone. | `library.json` (mysteryoldnw, `publicationYear`); `archives.json` (hannahfletcher, `date`) |
-| **1907** | **Henry "Harry" Whitmore publishes *Strange Things Found in Stranger Places*** — not yet represented in any asset or catalog; foreshadowed only by the Whitmore & Sons standalone page's line about "the other [who] wrote a book about wacky things found in dark unexpected places like abandoned mines." Flagged per the user for near-term implementation. | *(not yet coded)* |
+| **1907** | **Henry "Harry" Whitmore publishes *Strange Things Found in Even Stranger Places*** — not yet represented in any asset or catalog; foreshadowed only by the Whitmore & Sons standalone page's line about "the other [who] wrote a book about wacky things found in dark unexpected places like abandoned mines." Flagged per the user for near-term implementation. | *(not yet coded)* |
 | 1911 | Cpl. Thomas O'Rourke dies in an abseiling accident in France while on vacation with his wife (photographed boarding the RMS *Tunisian* at Québec City Harbor beforehand). Posthumously awarded a Medal of Honor for contributions to policing. | `police.json` (thomasorourke), photo `thomasorourke.png` |
 | 1912 | Henry Whitmore formally passes control of Whitmore & Sons to his younger brother Jerome, stepping aside from the family business to remain an author/naturalist. | `zoomsearch.json` (henrywhitmore, jeromewhitmore) |
 | 1912 | Honey Dew Caving Club, without its founder, is formally defunct. Its defining achievement — the hand-drawn Black Pine Cave System Collective Map, painstakingly assembled 1902–1911 — is released and handed to police in hopes of reviving the cold case. | `standalone-pages.json` (honeydewcavingclub); `photos_evidences_en.json` (standalone-honeydewcavingclub) |
@@ -86,7 +86,7 @@ career"), that's noted rather than invented.
 ```
 Sgt. Arthur Whitmore (NWMP; searched for Arnie, 1901)
  ├─ Henry "Harry" Whitmore (b. ?, d. c.1965) — eldest son, author/naturalist,
- │   Honey Dew Caving Club associate, wrote "Strange Things Found in Stranger
+ │   Honey Dew Caving Club associate, wrote "Strange Things Found in Even Stranger
  │   Places" (1907, not yet coded). Passed the family business to Jerome in 1912.
  └─ Jerome Whitmore (d. 1963) — younger son, took over Whitmore & Sons in 1912
      └─ Brian Whitmore — Jerome's son, president "today." Sends the player two

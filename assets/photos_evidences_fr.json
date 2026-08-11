@@ -59,6 +59,21 @@
       "photoPath": "./assets/photos/minemap.png",
       "captionText": "The Black Pine Cave System Collective Map, 1912",
       "descriptionText": "---\nThe Black Pine Cave System Collective Map, 1912, painstakingly put together through all the collective efforts of the Honey Dew Caving Club from 1902-1911.  Special mention to the main contributor Thomas O'Rourke who tragically lost his life in 1911 abseiling in France was the main contributor, and the founder of the Caving Club.\n---"
+    },
+    {
+      "id": "library-guardiansofthenorth",
+      "defaultTitleString": "Guardians of the North",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/guardiansOfTheNorth.png",
+      "descriptionText": "﻿library-guardiansofthenorth description (fr)\r\n\r\nNotes recorded by investigator.\r\n"
+    },
+    {
+      "id": "Strange Things Found In Even Stranger Places",
+      "defaultTitleString": "Strange Things Found In Even Stranger Places",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/strangethingsinevenstrangerplaces.png",
+      "captionText": "A missing page relating to a golden pendant found by search party member Lieutenant William McLeod in 1901.",
+      "descriptionText": "---\n\nA missing page relating to a golden pendant found by search party member Lieutenant William McLeod in 1901.\n\n---"
     }
   ]
 }

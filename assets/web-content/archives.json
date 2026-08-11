@@ -11,8 +11,8 @@
       "default": true
     },
     {
-      "username": "subscriber",
-      "password": "subscribe",
+      "username": "t.mcleod",
+      "password": "apple1",
       "label": "Subscriber",
       "accessLevel": 1
     }
@@ -96,6 +96,49 @@
         "paperStyle": "",
         "description": "",
         "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "williammcleodfindpendant",
+      "province": "Ontario",
+      "headline": "Remembering a great Guardian",
+      "publication": "Maple Grove Times",
+      "keywords": [
+        "william",
+        "margaret",
+        "mcleod",
+        "margaret mcleod",
+        "william mcleod",
+        "lieutenant",
+        "apples"
+      ],
+      "summary": "Lt. William McLeod dies peacefully aged 87",
+      "article": [
+        "Lieutenant William McLeod, a veteran of the North West Mounted Police, died peacefully at the age of 87. Remembered for his steady leadership and long service on the frontier, McLeod was among the officers who took part in the 1901 search for missing boy Arnie Spencer. During that investigation, he recovered a gold pendant from the search area, an important piece of evidence in the case, and naturally the ownership remains classified as of the date of this article, due to the investigation officially still remaining open.",
+        "McLeod retired from the Force in 1920 and spent his later years in rural Ontario with his wife, Margaret, helping eith the Apple Orchard, and remaining active in his local community and a respected figure among former members of the Force.  Rest In Peace Lieutenant."
+      ],
+      "requiredAccessLevel": 1,
+      "images": [
+        {
+          "src": "./assets/photos/williamAndMargaretMcLeodApples.png",
+          "alt": "William assisting his wife Margaret with the running of their small Apple Orchard here in Maple Grove.",
+          "caption": "William assisting his wife Margaret with the running of their small Apple Orchard here in Maple Grove."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
         "source": {
           "kind": "",
           "languageAware": false,
