@@ -1,27 +1,28 @@
 # Story Timeline & Character Audit
 
 A snapshot of every character, date and connection findable in the shipped
-assets as of **11 August 2026** (third pass). This is a developer reference,
+assets as of **11 August 2026** (sixth pass). This is a developer reference,
 not player-facing content — it exists to keep new faxes, records and photos
 consistent with what's already been written, and it will go stale as soon as
 new content lands. Re-derive it (or at least re-check the "Known gaps and
 inconsistencies" section) after any story-content pass, rather than trusting
 it blindly.
 
-Since the previous pass: Harry Whitmore's 1907 book is now fully coded (it
-was a planned-but-missing item before), a new McLeod-pendant mystery thread
-was added, and several previously-flagged issues are now resolved —
-`arthurWhitmore.png`'s path case now matches the file on disk, the McLeod
-apple-orchard photo path now correctly points under `assets/photos/` and the
-file exists, William McLeod's death year is consistent (1957) everywhere,
-and the "Guardians of the North" evidence is awarded from the library record
-itself rather than the unrelated newspaper article that briefly held it.
+Since the previous pass: two of the three in-game login credentials turn out
+to be hidden in the evidence photo art itself (handwritten notes, not JSON
+text) rather than being undiscoverable as previously assumed — see §3,
+"Credentials hidden in evidence photos," both now verified to read exactly
+right. The `t.mcleod` archives account is identified as **Teresa McLeod**,
+William and Margaret's daughter, via a handwritten dedication on their
+orchard polaroid, dated 1952. Also spotted a Tony Spencer ↔ Anthony "Tony"
+Worthing naming coincidence to go with the existing Simon one.
 
 Sources audited: `assets/story_en.md`, `assets/reportsEvidences_en.json`,
 `assets/photos_evidences_en.json`, `assets/web-content/{zoomsearch,library,
-police,archives,standalone-pages}.json`, and the photo files under
+police,archives,standalone-pages}.json`, the photo files under
 `assets/photos/` / `rawResources/` including the ones not yet wired into any
-catalog.
+catalog, and — this pass — the actual pixel content of the photos named in
+§3 below, not just their JSON metadata.
 
 ---
 
@@ -63,6 +64,7 @@ career"), that's noted rather than invented.
 | 1934 | Constable James Fletcher retires from the NWMP, having been awarded the King's Police Medal for his role in the 1901 search effort. Settles in Gray Stacks, Alberta with wife Hannah (Fletcher, the author — see above) and pet Labrador Oscar. | `police.json` (jamesfletcher) |
 | 1951 | James Fletcher dies. | `police.json` (jamesfletcher) |
 | 1952 | George Mackenzie, aged 80, has his celebrated moustache measured before a crowd at a local sports hall. | photo `georgemackenzie.png` |
+| 1952 | A family polaroid captioned "Mum, Dad collecting apples, 1952. For Teresa" shows William and Margaret McLeod at the Maple Grove orchard, five years before William's death. The note identifies **Teresa** as their daughter — she is who holds the archives Subscriber account (`t.mcleod`). | photo `williamAndMargaretMcLeodApples.png` |
 | 1954 | George Mackenzie dies. | `police.json` (georgemackenzie) |
 | 1955 | Emile Beaulieu dies, aged 84. | `police.json` (emilebeaulieu) |
 | 1957 | William McLeod dies peacefully, aged 87. Remembered in an obituary in the *Maple Grove Times* ("Remembering a great Guardian") for his steady leadership and for recovering the gold pendant during the 1901 search. Margaret continues the orchard/property alone. | `police.json` (williammcleod); `zoomsearch.json` (margaretmcleod); `archives.json` (williammcleodfindpendant) |
@@ -81,7 +83,7 @@ career"), that's noted rather than invented.
 - **Andrew John Spencer** (b. 12 Aug 1888 – d. 28 Jul 1901) — elder brother. Returns from the cave fatally injured; his account of the second visit, cut short when he loses consciousness, is the only first-hand record of what happened.
 - **Askew Arnold "Arnie" Spencer** (b. 6 Nov 1891 – missing 27 Jul 1901, presumed dead) — the missing boy the entire case centers on.
 - **John & Diane Spencer** — the boys' parents; ex-banker turned farmer and his wife. Diane's reaction ("You'll never set foot in that forest again!") is the story's most direct emotional beat.
-- **Simon** and **Tony** — the Spencers' two farmhands, early thirties, present the morning the boys leave for the cave the second time. *Possible unconfirmed link:* a "Simon Cresswell" appears in the 1904 Honey Dew Caving Club photo — same first name, same district, plausible timeframe — but nothing in the assets confirms they're the same person. Worth deciding deliberately rather than by coincidence if this thread gets developed.
+- **Simon** and **Tony** — the Spencers' two farmhands, early thirties, present the morning the boys leave for the cave the second time. *Possible unconfirmed link:* the 1904 Honey Dew Caving Club photo has both a "Simon Cresswell" and an "Anthony Worthing" — Tony being a standard nickname for Anthony — same first names, same district, plausible timeframe, and *both* farmhands would map to *both* of these club members in the same photo. Nothing in the assets confirms either link, but the pair reinforces itself. Worth deciding deliberately rather than by coincidence if this thread gets developed.
 - **The stranger on the path** — unnamed man who tells the boys about the "bottomless" hole and the old mine, then vanishes into the trees. Never identified or revisited by any other asset. A loose thread by construction.
 
 ### North-West Mounted Police (the searchers)
@@ -92,7 +94,7 @@ career"), that's noted rather than invented.
 - **Cpl. Emile Beaulieu** — later a celebrated professional climber; retires 1915, dies 1955.
 - **Lt. William McLeod** — frontier officer, recovered a gold pendant during the 1901 search that never made it into the case file, retires with honour in 1920, settles in Ontario with wife Margaret, dies 1957 aged 87 (obituary: "Remembering a great Guardian," *Maple Grove Times*).
 - **Cpl. George Mackenzie** — quietly dependable service, retires 1931, dies 1954; locally famous for the longest moustache in Canada.
-- **Administrator / t.fairchild / t.mcleod** — police- and archive-database accounts with no attached character yet. `t.fairchild` (police, Level 3, `mapleLaw91`) is credentials Brian Whitmore passes along, sourced from an unnamed contact. `t.mcleod` (archives Subscriber account, `apple1`) shares William McLeod's surname closely enough to suggest a descendant, but nothing confirms it. Both are loose threads ready to be given a face later.
+- **Administrator / t.fairchild** — police-database accounts with no attached character yet. `t.fairchild` (Level 3, `mapleLaw91`) is credentials Brian Whitmore passes along, sourced from an unnamed contact — still a loose thread.
 
 ### The Whitmore family (the benefactors)
 ```
@@ -113,12 +115,37 @@ Brian's great-uncle, but "Uncle" reads as the informal family term).
 ### Authors, family, and everyone else
 - **Hannah Fletcher** — author of *Mysteries of the Old North West* (1906); James Fletcher's wife, living with him in Gray Stacks, Alberta.
 - **Margaret McLeod** — William's wife, ran an apple orchard near Maple Grove, Ontario.
+- **Teresa McLeod** — William and Margaret's daughter, identified by the handwritten dedication "Mum, Dad collecting apples, 1952. For Teresa" on the family orchard polaroid. Holds the archives Subscriber account (`t.mcleod` / `apple1`), whose credentials are themselves handwritten in the corner of the "Guardians of the North" evidence photo — see "Credentials hidden in evidence photos" below.
 - **Honey Dew Caving Club, 1904 roster** — Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone, Anthony Worthing, Sam Henderson, Paul Greenwood, plus one still-unidentified member. Only O'Rourke and Henry Whitmore have any further biography elsewhere.
 - **Cat J Roman** — author of *Guardians of the North* (1988), the source of McLeod's retirement photo. No other appearances.
 
 ---
 
-## 3. Current mystery threads
+## 3. Credentials hidden in evidence photos
+
+Two of the three login credentials in the game are not exposed anywhere in
+JSON text — they're handwritten directly onto the evidence photo art, only
+visible if the player actually looks closely (e.g. the magnifier) at the
+photo once it's been collected. This is the actual intended discovery path
+for these logins, not a hidden dev cheat, and it changes the practical
+order of a playthrough: both Library pickups below should happen *before*
+their matching login is needed. See `happypath.md`, which has been updated
+to route through these.
+
+| Photo (Library pickup) | What's handwritten on it | Unlocks |
+| --- | --- | --- |
+| `mysteriesOldNW.png` ("Mysteries of the Old North West" evidence) | Top-right corner: **"j.fletcher / oscar123"** | Police Records Level 1. Matches the live `j.fletcher` / `oscar123` account exactly. |
+| `guardiansOfTheNorth.png` ("Guardians of the North" evidence) | Top-left corner: **"Ontario apples (t.mcleod / apple1)"** | Canada Newspaper Archive Subscriber access. Matches the live `t.mcleod` / `apple1` account exactly. |
+
+Once logged into the Archives with those credentials, searching Ontario +
+`mcleod` (Level 1, see `happypath.md` §3d) surfaces the `williammcleodfindpendant`
+article, which displays `williamAndMargaretMcLeodApples.png` — the polaroid
+that identifies `t.mcleod` as **Teresa McLeod**, William and Margaret's
+daughter (see the character index above).
+
+---
+
+## 4. Current mystery threads
 
 Things that read as deliberate, unresolved hooks rather than mistakes —
 worth knowing about so future content doesn't accidentally "solve" or
@@ -126,22 +153,24 @@ contradict them before they're meant to be addressed.
 
 - **The gold pendant.** William McLeod recovered a gold pendant during the August 1901 search (per his 1957 obituary), but the official three-month case report filed that October lists only a handkerchief, a lunchbox, rope and a torch — no pendant. Its ownership is described as "classified... due to the investigation officially still remaining open."
 - **The vandalised page.** The library's copy of Harry Whitmore's 1907 book has had a page torn out. The catalog description of that missing page explicitly ties it to McLeod's pendant, making the book a plausible link between the pendant and the case that never recorded it. Nobody in the shipped content is on record as knowing who vandalised it.
-- **Simon the farmhand vs. Simon Cresswell.** Possibly the same person, possibly not — see the character index above.
+- **Simon and Tony the farmhands vs. Simon Cresswell and Anthony "Tony" Worthing.** Both 1901 farmhands share a first name with a member of the 1904 caving-club photo — see the character index above. If real, it would put both farmhands in the caving club three years after the tragedy.
 - **The stranger on the path.** Warns the boys about the hole, admits he hasn't heard the mine mentioned "in years," and is never seen again.
-- **t.fairchild and t.mcleod.** Two named-but-faceless database accounts, introduced purely as credentials rather than characters.
+- **t.fairchild.** Still a named-but-faceless database account, introduced purely as credentials rather than a character (unlike `t.mcleod`, now identified as Teresa McLeod — see above).
 
 ---
 
-## 4. Known gaps and inconsistencies still open
+## 5. Known gaps and inconsistencies still open
 
 These are observations, not fixes — flagging them here rather than silently
 editing content that may be intentional or already slated for a rewrite.
 
-None outstanding as of this pass. The two previously listed here —
+None outstanding as of this pass. The handwritten police username on
+`mysteriesOldNW.png` previously read `james.f` against the live `j.fletcher`
+account; the art now reads `j.fletcher` and matches exactly.
 
 ---
 
-## 5. Source map
+## 6. Source map
 
 | File | What it covers |
 | --- | --- |
@@ -153,3 +182,4 @@ None outstanding as of this pass. The two previously listed here —
 | `assets/web-content/library.json` | Hannah Fletcher's, Cat J. Roman's and Harry Whitmore's books. |
 | `assets/web-content/archives.json` | Newspaper coverage of the above, plus the McLeod pendant obituary — gated by subscriber access level. |
 | `assets/web-content/standalone-pages.json` | Whitmore & Sons' own site; the Honey Dew Caving Club's own site. |
+| `assets/photos/{mysteriesOldNW,guardiansOfTheNorth,williamAndMargaretMcLeodApples}.png` | Carry story content in the image art itself, not the JSON — see §3. |
