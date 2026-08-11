@@ -595,3 +595,87 @@ test("minemap photo evidence milestone triggers Whitmore credentials fax", async
   expect(whitmoreFax.source.kind).toBe("report-localized-catalog-entry");
   expect(whitmoreFax.source.entryId).toBe("fax-whitmore-police-credentials");
 });
+
+test("opening Arthur Whitmore's police record triggers a Level 3 credentials fax", async ({ page }) => {
+  const consoleEntries = [];
+  page.on("console", async (message) => {
+    const values = await Promise.all(message.args().map((arg) => arg.jsonValue().catch(() => null)));
+    consoleEntries.push({ text: message.text(), values });
+  });
+
+  await page.goto("/");
+  await page.locator("#newGame").click();
+  await page.locator("#desktopComputerHotspot").click();
+  await page.getByRole("button", { name: "Netscape" }).click();
+  await page.getByRole("button", { name: "Police Records" }).click();
+
+  // Arthur Whitmore's record requires Level 2, granted by the first
+  // Whitmore fax's credentials.
+  await page.locator("input[aria-label='Police username']").fill("b.whitmore");
+  await page.locator("input[aria-label='Police password']").fill("ironVeins15");
+  await page.locator(".browser-page-police").getByRole("button", { name: "Login" }).click();
+  await expect(page.locator(".browser-page-police .browser-status-line").first())
+    .toHaveText("Logged in as: Mr Brian Whitmore (Level 2)");
+
+  const query = page.locator("input[aria-label='Police search']");
+  await query.fill("arthur whitmore");
+  await query.press("Enter");
+  await expect(page.locator(".browser-results-police tbody .browser-results-row")).toHaveCount(1);
+
+  // Merely returning the record must not fire the fax yet.
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  // Opening it (clicking through to the detail view) does.
+  await page.locator(".browser-results-police tbody .browser-results-row").click();
+  await expect(page.locator(".browser-record-layout-police .browser-record-title"))
+    .toHaveText("The Iron magnate who chose Policing first!");
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+
+  await page.getByRole("button", { name: "Close Netscape Navigator 3.0 window" }).click();
+  await page.getByRole("button", { name: "Close computer window" }).click();
+
+  await page.locator("#desktopFacsimileHotspot").click();
+  const facsimileWindow = page.locator(".facsimile-window");
+  await expect(facsimileWindow).toBeVisible();
+  await expect(facsimileWindow.getByRole("heading", { name: "MESSAGE FROM BRIAN WHITMORE" })).toBeVisible();
+  await expect(facsimileWindow.getByText("I probably shouldn't be doing this again")).toBeVisible();
+  await expect(facsimileWindow.getByText("t.fairchild")).toBeVisible();
+  await expect(facsimileWindow.getByText("mapleLaw91")).toBeVisible();
+
+  await facsimileWindow.locator(".story-window-close").click();
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  await page.keyboard.press("-");
+  await expect(page.locator(".debug-window")).toBeVisible();
+  await page.locator(".debug-window .debug-window-button").click();
+
+  await expect.poll(async () => consoleEntries.some((entry) => entry.text.includes("Evidence store in memory (raw):"))).toBe(true);
+  const evidenceDebugEntry = consoleEntries
+    .filter((entry) => entry.text.includes("Evidence store in memory (raw):"))
+    .at(-1);
+  expect(evidenceDebugEntry).toBeTruthy();
+
+  const rawStore = evidenceDebugEntry?.values?.[1];
+  const reportEntries = Array.isArray(rawStore?.collections?.reports)
+    ? rawStore.collections.reports
+        .map((id) => rawStore?.evidencesById?.[String(id)])
+        .filter(Boolean)
+    : [];
+
+  const level3Fax = reportEntries.find((entry) => entry.name === "facsimile-whitmore-level3-credentials");
+  expect(level3Fax).toBeTruthy();
+  expect(level3Fax.source.kind).toBe("report-localized-catalog-entry");
+  expect(level3Fax.source.entryId).toBe("fax-whitmore-level3-credentials");
+
+  await page.locator(".debug-window .story-window-close").click();
+
+  // The delivered credentials must actually work.
+  await page.locator("#desktopComputerHotspot").click();
+  await page.getByRole("button", { name: "Netscape" }).click();
+  await page.getByRole("button", { name: "Police Records" }).click();
+  await page.locator("input[aria-label='Police username']").fill("t.fairchild");
+  await page.locator("input[aria-label='Police password']").fill("mapleLaw91");
+  await page.locator(".browser-page-police").getByRole("button", { name: "Login" }).click();
+  await expect(page.locator(".browser-page-police .browser-status-line").first())
+    .toHaveText("Logged in as: T. Fairchild (Level 3)");
+});

@@ -20,6 +20,13 @@
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# MESSAGE FROM BRIAN WHITMORE\r\n\r\n---\r\n\r\nI knew you were investigating the Arnie Spencer tragedy and thought you might want to use our police database credentials for information about our grandpa.\r\n\r\nb.whitmore\r\nironVeins15\r\n\r\nPlease do not hesitate to thank us by visiting our website:\r\nhttp://www.whitmore-sons-iron-machinery-co.com/mining\r\n\r\n---\r\n",
       "descriptionText": "Fax received from Brian Whitmore with police database credentials."
+    },
+    {
+      "id": "fax-whitmore-level3-credentials",
+      "defaultTitleString": "MESSAGE FROM BRIAN WHITMORE",
+      "paperStyle": "report-parchment",
+      "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# MESSAGE FROM BRIAN WHITMORE\r\n\r\n---\r\n\r\nI probably shouldn't be doing this again - if anyone found out I could be in real trouble.\r\n\r\nBut I've been keeping an eye on your work, and it's clear you know what you're doing. I want to help.\r\n\r\nHere are some Level 3 credentials that should open a few more doors for you, but dont ask how i know them, I could get in trouble, as could you:\r\n\r\nt.fairchild\r\nmapleLaw91\r\n\r\nUse them wisely, and again you must not mention where you got them from!\r\n\r\n---\r\n",
+      "descriptionText": "Fax received from Brian Whitmore with Level 3 police database credentials."
     }
   ]
 }

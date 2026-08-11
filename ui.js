@@ -110,6 +110,9 @@ let debugWindowController = null;
 let ashtrayAnimationTimeoutId = null;
 let facsimileFeedAnimationTimeoutId = null;
 let evidenceMilestoneTriggersInitialized = false;
+const recordOpenFaxTriggers = new Map();
+let nextRecordOpenFaxTriggerId = 1;
+let recordOpenFaxTriggersInitialized = false;
 const NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS = 3000;
 const notificationQueue = [];
 let notificationReleaseIntervalId = null;
@@ -657,6 +660,95 @@ function initializeEvidenceMilestoneTriggers() {
   evidenceMilestoneTriggersInitialized = true;
 }
 
+// Sent when the player opens (selects) Arthur Whitmore's police record —
+// Brian Whitmore again, this time with Level 3 credentials.
+const WHITMORE_LEVEL3_MILESTONE_FAX_CONFIG = {
+  id: "fax-whitmore-level3-credentials",
+  source: {
+    kind: "report-localized-catalog-entry",
+    languageAware: true,
+    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    entryId: "fax-whitmore-level3-credentials",
+  },
+  storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+  titleKey: "reports",
+  evidenceName: "facsimile-whitmore-level3-credentials",
+  messageType: "credentials",
+  notification: {
+    messageType: "credentials",
+  },
+};
+
+// Fires a configured fax when the player opens a specific web record — e.g.
+// clicking through to a police record's detail view, as opposed to merely
+// searching for it. Complements `registerEvidenceMilestoneFaxTrigger`, which
+// keys off evidence acquisition instead.
+function registerRecordOpenFaxTrigger({
+  websiteId,
+  recordId,
+  faxConfig,
+  once = true,
+  animateFeed = true,
+} = {}) {
+  const normalizedWebsiteId = String(websiteId || "").trim().toLowerCase();
+  const normalizedRecordId = String(recordId || "").trim().toLowerCase();
+  if (!normalizedWebsiteId || !normalizedRecordId || !faxConfig || typeof faxConfig !== "object") {
+    return null;
+  }
+
+  const triggerId = nextRecordOpenFaxTriggerId++;
+  recordOpenFaxTriggers.set(triggerId, {
+    websiteId: normalizedWebsiteId,
+    recordId: normalizedRecordId,
+    faxConfig,
+    once,
+    animateFeed,
+  });
+  return triggerId;
+}
+
+// Handles `caveos-browser-record-opened`, dispatched by makeSelectableResults()
+// in webContentRegistry.js whenever a search result row is selected. The
+// website id travels in `detail.replay.siteId` (every site's getReplayDetail
+// supplies one) rather than as a top-level field.
+function handleBrowserRecordOpenedForFaxTriggers(detail) {
+  const openedWebsiteId = String(detail?.replay?.siteId || "").trim().toLowerCase();
+  const openedRecordId = String(detail?.recordId || "").trim().toLowerCase();
+  if (!openedWebsiteId || !openedRecordId) {
+    return;
+  }
+
+  recordOpenFaxTriggers.forEach((trigger, triggerId) => {
+    if (trigger.websiteId !== openedWebsiteId || trigger.recordId !== openedRecordId) {
+      return;
+    }
+
+    queueConfiguredFacsimileReport(trigger.faxConfig, { animateFeed: trigger.animateFeed }).catch((error) => {
+      console.error("Failed to queue record-open facsimile report:", error);
+    });
+
+    if (trigger.once !== false) {
+      recordOpenFaxTriggers.delete(triggerId);
+    }
+  });
+}
+
+function initializeWebRecordFaxTriggers() {
+  if (recordOpenFaxTriggersInitialized) {
+    return;
+  }
+
+  registerRecordOpenFaxTrigger({
+    websiteId: "police",
+    recordId: "arthurwhitmore",
+    faxConfig: WHITMORE_LEVEL3_MILESTONE_FAX_CONFIG,
+    once: true,
+    animateFeed: true,
+  });
+
+  recordOpenFaxTriggersInitialized = true;
+}
+
 function commitReadFacsimileReportToEvidence(report) {
   const normalizedReport = sanitizeFacsimileReport(report);
   if (!normalizedReport || isFacsimileReportConsumed(normalizedReport.id)) {
@@ -863,6 +955,10 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
   initializeEvidenceMilestoneTriggers();
+  initializeWebRecordFaxTriggers();
+  document.addEventListener("caveos-browser-record-opened", (event) => {
+    handleBrowserRecordOpenedForFaxTriggers(event?.detail);
+  });
   syncAshtrayVisualState();
   syncFacsimileVisualState({ animateFeed: false });
   initializeAudioControls();

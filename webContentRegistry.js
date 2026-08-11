@@ -380,20 +380,22 @@ function makeSelectableResults({
       row.classList.add("is-selected");
       setDetailContent(detailBody, renderDetail(record), detailPrompt);
 
+      // Dispatched on every record open, not just ones with a `url` (police
+      // records don't have one). The address-bar/history listener in ui.js
+      // ignores an empty url itself; record-open fax triggers key off
+      // `replay.siteId` + `recordId` instead, which every site supplies.
       const detailUrl = String(record?.url || "").trim();
-      if (detailUrl) {
-        const replay = typeof getReplayDetail === "function"
-          ? getReplayDetail(record)
-          : null;
-        row.dispatchEvent(new CustomEvent("caveos-browser-record-opened", {
-          bubbles: true,
-          detail: {
-            url: detailUrl,
-            recordId: String(record?.id || "").trim(),
-            replay: replay && typeof replay === "object" ? replay : null,
-          },
-        }));
-      }
+      const replay = typeof getReplayDetail === "function"
+        ? getReplayDetail(record)
+        : null;
+      row.dispatchEvent(new CustomEvent("caveos-browser-record-opened", {
+        bubbles: true,
+        detail: {
+          url: detailUrl,
+          recordId: String(record?.id || "").trim(),
+          replay: replay && typeof replay === "object" ? replay : null,
+        },
+      }));
     };
 
     row.addEventListener("click", activate);

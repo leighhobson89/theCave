@@ -169,6 +169,42 @@ per page load.
 
 ---
 
+## Web record-open triggers
+
+To fire a fax off the back of the player *opening* a specific web record —
+clicking through to its detail view, not just running a search that happens to
+return it — register a record-open trigger instead. In `ui.js`:
+
+```js
+registerRecordOpenFaxTrigger({
+  websiteId: "police",
+  recordId: "arthurwhitmore",
+  faxConfig: WHITMORE_LEVEL3_MILESTONE_FAX_CONFIG,
+  once: true,
+  animateFeed: true,
+});
+```
+
+`websiteId` matches the site's `id` in `webContentRegistry.js` (`police`,
+`zoomsearch`, `library`, `archives`); `recordId` matches a record's `id` in
+that site's `assets/web-content/<siteId>.json`. Both are matched
+case-insensitively. Register these inside `initializeWebRecordFaxTriggers()`,
+which is guarded so it only runs once per page load, and mirrors
+`initializeEvidenceMilestoneTriggers()` in shape.
+
+This is a distinct trigger channel from evidence milestones: it fires on
+`caveos-browser-record-opened` (dispatched by `makeSelectableResults()` in
+`webContentRegistry.js` every time a result row is selected) rather than on
+evidence creation, so it also works for gated records — like this one, which
+requires the Level 2 credentials from the *first* Whitmore fax just to appear
+in a search — that don't award evidence themselves. The shipped example:
+opening Arthur Whitmore's police record (`arthurwhitmore`, gated at
+`requiredPrivilegeLevel: 2`) sends a second, Level 3 credentials fax from
+Brian Whitmore (`t.fairchild` / `mapleLaw91`, added to `police.json`'s
+`accounts`).
+
+---
+
 ## New-game intro faxes (time-based, not evidence-triggered)
 
 A new game opens with two scripted faxes fired off plain timers rather than an

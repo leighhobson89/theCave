@@ -20,6 +20,7 @@
   "records": [
     {
       "id": "hannahfletcher",
+      "date": "1906",
       "province": "Alberta",
       "headline": "Local Author Hannah Fletcher publishes Husbands Career Mysteries",
       "publication": "The Gray Stacks Herald",
@@ -53,6 +54,51 @@
         "source": {
           "kind": "",
           "languageAware": true,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "henrywhitmore",
+      "province": "Saskatchewan",
+      "headline": "Local Author publishes book with interesting topic!",
+      "publication": "Strange Things Found In Even Stranger Places",
+      "keywords": [
+        "henry",
+        "harry",
+        "henry whitmore",
+        "harry whitmore",
+        "strange things",
+        "strange"
+      ],
+      "summary": "Things where you wouldn't expect...",
+      "article": [
+        "Local Author Henry \"Harry\" Whitmore, in fact the very same that forewent his inheritance of the famous Whitmore & Sons Iron and Machinery Company empire in favour of writing, has published a book.  Its an interesting publication, about objects or possessions that are found at the ends of the earth, sometimes literally, and certainly not where these objects belong!",
+        "I don't want to spoil the surprise but lets just say he details about Roman Coins in New York, Dinosaur fossils on top of inaccessible mountains, and even modern items in places thought undisturbed for decades.  Just take a look for yourself it is an interesting read indeed!",
+        "\"Strange Things Found In Even Stranger Places\" is now available in all good book stores and down at your local library."
+      ],
+      "requiredAccessLevel": 1,
+      "images": [
+        {
+          "src": "./assets/photos/henryStrangeThings.png",
+          "alt": "\"Harry\" Whitmore at the signing of his new book \"Strange Things Found In Even Stranger Places\" in 1907",
+          "caption": "\"Harry\" Whitmore at the signing of his new book \"Strange Things Found In Even Stranger Places\" in 1907"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
           "catalogPathTemplate": "",
           "entryId": ""
         }

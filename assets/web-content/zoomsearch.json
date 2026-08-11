@@ -128,9 +128,120 @@
       "pageContent": [
         "Margaret McLeod lived a quiet and practical life in rural Ontario following her husband's retirement from the North West Mounted Police. The couple settled near Maple Grove, where Margaret became closely involved in the running of their small property.",
         "She maintained a modest apple orchard and, during the autumn months, sold apples, preserves and other produce directly to families in the surrounding communities. The orchard was never a large commercial operation, but it became a familiar local source of fresh fruit and a modest supplement to the household income.",
-        "Margaret and William remained together on the property for the rest of their lives. She continued tending the orchard and garden after William's death in 1943, maintaining the simple rural life they had built together away from his former career on the frontier."
+        "Margaret and William remained together on the property for the rest of their lives. She continued tending the orchard and garden after William's death in 1957, maintaining the simple rural life they had built together away from his former career on the frontier."
       ],
       "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "henrywhitmore",
+      "websiteName": "Henry Whitmore",
+      "pageTitle": "Local Author is heir to the Whitmore Empire",
+      "url": "http://www.zoomsearch.net/manual/henrywhitmore",
+      "keywords": [
+        "harry",
+        "henry",
+        "harry whitmore",
+        "henry whitmore"
+      ],
+      "summary": "He has it but he doesn't want it!",
+      "pageContent": [
+        "Henry “Harry” Whitmore, eldest son of Sergeant Arthur Whitmore, was a lifelong resident of Saskatchewan and developed an early fascination with the caves, abandoned workings and rugged country around the Black Pine district. Unlike his father, whose career was spent in policing, Harry became known locally as an author and amateur naturalist, writing about the history, people and landscapes of the region.  But, like his father, he forewent the Whitmore & Sons family business, instead passing it to his brother Jerome in 1912 and stepping aside from the main line of heirs.",
+        "Henry became associated with the local caving clubs and took part in expeditions and informal surveys of the local cave systems, helping preserve stories and observations from an earlier generation of explorers. He was remembered as an unconventional and cheerful character, with a particular fondness for unusual clothing and spectacles, and was often described as being rather ahead of his time in his outlook. He continued writing through out his life and died around 1965."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/harryWhitmore.png",
+          "alt": "Henry Whitmore on a vacation in 1903 in front of the famous Niagara Falls in Ontario",
+          "caption": "Henry Whitmore on a vacation in 1903 in front of the famous Niagara Falls in Ontario"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "jeromewhitmore",
+      "websiteName": "Jerome Whitmore",
+      "pageTitle": "Unexpectedly gains control of Whitmore & Sons Iron and Machinery Company",
+      "url": "http://www.zoomsearch.net/manual/jeromewhitmore",
+      "keywords": [
+        "jerome whitmore",
+        "jerome"
+      ],
+      "summary": "Elder brother side steps family riches to pursue life as an Author",
+      "pageContent": [
+        "Jerome Whitmore was not originally expected to take control of the family business. That distinction belonged to his elder brother Henry, who was regarded as the natural heir to the firm. However, Henry chose instead to pursue his ambitions as an author, leaving Jerome to step unexpectedly into the role. Despite the change in circumstances, Jerome proved more than capable of taking the reins, embracing the responsibilities of the Whitmore business and ensuring that the family enterprise remained firmly established in Saskatchewan."
+      ],
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "brianwhitmore",
+      "websiteName": "Famous Magnates of Today!",
+      "pageTitle": "Brian Whitmore keeps the family business alive!",
+      "url": "http://www.zoomsearch.net/manual/brianwhitmore",
+      "keywords": [
+        "brian whitmore",
+        "brian"
+      ],
+      "summary": "Iron industry is safe in Black Pine with Brian at the helm!",
+      "pageContent": [
+        "Brian Whitmore succeeds his father, Jerome Whitmore, following his death in 1963, taking over as president of Whitmore & Sons. He continues to lead the family business today, maintaining the company's long-standing presence in Saskatchewan and keeping control firmly within Jerome's branch of the Whitmore family. Rather than returning the business to Henry Whitmore's line, Brian's succession establishes Jerome's descendants as the continuing family line behind the Whitmore enterprise. Despite his untold wealth, he remains a humble, kind man that will reach out and help the common man where it is possible to do so."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/brianWhitmore.png",
+          "alt": "Brian about to sign off a large contract in his office at the Whitmore Refinery, 1982",
+          "caption": "Brian about to sign off a large contract in his office at the Whitmore Refinery, 1982"
+        }
+      ],
       "awardsEvidence": false,
       "evidence": {
         "type": "",

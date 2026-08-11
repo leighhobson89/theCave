@@ -23,6 +23,12 @@
       "privilegeLevel": 2
     },
     {
+      "username": "t.fairchild",
+      "password": "mapleLaw91",
+      "label": "T. Fairchild",
+      "privilegeLevel": 3
+    },
+    {
       "username": "administrator",
       "password": "atlas",
       "label": "Administrator",
@@ -39,7 +45,7 @@
       ],
       "summary": "A distinguished Constable",
       "report": [
-        "James Fletcher was a Constable in the North West Mounties.  Among many great things he did during his career, he was awarded the King Charles III Coronation Medal for community leadership and significant contributions.  This was for his efforts in the search attempt for Askew 'Arnie' Spencer in the terrible Black Pine tragedy of 1901.  He was a serving Constable until 1934 when he retired from the force.  He lived in Gray Stacks, Alberta with his wife Hannah and pet Labrador dog Oscar, enjoying his well earned retirement until his passing in 1951."
+        "James Fletcher was a Constable in the North West Mounties.  Among many great things he did during his career, he was awarded the King's Police Medal for distinguished service and significant contributions.  This was for his efforts in the search attempt for Askew 'Arnie' Spencer in the terrible Black Pine tragedy of 1901.  He was a serving Constable until 1934 when he retired from the force.  He lived in Gray Stacks, Alberta with his wife Hannah and pet Labrador dog Oscar, enjoying his well earned retirement until his passing in 1951."
       ],
       "requiredPrivilegeLevel": 0,
       "images": [

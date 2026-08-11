@@ -17,7 +17,8 @@ npm run test:e2e                 # Playwright suite
 | [architecture.md](architecture.md) | **Start here.** How every component works: scenes and the viewport, the window system, evidence carousels, the story window, Notes and Paint, the facsimile, the CaveOS computer and Netscape, the web content system, notifications, audio, localization, save/load, the debug window, tests, and known issues |
 | [evidence-system.md](evidence-system.md) | The evidence store, content catalogs, the three unlock paths, evidence triggers, save validation, authoring rules |
 | [investigation-archives.md](investigation-archives.md) | The four in-game web services: exact search rules, real login credentials, record data, detail templates, standalone hidden pages, how to add records |
-| [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md) | Sending faxes, payload fields, the read-to-evidence lifecycle, milestone triggers, validation steps |
+| [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md) | Sending faxes, payload fields, the read-to-evidence lifecycle, milestone triggers, record-open triggers, validation steps |
+| [story-timeline.md](story-timeline.md) | Snapshot audit of every character, date and connection findable in the shipped story/evidence/web-content assets, plus known gaps and inconsistencies |
 | [../tools/WEB_CONTENT_BUILDER_TOOL_MANUAL.md](../tools/WEB_CONTENT_BUILDER_TOOL_MANUAL.md) | The Web Content Generator: the only content authoring tool in the repo |
 | [audit-2026-08-10.md](audit-2026-08-10.md) | The August 2026 audit: what was removed, de-duplicated, rewritten, and what was deliberately left alone |
 

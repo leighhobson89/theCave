@@ -485,8 +485,14 @@ is identical everywhere.
 
 Every site returns **at most one** record, and the results table is sliced to one
 row. Selecting the row renders the detail panel and dispatches
-`caveos-browser-record-opened`, which is what feeds the address bar and replay
-history.
+`caveos-browser-record-opened` — always, whether or not the record has a `url`.
+The address-bar/replay-history listener in `ui.js` only acts when `detail.url`
+is non-empty (police records don't have one); `handleBrowserRecordOpenedForFaxTriggers()`
+listens on `document` for the same event and keys off `detail.replay.siteId` +
+`detail.recordId` instead, which every site's `getReplayDetail` supplies
+regardless of `url`. This is what "opening" a record (as opposed to merely
+searching for it) means for `registerRecordOpenFaxTrigger()` — see
+[facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md).
 
 ### Awarding evidence from the web
 

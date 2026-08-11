@@ -8,7 +8,7 @@
       "url": "http://www.whitmore-sons-iron-machinery-co.com/mining",
       "content": [
         "Welcome to the Whitmore & Sons Mining Machinery information page!  Brian Whitmore, your head of company wishes to give you a warm salute and welcome to our space on the world wide web.  Every generation of Whitmore right back to the company's founding in 1798 has contributed to the company you see today, and the quality of our products are thanks in great part to these tireless efforts from our family, and the best products of all are in our mining range.  Try our Mine Carts, the best materials are used, right from today, as far back as 1840 to the Black Pine Silver Mine, its all thanks to us and our superior machinery!",
-        "The only family member who can not claim this accolade is Grandpa Arthur!  The irony is though, he did work in a mine that used our machinery, but after it had closed, as a Police Sergeant, leading a search party investigation.  Still, he is one of us and he excelled at what he did!"
+        "The only family members who can not claim this accolade are Grandpa Arthur and Uncle Harry!  The irony is though, one did do some work in a mine that used our machinery, but after it had closed, as a Police Sergeant, leading a search party investigation, and the other wrote a book about wacky things found in dark unexpected places like abandoned mines!  Still, they are one of us and they excelled at what they did!"
       ],
       "images": [
         {
@@ -52,8 +52,8 @@
       "images": [
         {
           "src": "./assets/photos/honeydewcavingclub.png",
-          "alt": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Unknown, Robert Johnstone.  Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood",
-          "caption": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Unknown, Robert Johnstone.  Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood"
+          "alt": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone.  Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood",
+          "caption": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone.  Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood"
         },
         {
           "src": "./assets/photos/minemap.png",
@@ -75,7 +75,7 @@
           "name": "standalone-honeydewcavingclub-team",
           "defaultTitleString": "The Honey Dew Caving Club Team in 1904",
           "paperStyle": "photo-mounted",
-          "photoCaption": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Unknown, Robert Johnstone. Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood",
+          "photoCaption": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood",
           "source": {
             "kind": "photo-localized-catalog-entry",
             "languageAware": true,
