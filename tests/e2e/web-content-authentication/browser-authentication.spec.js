@@ -19,7 +19,7 @@ const {
   policeQuery,
   captureSaveStringViaMenu,
   loadSaveStringViaMenu,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("police site logs in by default, gates records by privilege, and unlocks on login", async ({ page }) => {
   await startNewGame(page);

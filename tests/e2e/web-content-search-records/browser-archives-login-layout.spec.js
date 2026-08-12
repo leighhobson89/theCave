@@ -2,7 +2,7 @@
 // which is positioned to line its right edge up with the results table's
 // Summary column rather than the page edge.
 const { test, expect } = require("@playwright/test");
-const { startNewGame, openNetscape, openArchives } = require("../support/game-helpers");
+const { startNewGame, openNetscape, openArchives } = require("../../support/game-helpers");
 
 test("archives subscriber login right edge aligns with the Summary column", async ({ page }) => {
   await startNewGame(page);

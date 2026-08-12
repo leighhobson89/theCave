@@ -8,7 +8,7 @@ const {
   openFacsimile,
   facsimileWindow,
   closeFacsimile,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("save and load round-trips evidence, notes and browser history", async ({ page }) => {
   await startNewGame(page);

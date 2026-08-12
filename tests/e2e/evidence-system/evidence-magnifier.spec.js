@@ -4,11 +4,11 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("fs/promises");
 const path = require("path");
-const { startNewGame, openFacsimile, facsimileWindow } = require("../support/game-helpers");
+const { startNewGame, openFacsimile, facsimileWindow } = require("../../support/game-helpers");
 
 // Committed visual evidence for the scrolled-report case lives alongside the
 // suite so it can be reviewed without re-running Playwright.
-const ARTIFACTS_DIR = path.resolve(__dirname, "..", "artifacts");
+const ARTIFACTS_DIR = path.resolve(__dirname, "..", "..", "artifacts");
 
 async function scrollReportToBottom(page, reportViewport) {
   await reportViewport.hover();

@@ -6,7 +6,7 @@ const {
   openNotes,
   closeNotes,
   readStickySave,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("New Game starts immediately when there is no sticky save", async ({ page }) => {
   await page.goto("/");

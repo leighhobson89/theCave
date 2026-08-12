@@ -10,7 +10,7 @@ const {
   installStickyWriteCounter,
   readStickyWriteCount,
   readStickySave,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("starting a game seeds a sticky save under a namespaced localStorage key", async ({ page }) => {
   await page.goto("/");

@@ -812,19 +812,30 @@ port 4173). The suite is split by functional area; see
 npm run test:e2e            # everything, recorded into test-reports/runs/<stamp>/
 npm run test:e2e:app        # tests/e2e only (the game)
 npm run test:e2e:tools      # tests/tools only (the content builder API)
+npm run test:e2e:categories # list every tests/e2e/ category and its spec count
+npm run test:e2e:category -- quick-login   # just that one category
 npm run test:e2e:headed     # watch it in a real browser (forces one worker)
 npm run test:e2e:slow       # ...with a 350ms pause between actions
 npm run test:e2e:ui         # interactive UI mode
-node scripts/run-tests.cjs tests/e2e/browser-quick-login.spec.js
+node scripts/run-tests.cjs tests/e2e/quick-login/browser-quick-login.spec.js
 ```
 
 ```
 tests/
-  e2e/        18 specs covering the game by functional area
-  tools/      the content builder HTTP API
-  support/    shared helpers (game-helpers.js) and the static server
-  artifacts/  committed visual evidence produced by tests
+  e2e/
+    <category>/*.spec.js   one folder per coverage area (12 today; 18 specs)
+  tools/                    the content builder HTTP API
+  support/                  shared helpers (game-helpers.js) and the static server
+  artifacts/                committed visual evidence produced by tests
 ```
+
+`tests/e2e/` has no registry file — every immediate subfolder is a category.
+Playwright's own file matching already recurses into subfolders, so adding one
+is just `mkdir tests/e2e/<name>` plus `.spec.js` files; `--category <name>` and
+`--list-categories` in `scripts/run-tests.cjs` pick it up with no code change.
+Each category folder has its own `README.md`. Three exist today with no specs
+yet (`audio-settings`, `desktop-window-chrome`, `viewport-scene-navigation`) —
+the top gaps in `docs/test-coverage-analysis.md`.
 
 Results are written to `test-reports/runs/<timestamp>/` (JSON, a markdown
 summary, the full HTML report and an `artifacts/` folder), with a rolling

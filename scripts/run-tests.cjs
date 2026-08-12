@@ -20,8 +20,16 @@
 // name"), so "^test name" matches nothing, and a fragment matches every test
 // containing it. Use file:line when you mean exactly one.
 //
+// Coverage-area categories (tests/e2e/<category>/*.spec.js):
+//   node scripts/run-tests.cjs --list-categories        # what exists, and how many specs
+//   node scripts/run-tests.cjs --category quick-login    # just that folder
+//   npm run test:e2e:category -- audio-settings           # same, via npm script
+// Adding a new category needs no code change: create tests/e2e/<name>/, drop
+// .spec.js files in it, and both flags above pick it up automatically.
+//
 // Everything after the script name is forwarded to `playwright test` verbatim,
-// except `--slow[=ms]`, which this script consumes and turns into an env var.
+// except `--slow[=ms]`, `--category <name>` and `--list-categories`, which this
+// script consumes itself.
 const { spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -29,7 +37,54 @@ const path = require("path");
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const REPORTS_ROOT = path.join(PROJECT_ROOT, "test-reports");
 const RUNS_ROOT = path.join(REPORTS_ROOT, "runs");
+const E2E_ROOT = path.join(PROJECT_ROOT, "tests", "e2e");
 const HISTORY_LIMIT = Number.parseInt(process.env.CAVE_HISTORY_LIMIT || "10", 10);
+
+// Recursively counts .spec.js files under a directory (categories are one
+// level deep today, but this does not assume that stays true).
+function countSpecs(dir) {
+  if (!fs.existsSync(dir)) {
+    return 0;
+  }
+
+  return fs.readdirSync(dir, { withFileTypes: true }).reduce((total, entry) => {
+    if (entry.isDirectory()) {
+      return total + countSpecs(path.join(dir, entry.name));
+    }
+    return total + (entry.name.endsWith(".spec.js") ? 1 : 0);
+  }, 0);
+}
+
+// Every immediate subfolder of tests/e2e/ is a category, full stop -- there is
+// no registry to keep in sync. Sorted with non-empty categories first, since
+// those are the ones you'd actually run.
+function listCategories() {
+  if (!fs.existsSync(E2E_ROOT)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(E2E_ROOT, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => ({ name: entry.name, specCount: countSpecs(path.join(E2E_ROOT, entry.name)) }))
+    .sort((a, b) => (b.specCount - a.specCount) || a.name.localeCompare(b.name));
+}
+
+function printCategories() {
+  const categories = listCategories();
+  if (!categories.length) {
+    console.log("No categories found under tests/e2e/.");
+    return;
+  }
+
+  const nameWidth = Math.max(...categories.map((c) => c.name.length));
+  console.log(`Categories under tests/e2e/ (${categories.length}):\n`);
+  categories.forEach(({ name, specCount }) => {
+    const countLabel = `${specCount} spec${specCount === 1 ? "" : "s"}`;
+    console.log(`  ${name.padEnd(nameWidth)}   ${specCount === 0 ? "(empty)" : countLabel}`);
+  });
+  console.log(`\nRun one:   node scripts/run-tests.cjs --category <name>`);
+}
 
 // 2026-08-12T19-51-04 -- sorts chronologically as a plain string, and is a
 // legal directory name on Windows (no colons).
@@ -112,6 +167,30 @@ function groupByFile(rows) {
   return byFile;
 }
 
+// A row's category is the folder one level under tests/e2e/ (e.g.
+// "e2e/persistence"), or "tools" for anything outside tests/e2e/ entirely. A
+// spec placed directly in tests/e2e/ with no category folder is called out
+// rather than silently merged into something else.
+function categoryOf(filePath) {
+  const segments = String(filePath || "").split(/[\\/]/).filter(Boolean);
+  if (segments[0] !== "e2e") {
+    return segments[0] || "(unknown)";
+  }
+  return segments.length > 2 ? `e2e/${segments[1]}` : "e2e/(uncategorized)";
+}
+
+function groupByCategory(rows) {
+  const byCategory = new Map();
+  rows.forEach((row) => {
+    const key = categoryOf(row.file);
+    if (!byCategory.has(key)) {
+      byCategory.set(key, []);
+    }
+    byCategory.get(key).push(row);
+  });
+  return byCategory;
+}
+
 function writeSummary(runDir, stamp, rows, counts, wallClockMs, exitCode) {
   const total = rows.length;
   const verdict = exitCode === 0 ? "PASS" : "FAIL";
@@ -125,11 +204,22 @@ function writeSummary(runDir, stamp, rows, counts, wallClockMs, exitCode) {
     `**Skipped:** ${counts.skipped}  `,
     `**Wall clock:** ${formatDuration(wallClockMs)}`,
     "",
-    "## By suite",
+    "## By category",
     "",
-    "| Suite | Tests | Passed | Failed | Time |",
+    "| Category | Tests | Passed | Failed | Time |",
     "| --- | ---: | ---: | ---: | ---: |",
   ];
+
+  for (const [category, categoryRows] of groupByCategory(rows)) {
+    const categoryCounts = summarise(categoryRows);
+    const categoryTime = categoryRows.reduce((sum, row) => sum + (row.duration || 0), 0);
+    lines.push(
+      `| ${category} | ${categoryRows.length} | ${categoryCounts.passed} | `
+      + `${categoryCounts.failed + categoryCounts.timedOut + categoryCounts.interrupted} | ${formatDuration(categoryTime)} |`
+    );
+  }
+
+  lines.push("", "## By suite", "", "| Suite | Tests | Passed | Failed | Time |", "| --- | ---: | ---: | ---: | ---: |");
 
   for (const [file, fileRows] of groupByFile(rows)) {
     const fileCounts = summarise(fileRows);
@@ -232,17 +322,62 @@ function writeHistoryIndex(retained) {
 }
 
 function main() {
+  const rawArgs = process.argv.slice(2);
+
+  if (rawArgs.includes("--list-categories")) {
+    printCategories();
+    process.exit(0);
+  }
+
+  // `--category <name>` / `--category=<name>` picks a folder under tests/e2e/
+  // and forwards its path to Playwright, same as typing the path by hand. Kept
+  // separate from a bare path argument so `--list-categories` can validate and
+  // suggest a fix when the name is wrong, rather than Playwright silently
+  // reporting "0 tests found".
+  const categoryFlagIndex = rawArgs.findIndex((arg) => arg === "--category" || arg.startsWith("--category="));
+  let categoryPathArg = null;
+  let argsAfterCategory = rawArgs;
+  if (categoryFlagIndex !== -1) {
+    const inlineValue = rawArgs[categoryFlagIndex].split("=")[1];
+    const isSeparateValue = !inlineValue && rawArgs[categoryFlagIndex + 1] && !rawArgs[categoryFlagIndex + 1].startsWith("-");
+    const categoryName = inlineValue || (isSeparateValue ? rawArgs[categoryFlagIndex + 1] : "");
+    const removedCount = inlineValue ? 1 : (isSeparateValue ? 2 : 1);
+
+    if (!categoryName || !fs.existsSync(path.join(E2E_ROOT, categoryName))) {
+      console.error(`No such category: "${categoryName || "(none given)"}"\n`);
+      printCategories();
+      process.exit(1);
+    }
+
+    if (countSpecs(path.join(E2E_ROOT, categoryName)) === 0) {
+      console.error(`Category "${categoryName}" exists but has no .spec.js files yet.`);
+      console.error(`See tests/e2e/${categoryName}/README.md for what belongs there.`);
+      process.exit(1);
+    }
+
+    // Playwright treats positional args as regexes matched against forward-
+    // slash paths, even on Windows. path.join here would use backslashes,
+    // which a regex reads as escape sequences (\e, \q, ...) and silently
+    // drops -- "tests\e2e\quick-login" stops matching anything at all.
+    categoryPathArg = `tests/e2e/${categoryName}`;
+    argsAfterCategory = [
+      ...rawArgs.slice(0, categoryFlagIndex),
+      ...rawArgs.slice(categoryFlagIndex + removedCount),
+    ];
+  }
+
   const stamp = runStamp();
   const runDir = path.join(RUNS_ROOT, stamp);
   fs.mkdirSync(runDir, { recursive: true });
 
-  const rawArgs = process.argv.slice(2);
-
   // `--slow` / `--slow=600` is ours, not Playwright's: strip it and translate it
   // into CAVE_SLOWMO, which playwright.config.js reads. Default 350ms is about
   // the slowest you can watch without losing patience on a full suite.
-  const slowArg = rawArgs.find((arg) => arg === "--slow" || arg.startsWith("--slow="));
-  const forwardedArgs = rawArgs.filter((arg) => arg !== slowArg);
+  const slowArg = argsAfterCategory.find((arg) => arg === "--slow" || arg.startsWith("--slow="));
+  const forwardedArgs = argsAfterCategory.filter((arg) => arg !== slowArg);
+  if (categoryPathArg) {
+    forwardedArgs.push(categoryPathArg);
+  }
   const slowMo = slowArg
     ? (Number(slowArg.split("=")[1]) || 350)
     : Number(process.env.CAVE_SLOWMO) || 0;

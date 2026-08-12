@@ -9,7 +9,7 @@ const {
   openZoomSearch,
   openLibrary,
   browserAddress,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("browser address history replays a previous search from the dropdown", async ({ page }) => {
   await startNewGame(page);

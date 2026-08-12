@@ -7,6 +7,8 @@
         "test:e2e": "node scripts/run-tests.cjs",
         "test:e2e:app": "node scripts/run-tests.cjs tests/e2e",
         "test:e2e:tools": "node scripts/run-tests.cjs tests/tools",
+        "test:e2e:category": "node scripts/run-tests.cjs --category",
+        "test:e2e:categories": "node scripts/run-tests.cjs --list-categories",
         "test:e2e:headed": "node scripts/run-tests.cjs --headed",
         "test:e2e:slow": "node scripts/run-tests.cjs --headed --slow",
         "test:e2e:ui": "playwright test --ui",

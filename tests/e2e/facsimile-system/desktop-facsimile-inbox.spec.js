@@ -11,7 +11,7 @@ const {
   captureConsoleEntries,
   dumpEvidenceStore,
   evidenceEntriesIn,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 function readAlertLightAnimation(page) {
   return page.locator("#desktopFacsimile .facsimile-alert-light").evaluate((element) => {

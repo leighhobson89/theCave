@@ -10,7 +10,7 @@ const {
   captureConsoleEntries,
   dumpEvidenceStore,
   evidenceEntriesIn,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("honey dew standalone page awards two photo evidences", async ({ page }) => {
   const consoleEntries = captureConsoleEntries(page);

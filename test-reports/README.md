@@ -13,7 +13,7 @@ test-reports/
   runs/
     2026-08-12T19-51-04/
       results.json     raw Playwright JSON reporter output
-      summary.md       per-suite breakdown, failure list, embedded screenshots
+      summary.md       by-category and per-suite breakdown, failure list, embedded screenshots
       html/            full interactive Playwright HTML report
       artifacts/       failure evidence: screenshots, video, traces
     2026-08-12T18-04-11/
@@ -32,6 +32,8 @@ the summaries survived in history but the screenshots did not.
 npm run test:e2e            # whole suite, recorded into a new timestamped run
 npm run test:e2e:app        # tests/e2e only (the game)
 npm run test:e2e:tools      # tests/tools only (the content builder API)
+npm run test:e2e:categories # list every tests/e2e/ category and its spec count
+npm run test:e2e:category -- quick-login   # just that one category
 npm run test:e2e:headed     # watch it in a real browser (single worker)
 npm run test:e2e:slow       # ...with a 350ms pause between actions
 npm run test:e2e:ui         # interactive UI mode (not recorded to history)
@@ -41,15 +43,17 @@ npm run test:e2e:debug      # Playwright Inspector (not recorded to history)
 Any Playwright CLI argument is forwarded, so these work too:
 
 ```bash
-node scripts/run-tests.cjs tests/e2e/browser-quick-login.spec.js
+node scripts/run-tests.cjs tests/e2e/quick-login/browser-quick-login.spec.js
 node scripts/run-tests.cjs --grep "quick login"
 
 # one specific test, headed, slowed down enough to watch
 npm run test:e2e:slow -- --grep "police quick login is hidden until a manual login succeeds"
-node scripts/run-tests.cjs --headed --slow=600 tests/e2e/browser-quick-login.spec.js:28
+node scripts/run-tests.cjs --headed --slow=600 tests/e2e/quick-login/browser-quick-login.spec.js:28
 ```
 
-See [`tests/README.md`](../tests/README.md#running-one-specific-test-slowly) for
+See [`tests/README.md`](../tests/README.md#categories) for how the
+`tests/e2e/<category>/` folders work, and
+[`tests/README.md`](../tests/README.md#running-one-specific-test-slowly) for
 the `--grep` caveats.
 
 Opening the HTML report for a specific run:

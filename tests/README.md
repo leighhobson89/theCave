@@ -5,26 +5,133 @@ this folder; there is no second test location.
 
 ```
 tests/
-  e2e/        the game, driven through a real browser
-  tools/      the authoring tooling (content builder HTTP API)
-  support/    shared helpers and the static file server
-  artifacts/  committed visual evidence produced by tests
+  e2e/                          the game, driven through a real browser
+    <category>/*.spec.js        one folder per coverage area — see "Categories" below
+  tools/                        the authoring tooling (content builder HTTP API)
+  support/                      shared helpers and the static file server
+  artifacts/                    committed visual evidence produced by tests
 ```
 
 Reports and run history are written to [`../test-reports/`](../test-reports/README.md).
 
+## Categories
+
+Every coverage area under `tests/e2e/` is its own folder. This is a plain
+filesystem convention, not a registry anywhere — Playwright's own file matching
+already recurses into subfolders, so a new category is just a new folder:
+
+```bash
+mkdir tests/e2e/my-new-area
+# drop *.spec.js files in it — nothing else to wire up
+node scripts/run-tests.cjs --category my-new-area
+```
+
+```bash
+npm run test:e2e:categories                    # list every category and its spec count
+npm run test:e2e:category -- quick-login        # run just that one
+node scripts/run-tests.cjs --category quick-login
+```
+
+```
+$ npm run test:e2e:categories
+
+Categories under tests/e2e/ (12):
+
+  persistence                  5 specs
+  web-content-search-records   3 specs
+  evidence-system              2 specs
+  facsimile-system             2 specs
+  notes-paint-documents        2 specs
+  localization                 1 spec
+  notifications                1 spec
+  quick-login                  1 spec
+  web-content-authentication   1 spec
+  audio-settings               (empty)
+  desktop-window-chrome        (empty)
+  viewport-scene-navigation    (empty)
+```
+
+An unknown category name, or one with no `.spec.js` files in it yet, fails with
+a message pointing at that folder's `README.md` rather than Playwright's opaque
+"No tests found" — try `node scripts/run-tests.cjs --category audio-settings`
+to see it (that one's still empty; it's the top gap in
+`docs/test-coverage-analysis.md`).
+
+Every category folder has its own `README.md` describing its scope and current
+specs — start there before adding a test, to confirm it belongs in that folder
+rather than a neighbouring one.
+
 ## Running
+
+Three scopes, from broadest to narrowest: **everything**, **one category
+folder**, **one test**.
 
 ```bash
 npm run test:e2e            # everything, recorded into test-reports/runs/<stamp>/
 npm run test:e2e:app        # tests/e2e only
 npm run test:e2e:tools      # tests/tools only
-node scripts/run-tests.cjs tests/e2e/browser-quick-login.spec.js
-node scripts/run-tests.cjs --grep "quick login"
 ```
 
 `npx playwright test` also works and writes to `test-reports/runs/adhoc/`, which
 is excluded from the rolling history.
+
+### Running all tests in one folder
+
+Every category is a folder under `tests/e2e/` (see "Categories" above). Two
+equivalent ways to run everything in one:
+
+```bash
+npm run test:e2e:category -- quick-login          # by category name
+node scripts/run-tests.cjs --category quick-login
+```
+
+```bash
+node scripts/run-tests.cjs tests/e2e/quick-login   # by path, same result
+```
+
+`--category` is worth reaching for over the raw path because it validates the
+name — a typo or an empty category (e.g. `audio-settings`, which has no specs
+yet) fails immediately with a clear message instead of Playwright's generic
+"No tests found":
+
+```
+$ node scripts/run-tests.cjs --category qiuck-login
+No such category: "qiuck-login"
+
+Categories under tests/e2e/ (12):
+  persistence                  5 specs
+  ...
+```
+
+Both forms are recorded into `test-reports/history.md` like a full run, and the
+run's `summary.md` still breaks results down "By category" and "By suite" even
+when only one category ran.
+
+**Headed, for the whole folder** — watch every test in a category run in a real
+browser, one after another (see "Watching it run" below for what headed mode
+does):
+
+```bash
+node scripts/run-tests.cjs --category persistence --headed --slow
+node scripts/run-tests.cjs --category persistence --headed --slow=600
+```
+
+Via the npm script, the category name must come **immediately** after `--`
+(it's appended straight onto the script's own `--category`), with any other
+flags following it:
+
+```bash
+npm run test:e2e:category -- persistence --headed --slow=600
+```
+
+```
+Headed mode: one worker, 600ms between actions.
+Running 17 tests using 1 worker
+```
+
+This runs every spec in the folder back to back headed — for `persistence`
+(the biggest category, 17 tests) that's several minutes of watching. Narrow
+further with `--grep` if you only want to watch part of a large folder.
 
 ## Watching it run (headed mode)
 
@@ -40,9 +147,9 @@ racing each other. Narrow the run and tune the pace with any Playwright argument
 after `--`:
 
 ```bash
-npm run test:e2e:headed -- tests/e2e/desktop-paint-window.spec.js
+npm run test:e2e:headed -- tests/e2e/notes-paint-documents/desktop-paint-window.spec.js
 npm run test:e2e:headed -- --grep "flood fill"
-node scripts/run-tests.cjs --headed --slow=800 tests/e2e/browser-site-search.spec.js
+node scripts/run-tests.cjs --headed --slow=800 --category web-content-search-records
 ```
 
 `--slow[=ms]` is this repo's flag, not Playwright's — the runner consumes it and
@@ -70,14 +177,14 @@ Running 1 test using 1 worker
 gives you:
 
 ```bash
-node scripts/run-tests.cjs --headed --slow tests/e2e/browser-quick-login.spec.js:28
+node scripts/run-tests.cjs --headed --slow tests/e2e/quick-login/browser-quick-login.spec.js:28
 ```
 
 Set your own pace with `--slow=<ms>` (400–800 is comfortable for reading text as
 it renders; 1500 is good for catching a flash of the wrong state):
 
 ```bash
-node scripts/run-tests.cjs --headed --slow=600 tests/e2e/browser-quick-login.spec.js:28
+node scripts/run-tests.cjs --headed --slow=600 tests/e2e/quick-login/browser-quick-login.spec.js:28
 ```
 
 Two things worth knowing about `--grep`:
@@ -126,33 +233,80 @@ npx playwright show-trace test-reports/runs/<stamp>/artifacts/<test-dir>/trace.z
 
 ## Suites
 
-Every file is named for the functional area it covers, so `--grep`-free
-filtering is just a path.
+Every spec is named for the specific behaviour it covers, and lives inside a
+category folder named for the coverage area — so a path already tells you both.
+A run's `summary.md` groups results the same way, under "By category" (a
+rollup) and "By suite" (per file).
 
-### `e2e/` — the game
+### `e2e/quick-login/` — 100% covered, the model to copy
+
+| Spec | Covers |
+| --- | --- |
+| `browser-quick-login.spec.js` | Visibility rules, replay at the stored level, high-water-mark behaviour, save/load and New Game interaction |
+
+### `e2e/persistence/` — save, load, sticky save, resume
+
+| Spec | Covers |
+| --- | --- |
+| `autosave-indicator.spec.js` | Floppy-disk indicator driven by the real 60s autosave: appearance, fade, single-element reuse, visibility in every scene |
+| `menu-new-game-lifecycle.spec.js` | New Game overwrite confirmation; cancel preserves the sticky save; confirm replaces it |
+| `persistence-resume-after-refresh.spec.js` | Resume Game after a refresh versus returning to an in-memory game |
+| `persistence-save-load-round-trip.spec.js` | Full LZString save payload round trip: evidence collections, notes bodies, new-game defaults |
+| `persistence-sticky-save.spec.js` | localStorage seed write, 60s autosave timer, timer de-duplication, corrupt-save recovery, no collateral damage to other keys |
+
+### `e2e/facsimile-system/`
+
+| Spec | Covers |
+| --- | --- |
+| `desktop-facsimile-inbox.spec.js` | Alert light states, queueing, next-message stepping, award-exactly-once on close |
+| `desktop-facsimile-milestone-triggers.spec.js` | Scripted faxes fired by evidence acquisition and by opening a specific police record; delivered credentials actually work |
+
+### `e2e/notes-paint-documents/`
+
+| Spec | Covers |
+| --- | --- |
+| `desktop-notes-window.spec.js` | Ten-page model, per-page title commit, per-page body persistence |
+| `desktop-paint-window.spec.js` | Ten-sketch model, freehand drawing, flood fill, per-sketch canvas persistence |
+
+### `e2e/evidence-system/`
+
+| Spec | Covers |
+| --- | --- |
+| `evidence-magnifier.spec.js` | Magnifier lens over report text (including after scrolling) and over photos (alignment at centre and edge) |
+| `evidence-awards-from-web-content.spec.js` | A standalone page awarding multiple evidences, each with its own reward toast |
+
+### `e2e/web-content-search-records/`
+
+| Spec | Covers |
+| --- | --- |
+| `browser-site-search.spec.js` | ZoomSearch / Library / Archives query submission, result rows, detail views, per-site empty states |
+| `browser-address-history.spec.js` | History recording, de-duplication, replaying a stored search, surviving a computer close and a save round trip |
+| `browser-archives-login-layout.spec.js` | Subscriber login panel alignment against the Summary column, including at a narrow viewport |
+
+### `e2e/web-content-authentication/`
+
+| Spec | Covers |
+| --- | --- |
+| `browser-authentication.spec.js` | Guest defaults, privilege gating, case-sensitive credentials, log out, session lifetime across navigation and save/load |
+
+### `e2e/localization/`
 
 | Spec | Covers |
 | --- | --- |
 | `menu-language-localization.spec.js` | Language flag buttons; menu and desktop chrome re-render; open windows re-title on a mid-session switch |
-| `menu-new-game-lifecycle.spec.js` | New Game overwrite confirmation; cancel preserves the sticky save; confirm replaces it |
-| `desktop-notes-window.spec.js` | Notes: ten-page model, per-page title commit, per-page body persistence |
-| `desktop-paint-window.spec.js` | Paint: ten-sketch model, freehand drawing, flood fill, per-sketch canvas persistence |
-| `desktop-facsimile-inbox.spec.js` | Fax inbox: alert light states, queueing, next-message stepping, award-exactly-once on close |
-| `desktop-facsimile-milestone-triggers.spec.js` | Scripted faxes fired by evidence acquisition and by opening a specific police record; delivered credentials actually work |
-| `evidence-magnifier.spec.js` | Magnifier lens over report text (including after scrolling) and over photos (alignment at centre and edge) |
-| `evidence-awards-from-web-content.spec.js` | A standalone page awarding multiple evidences, each with its own reward toast |
-| `browser-site-search.spec.js` | ZoomSearch / Library / Archives query submission, result rows, detail views, per-site empty states |
-| `browser-authentication.spec.js` | Guest defaults, privilege gating, case-sensitive credentials, log out, session lifetime across navigation and save/load |
-| `browser-quick-login.spec.js` | Quick login visibility rules, replay at the stored level, high-water-mark behaviour, save/load and New Game interaction |
-| `browser-address-history.spec.js` | History recording, de-duplication, replaying a stored search, surviving a computer close and a save round trip |
-| `browser-archives-login-layout.spec.js` | Subscriber login panel alignment against the Summary column, including at a narrow viewport |
-| `notifications-window-shortcuts.spec.js` | Toasts as shortcuts to their desk object, closing the computer first, keyboard access, never covering a close button |
-| `autosave-indicator.spec.js` | Floppy-disk indicator driven by the real 60s autosave: appearance, fade, single-element reuse, visibility in every scene |
-| `persistence-sticky-save.spec.js` | localStorage seed write, 60s autosave timer, timer de-duplication, corrupt-save recovery, no collateral damage to other keys |
-| `persistence-resume-after-refresh.spec.js` | Resume Game after a refresh versus returning to an in-memory game |
-| `persistence-save-load-round-trip.spec.js` | Full LZString save payload round trip: evidence collections, notes bodies, new-game defaults |
 
-### `tools/` — authoring tooling
+### `e2e/notifications/`
+
+| Spec | Covers |
+| --- | --- |
+| `notifications-window-shortcuts.spec.js` | Toasts as shortcuts to their desk object, closing the computer first, keyboard access, never covering a close button |
+
+### `e2e/audio-settings/`, `e2e/desktop-window-chrome/`, `e2e/viewport-scene-navigation/`
+
+Empty — the three named gaps flagged first in `docs/test-coverage-analysis.md`.
+Each folder's `README.md` describes what belongs there.
+
+### `tools/` — authoring tooling (not a game category — a separate kind of test)
 
 | Spec | Covers |
 | --- | --- |

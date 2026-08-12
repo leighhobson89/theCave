@@ -20,7 +20,7 @@ const {
   quickLoginRow,
   captureSaveStringViaMenu,
   loadSaveStringViaMenu,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 const POLICE = ".browser-page-police";
 const ARCHIVES = ".browser-page-archives";

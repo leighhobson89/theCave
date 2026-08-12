@@ -8,7 +8,7 @@ const {
   openLibrary,
   openArchives,
   archivesStatus,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("zoomsearch and library searches return records and render detail", async ({ page }) => {
   await startNewGame(page);

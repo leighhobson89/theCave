@@ -11,7 +11,7 @@ const {
   notification,
   queueFacsimileReport,
   visitBrowserUrl,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 test("facsimile notification opens the facsimile window and runs the normal opened flow", async ({ page }) => {
   await startNewGame(page);

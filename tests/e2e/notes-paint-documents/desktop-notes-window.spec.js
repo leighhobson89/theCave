@@ -1,7 +1,7 @@
 // Notes window: the ten-page paged-document model, per-page title commit and
 // per-page body persistence.
 const { test, expect } = require("@playwright/test");
-const { startNewGame, openNotes } = require("../support/game-helpers");
+const { startNewGame, openNotes } = require("../../support/game-helpers");
 
 test("notes window: tabs render, titles commit and content persists per page", async ({ page }) => {
   await startNewGame(page);

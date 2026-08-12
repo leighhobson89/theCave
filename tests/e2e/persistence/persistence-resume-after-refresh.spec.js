@@ -12,7 +12,7 @@ const {
   policeLogin,
   policeStatus,
   quickLoginButton,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 const POLICE = ".browser-page-police";
 

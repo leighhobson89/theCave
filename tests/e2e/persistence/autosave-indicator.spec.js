@@ -2,7 +2,7 @@
 // autosave. Uses Playwright's clock control to advance the autosave timer
 // rather than waiting in real time.
 const { test, expect } = require("@playwright/test");
-const { clickNewGame, openComputer } = require("../support/game-helpers");
+const { clickNewGame, openComputer } = require("../../support/game-helpers");
 
 test("the autosave indicator appears on a real autosave and fades away", async ({ page }) => {
   await page.clock.install();

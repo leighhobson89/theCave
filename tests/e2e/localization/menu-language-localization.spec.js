@@ -2,7 +2,7 @@
 // from localization.json, and windows already open at the time of the switch
 // are re-titled rather than left showing a raw key.
 const { test, expect } = require("@playwright/test");
-const { startNewGame } = require("../support/game-helpers");
+const { startNewGame } = require("../../support/game-helpers");
 
 test("language buttons localize menu and desktop chrome", async ({ page }) => {
   await page.goto("/");

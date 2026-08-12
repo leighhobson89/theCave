@@ -1,7 +1,7 @@
 // CaveOS Paint window: the ten-sketch paged model, per-sketch canvas
 // persistence, freehand drawing and the flood-fill tool.
 const { test, expect } = require("@playwright/test");
-const { startNewGame, openPaint } = require("../support/game-helpers");
+const { startNewGame, openPaint } = require("../../support/game-helpers");
 
 test("paint window: tabs, title commit, drawing and flood fill persist per sketch", async ({ page }) => {
   await startNewGame(page);

@@ -17,7 +17,7 @@ const {
   captureConsoleEntries,
   dumpEvidenceStore,
   evidenceEntriesIn,
-} = require("../support/game-helpers");
+} = require("../../support/game-helpers");
 
 async function closeNetscapeAndComputer(page) {
   await page.getByRole("button", { name: "Close Netscape Navigator 3.0 window" }).click();
