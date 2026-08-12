@@ -322,11 +322,11 @@
       "summary": "05-33-22-02-03",
       "report": [
         "INSURANCE VALUATION RECORD",
-        "Date of Valuation: 14 March 1901\nInsured: Hollingworth & Co.\nAddress: St. Ann’s Wharf, Quebec",
+        "Date of Valuation: 14 March 1901\nInsured: John Hollingworth\nAddress: St. Ann’s Wharf, Quebec",
         "Item No.: 33\nDescription: Full-size cast bronze garden statue entitled *The Water Bearer*, depicting a standing woman in classical draped robes, one hand resting upon a draped water jug at her side, mounted upon a low round bronze plinth.",
         "Artist / Founder: Eugène Laurent, A.R.\nMaterial: Cast bronze, dark brown patination\nDimensions: Life-size, approximately 5 ft 9 in. high (including plinth) × 2 ft diameter at base\nApproximate Weight: 420 lb.\nCondition: Good; weathering consistent with long-standing outdoor display. No material damage observed.",
         "Estimated Date of Manufacture: c. 1885–1895\nEstimated Replacement / Insurance Value: $350.00 (Three Hundred And Fifty Dollars)\n",
-        "Policy No.: Q/1901/4427\nClass of Insurance: Fine Art / Garden Statuary\nRisk: Fire, theft and accidental damage\nLocation of Risk: Hollingworth & Co. premises, displayed on the rear lawn, St. Ann’s Wharf, Quebec\nTransit Cover: Included for carriage within Canada.",
+        "Policy No.: Q/1901/4427\nDocument Type: Insurance Policy\nClass of Insurance: Fine Art / Garden Statuary\nRisk: Fire, theft and accidental damage\nLocation of Risk: Hollingworth premises, displayed on the rear lawn, St. Ann’s Wharf, Quebec\nRoute: Through Blackwood\nTransit Cover: Included for carriage within Canada.",
         "Remarks:\nThe above-described bronze is a substantial, full-size garden figure of good nineteenth-century workmanship, presently standing on the lawn to the rear of the premises. The casting and patination are in sound order, showing only the ordinary weathering expected of a piece kept outdoors. For insurance purposes, the sum of Three Hundred And Fifty Dollars is considered a reasonable value as at the date stated, subject to satisfactory security and care while in transit."
       ],
       "requiredPrivilegeLevel": 0,
@@ -335,6 +335,49 @@
           "src": "./assets/photos/fairchildsExample.png",
           "alt": "",
           "caption": ""
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "fairchildinsurancerecordworthingpendant",
+      "title": "09-24-49-02-07",
+      "keywords": [
+        "09-24-49-02-07"
+      ],
+      "summary": "09-24-49-02-07",
+      "report": [
+        "INSURANCE VALUATION RECORD",
+        "Date of Valuation: 3 September 1893\nInsured: Percival Anthony Worthing\nAddress: Black Pine, District of Saskatchewan, North-West Territories",
+        "Item No.: 24\nDescription: Gold cross pendant on a fine gold chain, engraved 'P. A. WORTHING' upon the reverse.",
+        "Jeweller / Maker: (Unmarked)\nMaterial: 18-carat gold\nDimensions: Approximately 2 in. high × 1 in. wide (excluding chain)\nApproximate Weight: 0.5 oz.\nCondition: Good; minor surface wear consistent with age. No material damage observed.",
+        "Estimated Date of Manufacture: c. 1860–1870\nEstimated Replacement / Insurance Value: $250.00 (Two Hundred And Fifty Dollars)\n",
+        "Policy No.: T/1893/1122\nDocument Type: Insurance Policy\nClass of Insurance: Fine Art / Personal Jewellery\nRisk: Fire, theft and accidental loss\nLocation of Risk: Worthing residence, Black Pine, District of Saskatchewan, North-West Territories\nRoute: Through Fairchilds\nTransit Cover: Included for carriage within Canada.",
+        "Remarks:\nThe above-described pendant is a personal item of good quality gold work, engraved for identification. The chain and clasp are in good working order. For insurance purposes, the sum of Two Hundred And Fifty Dollars is considered a reasonable value as at the date stated, subject to satisfactory security and care while in transit.",
+        "\nEndorsement 1897 — Notice of Succession: This policy was continued in the name of the Insured's son, Anthony Worthing, following the death of the original policyholder, P. A. Worthing."
+      ],
+      "requiredPrivilegeLevel": 3,
+      "images": [
+        {
+          "src": "./assets/photos/worthingCrossInsurance.png",
+          "alt": "Gold cross pendant insured by Worthing, engraved P. A. WORTHING on its reverse side, connected to a fine gold chain",
+          "caption": "Gold cross pendant insured by Worthing, engraved P. A. WORTHING on its reverse side, connected to a fine gold chain"
         }
       ],
       "awardsEvidence": false,

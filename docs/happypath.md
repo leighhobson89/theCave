@@ -1,6 +1,6 @@
 # Happy Path — the order a player would actually discover things
 
-As of **11 August 2026**. This traces the order a player would realistically
+As of **12 August 2026**. This traces the order a player would realistically
 proceed through the game **using only in-game flavour text as clues** — no
 out-of-game knowledge of exact search keywords, no JSON-reading. It turns
 out the content is almost entirely clue-chained once you follow it
@@ -8,10 +8,10 @@ properly: nearly every gated login and every exact Library title is spelled
 out somewhere the player would plausibly have already read. The one weak
 link is noted where it happens (§2).
 
-A companion "Developer Quick Reference" at the end (§9) keeps the old
-mechanical shortest-path script for QA/testing purposes, since that's still
-useful on its own terms — this document exists alongside it, not instead of
-it.
+A companion "Developer Quick Reference" at the end of this document keeps
+the old mechanical shortest-path script for QA/testing purposes, since
+that's still useful on its own terms — this document exists alongside it,
+not instead of it.
 
 **Two access tiers matter to how a player finds things:**
 - **Open browsing** — ZoomSearch has no login at all; four Police records
@@ -155,7 +155,7 @@ now.
 
 ---
 
-## 8. Closing the Whitmore loop, then the Archive loop
+## 8. Closing the Whitmore loop, then the Fairchild and Archive threads
 
 11. **Police Records → login `b.whitmore` / `ironVeins15`.** Now Level 2 —
     return to the `arthur` search from §4, which was gated before. Search
@@ -163,9 +163,27 @@ now.
     it is what matters). This fires a second fax.
 12. **Open Facsimile, close it.** A second "Message from Brian Whitmore"
     gives `t.fairchild` / `mapleLaw91` (Level 3) — commits as Reports
-    evidence. Nothing currently requires this level; it's a dead end for
-    now (see §9).
-13. **Archives → login `t.mcleod` / `apple1`** (from §6). Two searches now
+    evidence. This used to be a dead end; it isn't any more (see below).
+13. **ZoomSearch → `fairchild`** (curiosity about the surname behind the
+    new login, same inference pattern as `j.fletcher` → James Fletcher and
+    `t.mcleod` → McLeod). Finds **"J & T Fairchild Valuation Experts &
+    Insurance Brokers."** Opening the record itself immediately awards the
+    **Insurance Record Template** report — its own flavour text prints a
+    demo code, `05-33-22-02-03`, and its last line links to their online
+    decode book. Its final line is also a standing hint for the Route
+    segment of *any* Fairchild insurance code: "we're the lucky 7 when it
+    comes to Insurance" — Route `07` plus Document `02` (Insurance Policy,
+    the only sensible reading given the context; the record codes
+    themselves stay zero-padded even though the decode book and this
+    line now write bare numbers), remembered for step 18.
+14. **Click that link.** Awards the **Insurance Decode Book** report — a
+    full key explaining Fairchild's five-number codes (Colour, Object,
+    Name, Document, Route, always in that order).
+15. *(Optional, no new evidence.)* **Police Records → search
+    `05-33-22-02-03`.** This particular demo record only requires Level 0,
+    so no login is even needed — it's just a working demonstration that
+    the code system in the decode book matches something real.
+16. **Archives → login `t.mcleod` / `apple1`** (from §6). Two searches now
     open up:
     - **Saskatchewan + `harry`** (or `henry` / `strange things` / `strange`,
       all established by now). Finds "Local Author publishes book with
@@ -174,42 +192,59 @@ now.
       **Henry Whitmore**.
     - **Ontario + `mcleod`** (or `william` / `margaret` / `lieutenant` /
       `apples`). Finds "Remembering a great Guardian" — William McLeod's
-      1957 obituary, the source of the gold-pendant thread, and displays a
-      family polaroid whose handwritten caption identifies `t.mcleod` as
-      **Teresa McLeod**, William and Margaret's daughter.
+      1957 obituary, the source of the gold-pendant thread ("he recovered
+      a gold pendant from the search area" — a new search term), and
+      displays a family polaroid whose handwritten caption identifies
+      `t.mcleod` as **Teresa McLeod**, William and Margaret's daughter.
+17. **Police Records → search `pendant`** (or `gold pendant`, from the
+    obituary above; already logged in as `t.fairchild`, Level 3, from step
+    12). Awards the **GOLD PENDANT** photo evidence: a gold pendant
+    engraved **"P. A. WORTHING,"** recovered by Lt. William McLeod from the
+    flooded lower section of Shaft 'B'. A new surname to chase — and, with
+    the decode book in hand, three of five code segments: Gold (`09`),
+    Pendant (`24`), Worthing (`49`).
+18. **Police Records → search `09-24-49-02-07`** — composed from the three
+    segments above plus Document/Route from step 13's hint (`02`
+    Insurance Policy, `07` Fairchilds). Opens Fairchild's own insurance
+    valuation for the pendant: names the original policyholder as
+    **Percival Anthony Worthing** (d. 1897) and, via a later endorsement,
+    his son **Anthony Worthing** — the same name already sitting
+    unremarked in the 1904 club photo. Informational only, no further
+    evidence.
 
 ---
 
 ## 9. Last Library pickup
 
-14. **Library → `Henry Whitmore` / `Strange Things Found In Even Stranger
+19. **Library → `Henry Whitmore` / `Strange Things Found In Even Stranger
     Places`** (from §8). Awards the vandalised-page photo — see
     `story-timeline.md` §4 for the pendant connection it hints at.
 
 At this point every fax trigger and evidence-award path that exists in the
-shipped assets has fired, in an order a player following only in-game
-clues would plausibly reach it. See below for what's left dangling.
+shipped assets *and* is legitimately reachable via in-game clues has
+fired. See below for what's left dangling.
 
 ---
 
 ## Current content boundary
 
-- **Level 3 and Level 5 police access** (`t.fairchild`, `administrator`)
-  don't currently gate anything — no record requires above Level 2.
+- **Level 5 police access** (`administrator`) doesn't currently gate
+  anything.
 - **`insideCaveLookingBack`** has a full photo catalog entry but no unlock
   path anywhere — it can never actually be collected right now.
-- **The gold pendant and the vandalised book page** (see
-  `story-timeline.md` §4, "Current mystery threads") are left dangling —
-  nothing in the shipped content resolves either, even after identifying
-  Teresa McLeod.
+- **The vandalised book page** (see `story-timeline.md` §4, "Current
+  mystery threads") is left dangling — nothing in the shipped content
+  resolves who tore it out, even after identifying Teresa McLeod and the
+  pendant's Worthing connection.
 
-**Full evidence inventory:** 9 photos (askewAndrew, caveEntrance, "No
+**Full evidence inventory:** 10 photos (askewAndrew, caveEntrance, "No
 More!", "Search Party outside Black Pine Silver Mine Shaft B",
 standalone-honeydewcavingclub-team, standalone-honeydewcavingclub,
 mysteriesOfTheOldNorthWest, library-guardiansofthenorth, "Strange Things
-Found In Even Stranger Places"); 3 reports (missingReport,
-facsimile-whitmore-police-credentials, facsimile-whitmore-level3-credentials);
-1 story (background story, default, never grows).
+Found In Even Stranger Places", GOLD PENDANT); 5 reports (missingReport,
+fax-whitmore-police-credentials, fax-whitmore-level3-credentials,
+Insurance Record Template, Insurance Decode Book); 1 story (background
+story, default, never grows).
 
 ---
 
@@ -232,8 +267,12 @@ way to exercise every trigger during QA:
 11. Open Facsimile, close it (Level 2 Whitmore fax → evidence).
 12. Police Records → login `b.whitmore` / `ironVeins15` → search `arthur whitmore` → open result.
 13. Open Facsimile, close it (Level 3 Whitmore fax → evidence).
-14. (Optional, no evidence) Archives → login `t.mcleod` / `apple1` → search Saskatchewan + `strange` and Ontario + `mcleod` for the remaining lore, including the Teresa McLeod reveal.
+14. ZoomSearch → `fairchild` → open result (→ evidence: Insurance Record Template) → click the decode-book link (→ evidence: Insurance Decode Book).
+15. (Optional, no evidence) Police Records → search `05-33-22-02-03` → open result (Level 0, no login needed).
+16. Archives → login `t.mcleod` / `apple1` → search Saskatchewan + `strange` and Ontario + `mcleod` for the remaining lore, including the Teresa McLeod reveal.
+17. Police Records → login `t.fairchild` / `mapleLaw91` → search `pendant` → open result (→ evidence: GOLD PENDANT).
+18. (No new evidence) Police Records → search `09-24-49-02-07` → open result — the Worthing insurance/endorsement record.
 
-18 evidence-relevant actions, plus the ~40s of real time for the intro
+21 evidence-relevant actions, plus the ~40s of real time for the intro
 faxes. That's the entire game as of this pass, in whichever of the two
 orders above suits the purpose at hand.

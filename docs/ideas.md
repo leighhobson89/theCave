@@ -1,12 +1,13 @@
 # Ideas — the hidden truth of Black Pine
 
-**Status: design document only. No code, no JSON, no story files were
-touched to produce this.** It's a proposal — the canonical story as you've
-described it, written out in full, cross-checked line-by-line against
-everything already shipped so nothing here contradicts it, plus a menu of
-new evidence you could produce to let a player actually *reconstruct* this
-rather than be told it. Nothing is implemented. Treat every "new evidence"
-item below as a suggestion to accept, reject or rewrite, not a spec.
+**Status: mostly still a design document.** It started as a pure
+proposal — the canonical story as you've described it, written out in
+full, cross-checked line-by-line against everything already shipped so
+nothing here contradicts it, plus a menu of new evidence you could
+produce to let a player actually *reconstruct* this rather than be told
+it. **Tier 1 and Tier 2 item 4 of §4 have since actually been built** —
+look for the ✅ marks. Everything else below is still just a suggestion
+to accept, reject or rewrite, not a spec.
 
 The single most important thing this document argues is: **`story_en.md`
 does not need to change at all.** Everything below sits as a hidden layer
@@ -261,6 +262,37 @@ sit to keep the existing clue chain intact.
 
 ### Tier 1 — the pendant gets a name
 
+**✅ Implemented, in a merged form.** Items 1–3 below were the proposal;
+what actually shipped is one Police Records document
+(`fairchildinsurancerecordworthingpendant`, code `09-24-49-02-07`, Level 3)
+that does the job of all three at once — an insurance valuation for the
+pendant itself, naming **Percival Anthony Worthing** as the original
+insured, with a later endorsement recording his death and the policy's
+continuation by his son, **Anthony Worthing**. His death year is **1897**
+(not 1895 as first drafted here — corrected to match the shipped record).
+This also gives the `t.fairchild` credential, previously a dead end per
+`happypath.md`, its purpose. Two things worth flagging about how it
+actually shipped, versus the proposal:
+- There's also now a *separate*, simpler Level 3 record (`goldenpendant`,
+  keywords `pendant` / `gold pendant` / `p a worthing`) that awards the
+  pendant itself as photo evidence, engraved "P. A. WORTHING." Both this
+  and the fuller insurance/endorsement record at `09-24-49-02-07` are now
+  legitimately reachable via clues already in the game (see
+  `happypath.md` §8) — the Fairchild ZoomSearch page carries a standing
+  line ("we're the lucky 7 when it comes to Insurance") that supplies
+  the Route segment directly, closing what was briefly a gap. The decode
+  book's own index tables also dropped their leading zeros since (`9`
+  not `09`), and its Name Index was reshuffled so Fairchild lands on `7`
+  — Hollingworth (`22`) and Worthing (`49`) kept their exact original
+  numbers, so neither shipped code needed to change.
+- The original three-item split proposed a separate death record and a
+  separate "next of kin" record; the shipped version folds both into one
+  endorsement line on the insurance record instead. Simpler, and it still
+  does the job.
+
+<details>
+<summary>Original proposal (superseded by the above)</summary>
+
 1. **A pawnbroker's or insurer's ledger entry for the pendant itself.**
    Describes a gold pendant, engraved "P.A.W.," insured or pawned by one
    **Percival Anthony Worthing**. This is the piece that turns "a gold
@@ -279,13 +311,16 @@ sit to keep the existing clue chain intact.
    father. This is the connective step: pendant → Worthing → Anthony
    Worthing → the 1904 photo the player already has.
 
+</details>
+
 ### Tier 2 — placing Tony at the scene, not just naming him
 
-4. **A close-up photo of the pendant itself**, engraving visible, as
-   physical evidence — currently the pendant exists only as text
-   ("a gold pendant") in the `williammcleodfindpendant` article; a real
-   photo evidence item would make it collectible and inspectable the same
-   way the other physical clues are.
+4. **✅ Implemented.** A close-up photo of the pendant itself, engraving
+   visible, as physical evidence — this shipped as the `goldenpendant`
+   Police record (Level 3, keywords `pendant` / `gold pendant` /
+   `p a worthing`), which awards the **GOLD PENDANT** photo showing the
+   "P. A. WORTHING" engraving. Legitimately reachable via clues already in
+   the game — see `happypath.md` §8.
 5. **A second, more complete account of Andrew's dying words** — a
    family diary page (Diane's, most plausibly) or a doctor's/coroner's
    private note not included in the official NWMP report, adding
@@ -313,12 +348,12 @@ sit to keep the existing clue chain intact.
    obsession wearing a hobby's clothes. Per §1, the notation only makes
    sense for the years *before* 1907 — dated entries could be shown
    trailing off or changing tone around then, which is the moment Tony
-   learns (via Harry's book, item 8 below) that there's nothing left down
-   there to physically recover.
+   learns (via Harry's book, below) that there's nothing left down there
+   to physically recover.
 
 ### Tier 5 — closing it, without fully closing it
 
-9. **Tony's own unsent letter or private confession**, found late — among
+8. **Tony's own unsent letter or private confession**, found late — among
    Honey Dew Club papers after his death, most plausibly — admitting he
    saw the pendant, saw Arnie pick it up, saw the fight that cost Andrew
    his injuries, and never told a soul that Arnie went into the hole
@@ -344,13 +379,13 @@ built, here's the shape a "solved" board could take:
 
 **Pinned items, left to right, roughly in discovery order:**
 missingReport → the four-footprints excerpt (`mysteryoldnw`) →
-`williammcleodfindpendant` → the pendant photo (item 4) → the pawn ledger
-(item 1) → P.A. Worthing's death record (item 2) → the Honey Dew Club
-record naming Anthony Worthing as his son (item 3) → the 1904 club photo,
-with Anthony Worthing circled → Diane's diary page (item 5) → the torn
-clothing/second blade (item 6) → Tony's annotated survey notes (item 7) →
-the vandalised book page's catalog description → the surviving manuscript
-fragment (item 8) → Tony's confession (item 9).
+`williammcleodfindpendant` → the **GOLD PENDANT** photo (now real —
+`goldenpendant`, Police Level 3) → the Fairchild insurance/endorsement
+record (also real — `09-24-49-02-07`, Police Level 3, though see the
+discoverability note under Tier 1) → the 1904 club photo, with Anthony
+Worthing circled → Diane's diary page (item 5) → the torn clothing/second
+blade (item 6) → Tony's annotated survey notes (item 7) → the vandalised
+book page's catalog description → Tony's confession (item 8).
 
 **String connections** the player would draw: pendant ↔ P.A. Worthing
 (engraving); P.A. Worthing ↔ Anthony Worthing (father/son); Anthony
@@ -371,16 +406,24 @@ identity, and Arnie's location. Both stay open, by design (§3).
 
 ## 6. If you decide to lock this in
 
-Not part of this deliverable, but worth listing so it's not lost: once
-you're happy with the shape of this,
+**Update:** Tier 1 (the pendant/Worthing/Fairchild thread) and Tier 2 item
+4 (the pendant photo) are now genuinely implemented — see the checkmarks
+in §4 above, and both `story-timeline.md` and `happypath.md` have been
+updated to match. What's left of this checklist covers Tiers 2 (item 5)
+through 5, which are still just proposals:
 - `story-timeline.md` §2 and §4 would need the Simon/Tony ↔ Cresswell/
-  Worthing link upgraded from "possible unconfirmed" to confirmed, and a
-  new entry for whichever open questions in §3 you've settled.
-- `happypath.md` would eventually need a new discovery chain for Tier 1–5
-  above, once those records exist.
+  Worthing link upgraded from "possible unconfirmed" to confirmed if you
+  decide to make that link explicit — it currently stays exactly as
+  reinforced-but-unconfirmed as before, since nothing shipped actually
+  states the farmhand and the club member are the same person.
+- `happypath.md` would need a new discovery chain for Diane's diary page
+  (item 5) and everything in Tiers 3–5, once those records exist.
 - The actual new photos, report text and web-content JSON records for
-  everything in §4 would need writing and adding — none of that has been
-  touched here.
+  the remaining items in §4 would need writing and adding — none of that
+  has been touched here.
+- **Resolved:** `09-24-49-02-07` now has a discoverable trail — the
+  Fairchild ZoomSearch page hints its Route segment directly. See Tier 1
+  above.
 
-None of that is done in this pass. This file is the story and the
-evidence menu only.
+None of the *remaining* items are done in this pass. This file is still
+the story and evidence menu for what's left.
