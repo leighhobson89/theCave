@@ -15,9 +15,6 @@
     "muteOff": "Off",
     "musicVolume": "Music Volume",
     "sfxVolume": "SFX Volume",
-    "placeholderA": "Placeholder A",
-    "placeholderB": "Placeholder B",
-    "placeholderC": "Placeholder C",
     "help": "Help",
     "resumeGame": "Resume Game",
     "resume": "Resume",
@@ -53,9 +50,6 @@
     "muteOff": "Inactivo",
     "musicVolume": "Volumen de Música",
     "sfxVolume": "Volumen de Efectos",
-    "placeholderA": "Marcador A",
-    "placeholderB": "Marcador B",
-    "placeholderC": "Marcador C",
     "help": "Ayuda",
     "resumeGame": "Reanudar Juego",
     "resume": "Reanudar",
@@ -71,9 +65,9 @@
     "headerStringSave": "Copiar esta cadena a un archivo de texto:",
     "headerStringLoad": "Pega la cadena a continuación y haz clic en Cargar:",
     "textAreaLabel": "Pega la cadena de guardado aquí...",
-    "evidenceTypePhoto": "Photo",
-    "evidenceTypeReport": "Report",
-    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
+    "evidenceTypePhoto": "Foto",
+    "evidenceTypeReport": "Informe",
+    "notificationEvidenceUnlockedSuffix": "¡Evidencia desbloqueada en tu carpeta de Evidencia!"
   },
   "de": {
     "newGame": "Neues Spiel",
@@ -91,9 +85,6 @@
     "muteOff": "Aus",
     "musicVolume": "Musiklautstärke",
     "sfxVolume": "Effektlautstärke",
-    "placeholderA": "Platzhalter A",
-    "placeholderB": "Platzhalter B",
-    "placeholderC": "Platzhalter C",
     "help": "Hilfe",
     "resumeGame": "Spiel fortsetzen",
     "resume": "Fortsetzen",
@@ -109,9 +100,9 @@
     "headerStringSave": "Kopiere diesen String in eine Textdatei:",
     "headerStringLoad": "Fügen Sie den String unten ein und klicken Sie auf Laden:",
     "textAreaLabel": "Speicher-String hier einfügen...",
-    "evidenceTypePhoto": "Photo",
-    "evidenceTypeReport": "Report",
-    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
+    "evidenceTypePhoto": "Foto",
+    "evidenceTypeReport": "Bericht",
+    "notificationEvidenceUnlockedSuffix": "Beweis in deinem Beweisordner freigeschaltet!"
   },
   "it": {
     "newGame": "Nuovo gioco",
@@ -129,9 +120,6 @@
     "muteOff": "Disattivo",
     "musicVolume": "Volume Musica",
     "sfxVolume": "Volume Effetti",
-    "placeholderA": "Segnaposto A",
-    "placeholderB": "Segnaposto B",
-    "placeholderC": "Segnaposto C",
     "help": "Aiuto",
     "resumeGame": "Riprendi gioco",
     "resume": "Riprendi",
@@ -147,9 +135,9 @@
     "headerStringSave": "Copia questa stringa in un file di testo:",
     "headerStringLoad": "Incolla la stringa qui sotto e clicca Carica:",
     "textAreaLabel": "Incolla qui la stringa di salvataggio...",
-    "evidenceTypePhoto": "Photo",
-    "evidenceTypeReport": "Report",
-    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
+    "evidenceTypePhoto": "Foto",
+    "evidenceTypeReport": "Rapporto",
+    "notificationEvidenceUnlockedSuffix": "Prova sbloccata nella tua cartella Prove!"
   },
   "fr": {
     "newGame": "Nouveau jeu",
@@ -167,9 +155,6 @@
     "muteOff": "Inactif",
     "musicVolume": "Volume Musique",
     "sfxVolume": "Volume Effets",
-    "placeholderA": "Espace réservé A",
-    "placeholderB": "Espace réservé B",
-    "placeholderC": "Espace réservé C",
     "help": "Aide",
     "resumeGame": "Reprendre le jeu",
     "resume": "Reprendre",
@@ -186,7 +171,7 @@
     "headerStringLoad": "Collez la chaîne ci-dessous et cliquez sur Charger :",
     "textAreaLabel": "Collez la chaîne de sauvegarde ici...",
     "evidenceTypePhoto": "Photo",
-    "evidenceTypeReport": "Report",
-    "notificationEvidenceUnlockedSuffix": "Evidence unlocked in your Evidence folder!"
+    "evidenceTypeReport": "Rapport",
+    "notificationEvidenceUnlockedSuffix": "Preuve déverrouillée dans votre dossier Preuves !"
   }
 }
