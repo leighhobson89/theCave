@@ -14,7 +14,7 @@ that's still useful on its own terms — this document exists alongside it,
 not instead of it.
 
 **Two access tiers matter to how a player finds things:**
-- **Open browsing** — ZoomSearch has no login at all; four Police records
+- **Open browsing** — ZoomSearch has no login at all; three Police records
   and one Archives record sit at privilege/access level 0, reachable by the
   default guest session with no credentials. A curious player exploring
   these needs only a plausible name to try, not a specific unlock.
@@ -97,14 +97,14 @@ Follow up immediately:
 
 Since the missing-person report's own letterhead is "NORTH-WEST MOUNTED
 POLICE," checking their public records site needs no clue at all — it's
-the obvious next stop, and four records + one search attempt are reachable
-with zero login (default Public/Level 0 session):
+the obvious next stop, and three records + two search attempts are
+reachable with zero login (default Public/Level 0 session):
 
 | Search | Result |
 | --- | --- |
 | `arthur` (or `arthur whitmore`, `whitmore`) | **"One or more matching records were hidden by privilege restrictions."** The record exists — this confirms Arthur is a real lead worth coming back for once better access is found. |
+| `william` (or `william mcleod`) | **"One or more matching records were hidden by privilege restrictions."** Same as Arthur — a real record, worth returning to once better access is found. |
 | `james fletcher` (or `james`) | Constable James Fletcher's bio: retired 1934, lived in Gray Stacks, **Alberta**, with wife **Hannah** and pet Labrador **Oscar**. Two leads for later: a province, and a first name to pair with the surname he shares with his wife. |
-| `william` (or `william mcleod`) | Lieutenant William McLeod's bio. Its photo caption names the exact book it's excerpted from: **"Guardians of the North," published in 1988, by Cat J Roman.** A complete, exact author + title pair. |
 | `emile` / `george mackenzie` | Flavour only — no further leads. |
 
 ---
@@ -121,46 +121,52 @@ first name learned from James Fletcher's bio:
 
 ---
 
-## 6. Library — first two pickups
+## 6. Library — first pickup
 
 Library never needs a login, but its search is exact author + exact title,
 with no partial matching — this is why nothing here was reachable until
-now.
+now. The second Library pickup, "Guardians of the North," needs a title the
+player doesn't have yet — William McLeod's bio names it, and that record now
+requires Level 2, so it waits until §8.
 
 6. **Library → `Hannah Fletcher` / `Mysteries of the Old North West`**
    (from §5). Awards the **mysteriesOfTheOldNorthWest** photo. **Examine it
    closely** — "j.fletcher / oscar123" is handwritten in the corner. The
    password directly echoes the dog's name from James Fletcher's own
    bio (§4) — a nice confirming payoff, not just an arbitrary string.
-7. **Library → `Cat J Roman` / `Guardians Of The North`** (from §4).
-   Awards the **library-guardiansofthenorth** photo. **Examine it
-   closely** — "Ontario apples (t.mcleod / apple1)" is handwritten beside
-   it. This is the Canada Newspaper Archive Subscriber login.
 
 ---
 
 ## 7. Cashing in the Police Level 1 credentials
 
-8. **Police Records → login `j.fletcher` / `oscar123`.** Now Level 1.
+7. **Police Records → login `j.fletcher` / `oscar123`.** Now Level 1.
    Search `thomas orourke` (a name not yet introduced by any clue — this
    is the second place a player has to just try the case's obvious
    subject matter, i.e. searching for whoever ran the search party, rather
    than following an explicit lead). His record's body ends with a live
    link: `http://honeydewcavingclub.com`.
-9. **Click the link.** The Honey Dew Caving Club page awards two photos
+8. **Click the link.** The Honey Dew Caving Club page awards two photos
    automatically (the 1904 team photo and the 1912 cave map). Picking up
    the map specifically fires a fax automatically.
-10. **Open Facsimile, close it.** "Message from Brian Whitmore" gives
-    `b.whitmore` / `ironVeins15` — commits as Reports evidence.
+9. **Open Facsimile, close it.** "Message from Brian Whitmore" gives
+   `b.whitmore` / `ironVeins15` — commits as Reports evidence.
 
 ---
 
 ## 8. Closing the Whitmore loop, then the Fairchild and Archive threads
 
-11. **Police Records → login `b.whitmore` / `ironVeins15`.** Now Level 2 —
-    return to the `arthur` search from §4, which was gated before. Search
-    `arthur whitmore`, then **open the record** (not just find it — opening
-    it is what matters). This fires a second fax.
+10. **Police Records → login `b.whitmore` / `ironVeins15`.** Now Level 2 —
+    return to both the `arthur` and `william` searches from §4, gated
+    before. Search `arthur whitmore`, then **open the record** (not just
+    find it — opening it is what matters); this fires a second fax. Also
+    open the now-reachable `william` (or `william mcleod`) record:
+    Lieutenant William McLeod's bio, whose photo caption names the exact
+    book it's excerpted from — **"Guardians of the North," published in
+    1988, by Cat J Roman.**
+11. **Library → `Cat J Roman` / `Guardians Of The North`** (from step 10).
+    Awards the **library-guardiansofthenorth** photo. **Examine it
+    closely** — "Ontario apples (t.mcleod / apple1)" is handwritten beside
+    it. This is the Canada Newspaper Archive Subscriber login.
 12. **Open Facsimile, close it.** A second "Message from Brian Whitmore"
     gives `t.fairchild` / `mapleLaw91` (Level 3) — commits as Reports
     evidence. This used to be a dead end; it isn't any more (see below).
@@ -171,11 +177,11 @@ now.
     **Insurance Record Template** report — its own flavour text prints a
     demo code, `05-33-22-02-03`, and its last line links to their online
     decode book. Its final line is also a standing hint for the Route
-    segment of *any* Fairchild insurance code: "we're the lucky 7 when it
+    segment of *any* Fairchild insurance code: "we're the lucky 07 when it
     comes to Insurance" — Route `07` plus Document `02` (Insurance Policy,
-    the only sensible reading given the context; the record codes
-    themselves stay zero-padded even though the decode book and this
-    line now write bare numbers), remembered for step 18.
+    the only sensible reading given the context; the hint line itself
+    writes the bare number "7," but the decode book and the record codes
+    both use the padded two-digit form, `07`), remembered for step 18.
 14. **Click that link.** Awards the **Insurance Decode Book** report — a
     full key explaining Fairchild's five-number codes (Colour, Object,
     Name, Document, Route, always in that order).
@@ -183,8 +189,8 @@ now.
     `05-33-22-02-03`.** This particular demo record only requires Level 0,
     so no login is even needed — it's just a working demonstration that
     the code system in the decode book matches something real.
-16. **Archives → login `t.mcleod` / `apple1`** (from §6). Two searches now
-    open up:
+16. **Archives → login `t.mcleod` / `apple1`** (from step 11). Two searches
+    now open up:
     - **Saskatchewan + `harry`** (or `henry` / `strange things` / `strange`,
       all established by now). Finds "Local Author publishes book with
       interesting topic!" — gives the exact title **"Strange Things Found

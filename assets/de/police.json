@@ -123,7 +123,7 @@
         "Lieutenant William McLeod served with distinction in the North West Mounted Police, spending much of his career on the frontier during a period of immense change across the North West Territories. Known for his quiet authority, discipline and dedication to his men, McLeod rose to the rank of Lieutenant before eventually retiring from the Force.",
         "After leaving active service, McLeod and his wife settled into a quieter life in rural Ontario. Far removed from the wide-open frontier, he devoted his later years to his home, family and local community. The couple remained together until McLeod's death in 1957, bringing to a close the life of a man whose early years had been spent serving in one of Canada's most demanding and isolated regions."
       ],
-      "requiredPrivilegeLevel": 0,
+      "requiredPrivilegeLevel": 2,
       "images": [
         {
           "src": "./assets/photos/williamMcLeod.png",
@@ -280,7 +280,7 @@
       ],
       "summary": "Located in shallow water at bottom of Shaft 'B'",
       "report": [
-        "Case: Askew Spencer Disappearance — 1901\nEvidence No.: 15081901-00\nLocated By: Lieutenant William McLeod\nDate Recovered: 15/08/1901\nLocation: Black Pine Former Silver Mine Shaft 'B', bottom flooded section",
+        "Case: Askew Spencer Disappearance — 1901\nEvidence No.: 15111901-00\nLocated By: Lieutenant William McLeod\nDate Recovered: 15/11/1901\nLocation: Black Pine Former Silver Mine Shaft 'B', bottom flooded section",
         "Description:",
         "A small gold pendant recovered during the third sweep of the search area following the disappearance of Andrew and Askew Spencer.",
         "The pendant was located on a rock ledge several centimetres beneath the surface of the water within the lower section of the shaft. It was recovered by Lieutenant William McLeod during a manual search of the area.",

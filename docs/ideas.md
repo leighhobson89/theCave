@@ -279,7 +279,7 @@ actually shipped, versus the proposal:
   and the fuller insurance/endorsement record at `09-24-49-02-07` are now
   legitimately reachable via clues already in the game (see
   `happypath.md` §8) — the Fairchild ZoomSearch page carries a standing
-  line ("we're the lucky 7 when it comes to Insurance") that supplies
+  line ("we're the lucky 07 when it comes to Insurance") that supplies
   the Route segment directly, closing what was briefly a gap. The decode
   book's own index tables also dropped their leading zeros since (`9`
   not `09`), and its Name Index was reshuffled so Fairchild lands on `7`

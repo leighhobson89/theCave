@@ -51,10 +51,11 @@ career"), that's noted rather than invented.
 | Jul 1901 (day 1) | The boys, exploring the forest, are chased off the known path by a large animal and stumble on a hidden, overgrown cave entrance. They agree to keep it secret and return the next day. On the way home they describe the cave and the "bottomless" hole at its back to a stranger on the path, who warns them to be careful and says he hasn't heard the old mine mentioned "in years." | `story_en.md` |
 | 27 Jul 1901 (afternoon) | Both boys enter the abandoned B Shaft. Andrew returns to Spencer Farm alone, severely injured (deep scratches, a long leg cut, left hand nearly severed), and collapses recounting the story before losing consciousness partway through. Arnie is never found. | `story_en.md`; `reports_evidences_{en,de,es,fr,it}.json` (missingReport) |
 | 28 Jul 1901 | Andrew dies of his injuries at the farm; cause (blood loss/shock) confirmed by the local Coroner. No explanation is ever established for the exact circumstances of his injuries. | same |
-| Aug 1901 | NWMP search party works the cave and the old mine. Sgt. Arthur Whitmore leads part of the search into the forest and is among the first to examine the cave; known for meticulous notes and local mining history knowledge. He is believed to have personally taken the search-party photo, which is why he isn't in it — letting police photographer John Baxley (normally behind the camera) appear instead. Cpl. Thomas O'Rourke, an avid caver/cave diver, and Lt. William McLeod are also part of the search. **McLeod recovers a gold pendant** — engraved "P. A. WORTHING," on a broken chain — from a rock ledge beneath the water in the lower, flooded section of Shaft 'B' during a third sweep. A detail that never made it into the official case file (see "Current mystery threads" below); ownership is not established at the time. | `police.json` (arthurwhitmore, thomasorourke, williammcleod, goldenpendant); `zoomsearch.json` (johnbaxley); `archives.json` (williammcleodfindpendant) |
+| Aug 1901 | NWMP search party works the cave and the old mine. Sgt. Arthur Whitmore leads part of the search into the forest and is among the first to examine the cave; known for meticulous notes and local mining history knowledge. He is believed to have personally taken the search-party photo, which is why he isn't in it — letting police photographer John Baxley (normally behind the camera) appear instead. Cpl. Thomas O'Rourke, an avid caver/cave diver, and Lt. William McLeod are also part of the search. | `police.json` (arthurwhitmore, thomasorourke, williammcleod); `zoomsearch.json` (johnbaxley) |
 | Aug 1901 | "Cave Entrance" photographed by police photographer John Baxley. | `photos_evidences_en.json` (caveEntrance) |
 | Summer 1901 | The only known photo of Andrew and Arnie Spencer together, taken at the Spencer family farm. | `photos_evidences_en.json` (askewAndrew) |
-| 27 Oct 1901 | NWMP "three months" progress report filed on the missing-person case (case no. 01-2710-00): still open, Arnie presumed dead. Evidence recovered: a white cotton handkerchief, a wooden varnished lunchbox, 40 ft of hemp rope, an unlit straw torch soaked in fuel oil. **No mention of McLeod's pendant.** | `reports_evidences_{en,de,es,fr,it}.json` (missingReport) |
+| 27 Oct 1901 | NWMP "three months" progress report filed on the missing-person case (case no. 01-2710-00): still open, Arnie presumed dead. Evidence recovered: a white cotton handkerchief, a wooden varnished lunchbox, 40 ft of hemp rope, an unlit straw torch soaked in fuel oil. | `reports_evidences_{en,de,es,fr,it}.json` (missingReport) |
+| 15 Nov 1901 | On a later return sweep of the flooded lower section of Shaft 'B' — the search area's third sweep overall — **Lt. William McLeod recovers a gold pendant**, engraved "P. A. WORTHING," on a broken chain, from a rock ledge beneath the water. This is after the October progress report was already filed, which is why that report has no mention of it; ownership is not established at the time. | `police.json` (williammcleod, goldenpendant); `archives.json` (williammcleodfindpendant) |
 | 1901 onward | The search for Arnie continues for years in a steadily more informal, "casual weekend divers" fashion, with no leads found in the mine; the case eventually goes cold. | `police.json` (thomasorourke) |
 | 1902 | Thomas O'Rourke founds the Honey Dew Caving Club in Saskatchewan. Not normally permitted into the high-profile, still-active Black Pine system, the club sneaks in occasionally over the following decade. | `standalone-pages.json` (honeydewcavingclub); `police.json` (thomasorourke) |
 | 1903 | Henry "Harry" Whitmore, Arthur's eldest son, photographed on vacation at Niagara Falls. | `zoomsearch.json` (henrywhitmore), photo `harryWhitmore.png` |
@@ -127,8 +128,8 @@ Percival Anthony Worthing (d. 1897) — insured a gold cross pendant with
  │   J & T Fairchild in 1893 (Policy No. T/1893/1122), engraved
  │   "P. A. WORTHING" on the reverse. That same pendant is recovered by
  │   Lt. William McLeod from the flooded lower section of Shaft 'B' during
- │   the August 1901 search — ownership never established by the official
- │   investigation.
+ │   a November 1901 return sweep — ownership never established by the
+ │   official investigation.
  └─ Anthony Worthing — Percival's son. The Fairchild policy is continued in
      his name per an endorsement on the same record, dated 1897. Also the
      name entered for a member of the 1904 Honey Dew Caving Club team
@@ -180,7 +181,7 @@ Things that read as deliberate, unresolved hooks rather than mistakes —
 worth knowing about so future content doesn't accidentally "solve" or
 contradict them before they're meant to be addressed.
 
-- **The gold pendant.** William McLeod recovered a gold pendant during the August 1901 search (per his 1957 obituary), but the official three-month case report filed that October lists only a handkerchief, a lunchbox, rope and a torch — no pendant. Its ownership is described as "classified... due to the investigation officially still remaining open" — an in-universe gap that stays a gap even though the *player* can now identify the pendant as **Percival Anthony Worthing's**, later **Anthony Worthing's**, via the two Level 3 police records (see "The Worthing family" above). Nobody inside the fiction ever makes that connection.
+- **The gold pendant.** William McLeod recovered a gold pendant on 15 November 1901 (per his 1957 obituary), during a return sweep that came *after* the official three-month case report — filed that October, listing only a handkerchief, a lunchbox, rope and a torch — had already gone in. That timing is why the report has no mention of it; the pendant's ownership is separately described as "classified... due to the investigation officially still remaining open," an in-universe gap that stays a gap even though the *player* can now identify the pendant as **Percival Anthony Worthing's**, later **Anthony Worthing's**, via the two Level 3 police records (see "The Worthing family" above). Nobody inside the fiction ever makes that connection.
 - **The vandalised page.** The library's copy of Harry Whitmore's 1907 book has had a page torn out. The catalog description of that missing page explicitly ties it to McLeod's pendant, making the book a plausible link between the pendant and the case that never recorded it. Nobody in the shipped content is on record as knowing who vandalised it.
 - **Simon and Tony the farmhands vs. Simon Cresswell and Anthony "Tony" Worthing.** Both 1901 farmhands share a first name with a member of the 1904 caving-club photo — see the character index above. If real, it would put both farmhands in the caving club three years after the tragedy, with Tony's own club membership doubling as a decade of unofficial searching for the very pendant now sitting, unrecognised, in police evidence.
 - **The stranger on the path.** Warns the boys about the hole, admits he hasn't heard the mine mentioned "in years," and is never seen again.
@@ -199,15 +200,19 @@ editing content that may be intentional or already slated for a rewrite.
   record of the fix.
 - `09-24-49-02-07` previously had no discoverable code — the Fairchild
   ZoomSearch page now closes that gap with a standing line ("we're the
-  lucky 7 when it comes to Insurance"), giving Route (`07`) directly and
+  lucky 07 when it comes to Insurance"), giving Route (`07`) directly and
   Document (`02`, Insurance Policy) by context. Combined with Gold/
   Pendant/Worthing from `goldenpendant`, all five segments are now
   legitimately derivable — see `happypath.md` §8 step 18. (The decode
-  book's own tables also dropped their leading zeros and reshuffled the
-  Name Index so Fairchild reads `7`, but Hollingworth `22` and Worthing
-  `49` — the two values baked into shipped codes — kept their exact
-  original numbers, so nothing else needed to change.) No longer
-  outstanding, kept here as a record of the fix.
+  book's own tables had at one point dropped their leading zeros and
+  reshuffled the Name Index so Fairchild read `7`, but Hollingworth `22`
+  and Worthing `49` — the two values baked into shipped codes — kept
+  their exact original numbers, so nothing else needed to change at the
+  time. Leading zeros were later restored across all five index
+  categories — `7 — Fairchilds` is `07 — Fairchilds` again — so the
+  decode book's own formatting now matches the two-digit codes it
+  decodes; the numeric values themselves, including Fairchild's, never
+  changed.) No longer outstanding, kept here as a record of the fix.
 
 ---
 
