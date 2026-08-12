@@ -2,7 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const rootDir = path.resolve(__dirname, "..");
+// tests/support/ -> repo root, which is what the app is served from.
+const rootDir = path.resolve(__dirname, "..", "..");
 const port = 4173;
 
 const mimeTypes = {

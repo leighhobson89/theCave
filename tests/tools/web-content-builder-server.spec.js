@@ -8,8 +8,8 @@
 //      still land in all five languages the way they did before.
 //
 // The server is a plain Node HTTP server (tools/web_content_builder_server.js),
-// not part of the app served by tests/static-server.cjs, so this spec spawns
-// it directly and talks to its API. Every record/evidence id created here is
+// not part of the app served by tests/support/static-server.cjs, so this spec
+// spawns it directly and talks to its API. Every record/evidence id created is
 // prefixed with a per-run token and removed from disk in afterAll, so the
 // suite leaves the real content files untouched even when a test fails
 // partway through.
@@ -19,7 +19,8 @@ const fs = require("fs/promises");
 const fsSync = require("fs");
 const path = require("path");
 
-const PROJECT_ROOT = path.resolve(__dirname, "..");
+// tests/tools/ -> repo root.
+const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
 const ASSETS_DIR = path.join(PROJECT_ROOT, "assets");
 const SERVER_SCRIPT = path.join(PROJECT_ROOT, "tools", "web_content_builder_server.js");
 const API_URL = "http://127.0.0.1:5058/api/web-content/upsert";

@@ -13,7 +13,7 @@
       "Bash(grep -n \"reportsEvidences\\\\|photos_evidences\\\\|pathTemplate\\\\|assets/{lang}\\\\|assets/\\\\${\" evidenceManager.js)",
       "Bash(node --check tools/web_content_builder_server.js)",
       "Bash(echo \"exit=$?\")",
-      "Bash(node --check tests/web-content-builder-server.spec.js)",
+      "Bash(node --check tests/tools/web-content-builder-server.spec.js)",
       "Bash(xargs sha256sum)",
       "Read(//tmp/**)",
       "Bash(node --check evidenceManager.js)"

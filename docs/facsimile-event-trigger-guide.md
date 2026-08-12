@@ -229,15 +229,20 @@ save that was just loaded.
 
 ## Automated coverage
 
-`tests/report-magnifier.spec.js`:
+`tests/e2e/desktop-facsimile-inbox.spec.js` and
+`tests/e2e/desktop-facsimile-milestone-triggers.spec.js`:
 
 - *facsimile desktop object receives report and awards evidence once* — empty state, pending state, rendering, one-time transfer, cleared queue.
 - *facsimile queues and transfers five unique reports* — FIFO batch behaviour.
 - *facsimile next cached message button advances queue and transfers evidence* — the in-window advance path.
 - *minemap photo evidence milestone triggers Whitmore credentials fax* — the evidence-trigger route end to end.
+- *opening Arthur Whitmore's police record triggers a Level 3 credentials fax* — the record-open trigger route, following the delivered credentials through to a working login.
+
+`tests/e2e/evidence-magnifier.spec.js`:
+
 - *report magnifier renders scrolled bottom content and captures evidence* — queues and reads the `missingReport` catalog entry directly (bypassing the real 40 s new-game delay) so the report is in evidence for the magnifier assertions.
 
-`tests/regression-smoke.spec.js` additionally round-trips a queued-then-read fax
+`tests/e2e/persistence-save-load-round-trip.spec.js` additionally round-trips a queued-then-read fax
 through save and load.
 
 To record video of fax behaviour:

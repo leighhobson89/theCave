@@ -41,7 +41,7 @@
             "approve": true,
             "matchCommandLine": true
         },
-        "/^node tests/static-server\\.cjs$/": {
+        "/^node tests/support/static-server\\.cjs$/": {
             "approve": true,
             "matchCommandLine": true
         },

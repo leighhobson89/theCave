@@ -803,25 +803,49 @@ The Playwright suite drives this window to assert on evidence state.
 
 ## 17. Tests
 
-Playwright, against a local static server (`tests/static-server.cjs`, port 4173).
+Playwright, against a local static server (`tests/support/static-server.cjs`,
+port 4173). The suite is split by functional area; see
+[`tests/README.md`](../tests/README.md) for the per-spec table and
+[`test-reports/README.md`](../test-reports/README.md) for run history.
 
 ```bash
-npm run test:e2e            # everything
-npx playwright test tests/report-magnifier.spec.js
+npm run test:e2e            # everything, recorded into test-reports/runs/<stamp>/
+npm run test:e2e:app        # tests/e2e only (the game)
+npm run test:e2e:tools      # tests/tools only (the content builder API)
+npm run test:e2e:headed     # watch it in a real browser (forces one worker)
+npm run test:e2e:slow       # ...with a 350ms pause between actions
+npm run test:e2e:ui         # interactive UI mode
+node scripts/run-tests.cjs tests/e2e/browser-quick-login.spec.js
 ```
 
-| Spec | Covers |
-| --- | --- |
-| `tests/report-magnifier.spec.js` | Report and photo magnifier geometry, standalone-page evidence awards, the full facsimile lifecycle (single, batch of five, next-message button), and the mine-map milestone fax |
-| `tests/regression-smoke.spec.js` | Notes and Paint paged documents (tabs, titles, per-page bodies, flood fill), all four web services including privilege gating, case-sensitive credentials, session persistence across a computer close, the Log Out button, address-history de-duplication and persistence, address-history replay, language switching, story-window retitling, and a save/load round trip |
-| `tests/quick-login-sticky-save.spec.js` | Quick login on both gated sites (availability, level display, no escalation past the manually earned level, high-water-mark behaviour, guest logins excluded) and its save/load round trip; sticky save (namespaced key, 60s autosave via `page.clock`, no duplicate timers, malformed-save recovery, unrelated keys untouched); Resume-after-refresh; the New Game confirmation (warn, cancel-preserves, confirm-overwrites); and the archives subscriber-login alignment at two viewport widths |
+```
+tests/
+  e2e/        18 specs covering the game by functional area
+  tools/      the content builder HTTP API
+  support/    shared helpers (game-helpers.js) and the static server
+  artifacts/  committed visual evidence produced by tests
+```
 
-| `tests/notifications-autosave-indicator.spec.js` | Notification click shortcuts for all three targets (computer always closed first, normal opened-flow preserved, already-open windows raised not toggled, keyboard access, no overlap with window close buttons) and the autosave indicator (driven by the real 60s autosave via `page.clock`, 0.75s fades, 40/40 placement, top z-index, single instance under rapid saves, visible from any state) |
+Results are written to `test-reports/runs/<timestamp>/` (JSON, a markdown
+summary, the full HTML report and an `artifacts/` folder), with a rolling
+history of the last 10 runs indexed in `test-reports/history.md`.
+
+Every test captures a screenshot, video and trace **on failure only**; these go
+into that run's own `artifacts/` folder, so history retains each run's failure
+evidence instead of the newest run wiping the previous one's. The run summary
+links them and embeds the screenshot inline.
 
 Note for anyone adding specs: clicking `#newGame` a second time in the same
-browser context now opens the overwrite confirmation, because the first game
-wrote a sticky save. Both suites use a `clickNewGame()` helper that accepts the
-dialog when it appears.
+browser context opens the overwrite confirmation, because the first game wrote
+a sticky save. Use `startNewGame()`/`clickNewGame()` from
+`tests/support/game-helpers.js`, which accept the dialog when it appears.
+
+Locators are written against the English values in `localization.json`.
+Rewording an English string breaks them, so treat those values as a contract.
+
+Worker count is pinned to 4 in `playwright.config.js`: Playwright's default of
+8 on this machine crashes browser targets and produces failures unrelated to
+the assertions. Override with `CAVE_WORKERS`.
 
 `playwright.facsimile-video.config.js` is the same config with `video: "on"`,
 for capturing fax behaviour.

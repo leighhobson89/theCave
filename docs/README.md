@@ -1,12 +1,12 @@
 # The Cave — Documentation
 
 A static, build-free ES-module browser game. Open `index.html` through any
-static server (or `node tests/static-server.cjs`, which serves the repo root on
+static server (or `node tests/support/static-server.cjs`, which serves the repo root on
 port 4173).
 
 ```bash
 npm install
-node tests/static-server.cjs     # http://127.0.0.1:4173
+node tests/support/static-server.cjs     # http://127.0.0.1:4173
 npm run test:e2e                 # Playwright suite
 ```
 

@@ -1,3 +1,9 @@
 node_modules/
 test-results/
 playwright-report/
+
+# Test run history is local build output: large (traces, videos, HTML reports)
+# and regenerated on every run. The folder structure and README are tracked so
+# the location is documented; the runs themselves are not.
+test-reports/runs/
+test-reports/history.md
