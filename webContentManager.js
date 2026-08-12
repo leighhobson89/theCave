@@ -20,12 +20,28 @@ export function textEquals(source, query) {
   return normalizeText(source) === normalizeText(query);
 }
 
-export function createWebContentManager({ awardEvidence, quickLogin } = {}) {
+// The dataPath a website definition supplies may carry a `{lang}` token (the
+// same convention used by the evidence/report catalogs and story text), so a
+// single definition can serve every language's copy of a site's records.
+// Definitions without the token resolve to the same path regardless of
+// language, which keeps this backwards compatible with a fixed dataPath.
+function resolveWebsiteDataPath(dataPath, language) {
+  return String(dataPath || "").replaceAll("{lang}", language);
+}
+
+export function createWebContentManager({ awardEvidence, quickLogin, getLanguage } = {}) {
   const websiteRegistry = new Map();
   const websiteDataCache = new Map();
   const websiteSessions = new Map();
   const awardedEvidenceKeys = new Set();
   const awardEvidenceCallback = typeof awardEvidence === "function" ? awardEvidence : null;
+
+  // Website content is fetched per-language, so the current language must be
+  // read fresh on every load rather than captured once at construction time -
+  // otherwise a language switch mid-game would keep serving stale content.
+  const resolveCurrentLanguage = () => String(
+    (typeof getLanguage === "function" ? getLanguage() : "") || "en"
+  ).trim() || "en";
 
   // Quick-login credentials live in the game save (constantsAndGlobalVars), not
   // here, so the owner injects read/write access the same way it injects
@@ -42,17 +58,20 @@ export function createWebContentManager({ awardEvidence, quickLogin } = {}) {
       throw new Error(`Unknown website: ${websiteId}`);
     }
 
-    if (websiteDataCache.has(websiteId)) {
-      return cloneJson(websiteDataCache.get(websiteId));
+    const language = resolveCurrentLanguage();
+    const cacheKey = `${websiteId}|${language}`;
+    if (websiteDataCache.has(cacheKey)) {
+      return cloneJson(websiteDataCache.get(cacheKey));
     }
 
-    const response = await fetch(definition.dataPath);
+    const resolvedPath = resolveWebsiteDataPath(definition.dataPath, language);
+    const response = await fetch(resolvedPath);
     if (!response.ok) {
-      throw new Error(`Failed to load website data for ${websiteId}: ${response.status}`);
+      throw new Error(`Failed to load website data for ${websiteId} (${language}): ${response.status}`);
     }
 
     const data = await response.json();
-    websiteDataCache.set(websiteId, data);
+    websiteDataCache.set(cacheKey, data);
     return cloneJson(data);
   }
 

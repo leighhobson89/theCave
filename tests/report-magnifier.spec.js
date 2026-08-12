@@ -200,7 +200,7 @@ test("report magnifier renders scrolled bottom content and captures evidence", a
     source: {
       kind: "report-localized-catalog-entry",
       languageAware: true,
-      catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+      catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
       entryId: "missingReport",
     },
     storageKey: "reports",

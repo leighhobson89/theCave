@@ -73,7 +73,7 @@ const EVIDENCE_TYPE_PRESETS = {
     ],
     source: {
       kind: "report-localized-catalog-entry",
-      catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+      catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
     },
   },
   photo: {
@@ -88,7 +88,7 @@ const EVIDENCE_TYPE_PRESETS = {
     ],
     source: {
       kind: "photo-localized-catalog-entry",
-      catalogPathTemplate: "./assets/photos_evidences_{lang}.json",
+      catalogPathTemplate: "./assets/{lang}/photos_evidences.json",
     },
   },
 };
@@ -588,8 +588,16 @@ async function injectPayload() {
     ? ` Evidence catalogs: ${catalogUpdates.map((update) => `${update.language}:${update.action}`).join(", ")}.`
     : "";
 
+  const siteContentUpdates = Array.isArray(result.siteContentUpdates)
+    ? result.siteContentUpdates
+    : [];
+  const otherLanguageCopies = siteContentUpdates.filter((update) => update.language !== "en");
+  const siteContentSummary = otherLanguageCopies.length
+    ? ` Copied to ${otherLanguageCopies.map((update) => update.language).join(", ")}.`
+    : "";
+
   setStatus(
-    `Injected ${result.action} entry '${result.id}' into ${result.targetFile} (${result.bucket}).${catalogSummary}`
+    `Injected ${result.action} entry '${result.id}' into ${result.targetFile} (${result.bucket}).${siteContentSummary}${catalogSummary}`
   );
 }
 

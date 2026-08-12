@@ -79,7 +79,7 @@
           "source": {
             "kind": "photo-localized-catalog-entry",
             "languageAware": true,
-            "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+            "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
             "entryId": "standalone-honeydewcavingclub-team",
             "photoPath": "./assets/photos/honeydewcavingclub.png"
           }
@@ -95,7 +95,7 @@
           "source": {
             "kind": "photo-localized-catalog-entry",
             "languageAware": true,
-            "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+            "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
             "entryId": "standalone-honeydewcavingclub",
             "photoPath": "./assets/photos/minemap.png"
           }
@@ -286,7 +286,7 @@
         "source": {
           "kind": "report-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/reports_evidences.json",
           "entryId": "Insurance Decode Book"
         }
       }

@@ -52,7 +52,7 @@ Only the detail layout differs per service.
 - A keyword entry may itself be multi-word (`"black pine mine"`); the whole entry must be typed.
 - Empty-result message: *"Search brings up a lot of unrelated bumph. You move on."*
 
-Current data (`assets/web-content/zoomsearch.json`):
+Current data (`assets/en/zoomsearch.json`):
 
 | Record | Keywords |
 | --- | --- |
@@ -75,7 +75,7 @@ Current data: `Hannah Fletcher` + `Mysteries of the Old North West`.
 - Records declare `requiredPrivilegeLevel`. A match the session cannot see returns no rows and the message *"One or more matching records were hidden by privilege restrictions."* — so the player learns the record exists but is gated.
 - Signed in as the default `public` account (level 0) the first time the page is built. After that the existing session is kept — see [Logins and sessions](#logins-and-sessions).
 
-Accounts (`assets/web-content/police.json`):
+Accounts (`assets/en/police.json`):
 
 | Username | Password | Level | Label |
 | --- | --- | ---: | --- |
@@ -100,7 +100,7 @@ Records and their required level:
 - Province options: Saskatchewan, Ontario, Quebec, Alberta. The selection is remembered across page re-renders for the session (`lastSelectedArchiveProvince`).
 - Records declare `requiredAccessLevel`; gated matches report *"Subscriber-only articles were hidden by access level."*
 
-Accounts (`assets/web-content/archives.json`):
+Accounts (`assets/en/archives.json`):
 
 | Username | Password | Level | Label |
 | --- | --- | ---: | --- |
@@ -214,7 +214,7 @@ Formal contracts live in `assets/web-content/schemas/`:
 Self-contained pages that no search returns; they open only by typing their URL
 (or by following an inline `*-*…*-*` link from another page).
 
-They all live in **one** file, `assets/web-content/standalone-pages.json`, under
+They all live in **one** file, `assets/en/standalone-pages.json`, under
 a `records` array:
 
 ```json
@@ -292,7 +292,7 @@ A record unlocks evidence with:
               "defaultTitleString": "Mine Map", "paperStyle": "photo-mounted",
               "source": { "kind": "photo-localized-catalog-entry",
                           "languageAware": true,
-                          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+                          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
                           "entryId": "standalone-honeydewcavingclub",
                           "photoPath": "./assets/photos/minemap.png" } }
 ```

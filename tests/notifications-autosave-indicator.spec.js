@@ -31,7 +31,7 @@ async function queueFacsimileReport(page) {
     source: {
       kind: "report-localized-catalog-entry",
       languageAware: true,
-      catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+      catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
       entryId: "missingReport",
     },
     storageKey: "reports",

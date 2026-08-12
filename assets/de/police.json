@@ -308,7 +308,7 @@
         "source": {
           "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "GOLD PENDANT"
         }
       }

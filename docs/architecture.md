@@ -228,13 +228,13 @@ event re-runs the same frame.
 ## 5. The Story folder
 
 The `#backgroundFolder` stack opens a single non-resizable window rendering
-`assets/story_{lang}.md` as plain text on lined paper. Text is fetched once per
+`assets/{lang}/story.md` as plain text on lined paper. Text is fetched once per
 resolved path and cached in `storyTextCacheByLanguage`. A language change
 re-renders the open window through `refreshOpenWindowLocalization()`.
 
 The story evidence item is created from `DEFAULT_EVIDENCE_BLUEPRINTS`, and its
 content path comes from `resolveEvidenceContentPath()`. If the story evidence is
-missing, `getStoryText()` falls back to `assets/story_{lang}.md` directly.
+missing, `getStoryText()` falls back to `assets/{lang}/story.md` directly.
 
 ---
 
@@ -559,8 +559,8 @@ tools/web_content_builder_server.js  local write API on http://localhost:5058
 Run `node tools/web_content_builder_server.js`, open the HTML page, fill the
 form, preview, then Inject. The server:
 
-1. Upserts the record (by slugified `id`) into the right `assets/web-content/*.json` bucket.
-2. If the record awards evidence, upserts a matching entry into **all five** localized evidence catalogs (`assets/photos_evidences_{lang}.json` or `assets/reportsEvidences_{lang}.json`), seeding every language with the entered text as placeholder content.
+1. Upserts the record (by slugified `id`) into the right `assets/en/*.json` bucket (the tool only edits the English site copy; other languages are separate files kept in sync manually).
+2. If the record awards evidence, upserts a matching entry into **all five** localized evidence catalogs (`assets/{lang}/photos_evidences.json` or `assets/{lang}/reports_evidences.json`), seeding every language with the entered text as placeholder content.
 3. Strips catalog-owned fields from the copy stored in the web-content JSON.
 
 This tool is now the only content generator in the repository. The former
@@ -657,11 +657,11 @@ then refreshes the mute label, transport controls, open windows and the calendar
 
 Content is localized separately, by file:
 
-- Story — `assets/story_{lang}.md`
-- Reports — `assets/reportsEvidences_{lang}.json`
-- Photos — `assets/photos_evidences_{lang}.json`
+- Story — `assets/{lang}/story.md`
+- Reports — `assets/{lang}/reports_evidences.json`
+- Photos — `assets/{lang}/photos_evidences.json`
 
-Web content (`assets/web-content/*.json`) is **not** localized.
+Web content (`assets/<lang>/*.json`) is **not** localized.
 
 ---
 

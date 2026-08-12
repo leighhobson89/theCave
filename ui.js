@@ -63,6 +63,8 @@ import {
   getEvidenceStoreSnapshot,
   getEvidenceStorageKeys,
   initializeEvidenceStoreForNewGame,
+  PHOTOS_CATALOG_PATH_TEMPLATE,
+  REPORTS_CATALOG_PATH_TEMPLATE,
   resolveEvidenceContentPath,
   setEvidenceIndex,
   stepEvidenceIndex,
@@ -137,6 +139,10 @@ const webContentManager = createWebContentManager({
     get: (websiteId) => getQuickLoginEntry(websiteId),
     record: (websiteId, entry) => recordQuickLogin(websiteId, entry),
   },
+  // Read fresh on every fetch (not captured once), so a language switch
+  // mid-game is picked up on the site's next load rather than reusing content
+  // fetched for a previous language.
+  getLanguage: () => getLanguage(),
 });
 
 registerDefaultWebContentSites(webContentManager);
@@ -196,12 +202,23 @@ function ensureAutosaveIndicatorElement() {
         <path class="autosave-indicator-disk-lines" d="M8.5 15.5h7M8.5 18h4.5"/>
       </svg>
     </span>
-    <span class="autosave-indicator-text">Saving…</span>
+    <span class="autosave-indicator-text"></span>
   `;
 
   document.body.appendChild(indicator);
   autosaveIndicatorElement = indicator;
+  refreshAutosaveIndicatorLanguage();
   return indicator;
+}
+
+// The indicator element is created once and reused for the rest of the
+// session (see comment above), so a language change needs its own refresh
+// hook rather than relying on the element being rebuilt.
+function refreshAutosaveIndicatorLanguage() {
+  const textElement = autosaveIndicatorElement?.querySelector(".autosave-indicator-text");
+  if (textElement) {
+    textElement.textContent = localize("savingInProgress", getLanguage());
+  }
 }
 
 // Safe to call at any time and at any frequency: a save arriving while the
@@ -693,7 +710,7 @@ const WHITMORE_MINEMAP_MILESTONE_FAX_CONFIG = {
   source: {
     kind: "report-localized-catalog-entry",
     languageAware: true,
-    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
     entryId: "fax-whitmore-police-credentials",
   },
   storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
@@ -712,7 +729,7 @@ const NEW_GAME_WELCOME_FAX_CONFIG = {
   source: {
     kind: "report-localized-catalog-entry",
     languageAware: true,
-    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
     entryId: "fax-welcome-arnie-tragedy",
   },
   storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
@@ -730,7 +747,7 @@ const MISSING_REPORT_FAX_CONFIG = {
   source: {
     kind: "report-localized-catalog-entry",
     languageAware: true,
-    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
     entryId: "missingReport",
   },
   storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
@@ -814,7 +831,7 @@ const WHITMORE_LEVEL3_MILESTONE_FAX_CONFIG = {
   source: {
     kind: "report-localized-catalog-entry",
     languageAware: true,
-    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
     entryId: "fax-whitmore-level3-credentials",
   },
   storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
@@ -964,7 +981,7 @@ function commitReadFacsimileReportToEvidence(report) {
   if (awardsEvidence) {
     showNotifcation(
       "reward",
-      `New ${resolveLocalizedText("evidenceTypeReport", "Report")} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
+      `${resolveLocalizedText("notificationEvidenceUnlockedPrefix", "New")} ${resolveLocalizedText("evidenceTypeReport", "Report")} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
       4000,
       "evidenceGain",
       "reports"
@@ -1088,7 +1105,7 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
         : resolveLocalizedText("evidenceTypeReport", "Report");
       showNotifcation(
         "reward",
-        `New ${evidenceTypeLabel} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
+        `${resolveLocalizedText("notificationEvidenceUnlockedPrefix", "New")} ${evidenceTypeLabel} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
         4000,
         "evidenceGain",
         evidenceType === "photo" ? "photos" : "reports"
@@ -1249,8 +1266,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 function beginNewGame() {
   initializeEvidenceStoreForNewGame();
   setEvidenceCustomNames({});
-  resetNotesPagesState();
-  resetPaintPagesState();
+  resetNotesPagesState(localize("notesPageDefaultTitlePrefix", getLanguage()));
+  resetPaintPagesState(localize("paintPageDefaultTitlePrefix", getLanguage()));
   resetAshtrayState();
   resetFacsimileState();
   resetQuickLoginState();
@@ -1376,6 +1393,32 @@ const LOCALIZED_STATIC_TEXT_BY_ELEMENT_KEY = {
   notesLabel: "notes",
   musicVolumeLabel: "musicVolume",
   sfxVolumeLabel: "sfxVolume",
+  newGameConfirmTitle: "newGameConfirmTitle",
+  newGameConfirmBody: "newGameConfirmBody",
+  newGameConfirmCancelButton: "cancelButton",
+  newGameConfirmAcceptButton: "startNewGameButton",
+};
+
+// Static chrome whose aria-label is a straight localization lookup.
+const LOCALIZED_ARIA_LABEL_BY_ELEMENT_KEY = {
+  desktopViewport: "desktopViewportAriaLabel",
+  deskWorld: "desktopWorkspaceAriaLabel",
+  backgroundFolder: "theArnieTragedy",
+  notesFolder: "notesFolderAriaLabel",
+  desktopCalendar: "desktopCalendarAriaLabel",
+  desktopAshtray: "ashtrayAriaLabel",
+  desktopAshtrayHotspot: "ashtrayButtonAriaLabel",
+  desktopFacsimileRig: "facsimileRigAriaLabel",
+  desktopFacsimileHotspot: "openFacsimileAriaLabel",
+  desktopComputerHotspot: "openComputerAriaLabel",
+  noticeboardScene: "noticeboardWorkspaceAriaLabel",
+  floatingSettings: "settingsMenuAriaLabel",
+};
+
+// Static chrome whose aria-label AND title are the same localization lookup.
+const LOCALIZED_ARIA_LABEL_AND_TITLE_BY_ELEMENT_KEY = {
+  settingsToggle: "musicSettingsLabel",
+  noticeboardButton: "goToNoticeboardLabel",
 };
 
 function setElementsLanguageText() {
@@ -1389,11 +1432,28 @@ function setElementsLanguageText() {
     }
   });
 
+  Object.entries(LOCALIZED_ARIA_LABEL_BY_ELEMENT_KEY).forEach(([elementKey, localizationKey]) => {
+    const element = elements[elementKey];
+    if (element) {
+      element.setAttribute("aria-label", localize(localizationKey, languageCode));
+    }
+  });
+
+  Object.entries(LOCALIZED_ARIA_LABEL_AND_TITLE_BY_ELEMENT_KEY).forEach(([elementKey, localizationKey]) => {
+    const element = elements[elementKey];
+    if (element) {
+      const localizedText = localize(localizationKey, languageCode);
+      element.setAttribute("aria-label", localizedText);
+      element.title = localizedText;
+    }
+  });
+
   elements.zoomReadout.textContent = `${localize("zoomLabel", languageCode)} 3/5`;
 
   refreshMuteButtonLabel();
   refreshMusicTransportControls();
   refreshOpenWindowLocalization();
+  refreshAutosaveIndicatorLanguage();
   updateDesktopCalendarDate();
 }
 
@@ -1661,17 +1721,18 @@ function refreshMusicTransportControls() {
     return;
   }
 
+  const languageCode = getLanguage();
   const isPlaying = audioManager.isMusicPlaying();
   getElements().musicPlayPauseButton.textContent = isPlaying ? "⏸" : "▶";
   getElements().musicPlayPauseButton.setAttribute(
     "aria-label",
-    isPlaying ? "Pause music" : "Play music"
+    isPlaying ? localize("pauseMusicAriaLabel", languageCode) : localize("playMusicAriaLabel", languageCode)
   );
-  getElements().musicPlayPauseButton.title = isPlaying ? "Pause" : "Play";
+  getElements().musicPlayPauseButton.title = isPlaying ? localize("pause", languageCode) : localize("play", languageCode);
 
   getElements().musicNextButton.textContent = "⏭";
-  getElements().musicNextButton.setAttribute("aria-label", "Next track");
-  getElements().musicNextButton.title = "Next";
+  getElements().musicNextButton.setAttribute("aria-label", localize("nextTrackAriaLabel", languageCode));
+  getElements().musicNextButton.title = localize("next", languageCode);
 }
 
 function initializeStoryWindowControls() {
@@ -1914,15 +1975,15 @@ function bringDesktopWindowToFront(windowController) {
 // change. `titleKey` goes through localize(); `title` is a fixed product name.
 // Kinds absent from this table (currently "debug") are left untouched.
 const DESKTOP_WINDOW_LOCALIZATION_BY_KIND = {
-  story: { titleKey: "theArnieTragedy", refresh: updateStoryWindowContent },
-  photos: { titleKey: "photos", refresh: updatePhotosWindowContent },
-  reports: { titleKey: "reports", refresh: updateReportsWindowContent },
-  notes: { titleKey: "notes" },
-  "computer-notes": { titleKey: "notes" },
-  "computer-paint": { title: "Paint" },
-  "computer-netscape": { title: "Netscape Navigator 3.0" },
-  facsimile: { title: "FACSIMILE", refresh: updateFacsimileWindowContent },
-  computer: { title: "Computer" },
+  story: { titleKey: "theArnieTragedy", closeButtonAriaLabelKey: "closeStoryWindowAriaLabel", refresh: updateStoryWindowContent },
+  photos: { titleKey: "photos", closeButtonAriaLabelKey: "closePhotosWindowAriaLabel", carousel: true, refresh: updatePhotosWindowContent },
+  reports: { titleKey: "reports", closeButtonAriaLabelKey: "closeReportsWindowAriaLabel", carousel: true, refresh: updateReportsWindowContent },
+  notes: { titleKey: "notes", closeButtonAriaLabelKey: "closeNotesWindowAriaLabel" },
+  "computer-notes": { titleKey: "notes", closeButtonAriaLabelKey: "closeNotesWindowAriaLabel" },
+  "computer-paint": { titleKey: "computerPaintIconLabel", closeButtonAriaLabelKey: "closePaintWindowAriaLabel" },
+  "computer-netscape": { title: "Netscape Navigator 3.0", closeButtonAriaLabelKey: "closeNetscapeWindowAriaLabel" },
+  facsimile: { titleKey: "facsimileWindowTitle", closeButtonAriaLabelKey: "closeFacsimileWindowAriaLabel", refresh: updateFacsimileWindowContent },
+  computer: { titleKey: "computerWindowTitle", closeButtonAriaLabelKey: "closeComputerWindowAriaLabel" },
 };
 
 function refreshOpenWindowLocalization() {
@@ -1940,6 +2001,18 @@ function refreshOpenWindowLocalization() {
         ? localize(localization.titleKey, languageCode)
         : localization.title
     );
+
+    if (localization.closeButtonAriaLabelKey) {
+      windowController.setCloseButtonAriaLabel(localize(localization.closeButtonAriaLabelKey, languageCode));
+    }
+
+    if (localization.carousel) {
+      windowController.setCarouselAriaLabels({
+        previous: localize("previousImageAriaLabel", languageCode),
+        next: localize("nextImageAriaLabel", languageCode),
+      });
+    }
+
     localization.refresh?.(windowController);
   });
 }
@@ -2003,15 +2076,16 @@ function createComputerWindowContentElements() {
     return button;
   };
 
-  const notesIcon = createIconButton("Notes", "computer-icon-notes");
-  const paintIcon = createIconButton("Paint", "computer-icon-paint");
+  const languageCode = getLanguage();
+  const notesIcon = createIconButton(localize("computerNotesIconLabel", languageCode), "computer-icon-notes");
+  const paintIcon = createIconButton(localize("computerPaintIconLabel", languageCode), "computer-icon-paint");
   const netscapeIcon = createIconButton("Netscape", "computer-icon-netscape");
 
   const clockPanel = document.createElement("button");
   clockPanel.type = "button";
   clockPanel.classList.add("computer-clock-panel");
-  clockPanel.setAttribute("aria-label", "Open main menu");
-  clockPanel.title = "Open main menu";
+  clockPanel.setAttribute("aria-label", localize("openMainMenuAriaLabel", languageCode));
+  clockPanel.title = localize("openMainMenuAriaLabel", languageCode);
 
   const analogClock = document.createElement("div");
   analogClock.classList.add("computer-analog-clock");
@@ -2035,7 +2109,7 @@ function createComputerWindowContentElements() {
 
   const clockHint = document.createElement("div");
   clockHint.classList.add("computer-clock-hint");
-  clockHint.textContent = "MENU";
+  clockHint.textContent = localize("computerMenuHint", languageCode);
 
   clockPanel.append(analogClock, dateText, clockHint);
 
@@ -2076,8 +2150,18 @@ function createComputerPaintWindowContentElements() {
   const toolbar = document.createElement("div");
   toolbar.classList.add("caveos-paint-toolbar");
 
+  const languageCode = getLanguage();
   const toolButtons = [];
   const toolNames = ["pen", "line", "rect", "eraser", "fill"];
+  // dataset.tool stays the English identifier (read by the tool-switch
+  // handler below); only the visible label is localized.
+  const toolLabelKeys = {
+    pen: "paintToolPen",
+    line: "paintToolLine",
+    rect: "paintToolRect",
+    eraser: "paintToolEraser",
+    fill: "paintToolFill",
+  };
 
   toolNames.forEach((toolName, index) => {
     const button = document.createElement("button");
@@ -2087,7 +2171,7 @@ function createComputerPaintWindowContentElements() {
       button.classList.add("is-active");
     }
     button.dataset.tool = toolName;
-    button.textContent = toolName.toUpperCase();
+    button.textContent = localize(toolLabelKeys[toolName], languageCode);
     toolbar.appendChild(button);
     toolButtons.push(button);
   });
@@ -2098,19 +2182,19 @@ function createComputerPaintWindowContentElements() {
   sizeInput.max = "18";
   sizeInput.value = "3";
   sizeInput.classList.add("caveos-paint-size");
-  sizeInput.setAttribute("aria-label", "Brush size");
+  sizeInput.setAttribute("aria-label", localize("paintBrushSizeAriaLabel", languageCode));
 
   const colorInput = document.createElement("input");
   colorInput.type = "color";
   colorInput.value = "#76ff62";
   colorInput.classList.add("caveos-paint-color");
-  colorInput.setAttribute("aria-label", "Paint color");
+  colorInput.setAttribute("aria-label", localize("paintColorAriaLabel", languageCode));
 
   const clearButton = document.createElement("button");
   clearButton.type = "button";
   clearButton.classList.add("caveos-paint-tool", "caveos-paint-clear");
   clearButton.dataset.action = "clear";
-  clearButton.textContent = "CLEAR";
+  clearButton.textContent = localize("paintClearButton", languageCode);
 
   toolbar.append(sizeInput, colorInput, clearButton);
 
@@ -2528,11 +2612,12 @@ function createComputerNetscapeWindowContentElements() {
   const createMissingPage = (attemptedUrl) => {
     const page = document.createElement("div");
     page.classList.add("caveos-browser-page", "browser-page-welcome", "browser-page-missing");
+    const languageCode = getLanguage();
     page.innerHTML = `
-      <h1 class="browser-welcome-title">Page Not Found</h1>
-      <p class="browser-welcome-copy">No in-game page exists at:</p>
+      <h1 class="browser-welcome-title">${localize("browserPageNotFoundTitle", languageCode)}</h1>
+      <p class="browser-welcome-copy">${localize("browserNoPageExistsAt", languageCode)}</p>
       <p class="browser-cosmic-copy browser-cosmic-plain-url">${attemptedUrl}</p>
-      <p class="browser-welcome-copy">Try one of the favorites or a known hidden page URL.</p>
+      <p class="browser-welcome-copy">${localize("browserTryFavoritesHint", languageCode)}</p>
     `;
     return page;
   };
@@ -2545,7 +2630,7 @@ function createComputerNetscapeWindowContentElements() {
     shell.classList.add("browser-page-shell", "browser-page-shell-gray", "browser-page-shell-standalone");
 
     shell.innerHTML = `
-      <h1 class="browser-page-title">${pageRecord.title || pageRecord.id || "Recovered Page"}</h1>
+      <h1 class="browser-page-title">${pageRecord.title || pageRecord.id || localize("browserRecoveredPageFallback", getLanguage())}</h1>
     `;
 
     const styleSettings = pageRecord?.style && typeof pageRecord.style === "object"
@@ -2570,7 +2655,7 @@ function createComputerNetscapeWindowContentElements() {
     if (!contentLines.length) {
       const empty = document.createElement("p");
       empty.classList.add("browser-welcome-copy");
-      empty.textContent = "This hidden page has no body content.";
+      empty.textContent = localize("browserNoBodyContent", getLanguage());
       shell.appendChild(empty);
     } else {
       const content = document.createElement("section");
@@ -2653,14 +2738,16 @@ function createComputerNetscapeWindowContentElements() {
   const addressRow = document.createElement("div");
   addressRow.classList.add("caveos-browser-address-row");
 
+  const browserLanguageCode = getLanguage();
+
   const label = document.createElement("span");
-  label.textContent = "URL:";
+  label.textContent = localize("browserUrlLabel", browserLanguageCode);
 
   const browserAddress = document.createElement("input");
   browserAddress.classList.add("caveos-browser-address");
   browserAddress.type = "text";
   browserAddress.value = "about:welcome";
-  browserAddress.setAttribute("aria-label", "Browser address");
+  browserAddress.setAttribute("aria-label", localize("browserAddressAriaLabel", browserLanguageCode));
 
   const addressInputShell = document.createElement("div");
   addressInputShell.classList.add("caveos-browser-address-shell");
@@ -2668,8 +2755,8 @@ function createComputerNetscapeWindowContentElements() {
   const addressSubmitButton = document.createElement("button");
   addressSubmitButton.type = "button";
   addressSubmitButton.classList.add("caveos-browser-address-submit");
-  addressSubmitButton.setAttribute("aria-label", "Go to URL");
-  addressSubmitButton.title = "Go";
+  addressSubmitButton.setAttribute("aria-label", localize("browserGoAriaLabel", browserLanguageCode));
+  addressSubmitButton.title = localize("browserGoTitle", browserLanguageCode);
 
   const addressHistoryPanel = document.createElement("div");
   addressHistoryPanel.classList.add("caveos-browser-address-history");
@@ -2682,19 +2769,19 @@ function createComputerNetscapeWindowContentElements() {
   backButton.type = "button";
   backButton.classList.add("caveos-browser-nav-button");
   backButton.textContent = "←";
-  backButton.setAttribute("aria-label", "Back");
+  backButton.setAttribute("aria-label", localize("browserBackAriaLabel", browserLanguageCode));
 
   const forwardButton = document.createElement("button");
   forwardButton.type = "button";
   forwardButton.classList.add("caveos-browser-nav-button");
   forwardButton.textContent = "→";
-  forwardButton.setAttribute("aria-label", "Forward");
+  forwardButton.setAttribute("aria-label", localize("browserForwardAriaLabel", browserLanguageCode));
 
   const homeButton = document.createElement("button");
   homeButton.type = "button";
   homeButton.classList.add("caveos-browser-nav-button");
   homeButton.textContent = "⌂";
-  homeButton.setAttribute("aria-label", "Home");
+  homeButton.setAttribute("aria-label", localize("browserHomeAriaLabel", browserLanguageCode));
 
   addressRow.append(label, addressInputShell, backButton, forwardButton, homeButton);
 
@@ -2756,6 +2843,7 @@ function createComputerNetscapeWindowContentElements() {
   );
   let historyIndex = -1;
   let standalonePagesPromise = null;
+  let standalonePagesLanguage = null;
   let ignoreNextInputBlur = false;
 
   const getAddressEntryUrl = (entry) => {
@@ -3005,7 +3093,7 @@ function createComputerNetscapeWindowContentElements() {
         navigateToStandalonePage(routedPage, { pushHistory: false });
       } else {
         browserAddress.value = entry.url || "about:missing";
-        pageHost.replaceChildren(createMissingPage(entry.url || "Unknown URL"));
+        pageHost.replaceChildren(createMissingPage(entry.url || localize("browserUnknownUrlFallback", getLanguage())));
       }
       return;
     }
@@ -3016,7 +3104,7 @@ function createComputerNetscapeWindowContentElements() {
     }
 
     browserAddress.value = entry.url || "about:missing";
-    pageHost.replaceChildren(createMissingPage(entry.url || "Unknown URL"));
+    pageHost.replaceChildren(createMissingPage(entry.url || localize("browserUnknownUrlFallback", getLanguage())));
   };
 
   const navigateBack = () => {
@@ -3040,13 +3128,21 @@ function createComputerNetscapeWindowContentElements() {
   };
 
   const ensureStandaloneRoutesLoaded = async () => {
-    if (standalonePagesPromise) {
+    // Re-fetches whenever the current language differs from the one these
+    // routes were last built for, so a mid-game language switch (or a save
+    // loaded in a different language) picks up that language's standalone
+    // pages instead of reusing routes built for the previous one.
+    const currentLanguage = normalizeLanguageCode(getLanguage());
+    if (standalonePagesPromise && standalonePagesLanguage === currentLanguage) {
       return standalonePagesPromise;
     }
 
+    standalonePagesLanguage = currentLanguage;
+    standalonePageRouteMap.clear();
+
     standalonePagesPromise = (async () => {
       try {
-        const standaloneResponse = await fetch("./assets/web-content/standalone-pages.json");
+        const standaloneResponse = await fetch(resolveCatalogPath("./assets/{lang}/standalone-pages.json", currentLanguage));
         if (standaloneResponse.ok) {
           const standaloneData = await standaloneResponse.json();
           const standaloneRecords = Array.isArray(standaloneData?.records)
@@ -3091,7 +3187,7 @@ function createComputerNetscapeWindowContentElements() {
           });
         }
       } catch (error) {
-        console.warn("Unable to load standalone-pages.json routes.", error);
+        console.warn(`Unable to load assets/${currentLanguage}/standalone-pages.json routes.`, error);
       }
 
     })();
@@ -3353,6 +3449,12 @@ function positionWindowWithinParent(
   rootElement.style.transform = "none";
 }
 
+const COMPUTER_APP_CLOSE_ARIA_LABEL_KEY_BY_KIND = {
+  "computer-notes": "closeNotesWindowAriaLabel",
+  "computer-paint": "closePaintWindowAriaLabel",
+  "computer-netscape": "closeNetscapeWindowAriaLabel",
+};
+
 function openComputerAppWindow({
   parentElement,
   kind,
@@ -3371,13 +3473,17 @@ function openComputerAppWindow({
     return null;
   }
 
+  const closeAriaLabelKey = COMPUTER_APP_CLOSE_ARIA_LABEL_KEY_BY_KIND[kind];
+
   let appWindowController = null;
   appWindowController = new DesktopWindow({
     parentElement,
     classNames: ["caveos-app-window", ...classNames],
     title,
     showCarouselNavigation: false,
-    closeButtonAriaLabel: `Close ${title} window`,
+    closeButtonAriaLabel: closeAriaLabelKey
+      ? localize(closeAriaLabelKey, getLanguage())
+      : `Close ${title} window`,
     onClose: () => {
       unregisterDesktopWindow(appWindowController);
       if (appWindowSet) {
@@ -3414,7 +3520,7 @@ async function getStoryText(language, forceReload = false) {
   const storyLanguage = language || "en";
   const storyPath = storyEvidence
     ? resolveEvidenceContentPath(storyEvidence, storyLanguage)
-    : `assets/story_${storyLanguage}.md`;
+    : `assets/${storyLanguage}/story.md`;
 
   if (!forceReload && storyTextCacheByLanguage.has(storyPath)) {
     return storyTextCacheByLanguage.get(storyPath);
@@ -3431,7 +3537,7 @@ async function getStoryText(language, forceReload = false) {
     return storyText;
   } catch (error) {
     console.error("Error fetching story markdown:", error);
-    const fallbackStory = "Unable to load story content.";
+    const fallbackStory = localize("unableToLoadStory", storyLanguage);
     storyTextCacheByLanguage.set(storyPath, fallbackStory);
     return fallbackStory;
   }
@@ -3464,7 +3570,7 @@ async function openStoryWindow(resizable = false, showScrollbar = true) {
     classNames: ["story-window"],
     title: localize("theArnieTragedy", getLanguage()),
     showCarouselNavigation: false,
-    closeButtonAriaLabel: "Close story window",
+    closeButtonAriaLabel: localize("closeStoryWindowAriaLabel", getLanguage()),
     onClose: () => {
       unregisterDesktopWindow(storyWindowController);
       audioManager.playSfx("clickSwitch");
@@ -3490,7 +3596,7 @@ async function updateStoryWindowContent(windowController, forceReload = false) {
     return;
   }
 
-  refs.storyDocumentText.textContent = "Loading story...";
+  refs.storyDocumentText.textContent = localize("loadingStory", getLanguage());
   const storyText = await getStoryText(getLanguage(), forceReload);
   refs.storyDocumentText.textContent = storyText;
   refs.storyDocumentContent.scrollTop = 0;
@@ -3679,11 +3785,17 @@ function buildMissingCatalogFieldMessage(evidence, label, fieldName, languageCod
   return `${label} unavailable for '${title}'. Catalog entry '${entryId}' is missing '${fieldName}' for language '${normalizeLanguageCode(languageCode)}'.`;
 }
 
-async function getCatalogEntryForEvidence(evidence, languageCode, forceReload, { cacheMap, catalogLabel }) {
+// `pathTemplate` is always the current code-owned constant, never read off
+// the evidence object: evidence.source.catalogPathTemplate is cloned
+// verbatim into save files and web-content JSON records, so a value baked in
+// under an older file-naming convention would otherwise 404 forever after a
+// rename. getReportCatalogEntry/getPhotoCatalogEntry below always pass the
+// live REPORTS_/PHOTOS_CATALOG_PATH_TEMPLATE instead.
+async function getCatalogEntryForEvidence(evidence, languageCode, forceReload, { cacheMap, catalogLabel, pathTemplate }) {
   const catalogIndex = await loadEvidenceCatalogByLanguage({
     cacheMap,
     languageCode,
-    pathTemplate: String(evidence?.source?.catalogPathTemplate || "").trim(),
+    pathTemplate,
     catalogLabel,
     forceReload,
   });
@@ -3695,6 +3807,7 @@ function getReportCatalogEntry(evidence, languageCode, forceReload = false) {
   return getCatalogEntryForEvidence(evidence, languageCode, forceReload, {
     cacheMap: reportCatalogCacheByLanguage,
     catalogLabel: "report evidence",
+    pathTemplate: REPORTS_CATALOG_PATH_TEMPLATE,
   });
 }
 
@@ -3702,6 +3815,7 @@ function getPhotoCatalogEntry(evidence, languageCode, forceReload = false) {
   return getCatalogEntryForEvidence(evidence, languageCode, forceReload, {
     cacheMap: photoCatalogCacheByLanguage,
     catalogLabel: "photo evidence",
+    pathTemplate: PHOTOS_CATALOG_PATH_TEMPLATE,
   });
 }
 
@@ -3723,10 +3837,12 @@ async function getDescriptionTextByEvidence(
   }
 
   if (evidenceType !== "report" && evidenceType !== "photo") {
-    return "Description unavailable.";
+    return localize("descriptionUnavailable", getLanguage());
   }
 
-  const label = evidenceType === "report" ? "Report description" : "Photo description";
+  const label = evidenceType === "report"
+    ? localize("reportDescriptionFieldLabel", languageCode)
+    : localize("photoDescriptionFieldLabel", languageCode);
   const catalogEntry = preloadedCatalogEntry
     || (evidenceType === "report"
       ? await getReportCatalogEntry(evidence, languageCode, forceReload)
@@ -3807,15 +3923,15 @@ function createEvidenceTitleBarElements() {
   const titleInput = document.createElement("input");
   titleInput.type = "text";
   titleInput.classList.add("evidence-title-input");
-  titleInput.placeholder = "Evidence title";
-  titleInput.setAttribute("aria-label", "Evidence title");
+  titleInput.placeholder = localize("evidenceTitlePlaceholder", getLanguage());
+  titleInput.setAttribute("aria-label", localize("evidenceTitlePlaceholder", getLanguage()));
 
   const commitButton = document.createElement("button");
   commitButton.type = "button";
   commitButton.classList.add("evidence-title-commit");
   commitButton.textContent = "✓";
   commitButton.disabled = true;
-  commitButton.setAttribute("aria-label", "Apply evidence title");
+  commitButton.setAttribute("aria-label", localize("applyEvidenceTitleAriaLabel", getLanguage()));
 
   titleBar.append(titleInput, commitButton);
 
@@ -3907,8 +4023,9 @@ function wireEvidenceTitleEditor({ refs, storageKey, onCommitted }) {
 
 const NOTES_PAGE_MODEL = {
   pageCount: NOTES_PAGE_COUNT,
-  titlePrefix: "Page",
-  ariaNoun: "notes page",
+  titlePrefixKey: "notesPageDefaultTitlePrefix",
+  titleForAriaKey: "notesPageTitleForAriaLabelPrefix",
+  applyTitleForAriaKey: "notesPageTitleApplyAriaLabelPrefix",
   bodyKey: "content",
   getPages: getNotesPages,
   setPages: setNotesPages,
@@ -3921,8 +4038,9 @@ const NOTES_PAGE_MODEL = {
 
 const PAINT_PAGE_MODEL = {
   pageCount: PAINT_PAGE_COUNT,
-  titlePrefix: "Sketch",
-  ariaNoun: "sketch",
+  titlePrefixKey: "paintPageDefaultTitlePrefix",
+  titleForAriaKey: "paintPageTitleForAriaLabelPrefix",
+  applyTitleForAriaKey: "paintPageTitleApplyAriaLabelPrefix",
   bodyKey: "snapshot",
   getPages: getPaintPages,
   setPages: setPaintPages,
@@ -3934,7 +4052,7 @@ const PAINT_PAGE_MODEL = {
 };
 
 function buildDefaultPageTitle(model, pageIndex) {
-  return `${model.titlePrefix} ${pageIndex + 1}`;
+  return `${localize(model.titlePrefixKey, getLanguage())} ${pageIndex + 1}`;
 }
 
 function readPageOrDefault(model, pages, pageIndex) {
@@ -4032,13 +4150,13 @@ function createPageTabRow(model, pageIndex, onActivate) {
   titleInput.type = "text";
   titleInput.classList.add("evidence-title-input", "notes-page-title-input", ...model.titleInputClassNames);
   titleInput.placeholder = defaultTitle;
-  titleInput.setAttribute("aria-label", `Title for ${model.ariaNoun} ${pageIndex + 1}`);
+  titleInput.setAttribute("aria-label", `${localize(model.titleForAriaKey, getLanguage())} ${pageIndex + 1}`);
 
   const commitButton = document.createElement("button");
   commitButton.type = "button";
   commitButton.classList.add("evidence-title-commit", "notes-page-title-commit");
   commitButton.textContent = "✓";
-  commitButton.setAttribute("aria-label", `Apply title for ${model.ariaNoun} ${pageIndex + 1}`);
+  commitButton.setAttribute("aria-label", `${localize(model.applyTitleForAriaKey, getLanguage())} ${pageIndex + 1}`);
   commitButton.disabled = true;
 
   titleBar.append(titleInput, commitButton);
@@ -4095,7 +4213,7 @@ function syncPageTabRows(model, pageRows, pages, activeIndex) {
 
     pageRowRefs.root.classList.toggle("is-active", isActive);
     pageRowRefs.activateButton.setAttribute("aria-pressed", String(isActive));
-    pageRowRefs.activateButton.setAttribute("aria-label", `Open ${normalizedTitle}`);
+    pageRowRefs.activateButton.setAttribute("aria-label", `${localize("openPagePrefix", getLanguage())} ${normalizedTitle}`);
     pageRowRefs.committedTitle = normalizedTitle;
     pageRowRefs.titleInput.value = normalizedTitle;
     pageRowRefs.commitButton.disabled = true;
@@ -4150,8 +4268,8 @@ function createNotesWindowContentElements() {
   const textarea = document.createElement("textarea");
   textarea.classList.add("notes-editor-textarea", "scrollbars-hidden");
   textarea.spellcheck = false;
-  textarea.placeholder = "Write notes...";
-  textarea.setAttribute("aria-label", "Notes page content");
+  textarea.placeholder = localize("notesWritePlaceholder", getLanguage());
+  textarea.setAttribute("aria-label", localize("notesPageContentAriaLabel", getLanguage()));
 
   editorColumn.appendChild(textarea);
 
@@ -4186,9 +4304,9 @@ function createEvidenceMagnifierToggleButton() {
   const button = document.createElement("button");
   button.type = "button";
   button.classList.add("evidence-magnifier-toggle");
-  button.setAttribute("aria-label", "Magnifier");
+  button.setAttribute("aria-label", localize("magnifierLabel", getLanguage()));
   button.setAttribute("aria-pressed", "false");
-  button.title = "Magnifier";
+  button.title = localize("magnifierLabel", getLanguage());
 
   const icon = document.createElement("span");
   icon.classList.add("evidence-magnifier-icon");
@@ -4479,7 +4597,7 @@ function createEvidenceDescriptionPanel() {
 
   const descriptionText = document.createElement("div");
   descriptionText.classList.add("evidence-description-text", "scrollbars-hidden");
-  descriptionText.textContent = "Loading description...";
+  descriptionText.textContent = localize("loadingDescription", getLanguage());
 
   descriptionPaperWrap.appendChild(descriptionText);
   descriptionOuter.appendChild(descriptionPaperWrap);
@@ -4700,7 +4818,7 @@ async function updatePhotosWindowContent(windowController) {
     refs.titleInput.value = "";
     refs.commitButton.disabled = true;
     refs.captionText.textContent = "";
-    refs.descriptionText.textContent = "Description unavailable.";
+    refs.descriptionText.textContent = localize("descriptionUnavailable", getLanguage());
     return;
   }
 
@@ -4711,7 +4829,7 @@ async function updatePhotosWindowContent(windowController) {
   const renderToken = (refs.renderToken || 0) + 1;
   refs.renderToken = renderToken;
 
-  refs.descriptionText.textContent = "Loading description...";
+  refs.descriptionText.textContent = localize("loadingDescription", getLanguage());
 
   const photoCatalogEntry = await getPhotoCatalogEntry(currentEvidence, languageCode);
   const effectiveEvidence = buildEvidenceWithCatalogDefaults(currentEvidence, photoCatalogEntry);
@@ -4735,11 +4853,11 @@ async function updatePhotosWindowContent(windowController) {
   if (!currentItem) {
     refs.image.classList.add("d-none");
     refs.emptyState.classList.remove("d-none");
-    refs.emptyState.textContent = buildMissingCatalogFieldMessage(currentEvidence, "Photo image", "photoPath", languageCode);
+    refs.emptyState.textContent = buildMissingCatalogFieldMessage(currentEvidence, localize("photoImageFieldLabel", languageCode), "photoPath", languageCode);
     refs.image.removeAttribute("src");
     refs.counter.textContent = `${currentIndex + 1}/${photoEvidences.length}`;
     refs.captionText.textContent = photoCaptionText;
-    refs.descriptionText.textContent = descriptionText || "Description unavailable.";
+    refs.descriptionText.textContent = descriptionText || localize("descriptionUnavailable", getLanguage());
     refs.descriptionText.scrollTop = 0;
 
     if (windowController.previousButtonElement) {
@@ -4759,7 +4877,7 @@ async function updatePhotosWindowContent(windowController) {
   refs.image.alt = photoCaptionText || `${localize("photos", languageCode)} ${currentIndex + 1}`;
   refs.counter.textContent = `${currentIndex + 1}/${photoEvidences.length}`;
   refs.captionText.textContent = photoCaptionText;
-  refs.descriptionText.textContent = descriptionText || "Description unavailable.";
+  refs.descriptionText.textContent = descriptionText || localize("descriptionUnavailable", getLanguage());
   refs.descriptionText.scrollTop = 0;
 
   const applyLayout = () => {
@@ -4791,7 +4909,7 @@ async function updatePhotosWindowContent(windowController) {
     refs.image.style.height = "";
     refs.image.classList.add("d-none");
     refs.emptyState.classList.remove("d-none");
-    refs.emptyState.textContent = `Missing image: ${currentItem}`;
+    refs.emptyState.textContent = `${localize("missingImagePrefix", getLanguage())} ${currentItem}`;
   };
 
   syncPhotoMountChrome(refs);
@@ -4813,7 +4931,7 @@ async function getReportTextByEvidence(
   const reportEntry = preloadedReportEntry
     || await getReportCatalogEntry(evidence, languageCode, forceReload);
   if (!reportEntry) {
-    return buildMissingCatalogEntryMessage(evidence, "Report content", languageCode);
+    return buildMissingCatalogEntryMessage(evidence, localize("reportContentFieldLabel", languageCode), languageCode);
   }
 
   const localizedReportText = sanitizeCatalogText(reportEntry?.reportText).trim();
@@ -4821,7 +4939,7 @@ async function getReportTextByEvidence(
     return localizedReportText;
   }
 
-  return buildMissingCatalogFieldMessage(evidence, "Report content", "reportText", languageCode);
+  return buildMissingCatalogFieldMessage(evidence, localize("reportContentFieldLabel", languageCode), "reportText", languageCode);
 }
 
 async function updateReportsWindowContent(windowController) {
@@ -4849,7 +4967,7 @@ async function updateReportsWindowContent(windowController) {
     refs.currentCommittedTitle = "";
     refs.titleInput.value = "";
     refs.commitButton.disabled = true;
-    refs.descriptionText.textContent = "Description unavailable.";
+    refs.descriptionText.textContent = localize("descriptionUnavailable", getLanguage());
     return;
   }
 
@@ -4861,8 +4979,8 @@ async function updateReportsWindowContent(windowController) {
   refs.renderToken = renderToken;
 
   refs.emptyState.classList.add("d-none");
-  refs.reportDocumentText.textContent = "Loading report...";
-  refs.descriptionText.textContent = "Loading description...";
+  refs.reportDocumentText.textContent = localize("loadingReport", getLanguage());
+  refs.descriptionText.textContent = localize("loadingDescription", getLanguage());
 
   const reportCatalogEntry = await getReportCatalogEntry(currentEvidence, languageCode);
   const effectiveEvidence = buildEvidenceWithCatalogDefaults(currentEvidence, reportCatalogEntry);
@@ -4886,7 +5004,7 @@ async function updateReportsWindowContent(windowController) {
   }
   refs.counter.textContent = `${currentIndex + 1}/${reportEvidences.length}`;
   refs.reportDocumentContent.scrollTop = 0;
-  refs.descriptionText.textContent = descriptionText || "Description unavailable.";
+  refs.descriptionText.textContent = descriptionText || localize("descriptionUnavailable", getLanguage());
   refs.descriptionText.scrollTop = 0;
   syncEvidenceTitleWidth(refs, refs.reportPaperWrap);
 
@@ -4932,7 +5050,7 @@ const EVIDENCE_CAROUSEL_WINDOWS = {
     kind: "photos",
     titleKey: "photos",
     classNames: ["story-window", "photos-window"],
-    closeButtonAriaLabel: "Close photos window",
+    closeButtonAriaLabelKey: "closePhotosWindowAriaLabel",
     storageKey: () => EVIDENCE_STORAGE_KEYS.PHOTOS,
     contentRefsMap: () => photosWindowContentRefs,
     createContentElements: createPhotosWindowContentElements,
@@ -4949,7 +5067,7 @@ const EVIDENCE_CAROUSEL_WINDOWS = {
     kind: "reports",
     titleKey: "reports",
     classNames: ["story-window", "reports-window"],
-    closeButtonAriaLabel: "Close reports window",
+    closeButtonAriaLabelKey: "closeReportsWindowAriaLabel",
     storageKey: () => EVIDENCE_STORAGE_KEYS.REPORTS,
     contentRefsMap: () => reportsWindowContentRefs,
     createContentElements: createReportsWindowContentElements,
@@ -4985,7 +5103,7 @@ function openEvidenceCarouselWindow(config) {
       stepEvidenceCarousel(storageKey, 1);
       config.updateWindowContent(windowController);
     },
-    closeButtonAriaLabel: config.closeButtonAriaLabel,
+    closeButtonAriaLabel: localize(config.closeButtonAriaLabelKey, getLanguage()),
     onClose: () => {
       const refs = contentRefsMap.get(windowController);
       if (refs?.resizeObserver) {
@@ -4996,6 +5114,11 @@ function openEvidenceCarouselWindow(config) {
       unregisterDesktopWindow(windowController);
       audioManager.playSfx("clickSwitch");
     },
+  });
+
+  windowController.setCarouselAriaLabels({
+    previous: localize("previousImageAriaLabel", getLanguage()),
+    next: localize("nextImageAriaLabel", getLanguage()),
   });
 
   const contentRefs = config.createContentElements();
@@ -5140,7 +5263,7 @@ function openFacsimileWindow() {
     classNames: ["story-window", "facsimile-window"],
     title: "FACSIMILE",
     showCarouselNavigation: false,
-    closeButtonAriaLabel: "Close facsimile window",
+    closeButtonAriaLabel: localize("closeFacsimileWindowAriaLabel", getLanguage()),
     onClose: () => {
       const refs = facsimileWindowContentRefs.get(facsimileWindowController);
       if (refs?.hasReadPendingMessage && refs.viewedReportId) {
@@ -5201,7 +5324,7 @@ function openNotesWindow(options = {}) {
     classNames,
     title: localize("notes", getLanguage()),
     showCarouselNavigation: false,
-    closeButtonAriaLabel: "Close notes window",
+    closeButtonAriaLabel: localize("closeNotesWindowAriaLabel", getLanguage()),
     onClose: () => {
       const refs = notesWindowContentRefs.get(notesWindowController);
       if (refs) {
@@ -5298,7 +5421,7 @@ function openComputerWindow() {
     openComputerAppWindow({
       parentElement: contentRefs.container,
       kind: "computer-paint",
-      title: "Paint",
+      title: localize("computerPaintIconLabel", getLanguage()),
       classNames: ["caveos-paint-window"],
       contentNode: paintRefs.container,
       appWindowSet: contentRefs.appWindows,
@@ -5334,9 +5457,9 @@ function openComputerWindow() {
   nextController = new DesktopWindow({
     parentElement: getElements().gameArea,
     classNames: ["story-window", "computer-window"],
-    title: "Computer",
+    title: localize("computerWindowTitle", getLanguage()),
     showCarouselNavigation: false,
-    closeButtonAriaLabel: "Close computer window",
+    closeButtonAriaLabel: localize("closeComputerWindowAriaLabel", getLanguage()),
     onClose: () => {
       const refs = computerWindowContentRefs.get(nextController);
       if (refs?.appWindows?.size) {

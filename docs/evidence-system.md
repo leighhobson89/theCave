@@ -89,7 +89,7 @@ resolved.
 ### `markdown-template` — the story
 
 ```js
-source: { kind: "markdown-template", languageAware: true, pathTemplate: "./assets/story_{lang}.md" }
+source: { kind: "markdown-template", languageAware: true, pathTemplate: "./assets/{lang}/story.md" }
 ```
 
 `{lang}` is substituted with the active language code. Rendered as plain text.
@@ -100,7 +100,7 @@ source: { kind: "markdown-template", languageAware: true, pathTemplate: "./asset
 source: {
   kind: "report-localized-catalog-entry",
   languageAware: true,
-  catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+  catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
   entryId: "missingReport"
 }
 ```
@@ -125,7 +125,7 @@ Fields used: `reportText`, `descriptionText`, `defaultTitleString`, `paperStyle`
 source: {
   kind: "photo-localized-catalog-entry",
   languageAware: true,
-  catalogPathTemplate: "./assets/photos_evidences_{lang}.json",
+  catalogPathTemplate: "./assets/{lang}/photos_evidences.json",
   entryId: "caveEntrance",
   photoPath: "./assets/photos/caveEntrance.png"
 }
@@ -184,7 +184,7 @@ There are three paths in.
 
 ### 2. Web content
 
-A record in `assets/web-content/*.json` with `awardsEvidence: true` and an
+A record in `assets/<lang>/*.json` with `awardsEvidence: true` and an
 `evidence` descriptor (object, or array for multiple). On a matching search or
 standalone-page visit:
 
@@ -239,9 +239,9 @@ id → name), and are saved alongside it.
 
 For web-unlocked report evidence:
 
-1. Keep unlock metadata in `assets/web-content/*.json`.
+1. Keep unlock metadata in `assets/<lang>/*.json`.
 2. Use source kind `report-localized-catalog-entry`.
-3. Match `evidence.name` and `source.entryId` to an entry id in `assets/reportsEvidences_{lang}.json`.
+3. Match `evidence.name` and `source.entryId` to an entry id in `assets/{lang}/reports_evidences.json`.
 4. Add the text to **every** supported language catalog (`en`, `de`, `es`, `fr`, `it`).
 5. Do not create markdown files for report or photo evidence.
 

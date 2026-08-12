@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"resolveCatalogPath\\\\|catalogPathTemplate\\\\|_en\\\\b\\\\|_\\\\${.*}\\\\|reportCatalog\\\\|getReportCatalogEntry\\\\|getStoryText\" ui.js)",
+      "Bash(awk 'NR<=2700 && /^function |^async function |^export function |^export async function /{print NR\": \"$0}' ui.js)",
+      "Bash(git add *)",
+      "Bash(git reset *)",
+      "Bash(node -e ' *)",
+      "Bash(node server.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/assets/web-content/archives_en.json)",
+      "Bash(grep -rn \"reportsEvidences\\\\|photos_evidences\\\\|story_\\\\${\\\\|story_{lang}\\\\|catalogPathTemplate\\\\|pathTemplate\" --include=\"*.js\" .)",
+      "Bash(grep -rln \"assets/story_\\\\|assets/reportsEvidences\\\\|assets/photos_evidences\\\\|assets/web-content\\\\|story_\\\\${\" --include=\"*.js\" --include=\"*.json\" --include=\"*.html\" .)",
+      "Bash(grep -n \"reportsEvidences\\\\|photos_evidences\\\\|pathTemplate\\\\|assets/{lang}\\\\|assets/\\\\${\" evidenceManager.js)",
+      "Bash(node --check tools/web_content_builder_server.js)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(node --check tests/web-content-builder-server.spec.js)",
+      "Bash(xargs sha256sum)",
+      "Read(//tmp/**)",
+      "Bash(node --check evidenceManager.js)"
+    ]
+  }
+}

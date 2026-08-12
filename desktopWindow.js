@@ -296,6 +296,22 @@ export class DesktopWindow {
     }
   }
 
+  // Lets a caller re-localize the close/carousel-nav aria-labels of an
+  // already-open window (e.g. on a mid-session language change), since these
+  // are only set once at construction time otherwise.
+  setCloseButtonAriaLabel(label) {
+    this.closeButtonElement?.setAttribute("aria-label", label);
+  }
+
+  setCarouselAriaLabels({ previous, next } = {}) {
+    if (previous) {
+      this.previousButtonElement?.setAttribute("aria-label", previous);
+    }
+    if (next) {
+      this.nextButtonElement?.setAttribute("aria-label", next);
+    }
+  }
+
   setContent(content) {
     if (!this.contentHostElement) {
       return;

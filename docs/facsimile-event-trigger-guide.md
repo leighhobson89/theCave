@@ -58,7 +58,7 @@ window.receiveConfiguredFacsimileReport({
   source: {
     kind: "report-localized-catalog-entry",
     languageAware: true,
-    catalogPathTemplate: "./assets/reportsEvidences_{lang}.json",
+    catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
     entryId: "fax-whitmore-police-credentials"
   },
   storageKey: "reports",
@@ -71,7 +71,7 @@ window.receiveConfiguredFacsimileReport({
 `window.receiveLocalizedFacsimileReport` is an alias of the same function.
 
 With a `report-localized-catalog-entry` source, the title, body, description and
-paper style are pulled from `assets/reportsEvidences_{lang}.json` at queue time,
+paper style are pulled from `assets/{lang}/reports_evidences.json` at queue time,
 and the fax follows the player's language.
 
 Without a catalog source you can still localize by key:
@@ -187,7 +187,7 @@ registerRecordOpenFaxTrigger({
 
 `websiteId` matches the site's `id` in `webContentRegistry.js` (`police`,
 `zoomsearch`, `library`, `archives`); `recordId` matches a record's `id` in
-that site's `assets/web-content/<siteId>.json`. Both are matched
+that site's `assets/<lang>/<siteId>.json`. Both are matched
 case-insensitively. Register these inside `initializeWebRecordFaxTriggers()`,
 which is guarded so it only runs once per page load, and mirrors
 `initializeEvidenceMilestoneTriggers()` in shape.

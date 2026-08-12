@@ -1,0 +1,152 @@
+{
+  "siteId": "archives",
+  "displayName": "Canada Newspaper Archive",
+  "homeUrl": "http://archives.canada.news",
+  "accounts": [
+    {
+      "username": "free",
+      "password": "free",
+      "label": "Free",
+      "accessLevel": 0,
+      "default": true
+    },
+    {
+      "username": "t.mcleod",
+      "password": "apple1",
+      "label": "Subscriber",
+      "accessLevel": 1
+    }
+  ],
+  "records": [
+    {
+      "id": "hannahfletcher",
+      "date": "1906",
+      "province": "Alberta",
+      "headline": "Local Author Hannah Fletcher publishes Husbands Career Mysteries",
+      "publication": "The Gray Stacks Herald",
+      "keywords": [
+        "hannah fletcher",
+        "hannah",
+        "mysteries of the old north west"
+      ],
+      "summary": "Unsolved Cases get brought back to the Public Eye",
+      "article": [
+        "Local author Hannah Fletcher, the wife of a distinguished Police Constable from Saskatchewan has published a book that reviews a lot of the cold unsolved cases from the last few decades across the North West Territories both before and after the formation of the modern provinces (Alberta, Saskatchewan) In the publication, she interviews many members of search parties sent out to investigate homicides and accidents, and witnesses.  It is both a great read and a great education in to the minds of some of the criminals unfortunately absconding within our lands.",
+        "One such example was from her own husband, who, during the summer of 1901 was part of the search party that went out to Black Pine's former Silver Mine in Saskatchewan, to try and find a missing nine year old boy.  During the interview, he mentioned his surprise to find that there were no less than four sets of footprints made at roughly the same time, two of which were adult.  Four, in a place that had laid undisturbed for at least a couple of decades, yet witness accounts all insisted that two boys went out alone exploring and found the cave leading to one of the shafts.  A mystery indeed!",
+        "Hannah Fletcher's New Book \"Mysteries of the Old North West\" is available in all good book stores across Canada."
+      ],
+      "requiredAccessLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/mysteryoldnw2.png",
+          "alt": "",
+          "caption": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\""
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "source": {
+          "kind": "",
+          "languageAware": true,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "henrywhitmore",
+      "province": "Saskatchewan",
+      "headline": "Local Author publishes book with interesting topic!",
+      "publication": "Saskatchewan Daily News",
+      "keywords": [
+        "henry",
+        "harry",
+        "henry whitmore",
+        "harry whitmore",
+        "strange things",
+        "strange"
+      ],
+      "summary": "Things where you wouldn't expect...",
+      "article": [
+        "Local Author Henry \"Harry\" Whitmore, in fact the very same that forewent his inheritance of the famous Whitmore & Sons Iron and Machinery Company empire in favour of writing, has published a book.  Its an interesting publication, about objects or possessions that are found at the ends of the earth, sometimes literally, and certainly not where these objects belong!",
+        "I don't want to spoil the surprise but lets just say he details about Roman Coins in New York, Dinosaur fossils on top of inaccessible mountains, and even modern items in places thought undisturbed for decades.  Just take a look for yourself it is an interesting read indeed!",
+        "\"Strange Things Found In Even Stranger Places\" is now available in all good book stores and down at your local library."
+      ],
+      "requiredAccessLevel": 1,
+      "images": [
+        {
+          "src": "./assets/photos/henryStrangeThings.png",
+          "alt": "\"Harry\" Whitmore at the signing of his new book \"Strange Things Found In Even Stranger Places\" in 1907",
+          "caption": "\"Harry\" Whitmore at the signing of his new book \"Strange Things Found In Even Stranger Places\" in 1907"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "williammcleodfindpendant",
+      "date": "1957",
+      "province": "Ontario",
+      "headline": "Remembering a great Guardian",
+      "publication": "Maple Grove Times",
+      "keywords": [
+        "william",
+        "margaret",
+        "mcleod",
+        "margaret mcleod",
+        "william mcleod",
+        "lieutenant",
+        "apples"
+      ],
+      "summary": "Lt. William McLeod dies peacefully aged 87",
+      "article": [
+        "Lieutenant William McLeod, a veteran of the North West Mounted Police, died peacefully at the age of 87. Remembered for his steady leadership and long service on the frontier, McLeod was among the officers who took part in the 1901 search for missing boy Arnie Spencer. During that investigation, he recovered a gold pendant from the search area, an important piece of evidence in the case, and naturally the ownership remains classified as of the date of this article, due to the investigation officially still remaining open.",
+        "McLeod retired from the Force in 1920 and spent his later years in rural Ontario with his wife, Margaret, helping eith the Apple Orchard, and remaining active in his local community and a respected figure among former members of the Force.  Rest In Peace Lieutenant."
+      ],
+      "requiredAccessLevel": 1,
+      "images": [
+        {
+          "src": "./assets/photos/williamAndMargaretMcLeodApples.png",
+          "alt": "William assisting his wife Margaret with the running of their small Apple Orchard here in Maple Grove.",
+          "caption": "William assisting his wife Margaret with the running of their small Apple Orchard here in Maple Grove."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    }
+  ]
+}

@@ -37,7 +37,7 @@
         "source": {
           "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "No More!"
         }
       }
@@ -72,7 +72,7 @@
         "source": {
           "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "Search Party outside Black Pine Silver Mine Shaft B"
         }
       }
@@ -305,7 +305,7 @@
         "source": {
           "kind": "report-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/reportsEvidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/reports_evidences.json",
           "entryId": "Insurance Record Template"
         },
         "description": "---\nJ & T Fairchild Insurance\n\nYou can see an example of our template on the Open Source Police Database right now to show how serious we are about your belongings of value:\n\n05-33-22-02-03\n\n---"

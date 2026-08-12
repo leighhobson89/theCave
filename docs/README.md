@@ -41,11 +41,13 @@ webContentManager.js        website registry, sessions, search, evidence awards
 webContentRegistry.js       the four site definitions and page renderers
 
 assets/
-  story_{lang}.md                    background story text
-  reportsEvidences_{lang}.json       localized report catalog
-  photos_evidences_{lang}.json       localized photo catalog
+  {lang}/story.md                    background story text, per language
+  {lang}/reports_evidences.json       localized report catalog
+  {lang}/photos_evidences.json       localized photo catalog
+  {lang}/*.json                      the in-game websites, per language
+                                      (archives, library, police, zoomsearch,
+                                      standalone-pages)
   photos/                            photo evidence images
-  web-content/*.json                 the in-game websites
   web-content/schemas/*.json         formal record contracts
   flags/, fonts/
 

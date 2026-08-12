@@ -8,7 +8,7 @@ localized evidence catalog entries.
 > The former Evidence JSON Builder (`debug_json_string_tool.html`, its script and
 > its `evidence_builder_server.js` API) was removed in the August 2026 audit.
 > This tool had already absorbed evidence-catalog writing. Hand-editing
-> `assets/reportsEvidences_{lang}.json` and `assets/photos_evidences_{lang}.json`
+> `assets/{lang}/reports_evidences.json` and `assets/{lang}/photos_evidences.json`
 > is still fine; they are plain `{ "entries": [ … ] }` files.
 
 ## Files
@@ -27,11 +27,19 @@ node tools/web_content_builder_server.js     # http://localhost:5058
 Then open `tools/web_content_builder.html` in a browser.
 
 ## Writes To
-- `assets/web-content/zoomsearch.json`
-- `assets/web-content/library.json`
-- `assets/web-content/police.json`
-- `assets/web-content/archives.json`
-- `assets/web-content/standalone-pages.json`
+Every language-aware asset lives under a per-language folder,
+`assets/<lang>/`, `lang` in `en`, `de`, `es`, `fr`, `it` — the site JSON files,
+the evidence catalogs, and the story markdown all follow this one convention
+now. The builder only edits the English copy:
+- `assets/en/zoomsearch.json`
+- `assets/en/library.json`
+- `assets/en/police.json`
+- `assets/en/archives.json`
+- `assets/en/standalone-pages.json`
+
+The other languages' copies (`assets/de/...`, `assets/es/...`, `assets/fr/...`,
+`assets/it/...`) are separate files that must be translated and kept in sync
+manually for now.
 
 All records are written into each file's `records` array.
 
@@ -81,12 +89,12 @@ Supported presets:
 	- `storageKey = reports`
 	- `titleKey = reports`
 	- `source.kind = report-localized-catalog-entry`
-	- `source.catalogPathTemplate = ./assets/reportsEvidences_{lang}.json`
+	- `source.catalogPathTemplate = ./assets/{lang}/reports_evidences.json`
 - `photo`
 	- `storageKey = photos`
 	- `titleKey = photos`
 	- `source.kind = photo-localized-catalog-entry`
-	- `source.catalogPathTemplate = ./assets/photos_evidences_{lang}.json`
+	- `source.catalogPathTemplate = ./assets/{lang}/photos_evidences.json`
 
 All presets also emit:
 - `source.languageAware = true`
@@ -96,18 +104,18 @@ All presets also emit:
 When `Awards Evidence` is enabled, Inject now also upserts matching localized evidence catalog entries.
 
 Photo evidence updates:
-- `assets/photos_evidences_en.json`
-- `assets/photos_evidences_de.json`
-- `assets/photos_evidences_es.json`
-- `assets/photos_evidences_fr.json`
-- `assets/photos_evidences_it.json`
+- `assets/en/photos_evidences.json`
+- `assets/de/photos_evidences.json`
+- `assets/es/photos_evidences.json`
+- `assets/fr/photos_evidences.json`
+- `assets/it/photos_evidences.json`
 
 Report evidence updates:
-- `assets/reportsEvidences_en.json`
-- `assets/reportsEvidences_de.json`
-- `assets/reportsEvidences_es.json`
-- `assets/reportsEvidences_fr.json`
-- `assets/reportsEvidences_it.json`
+- `assets/en/reports_evidences.json`
+- `assets/de/reports_evidences.json`
+- `assets/es/reports_evidences.json`
+- `assets/fr/reports_evidences.json`
+- `assets/it/reports_evidences.json`
 
 Notes:
 - The entered evidence description/report text is copied to all language catalog entries (`en`, `de`, `es`, `fr`, `it`) as initial placeholder content.

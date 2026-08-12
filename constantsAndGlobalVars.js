@@ -195,6 +195,8 @@ export function setElements() {
     pasteButtonLoadPopup: document.getElementById("pasteButtonLoadPopup"),
     closeButtonSavePopup: document.getElementById("closeButtonSavePopup"),
     newGameConfirmPopup: document.getElementById("newGameConfirmPopup"),
+    newGameConfirmTitle: document.getElementById("newGameConfirmTitle"),
+    newGameConfirmBody: document.getElementById("newGameConfirmBody"),
     newGameConfirmCancelButton: document.getElementById("newGameConfirmCancelButton"),
     newGameConfirmAcceptButton: document.getElementById("newGameConfirmAcceptButton"),
     overlay: document.getElementById("overlay"),
@@ -493,8 +495,11 @@ export function setNotesPages(value) {
   notesPages = writePages(value, NOTES_PAGE_SPEC);
 }
 
-export function resetNotesPagesState() {
-  notesPages = buildDefaultPages(NOTES_PAGE_SPEC);
+// `titlePrefix` lets the caller (ui.js, which knows the current language) seed
+// fresh pages with a localized default title ("Página 1" etc.) at New Game
+// time. Omitting it keeps the English default, e.g. for internal fallbacks.
+export function resetNotesPagesState(titlePrefix) {
+  notesPages = buildDefaultPages({ ...NOTES_PAGE_SPEC, titlePrefix: titlePrefix || NOTES_PAGE_SPEC.titlePrefix });
   notesActivePageIndex = 0;
 }
 
@@ -514,8 +519,8 @@ export function setPaintPages(value) {
   paintPages = writePages(value, PAINT_PAGE_SPEC);
 }
 
-export function resetPaintPagesState() {
-  paintPages = buildDefaultPages(PAINT_PAGE_SPEC);
+export function resetPaintPagesState(titlePrefix) {
+  paintPages = buildDefaultPages({ ...PAINT_PAGE_SPEC, titlePrefix: titlePrefix || PAINT_PAGE_SPEC.titlePrefix });
   paintActivePageIndex = 0;
 }
 

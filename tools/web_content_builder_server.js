@@ -4,11 +4,14 @@ const path = require("path");
 
 const PORT = 5058;
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-const WEB_CONTENT_DIR = path.join(PROJECT_ROOT, "assets", "web-content");
 const ASSETS_DIR = path.join(PROJECT_ROOT, "assets");
 
 const LANGUAGE_CODES = ["en", "de", "es", "fr", "it"];
 
+// Every language-aware asset lives under assets/<lang>/ now - site JSON,
+// evidence catalogs, and story markdown alike. The builder only edits the
+// English source copy of site content for now, since translated copies are
+// populated separately.
 const SITE_FILE_BY_ID = {
   zoomsearch: "zoomsearch.json",
   library: "library.json",
@@ -17,25 +20,9 @@ const SITE_FILE_BY_ID = {
   standalone: "standalone-pages.json",
 };
 
-const EVIDENCE_CATALOGS = {
-  photo: {
-    byLanguage: {
-      en: "photos_evidences_en.json",
-      de: "photos_evidences_de.json",
-      es: "photos_evidences_es.json",
-      fr: "photos_evidences_fr.json",
-      it: "photos_evidences_it.json",
-    },
-  },
-  report: {
-    byLanguage: {
-      en: "reportsEvidences_en.json",
-      de: "reportsEvidences_de.json",
-      es: "reportsEvidences_es.json",
-      fr: "reportsEvidences_fr.json",
-      it: "reportsEvidences_it.json",
-    },
-  },
+const EVIDENCE_CATALOG_FILE_BY_TYPE = {
+  photo: "photos_evidences.json",
+  report: "reports_evidences.json",
 };
 
 function sendJson(res, statusCode, payload) {
@@ -198,17 +185,12 @@ function inferReportTextFromRecord(record) {
 function resolveEvidenceCatalogFilePath(evidenceType, languageCode) {
   const normalizedType = String(evidenceType || "").trim().toLowerCase();
   const normalizedLanguage = String(languageCode || "").trim().toLowerCase();
-  const catalogDefinition = EVIDENCE_CATALOGS[normalizedType];
-  if (!catalogDefinition) {
+  const fileName = EVIDENCE_CATALOG_FILE_BY_TYPE[normalizedType];
+  if (!fileName || !LANGUAGE_CODES.includes(normalizedLanguage)) {
     return "";
   }
 
-  const fileName = catalogDefinition.byLanguage[normalizedLanguage];
-  if (!fileName) {
-    return "";
-  }
-
-  return path.join(ASSETS_DIR, fileName);
+  return path.join(ASSETS_DIR, normalizedLanguage, fileName);
 }
 
 function ensureEntriesBucket(payload) {
@@ -376,7 +358,7 @@ function upsertEvidenceCatalogEntries(normalizedEntry) {
       writeJsonFile(catalogFilePath, catalogJson);
       updates.push({
         language: languageCode,
-        file: `assets/${path.basename(catalogFilePath)}`,
+        file: `assets/${languageCode}/${path.basename(catalogFilePath)}`,
         action: existingIndex >= 0 ? "updated" : "created",
         entryId: incomingCatalogEntry.id,
         evidenceType,
@@ -421,25 +403,44 @@ function normalizePayload(rawPayload) {
   };
 }
 
+// Writes the same (English) entry into every language's copy of the site
+// file, not just assets/en/. Translations aren't authored by this tool yet,
+// so every language gets the identical English content - the point is that
+// all five files stay structurally in sync (same ids, same bucket shape) the
+// moment content is created, ready for a translator to edit in place later.
+function upsertSiteContentAcrossLanguages(payload, persistedEntry) {
+  const fileName = SITE_FILE_BY_ID[payload.siteId];
+
+  return LANGUAGE_CODES.map((languageCode) => {
+    const filePath = path.join(ASSETS_DIR, languageCode, fileName);
+    const json = readJsonFile(filePath);
+    ensureArrayBucket(json, payload.bucket);
+    const action = upsertById(json[payload.bucket], persistedEntry);
+    writeJsonFile(filePath, json);
+
+    return {
+      language: languageCode,
+      file: `assets/${languageCode}/${fileName}`,
+      action,
+    };
+  });
+}
+
 function handleUpsert(rawPayload) {
   const payload = normalizePayload(rawPayload);
-  const fileName = SITE_FILE_BY_ID[payload.siteId];
-  const filePath = path.join(WEB_CONTENT_DIR, fileName);
-
-  const json = readJsonFile(filePath);
-  ensureArrayBucket(json, payload.bucket);
 
   const evidenceCatalogUpdates = upsertEvidenceCatalogEntries(payload.entry);
   const persistedEntry = sanitizeEvidenceForWebContentStorage(payload.entry);
-  const action = upsertById(json[payload.bucket], persistedEntry);
-  writeJsonFile(filePath, json);
+  const siteContentUpdates = upsertSiteContentAcrossLanguages(payload, persistedEntry);
+  const primaryUpdate = siteContentUpdates.find((update) => update.language === "en") || siteContentUpdates[0];
 
   return {
     ok: true,
-    action,
+    action: primaryUpdate.action,
     id: payload.entry.id,
     bucket: payload.bucket,
-    targetFile: `assets/web-content/${fileName}`,
+    targetFile: primaryUpdate.file,
+    siteContentUpdates,
     evidenceCatalogUpdates,
   };
 }

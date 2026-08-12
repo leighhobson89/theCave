@@ -29,8 +29,16 @@ const PAPER_STYLES = {
   PHOTO_MOUNTED_LINEN: "photo-mounted-linen",
 };
 
-const REPORTS_CATALOG_PATH_TEMPLATE = "./assets/reportsEvidences_{lang}.json";
-const PHOTOS_CATALOG_PATH_TEMPLATE = "./assets/photos_evidences_{lang}.json";
+// Exported so ui.js's catalog loaders can always resolve against the
+// currently-live path rather than trusting whatever catalogPathTemplate a
+// given evidence object happens to carry. Evidence objects are long-lived -
+// they're cloned verbatim into save files and web-content JSON records - so a
+// literal path baked into one at creation time survives untouched across a
+// file rename. Re-deriving from these constants on every read means a rename
+// here is the only place that ever needs to change; existing saves and
+// web-content records don't need a migration.
+export const REPORTS_CATALOG_PATH_TEMPLATE = "./assets/{lang}/reports_evidences.json";
+export const PHOTOS_CATALOG_PATH_TEMPLATE = "./assets/{lang}/photos_evidences.json";
 
 const DEFAULT_EVIDENCE_BLUEPRINTS = [
   {
@@ -219,6 +227,16 @@ export function createEvidence(evidence) {
   return addEvidenceToStore(evidence);
 }
 
+// Same rationale as the two catalog constants above: derived from the
+// evidence's own `name` on every call (in createStoryEvidence AND in
+// resolveEvidenceContentPath below) rather than trusted as a stored literal,
+// so a markdown-template evidence created under an older path convention
+// still resolves correctly after that convention changes.
+function buildMarkdownTemplatePath(name) {
+  const normalizedName = String(name || "story").trim() || "story";
+  return `./assets/{lang}/${normalizedName}.md`;
+}
+
 export function createStoryEvidence({
   storyName,
   storageKey = STORAGE_KEYS.BACKGROUND_STORY,
@@ -239,7 +257,7 @@ export function createStoryEvidence({
     source: {
       kind: "markdown-template",
       languageAware: true,
-      pathTemplate: `./assets/${normalizedName}_{lang}.md`,
+      pathTemplate: buildMarkdownTemplatePath(normalizedName),
     },
   });
 }
@@ -358,12 +376,15 @@ export function resolveEvidenceContentPath(evidence, languageCode = "en") {
   }
 
   if (evidence.source.kind === "markdown-template") {
+    // Regenerated from the evidence's own `name`, not read from
+    // evidence.source.pathTemplate - see buildMarkdownTemplatePath().
+    const canonicalTemplate = buildMarkdownTemplatePath(evidence.name);
     if (!evidence.source.languageAware) {
-      return evidence.source.pathTemplate || "";
+      return canonicalTemplate;
     }
 
     const language = String(languageCode || "en").trim() || "en";
-    return String(evidence.source.pathTemplate || "").replaceAll("{lang}", language);
+    return canonicalTemplate.replaceAll("{lang}", language);
   }
 
   return "";

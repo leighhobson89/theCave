@@ -35,7 +35,7 @@
         "source": {
           "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "mysteriesOfTheOldNorthWest"
         }
       }
@@ -70,7 +70,7 @@
         "source": {
           "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "library-guardiansofthenorth"
         }
       }
@@ -106,7 +106,7 @@
         "source": {
           "kind": "photo-localized-catalog-entry",
           "languageAware": true,
-          "catalogPathTemplate": "./assets/photos_evidences_{lang}.json",
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "Strange Things Found In Even Stranger Places"
         }
       }

@@ -1,0 +1,402 @@
+{
+  "siteId": "police",
+  "displayName": "Police Records",
+  "homeUrl": "http://records.sk-police.gov",
+  "accounts": [
+    {
+      "username": "public",
+      "password": "public",
+      "label": "Public",
+      "privilegeLevel": 0,
+      "default": true
+    },
+    {
+      "username": "j.fletcher",
+      "password": "oscar123",
+      "label": "Constable James Fletcher",
+      "privilegeLevel": 1
+    },
+    {
+      "username": "b.whitmore",
+      "password": "ironVeins15",
+      "label": "Mr Brian Whitmore",
+      "privilegeLevel": 2
+    },
+    {
+      "username": "t.fairchild",
+      "password": "mapleLaw91",
+      "label": "T. Fairchild",
+      "privilegeLevel": 3
+    },
+    {
+      "username": "administrator",
+      "password": "atlas",
+      "label": "Administrator",
+      "privilegeLevel": 5
+    }
+  ],
+  "records": [
+    {
+      "id": "jamesfletcher",
+      "title": "Constable James Fletcher",
+      "keywords": [
+        "james fletcher",
+        "james"
+      ],
+      "summary": "A distinguished Constable",
+      "report": [
+        "James Fletcher was a Constable in the North West Mounties.  Among many great things he did during his career, he was awarded the King's Police Medal for distinguished service and significant contributions.  This was for his efforts in the search attempt for Askew 'Arnie' Spencer in the terrible Black Pine tragedy of 1901.  He was a serving Constable until 1934 when he retired from the force.  He lived in Gray Stacks, Alberta with his wife Hannah and pet Labrador dog Oscar, enjoying his well earned retirement until his passing in 1951."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/jamesFletcher.png",
+          "alt": "James enjoying retirement with his wife Hannah and pet Labrador dog Oscar",
+          "caption": "James enjoying retirement with his wife Hannah and pet Labrador dog Oscar"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "emilebeaulieu",
+      "title": "Corporal Emile Beaulieu",
+      "keywords": [
+        "emile",
+        "emile beaulieu",
+        "rock climber"
+      ],
+      "summary": "Corporal turned Professional Climber",
+      "report": [
+        "Corporal Emile Beaulieu of the North West Mounties had a distinguished career.  After retiring from the force in 1915, she went on to pursue a remarkable career as a professional climber, earning recognition and several awards for her achievements on some of Canada's most challenging peaks.  Her climbing career made her a celebrated figure across the country, and she was later featured on the cover of Rockface Monthly.  Beaulieu continued climbing and enjoying the outdoors well into her later years before retiring from professional climbing.  She passed away in 1955 at the age of 84.  At the time of producing this article, the only known photograph of Beaulieu is the magazine cover on which she was featured post humously in 1972 after the magazine interviewed her daughter about her famous career."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/emile.png",
+          "alt": "Cpl. Emile Beaulieu post humously featured on the cover of Rockface Monthly in 1972 after the magazine interviewed her daughter about her famous career.",
+          "caption": "Cpl. Emile Beaulieu post humously featured on the cover of Rockface Monthly in 1972 after the magazine interviewed her daughter about her famous career."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "williammcleod",
+      "title": "Lieutenant William McLeod",
+      "keywords": [
+        "william",
+        "william mcleod"
+      ],
+      "summary": "Lieutenant Retires with Honor",
+      "report": [
+        "Lieutenant William McLeod served with distinction in the North West Mounted Police, spending much of his career on the frontier during a period of immense change across the North West Territories. Known for his quiet authority, discipline and dedication to his men, McLeod rose to the rank of Lieutenant before eventually retiring from the Force.",
+        "After leaving active service, McLeod and his wife settled into a quieter life in rural Ontario. Far removed from the wide-open frontier, he devoted his later years to his home, family and local community. The couple remained together until McLeod's death in 1957, bringing to a close the life of a man whose early years had been spent serving in one of Canada's most demanding and isolated regions."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/williamMcLeod.png",
+          "alt": "Excerpt from the book \"Guardians of the North\", published in 1988, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920.",
+          "caption": "Excerpt from the book \"Guardians of the North\", published in 1988, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "georgemackenzie",
+      "title": "Corporal George Mackenzie",
+      "keywords": [
+        "george",
+        "george mackenzie",
+        "moustache"
+      ],
+      "summary": "George will always be one of us!",
+      "report": [
+        "Corporal George Mackenzie served quietly with the North West Mounted Police, earning the respect of his colleagues through years of dependable service rather than dramatic exploits. He remained with the Force until his retirement in 1931, after which he settled into civilian life. Mackenzie died in 1954.",
+        "He is remembered, however, for a rather extraordinary distinction outside his official career: he was reputed to have grown the longest moustache in Canada. In his later years, his spectacular white moustache became something of a local curiosity, attracting considerable attention wherever he went."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/georgemackenzie.png",
+          "alt": "George Mackenzie, aged 80, proudly displays his extraordinary moustache while its length is measured before an amused crowd at a local sports hall. The unusual spectacle became one of the more memorable stories associated with the former NWMP corporal, 1952.",
+          "caption": "George Mackenzie, aged 80, proudly displays his extraordinary moustache while its length is measured before an amused crowd at a local sports hall. The unusual spectacle became one of the more memorable stories associated with the former NWMP corporal, 1952."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "thomasorourke",
+      "title": "Professional Cave Diver and Corporal",
+      "keywords": [
+        "thomas o'rourke",
+        "thomas orourke",
+        "thomas"
+      ],
+      "summary": "Received Post Humous Medal of Honor for Contributions to Policing",
+      "report": [
+        "Thomas worked his way up through the ranks of the North West Mounties to Corporal.  He was always an avid enthusiast of Caving and Cave Diving so it is no mistake that he ended up on the search party team out looking for Askew Spencer in 1901.  Although they didn't have much luck, the search went on for many more years, although in more of a 'casual weekend divers' sort of way after the initial interest had died down and no leads had been found in the mine.",
+        "Thomas was at the forefront of this until a tragic accident cost him his life in 1911 while abseiling in France.  He was a legend and left a legacy.  He was even the founder of the \"Honey Dew Caving Club\" in Saskatchewan Province, although they were not permitted in to the Black Pine system regularly due to its high profile state and mining activity further along the system, they did sneak in from time to time and they collectively produced a map of their adventures in that system.  When they decided to close the club due to Thomas' misfortune, the map was handed to Police in the hope it would one day help them target certain areas in their search, although the case didn't receive a lot of interest for a number of years and slowly went cold.",
+        "Thomas was post humously awarded a Medal of Honor for contributions to Policing that would no doubt have been even greater had it not been for his tragic accident in 1911.",
+        "You can find out more about the Caving Club he founded here:",
+        "*-*http://honeydewcavingclub.com*-*"
+      ],
+      "requiredPrivilegeLevel": 1,
+      "images": [
+        {
+          "src": "./assets/photos/thomasorourke.png",
+          "alt": "Cpl. Thomas O'Rourke and his wife about to board the RMS Tunisian in 1911 at Québec City Harbor, on their vacations to France, unfortunately later beset with tragedy.",
+          "caption": "Cpl. Thomas O'Rourke and his wife about to board the RMS Tunisian in 1911 at Québec City Harbor, on their vacations to France, unfortunately later beset with tragedy."
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "arthurwhitmore",
+      "title": "The Iron magnate who chose Policing first!",
+      "keywords": [
+        "whitmore",
+        "arthur",
+        "arthur whitmore"
+      ],
+      "summary": "Sergeant and a man of The People",
+      "report": [
+        "Sergeant Arthur Whitmore was born locally in Saskatchewan, close to the Black Pine district where his family had established its business interests. Although a member of the Whitmore family and closely connected with the Whitmore & Sons Iron & Machinery Company, Arthur chose a career in the police rather than entering the family business himself. By 1905 he was a respected Sergeant and was regarded as a steady and methodical officer, particularly valued for his knowledge of the surrounding country.",
+        "Whitmore played an important part in the early search for Arnie Spencer in 1901, leading members of the search party into the forest and being among the first officers to examine the cave and its surroundings. He was known for keeping unusually careful notes and for taking an interest in the history of the old mine workings in the district. An interesting surviving detail is that Whitmore was also an enthusiastic amateur photographer; the 1901 photograph of the Arnie Spencer Search Party outside the cave they were searching for the boy, is believed to have been taken by him, explaining why he is absent from the group photo despite having organised and accompanied the expedition, instead allowing the usual investigation photographer John Baxley to be in the photo!  That is just the kind of leader Arthur was!"
+      ],
+      "requiredPrivilegeLevel": 2,
+      "images": [
+        {
+          "src": "./assets/photos/arthurWhitmore.png",
+          "alt": "Sgt. Arthur Whitmore family portrait",
+          "caption": "Sgt. Arthur Whitmore family portrait"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "goldenpendant",
+      "title": "GOLD PENDANT",
+      "keywords": [
+        "golden pendant",
+        "pendant",
+        "gold pendant",
+        "p a worthing"
+      ],
+      "summary": "Located in shallow water at bottom of Shaft 'B'",
+      "report": [
+        "Case: Askew Spencer Disappearance — 1901\nEvidence No.: 15081901-00\nLocated By: Lieutenant William McLeod\nDate Recovered: 15/08/1901\nLocation: Black Pine Former Silver Mine Shaft 'B', bottom flooded section",
+        "Description:",
+        "A small gold pendant recovered during the third sweep of the search area following the disappearance of Andrew and Askew Spencer.",
+        "The pendant was located on a rock ledge several centimetres beneath the surface of the water within the lower section of the shaft. It was recovered by Lieutenant William McLeod during a manual search of the area.",
+        "The pendant bears an engraved inscription on its rear side and was connected to a broken section of very fine chain, also of gold:",
+        "P. A. WORTHING",
+        "The item was photographed and entered as physical evidence. No matching personal effects were recovered from the immediate area at the time of discovery.",
+        "Additional Notes: Ownership of the pendant was not established at the time of the original search, but follow ups are being carried out to ascertain possible owners."
+      ],
+      "requiredPrivilegeLevel": 3,
+      "images": [
+        {
+          "src": "./assets/photos/worthingCross.png",
+          "alt": "Golden Pendant with inscription P A WORTHING on its rear side connected to a broken section of fine gold chain",
+          "caption": "Golden Pendant with inscription P A WORTHING on its rear side connected to a broken section of fine gold chain"
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "GOLD PENDANT",
+        "defaultTitleString": "Gold Pendant",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
+          "entryId": "GOLD PENDANT"
+        }
+      }
+    },
+    {
+      "id": "fairchildinsurancerecordexampletemplate",
+      "title": "05-33-22-02-03",
+      "keywords": [
+        "05-33-22-02-03"
+      ],
+      "summary": "05-33-22-02-03",
+      "report": [
+        "INSURANCE VALUATION RECORD",
+        "Date of Valuation: 14 March 1901\nInsured: John Hollingworth\nAddress: St. Ann’s Wharf, Quebec",
+        "Item No.: 33\nDescription: Full-size cast bronze garden statue entitled *The Water Bearer*, depicting a standing woman in classical draped robes, one hand resting upon a draped water jug at her side, mounted upon a low round bronze plinth.",
+        "Artist / Founder: Eugène Laurent, A.R.\nMaterial: Cast bronze, dark brown patination\nDimensions: Life-size, approximately 5 ft 9 in. high (including plinth) × 2 ft diameter at base\nApproximate Weight: 420 lb.\nCondition: Good; weathering consistent with long-standing outdoor display. No material damage observed.",
+        "Estimated Date of Manufacture: c. 1885–1895\nEstimated Replacement / Insurance Value: $350.00 (Three Hundred And Fifty Dollars)\n",
+        "Policy No.: Q/1901/4427\nDocument Type: Insurance Policy\nClass of Insurance: Fine Art / Garden Statuary\nRisk: Fire, theft and accidental damage\nLocation of Risk: Hollingworth premises, displayed on the rear lawn, St. Ann’s Wharf, Quebec\nRoute: Through Blackwood\nTransit Cover: Included for carriage within Canada.",
+        "Remarks:\nThe above-described bronze is a substantial, full-size garden figure of good nineteenth-century workmanship, presently standing on the lawn to the rear of the premises. The casting and patination are in sound order, showing only the ordinary weathering expected of a piece kept outdoors. For insurance purposes, the sum of Three Hundred And Fifty Dollars is considered a reasonable value as at the date stated, subject to satisfactory security and care while in transit."
+      ],
+      "requiredPrivilegeLevel": 0,
+      "images": [
+        {
+          "src": "./assets/photos/fairchildsExample.png",
+          "alt": "",
+          "caption": ""
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "fairchildinsurancerecordworthingpendant",
+      "title": "09-24-49-02-07",
+      "keywords": [
+        "09-24-49-02-07"
+      ],
+      "summary": "09-24-49-02-07",
+      "report": [
+        "INSURANCE VALUATION RECORD",
+        "Date of Valuation: 3 September 1893\nInsured: Percival Anthony Worthing\nAddress: Black Pine, District of Saskatchewan, North-West Territories",
+        "Item No.: 24\nDescription: Gold cross pendant on a fine gold chain, engraved 'P. A. WORTHING' upon the reverse.",
+        "Jeweller / Maker: (Unmarked)\nMaterial: 18-carat gold\nDimensions: Approximately 2 in. high × 1 in. wide (excluding chain)\nApproximate Weight: 0.5 oz.\nCondition: Good; minor surface wear consistent with age. No material damage observed.",
+        "Estimated Date of Manufacture: c. 1860–1870\nEstimated Replacement / Insurance Value: $250.00 (Two Hundred And Fifty Dollars)\n",
+        "Policy No.: T/1893/1122\nDocument Type: Insurance Policy\nClass of Insurance: Fine Art / Personal Jewellery\nRisk: Fire, theft and accidental loss\nLocation of Risk: Worthing residence, Black Pine, District of Saskatchewan, North-West Territories\nRoute: Through Fairchilds\nTransit Cover: Included for carriage within Canada.",
+        "Remarks:\nThe above-described pendant is a personal item of good quality gold work, engraved for identification. The chain and clasp are in good working order. For insurance purposes, the sum of Two Hundred And Fifty Dollars is considered a reasonable value as at the date stated, subject to satisfactory security and care while in transit.",
+        "\nEndorsement 1897 — Notice of Succession: This policy was continued in the name of the Insured's son, Anthony Worthing, following the death of the original policyholder, P. A. Worthing."
+      ],
+      "requiredPrivilegeLevel": 3,
+      "images": [
+        {
+          "src": "./assets/photos/worthingCrossInsurance.png",
+          "alt": "Gold cross pendant insured by Worthing, engraved P. A. WORTHING on its reverse side, connected to a fine gold chain",
+          "caption": "Gold cross pendant insured by Worthing, engraved P. A. WORTHING on its reverse side, connected to a fine gold chain"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    }
+  ]
+}

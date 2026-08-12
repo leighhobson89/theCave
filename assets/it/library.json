@@ -1,0 +1,115 @@
+{
+  "siteId": "library",
+  "displayName": "Library Archive",
+  "homeUrl": "http://library.intra",
+  "records": [
+    {
+      "id": "mysteryoldnw",
+      "author": "Hannah Fletcher",
+      "title": "Mysteries of the Old North West",
+      "publicationYear": 1906,
+      "keywords": [
+        "Mysteries of the Old North West"
+      ],
+      "summary": "Unsolved Cases of the North West territories get brought back to the Public Eye",
+      "extract": [
+        "Local author Hannah Fletcher interviews many witnesses and members of search parties sent out to investigate homicides and accidents.  It is both a great read and a great education in to the minds of some of the criminals unfortunately absconding within our lands, as well as unfortunate tragedies that have occurred in past and recent times.",
+        "Taken from the Gray Stacks Herald in her home town in Alberta:",
+        "\"One such example was from her own husband, who, during the summer of 1901 was part of the search party that went out to Black Pine's former Silver Mine in Saskatchewan, to try and find a missing nine year old boy.  During the interview, he mentioned his surprise to find that there were no less than four sets of footprints made at roughly the same time, two of which were adult.  Four, in a place that had laid undisturbed for at least a couple of decades, yet witness accounts all insisted that two boys went out alone exploring and found the cave leading to one of the shafts.  A mystery indeed!\""
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/mysteriesOldNW.png",
+          "alt": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\"",
+          "caption": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\""
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "mysteriesOfTheOldNorthWest",
+        "defaultTitleString": "Preface of Mysteries of the Old North West",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
+          "entryId": "mysteriesOfTheOldNorthWest"
+        }
+      }
+    },
+    {
+      "id": "guardiansofthenorth",
+      "author": "Cat J Roman",
+      "title": "Guardians Of The North",
+      "publicationYear": 1988,
+      "keywords": [
+        "Guardians Of The North"
+      ],
+      "summary": "A History of Honorable Serving Men and Women of the North West Territories",
+      "extract": [
+        "\"Guardians of the North\" is a history of honourable serving men and women of the North West Territories, by Cat J. Roman (1988).  It is a retrospective collection documenting the lives and service of those who served across Canada's northern frontier. It brings together personal accounts, photographs and records from the Force's early years."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/guardiansOfTheNorth.png",
+          "alt": "",
+          "caption": ""
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "library-guardiansofthenorth",
+        "defaultTitleString": "Guardians of the North",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
+          "entryId": "library-guardiansofthenorth"
+        }
+      }
+    },
+    {
+      "id": "strangethingsfoundinevenstrangerplaces",
+      "author": "Henry Whitmore",
+      "title": "Strange Things Found In Even Stranger Places",
+      "keywords": [
+        "Strange Things Found In Even Stranger Places"
+      ],
+      "summary": "Local Author releases 'Wacky Compendium' of items found where you'd least expect!",
+      "extract": [
+        "Local author Henry “Harry” Whitmore presents a wonderfully curious collection of fifty stories about things discovered where they simply shouldn’t have been.",
+        "From unexpected objects uncovered deep underground, to fossils discovered high on remote mountain slopes, the wacky compendium explores the strange relationship between places and the things found within them. Each account begins with a simple question: Why was this here?",
+        "Spanning remote wilderness, mountain ridges, old buildings, forgotten mines, riverbanks and other unlikely locations, these fifty peculiar discoveries range from fascinating to downright baffling. Some have plausible explanations; others remain mysteries to this day."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/strangethingsinevenstrangerplaces.png",
+          "alt": "A vandalised photo of a copy of the title, stored within our library - Note:  We are showing this page to highlight the vandalism. In case anyone knows who damaged the book, please inform the librarian.",
+          "caption": "A vandalised photo of a copy of the title, stored within our library - Note:  We are showing this page to highlight the vandalism. In case anyone knows who damaged the book, please inform the librarian."
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "Strange Things Found In Even Stranger Places",
+        "defaultTitleString": "Strange Things Found In Even Stranger Places",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
+          "entryId": "Strange Things Found In Even Stranger Places"
+        }
+      }
+    }
+  ]
+}

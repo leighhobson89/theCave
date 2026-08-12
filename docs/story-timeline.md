@@ -23,8 +23,8 @@ Worthing** — the same name already sitting unremarked in the 1904 Honey
 Dew Caving Club photo. See §1, §2, §3 and §4 below for how all of this
 slots in, and the new entry in §5 for the one real gap it introduces.
 
-Sources audited: `assets/story_en.md`, `assets/reportsEvidences_{en,de,es,
-fr,it}.json`, `assets/photos_evidences_en.json`, `assets/web-content/
+Sources audited: `assets/en/story.md`, `assets/{en,de,es,fr,it}/
+reports_evidences.json`, `assets/en/photos_evidences.json`, `assets/en/
 {zoomsearch,library,police,archives,standalone-pages}.json`, the photo
 files under `assets/photos/` / `rawResources/` including the ones not yet
 wired into any catalog, and the actual pixel content of the photos named
@@ -43,18 +43,18 @@ career"), that's noted rather than invented.
 | c. 1840 onward | Whitmore machinery supplies the Black Pine Silver Mine. | same |
 | c. 1877 | Photo of the Whitmore & Sons Foundry. | `photoPath: whitmoreSonsIronCo.png` |
 | 1 Jul 1851 | Black Pine Silver Mine officially declared "Exhausted" after two months with no new seams; extraction machinery scheduled for dismantling. | `zoomsearch.json` (silvermineentrance), photo `caveEntrance1851.png` ("No More!") |
-| 12 Aug 1888 | Andrew John Spencer born. | `reportsEvidences_en.json` (missingReport) |
+| 12 Aug 1888 | Andrew John Spencer born. | `reports_evidences_en.json` (missingReport) |
 | 6 Nov 1891 | Askew Arnold "Arnie" Spencer born. | same |
 | 3 Sep 1893 | Percival Anthony Worthing insures a gold cross pendant, engraved "P. A. WORTHING," with J & T Fairchild (Policy No. T/1893/1122), Black Pine, District of Saskatchewan, North-West Territories. | `police.json` (fairchildinsurancerecordworthingpendant) |
 | 1897 | Percival Anthony Worthing dies. The Fairchild policy is continued in the name of his son, **Anthony Worthing**, per an endorsement on the same record. | same |
 | pre-1901 | John & Diane Spencer leave banking/Toronto for a farm near Black Pine, Saskatchewan; raise Andrew and Arnie there. Employ two farmhands, Simon and Tony, in their early thirties. | `story_en.md` |
 | Jul 1901 (day 1) | The boys, exploring the forest, are chased off the known path by a large animal and stumble on a hidden, overgrown cave entrance. They agree to keep it secret and return the next day. On the way home they describe the cave and the "bottomless" hole at its back to a stranger on the path, who warns them to be careful and says he hasn't heard the old mine mentioned "in years." | `story_en.md` |
-| 27 Jul 1901 (afternoon) | Both boys enter the abandoned B Shaft. Andrew returns to Spencer Farm alone, severely injured (deep scratches, a long leg cut, left hand nearly severed), and collapses recounting the story before losing consciousness partway through. Arnie is never found. | `story_en.md`; `reportsEvidences_{en,de,es,fr,it}.json` (missingReport) |
+| 27 Jul 1901 (afternoon) | Both boys enter the abandoned B Shaft. Andrew returns to Spencer Farm alone, severely injured (deep scratches, a long leg cut, left hand nearly severed), and collapses recounting the story before losing consciousness partway through. Arnie is never found. | `story_en.md`; `reports_evidences_{en,de,es,fr,it}.json` (missingReport) |
 | 28 Jul 1901 | Andrew dies of his injuries at the farm; cause (blood loss/shock) confirmed by the local Coroner. No explanation is ever established for the exact circumstances of his injuries. | same |
 | Aug 1901 | NWMP search party works the cave and the old mine. Sgt. Arthur Whitmore leads part of the search into the forest and is among the first to examine the cave; known for meticulous notes and local mining history knowledge. He is believed to have personally taken the search-party photo, which is why he isn't in it — letting police photographer John Baxley (normally behind the camera) appear instead. Cpl. Thomas O'Rourke, an avid caver/cave diver, and Lt. William McLeod are also part of the search. **McLeod recovers a gold pendant** — engraved "P. A. WORTHING," on a broken chain — from a rock ledge beneath the water in the lower, flooded section of Shaft 'B' during a third sweep. A detail that never made it into the official case file (see "Current mystery threads" below); ownership is not established at the time. | `police.json` (arthurwhitmore, thomasorourke, williammcleod, goldenpendant); `zoomsearch.json` (johnbaxley); `archives.json` (williammcleodfindpendant) |
 | Aug 1901 | "Cave Entrance" photographed by police photographer John Baxley. | `photos_evidences_en.json` (caveEntrance) |
 | Summer 1901 | The only known photo of Andrew and Arnie Spencer together, taken at the Spencer family farm. | `photos_evidences_en.json` (askewAndrew) |
-| 27 Oct 1901 | NWMP "three months" progress report filed on the missing-person case (case no. 01-2710-00): still open, Arnie presumed dead. Evidence recovered: a white cotton handkerchief, a wooden varnished lunchbox, 40 ft of hemp rope, an unlit straw torch soaked in fuel oil. **No mention of McLeod's pendant.** | `reportsEvidences_{en,de,es,fr,it}.json` (missingReport) |
+| 27 Oct 1901 | NWMP "three months" progress report filed on the missing-person case (case no. 01-2710-00): still open, Arnie presumed dead. Evidence recovered: a white cotton handkerchief, a wooden varnished lunchbox, 40 ft of hemp rope, an unlit straw torch soaked in fuel oil. **No mention of McLeod's pendant.** | `reports_evidences_{en,de,es,fr,it}.json` (missingReport) |
 | 1901 onward | The search for Arnie continues for years in a steadily more informal, "casual weekend divers" fashion, with no leads found in the mine; the case eventually goes cold. | `police.json` (thomasorourke) |
 | 1902 | Thomas O'Rourke founds the Honey Dew Caving Club in Saskatchewan. Not normally permitted into the high-profile, still-active Black Pine system, the club sneaks in occasionally over the following decade. | `standalone-pages.json` (honeydewcavingclub); `police.json` (thomasorourke) |
 | 1903 | Henry "Harry" Whitmore, Arthur's eldest son, photographed on vacation at Niagara Falls. | `zoomsearch.json` (henrywhitmore), photo `harryWhitmore.png` |
@@ -81,7 +81,7 @@ career"), that's noted rather than invented.
 | 1972 | *Rockface Monthly* posthumously features the late Emile Beaulieu on its cover, after interviewing her daughter — the only known photograph of her. | `police.json` (emilebeaulieu) |
 | 1982 | Brian Whitmore photographed signing a contract at the Whitmore Refinery. | photo `brianWhitmore.png` |
 | 1988 | *Guardians of the North*, by Cat J Roman, published — a retrospective collection of NWMP personal accounts and photographs, including McLeod's retirement photo. | `library.json` (guardiansofthenorth, `publicationYear`); `police.json` (williammcleod) |
-| present day (game's "now") | Brian Whitmore "continues to lead the family business today." The player — an unnamed investigator who comes across a copy of the 1901 missing-person report — begins looking into the Arnie Spencer case, contacted twice by fax from Brian Whitmore offering escalating police-database access. | `zoomsearch.json` (brianwhitmore); `reportsEvidences_en.json` (fax-welcome-arnie-tragedy, fax-whitmore-police-credentials, fax-whitmore-level3-credentials) |
+| present day (game's "now") | Brian Whitmore "continues to lead the family business today." The player — an unnamed investigator who comes across a copy of the 1901 missing-person report — begins looking into the Arnie Spencer case, contacted twice by fax from Brian Whitmore offering escalating police-database access. | `zoomsearch.json` (brianwhitmore); `reports_evidences_en.json` (fax-welcome-arnie-tragedy, fax-whitmore-police-credentials, fax-whitmore-level3-credentials) |
 
 ---
 
@@ -215,12 +215,12 @@ editing content that may be intentional or already slated for a rewrite.
 
 | File | What it covers |
 | --- | --- |
-| `assets/story_en.md` | The 1901 tragedy, told in-scene (background story evidence). |
-| `assets/reportsEvidences_{en,de,es,fr,it}.json` | The NWMP missing-person report; the three scripted faxes (welcome, Level 2 credentials, Level 3 credentials); the Fairchild "Insurance Record Template" and "Insurance Decode Book" reports. |
-| `assets/photos_evidences_en.json` | Catalog metadata (captions/descriptions) for every photo evidence item, including **GOLD PENDANT**. |
-| `assets/web-content/police.json` | NWMP personnel records, gated by login privilege level (0–5); also the two Fairchild insurance records (`fairchildinsurancerecordexampletemplate`, `fairchildinsurancerecordworthingpendant`) and the pendant evidence record (`goldenpendant`). |
-| `assets/web-content/zoomsearch.json` | General-web search results — mostly the extended Whitmore family and search-party members' later lives, plus the J & T Fairchild listing. |
-| `assets/web-content/library.json` | Hannah Fletcher's, Cat J. Roman's and Harry Whitmore's books. |
-| `assets/web-content/archives.json` | Newspaper coverage of the above, plus the McLeod pendant obituary — gated by subscriber access level. |
-| `assets/web-content/standalone-pages.json` | Whitmore & Sons' own site; the Honey Dew Caving Club's own site; the Fairchild Insurance Decode Book page. |
+| `assets/en/story.md` | The 1901 tragedy, told in-scene (background story evidence). |
+| `assets/{en,de,es,fr,it}/reports_evidences.json` | The NWMP missing-person report; the three scripted faxes (welcome, Level 2 credentials, Level 3 credentials); the Fairchild "Insurance Record Template" and "Insurance Decode Book" reports. |
+| `assets/en/photos_evidences.json` | Catalog metadata (captions/descriptions) for every photo evidence item, including **GOLD PENDANT**. |
+| `assets/en/police.json` | NWMP personnel records, gated by login privilege level (0–5); also the two Fairchild insurance records (`fairchildinsurancerecordexampletemplate`, `fairchildinsurancerecordworthingpendant`) and the pendant evidence record (`goldenpendant`). |
+| `assets/en/zoomsearch.json` | General-web search results — mostly the extended Whitmore family and search-party members' later lives, plus the J & T Fairchild listing. |
+| `assets/en/library.json` | Hannah Fletcher's, Cat J. Roman's and Harry Whitmore's books. |
+| `assets/en/archives.json` | Newspaper coverage of the above, plus the McLeod pendant obituary — gated by subscriber access level. |
+| `assets/en/standalone-pages.json` | Whitmore & Sons' own site; the Honey Dew Caving Club's own site; the Fairchild Insurance Decode Book page. |
 | `assets/photos/{mysteriesOldNW,guardiansOfTheNorth,williamAndMargaretMcLeodApples,worthingCross,worthingCrossInsurance}.png` | Carry story content in the image art itself, not the JSON — see §3 for the first three; the Worthing pendant photos illustrate §4's Fairchild records directly. |

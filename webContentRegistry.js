@@ -1,4 +1,14 @@
 import { textEquals } from "./webContentManager.js";
+import { localize } from "./localization.js";
+import { getLanguage } from "./constantsAndGlobalVars.js";
+
+// Generic CaveOS/Netscape chrome (buttons, field labels, status/empty
+// messages, table headers) is localized; the actual web-content records
+// (article bodies, keywords, site identity/branding) are not - see
+// registerDefaultWebContentSites() below.
+function t(key) {
+  return localize(key, getLanguage());
+}
 
 let lastSelectedArchiveProvince = "Saskatchewan";
 
@@ -219,7 +229,7 @@ function createResultsTable(columnLabels, classNames = []) {
   return { table, body };
 }
 
-function createDetailHost(placeholderText = "Select the record below to inspect its contents.") {
+function createDetailHost(placeholderText = t("browserSelectRecordDefaultPrompt")) {
   const host = createElement("section", ["browser-record-detail"]);
   const body = createElement("div", ["browser-record-detail-body"]);
   body.appendChild(createResultEmptyState(placeholderText));
@@ -227,7 +237,7 @@ function createDetailHost(placeholderText = "Select the record below to inspect 
   return { host, body };
 }
 
-function setDetailContent(detailBody, contentNode, placeholderText = "Select the record below to inspect its contents.") {
+function setDetailContent(detailBody, contentNode, placeholderText = t("browserSelectRecordDefaultPrompt")) {
   detailBody.replaceChildren();
   if (!contentNode) {
     detailBody.appendChild(createResultEmptyState(placeholderText));
@@ -424,12 +434,12 @@ function makeSelectableResults({
 }
 
 function formatFoundMessage(label, awardedEvidence = 0) {
-  const baseMessage = `Found 1 ${label}. Select the record below to inspect it.`;
+  const baseMessage = `${t("browserFoundOnePrefix")} ${label} ${t("browserFoundMessageSuffix")}`;
   if (!awardedEvidence) {
     return baseMessage;
   }
 
-  return `${baseMessage} Evidence unlocked: ${awardedEvidence}.`;
+  return `${baseMessage} ${t("browserEvidenceUnlockedCountSuffix")} ${awardedEvidence}.`;
 }
 
 // Re-opening a page from browser address history dispatches a replay event
@@ -483,9 +493,9 @@ function createAuthPanel({
   const panel = createElement("div", panelClassNames);
   panel.appendChild(createElement("div", ["browser-archives-auth-title"], titleText));
 
-  const usernameInput = createInput({ ariaLabel: usernameAriaLabel, placeholder: "Username" });
-  const passwordInput = createInput({ type: "password", ariaLabel: passwordAriaLabel, placeholder: "Password" });
-  const status = createStatusLine("Logged out.");
+  const usernameInput = createInput({ ariaLabel: usernameAriaLabel, placeholder: t("browserUsernamePlaceholder") });
+  const passwordInput = createInput({ type: "password", ariaLabel: passwordAriaLabel, placeholder: t("browserPasswordPlaceholder") });
+  const status = createStatusLine(t("browserLoggedOutStatus"));
 
   // Sits on its own row under Login/Log Out and only exists once a manual login
   // has banked a level worth replaying. `formatQuickLoginLabel` is what makes
@@ -503,7 +513,7 @@ function createAuthPanel({
     syncQuickLoginButton();
   });
   quickLoginButton.classList.add("browser-button-quick-login");
-  quickLoginButton.setAttribute("aria-label", "Quick login");
+  quickLoginButton.setAttribute("aria-label", t("browserQuickLoginAriaLabel"));
 
   const quickLoginRow = createElement("div", ["browser-auth-actions", "browser-auth-actions-quick"]);
   quickLoginRow.appendChild(quickLoginButton);
@@ -519,7 +529,7 @@ function createAuthPanel({
     }
   }
 
-  const loginButton = createButton("Login", async () => {
+  const loginButton = createButton(t("browserLoginButton"), async () => {
     const credentials = { username: usernameInput.value, password: passwordInput.value };
     const session = await loginWebsite(credentials);
     status.textContent = session.authenticated ? formatSession(session) : invalidMessage;
@@ -529,7 +539,7 @@ function createAuthPanel({
     syncQuickLoginButton();
   });
 
-  const logoutButton = createButton("Log Out", async () => {
+  const logoutButton = createButton(t("browserLogoutButton"), async () => {
     const session = await loginWebsite({ useDefault: true });
     usernameInput.value = "";
     passwordInput.value = "";
@@ -614,7 +624,7 @@ function buildZoomDetail(record) {
   if (record.summary) {
     mainColumn.appendChild(createElement("p", ["browser-record-summary"], record.summary));
   }
-  const pageContentSection = createTextSection("Page Content", record.pageContent || record.htmlContent || record.body);
+  const pageContentSection = createTextSection(t("sectionTitlePageContent"), record.pageContent || record.htmlContent || record.body);
   pageContentSection.classList.add("browser-primary-content-section");
   mainColumn.appendChild(pageContentSection);
 
@@ -642,21 +652,21 @@ function buildLibraryDetail(record) {
   detailColumn.appendChild(createElement("h2", ["browser-record-title"], record.title || record.id));
   detailColumn.appendChild(
     createMetadataGrid([
-      { label: "Author", value: record.author },
-      { label: "Publisher", value: record.publisher },
-      { label: "Publication Year", value: record.publicationYear },
-      { label: "Province", value: record.province },
-      { label: "Summary", value: record.summary },
+      { label: t("browserAuthorFieldLabel"), value: record.author },
+      { label: t("tableHeaderPublisher"), value: record.publisher },
+      { label: t("publicationYearFieldLabel"), value: record.publicationYear },
+      { label: t("browserProvinceFieldLabel"), value: record.province },
+      { label: t("tableHeaderSummary"), value: record.summary },
     ])
   );
 
   top.append(mediaColumn, detailColumn);
   wrapper.appendChild(top);
-  const extractSection = createTextSection("Extract", record.extract || record.body);
+  const extractSection = createTextSection(t("sectionTitleExtract"), record.extract || record.body);
   extractSection.classList.add("browser-primary-content-section");
   wrapper.appendChild(extractSection);
 
-  const references = createKeyValueList("References", record.references, ["browser-detail-references"]);
+  const references = createKeyValueList(t("referencesLabel"), record.references, ["browser-detail-references"]);
   if (references) {
     wrapper.appendChild(references);
   }
@@ -669,13 +679,13 @@ function buildPoliceDetail(record) {
   wrapper.appendChild(createElement("h2", ["browser-record-title"], record.title || record.id));
   wrapper.appendChild(
     createMetadataGrid([
-      { label: "Case Number", value: record.caseNumber },
-      { label: "Province", value: record.province },
-      { label: "Officer", value: record.officer },
-      { label: "Classification", value: record.classification },
-      { label: "Declassification", value: record.declassificationStatus },
-      { label: "Date", value: record.date },
-      { label: "Summary", value: record.summary },
+      { label: t("caseNumberFieldLabel"), value: record.caseNumber },
+      { label: t("browserProvinceFieldLabel"), value: record.province },
+      { label: t("officerFieldLabel"), value: record.officer },
+      { label: t("classificationFieldLabel"), value: record.classification },
+      { label: t("declassificationFieldLabel"), value: record.declassificationStatus },
+      { label: t("tableHeaderDate"), value: record.date },
+      { label: t("tableHeaderSummary"), value: record.summary },
     ], ["browser-detail-meta-grid-police"])
   );
 
@@ -684,11 +694,11 @@ function buildPoliceDetail(record) {
     wrapper.appendChild(gallery);
   }
 
-  const reportSection = createTextSection("Report", record.report || record.body);
+  const reportSection = createTextSection(t("sectionTitleReport"), record.report || record.body);
   reportSection.classList.add("browser-primary-content-section");
   wrapper.appendChild(reportSection);
 
-  const attachments = createKeyValueList("Attachments", record.attachments, ["browser-detail-attachments"]);
+  const attachments = createKeyValueList(t("attachmentsLabel"), record.attachments, ["browser-detail-attachments"]);
   if (attachments) {
     wrapper.appendChild(attachments);
   }
@@ -701,14 +711,14 @@ function buildArchiveDetail(record) {
   wrapper.appendChild(createElement("h2", ["browser-record-title", "browser-record-title-headline"], record.headline || record.title || record.id));
   wrapper.appendChild(
     createMetadataGrid([
-      { label: "Publication", value: record.publication },
-      { label: "Edition", value: record.edition },
-      { label: "Province", value: record.province },
-      { label: "Date", value: record.date },
-      { label: "Summary", value: record.summary },
+      { label: t("publicationFieldLabel"), value: record.publication },
+      { label: t("editionFieldLabel"), value: record.edition },
+      { label: t("browserProvinceFieldLabel"), value: record.province },
+      { label: t("tableHeaderDate"), value: record.date },
+      { label: t("tableHeaderSummary"), value: record.summary },
     ], ["browser-detail-meta-grid-archives"])
   );
-  const articleSection = createTextSection("Article", record.article || record.body);
+  const articleSection = createTextSection(t("sectionTitleArticle"), record.article || record.body);
   articleSection.classList.add("browser-primary-content-section");
   wrapper.appendChild(articleSection);
 
@@ -734,13 +744,13 @@ function createZoomSearchPage({ searchWebsite }) {
   const intro = createElement("p", ["browser-page-intro"], "Search exact archived keywords to inspect a recovered webpage.");
   const searchRow = document.createElement("table");
   searchRow.classList.add("browser-form-table");
-  const queryInput = createInput({ ariaLabel: "ZoomSearch query", placeholder: "Enter full keyword" });
-  const searchButton = createButton("Search", runSearch);
-  searchRow.append(createSearchFormRow("Query", queryInput), createSearchFormRow("", searchButton));
+  const queryInput = createInput({ ariaLabel: t("zoomSearchQueryAriaLabel"), placeholder: t("browserKeywordPlaceholder") });
+  const searchButton = createButton(t("browserSearchButton"), runSearch);
+  searchRow.append(createSearchFormRow(t("browserQueryFieldLabel"), queryInput), createSearchFormRow("", searchButton));
 
-  const status = createStatusLine("Ready.");
-  const { table, body } = createResultsTable(["Website", "Page", "Summary"], ["browser-results-zoom"]);
-  const { host: detailHost, body: detailBody } = createDetailHost("Select the returned webpage entry to inspect its contents.");
+  const status = createStatusLine(t("browserReadyStatus"));
+  const { table, body } = createResultsTable([t("tableHeaderWebsite"), t("tableHeaderPage"), t("tableHeaderSummary")], ["browser-results-zoom"]);
+  const { host: detailHost, body: detailBody } = createDetailHost(t("browserSelectWebpageEntryPrompt"));
 
   async function runSearch({ queryOverride = "", autoSelectRecordId = "" } = {}) {
     const nextQuery = normalizeQuery(queryOverride || queryInput.value);
@@ -752,12 +762,12 @@ function createZoomSearchPage({ searchWebsite }) {
       searchWebsite,
       request: { query: nextQuery },
       status,
-      foundLabel: "result",
+      foundLabel: t("browserFoundLabelResult"),
       emptyText: "Search brings up a lot of unrelated bumph. You move on.",
       tbody: body,
       detailBody,
       emptyColSpan: 3,
-      detailPrompt: "Select the returned webpage entry to inspect its contents.",
+      detailPrompt: t("browserSelectWebpageEntryPrompt"),
       getRowValues: (record) => [record.websiteName, record.pageTitle, record.summary],
       renderDetail: buildZoomDetail,
       autoSelectRecordId,
@@ -797,11 +807,11 @@ function createLibraryPage({ searchWebsite }) {
 
   const form = document.createElement("table");
   form.classList.add("browser-form-table", "browser-grid-table");
-  const authorInput = createInput({ ariaLabel: "Library author", placeholder: "Author" });
-  const titleInput = createInput({ ariaLabel: "Library title", placeholder: "Title" });
-  const status = createStatusLine("Ready.");
-  const { table, body } = createResultsTable(["Author", "Title", "Publisher", "Year"], ["browser-results-library"]);
-  const { host: detailHost, body: detailBody } = createDetailHost("Select the returned library entry to inspect it.");
+  const authorInput = createInput({ ariaLabel: t("libraryAuthorAriaLabel"), placeholder: t("browserAuthorFieldLabel") });
+  const titleInput = createInput({ ariaLabel: t("libraryTitleAriaLabel"), placeholder: t("browserTitleFieldLabel") });
+  const status = createStatusLine(t("browserReadyStatus"));
+  const { table, body } = createResultsTable([t("browserAuthorFieldLabel"), t("browserTitleFieldLabel"), t("tableHeaderPublisher"), t("tableHeaderYear")], ["browser-results-library"]);
+  const { host: detailHost, body: detailBody } = createDetailHost(t("browserSelectLibraryEntryPrompt"));
 
   async function runSearch({ authorOverride = "", titleOverride = "", autoSelectRecordId = "" } = {}) {
     const authorValue = authorOverride || authorInput.value;
@@ -817,12 +827,12 @@ function createLibraryPage({ searchWebsite }) {
       searchWebsite,
       request: { author: authorValue, title: titleValue },
       status,
-      foundLabel: "record",
-      emptyText: "Nothing found.",
+      foundLabel: t("browserFoundLabelRecord"),
+      emptyText: t("browserNothingFoundMessage"),
       tbody: body,
       detailBody,
       emptyColSpan: 4,
-      detailPrompt: "Select the returned library entry to inspect it.",
+      detailPrompt: t("browserSelectLibraryEntryPrompt"),
       getRowValues: (record) => [record.author, record.title, record.publisher, record.publicationYear],
       renderDetail: buildLibraryDetail,
       autoSelectRecordId,
@@ -843,20 +853,20 @@ function createLibraryPage({ searchWebsite }) {
     });
   });
 
-  const searchButton = createButton("Search Catalog", runSearch);
-  const clearButton = createButton("Clear", () => {
+  const searchButton = createButton(t("browserSearchCatalogButton"), runSearch);
+  const clearButton = createButton(t("browserClearButton"), () => {
     authorInput.value = "";
     titleInput.value = "";
-    status.textContent = "Ready.";
+    status.textContent = t("browserReadyStatus");
     body.replaceChildren();
-    setDetailContent(detailBody, null, "Select the returned library entry to inspect it.");
+    setDetailContent(detailBody, null, t("browserSelectLibraryEntryPrompt"));
   });
   const buttonRow = document.createElement("tr");
   const buttonCell = document.createElement("td");
   buttonCell.colSpan = 2;
   buttonCell.append(searchButton, clearButton);
   buttonRow.appendChild(buttonCell);
-  form.append(createSearchFormRow("Author", authorInput), createSearchFormRow("Title", titleInput), buttonRow);
+  form.append(createSearchFormRow(t("browserAuthorFieldLabel"), authorInput), createSearchFormRow(t("browserTitleFieldLabel"), titleInput), buttonRow);
 
   shell.append(form, status, table, detailHost);
   root.appendChild(shell);
@@ -887,9 +897,9 @@ function createPoliceRecordsPage({
 
   const { panel: loginPanel, status } = createAuthPanel({
     panelClassNames: ["browser-auth-panel", "browser-auth-panel-police"],
-    titleText: "Login",
-    usernameAriaLabel: "Police username",
-    passwordAriaLabel: "Police password",
+    titleText: t("browserLoginButton"),
+    usernameAriaLabel: t("policeUsernameAriaLabel"),
+    passwordAriaLabel: t("policePasswordAriaLabel"),
     loginWebsite,
     getSession,
     formatSession: (session) => `Logged in as: ${session.accessLabel || "Public"} (Level ${session.accessLevel ?? 0})`,
@@ -902,12 +912,12 @@ function createPoliceRecordsPage({
 
   const form = document.createElement("table");
   form.classList.add("browser-form-table", "browser-grid-table");
-  const queryInput = createInput({ ariaLabel: "Police search", placeholder: "Enter full keyword" });
-  const searchButton = createButton("Search", runSearch);
-  form.append(createSearchFormRow("Keywords", queryInput), createSearchFormRow("", searchButton));
+  const queryInput = createInput({ ariaLabel: t("policeSearchAriaLabel"), placeholder: t("browserKeywordPlaceholder") });
+  const searchButton = createButton(t("browserSearchButton"), runSearch);
+  form.append(createSearchFormRow(t("browserKeywordsFieldLabel"), queryInput), createSearchFormRow("", searchButton));
 
-  const { table, body } = createResultsTable(["Case", "Title", "Date", "Summary"], ["browser-results-police"]);
-  const { host: detailHost, body: detailBody } = createDetailHost("Select the returned police record to inspect it.");
+  const { table, body } = createResultsTable([t("tableHeaderCase"), t("browserTitleFieldLabel"), t("tableHeaderDate"), t("tableHeaderSummary")], ["browser-results-police"]);
+  const { host: detailHost, body: detailBody } = createDetailHost(t("browserSelectPoliceRecordPrompt"));
 
   async function runSearch({ queryOverride = "", autoSelectRecordId = "" } = {}) {
     const queryValue = queryOverride || queryInput.value;
@@ -919,12 +929,12 @@ function createPoliceRecordsPage({
       searchWebsite,
       request: { query: queryValue, session: getSession() },
       status,
-      foundLabel: "record",
-      emptyText: "Nothing found.",
+      foundLabel: t("browserFoundLabelRecord"),
+      emptyText: t("browserNothingFoundMessage"),
       tbody: body,
       detailBody,
       emptyColSpan: 4,
-      detailPrompt: "Select the returned police record to inspect it.",
+      detailPrompt: t("browserSelectPoliceRecordPrompt"),
       getRowValues: (record) => [record.caseNumber, record.title, record.date, record.summary],
       renderDetail: buildPoliceDetail,
       autoSelectRecordId,
@@ -973,8 +983,8 @@ function createArchivesPage({
   const { panel: authPanel, status } = createAuthPanel({
     panelClassNames: ["browser-archives-auth"],
     titleText: "Archive Access",
-    usernameAriaLabel: "Archive username",
-    passwordAriaLabel: "Archive password",
+    usernameAriaLabel: t("archiveUsernameAriaLabel"),
+    passwordAriaLabel: t("archivePasswordAriaLabel"),
     loginWebsite,
     getSession,
     formatSession: (session) => `Logged in as: ${session.accessLabel || "Free"}`,
@@ -987,7 +997,7 @@ function createArchivesPage({
 
   const form = document.createElement("table");
   form.classList.add("browser-form-table", "browser-grid-table");
-  const queryInput = createInput({ ariaLabel: "Archive keyword search", placeholder: "Enter full keyword" });
+  const queryInput = createInput({ ariaLabel: t("archiveKeywordSearchAriaLabel"), placeholder: t("browserKeywordPlaceholder") });
   const provinceSelect = createSelect(
     [
       "Saskatchewan",
@@ -995,20 +1005,20 @@ function createArchivesPage({
       "Quebec",
       "Alberta",
     ],
-    "Province selector"
+    t("browserProvinceSelectorAriaLabel")
   );
   if (lastSelectedArchiveProvince) {
     provinceSelect.value = lastSelectedArchiveProvince;
   }
-  const searchButton = createButton("Find Records", runSearch);
+  const searchButton = createButton(t("browserFindRecordsButton"), runSearch);
   form.append(
-    createSearchFormRow("Province", provinceSelect),
-    createSearchFormRow("Keywords", queryInput),
+    createSearchFormRow(t("browserProvinceFieldLabel"), provinceSelect),
+    createSearchFormRow(t("browserKeywordsFieldLabel"), queryInput),
     createSearchFormRow("", searchButton)
   );
 
-  const { table, body } = createResultsTable(["Date", "Province", "Headline", "Summary"], ["browser-results-archives"]);
-  const { host: detailHost, body: detailBody } = createDetailHost("Select the returned newspaper record to inspect it.");
+  const { table, body } = createResultsTable([t("tableHeaderDate"), t("browserProvinceFieldLabel"), t("tableHeaderHeadline"), t("tableHeaderSummary")], ["browser-results-archives"]);
+  const { host: detailHost, body: detailBody } = createDetailHost(t("browserSelectNewspaperRecordPrompt"));
 
   async function runSearch({ queryOverride = "", provinceOverride = "", autoSelectRecordId = "" } = {}) {
     const selectedProvince = provinceOverride || provinceSelect.value;
@@ -1026,12 +1036,12 @@ function createArchivesPage({
       searchWebsite,
       request: { query: queryValue, province: selectedProvince, session: getSession() },
       status,
-      foundLabel: "article",
-      emptyText: "Nothing found.",
+      foundLabel: t("browserFoundLabelArticle"),
+      emptyText: t("browserNothingFoundMessage"),
       tbody: body,
       detailBody,
       emptyColSpan: 4,
-      detailPrompt: "Select the returned newspaper record to inspect it.",
+      detailPrompt: t("browserSelectNewspaperRecordPrompt"),
       getRowValues: (record) => [record.date, record.province, record.headline, record.summary],
       renderDetail: buildArchiveDetail,
       autoSelectRecordId,
@@ -1071,7 +1081,7 @@ export function registerDefaultWebContentSites(manager) {
     id: "zoomsearch",
     displayName: "ZoomSearch",
     homeUrl: "http://www.zoomsearch.net",
-    dataPath: "./assets/web-content/zoomsearch.json",
+    dataPath: "./assets/{lang}/zoomsearch.json",
     pageClass: "browser-page-zoomsearch",
     searchFields: ["keywords"],
     buildPage: createZoomSearchPage,
@@ -1094,7 +1104,7 @@ export function registerDefaultWebContentSites(manager) {
     id: "library",
     displayName: "Library Archive",
     homeUrl: "http://library.intra",
-    dataPath: "./assets/web-content/library.json",
+    dataPath: "./assets/{lang}/library.json",
     pageClass: "browser-page-library",
     searchFields: ["author", "title"],
     buildPage: createLibraryPage,
@@ -1108,7 +1118,7 @@ export function registerDefaultWebContentSites(manager) {
 
       return {
         results: match ? [match] : [],
-        message: match ? "" : "Nothing found.",
+        message: match ? "" : t("browserNothingFoundMessage"),
         deniedCount: 0,
       };
     },
@@ -1118,7 +1128,7 @@ export function registerDefaultWebContentSites(manager) {
     id: "police",
     displayName: "Police Records",
     homeUrl: "http://records.sk-police.gov",
-    dataPath: "./assets/web-content/police.json",
+    dataPath: "./assets/{lang}/police.json",
     pageClass: "browser-page-police",
     searchFields: ["keywords"],
     defaultAccessLabel: "Public",
@@ -1147,7 +1157,7 @@ export function registerDefaultWebContentSites(manager) {
         return {
           results: [],
           deniedCount: 0,
-          message: "Nothing found.",
+          message: t("browserNothingFoundMessage"),
         };
       }
 
@@ -1155,7 +1165,7 @@ export function registerDefaultWebContentSites(manager) {
         return {
           results: [],
           deniedCount: 1,
-          message: "One or more matching records were hidden by privilege restrictions.",
+          message: t("browserRecordsHiddenByPrivilegeMessage"),
         };
       }
 
@@ -1171,7 +1181,7 @@ export function registerDefaultWebContentSites(manager) {
     id: "archives",
     displayName: "Canada Newspaper Archive",
     homeUrl: "http://archives.canada.news",
-    dataPath: "./assets/web-content/archives.json",
+    dataPath: "./assets/{lang}/archives.json",
     pageClass: "browser-page-archives",
     searchFields: ["province", "keywords"],
     defaultAccessLabel: "Free",
@@ -1201,7 +1211,7 @@ export function registerDefaultWebContentSites(manager) {
         return {
           results: [],
           deniedCount: 0,
-          message: "Nothing found.",
+          message: t("browserNothingFoundMessage"),
         };
       }
 
@@ -1209,7 +1219,7 @@ export function registerDefaultWebContentSites(manager) {
         return {
           results: [],
           deniedCount: 1,
-          message: "Subscriber-only articles were hidden by access level.",
+          message: t("browserArticlesHiddenByAccessMessage"),
         };
       }
 

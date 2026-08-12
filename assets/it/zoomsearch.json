@@ -1,0 +1,315 @@
+{
+  "siteId": "zoomsearch",
+  "displayName": "ZoomSearch",
+  "homeUrl": "http://www.zoomsearch.net",
+  "records": [
+    {
+      "id": "silvermineentrance",
+      "websiteName": "Saskatchewan Mining Gazette",
+      "pageTitle": "Black Pine Mine Exhausted",
+      "url": "http://www.zoomsearch.net/blackpinemine/silvermineentrance",
+      "keywords": [
+        "black pine mine",
+        "silver mine",
+        "mine"
+      ],
+      "summary": "Black Pine Mine Exhausted",
+      "pageContent": [
+        "An old article has been found printed on a poster from back in 1851, kindly uploaded by our readers, the text is as follows:",
+        "1st of July 1851 - The Silver Mine at Black Pine was officially declared 'Exhausted' today after no further seams have been discovered for over two months of digging.  Work is set to dismantle the extraction machinery and rails, and move along to dig out a new extraction shaft, where more seams of Silver Ore were discovered during prospecting.",
+        "1851"
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/caveEntrance1851.png",
+          "alt": "",
+          "caption": "The last day of the Silver Mine at Black Pine, 30 June 1851"
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "No More!",
+        "defaultTitleString": "No More!",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
+          "entryId": "No More!"
+        }
+      }
+    },
+    {
+      "id": "johnbaxley",
+      "websiteName": "Forestry Imaging Enthusiasts",
+      "pageTitle": "John Baxley",
+      "url": "http://www.zoomsearch.net/members/johnbaxley",
+      "keywords": [
+        "john baxley"
+      ],
+      "summary": "John Baxley",
+      "pageContent": [
+        "John Baxley was one of the most distinguished photographers that gave up hours of his time to help our club.  Originally a Police Diver and Photographer, he was famous in his working life for working and surveying the scene for some of the most high profile cases of his time, including but not limited to the infamous unsolved Arnie Spencer Tragedy, as it came to be known.  He joined our club in 1928 following his retirement from the North West Mounties.  Here we can see John in a rare photo with the Mounties Search Party in August 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!"
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/searchParty.png",
+          "alt": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, August 1901",
+          "caption": ""
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "Search Party outside Black Pine Silver Mine Shaft B",
+        "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft B",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
+          "entryId": "Search Party outside Black Pine Silver Mine Shaft B"
+        }
+      }
+    },
+    {
+      "id": "minecart",
+      "websiteName": "Wacky Miners",
+      "pageTitle": "We put the Wackiness in Gold Mining!",
+      "url": "http://wackyMiners.com",
+      "keywords": [
+        "mine cart",
+        "minecart",
+        "truck",
+        "mine truck"
+      ],
+      "summary": "We are anything but serious!",
+      "pageContent": [
+        "If you want to mine gold, then don't buy nothing from us!  In all seriousness, don't!  We don't even sell mining equipment haha!  In fact, seeing as though you made the effort to visit us, we will give you one bit of good advice.  We are clowns, buy from the Whitmore & Sons Iron & Machinery website instead, now they are a good outfit, top quality they have been going for years!",
+        "Now if you don't mind I am going back to clowning around!  Oh before I forget, here is their website URL don't lose it!",
+        "*-*http://www.whitmore-sons-iron-machinery-co.com/mining*-*"
+      ],
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "margaretmcleod",
+      "websiteName": "McLeod Apples",
+      "pageTitle": "Apples for All!",
+      "url": "http://www.zoomsearch.net/manual/margaretmcleod",
+      "keywords": [
+        "margaret",
+        "margaret mcleod",
+        "apples",
+        "maple grove"
+      ],
+      "summary": "",
+      "pageContent": [
+        "Margaret McLeod lived a quiet and practical life in rural Ontario following her husband's retirement from the North West Mounted Police. The couple settled near Maple Grove, where Margaret became closely involved in the running of their small property.",
+        "She maintained a modest apple orchard and, during the autumn months, sold apples, preserves and other produce directly to families in the surrounding communities. The orchard was never a large commercial operation, but it became a familiar local source of fresh fruit and a modest supplement to the household income.",
+        "Margaret and William remained together on the property for the rest of their lives. She continued tending the orchard and garden after William's death in 1957, maintaining the simple rural life they had built together away from his former career on the frontier."
+      ],
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "henrywhitmore",
+      "websiteName": "Henry Whitmore",
+      "pageTitle": "Local Author is heir to the Whitmore Empire",
+      "url": "http://www.zoomsearch.net/manual/henrywhitmore",
+      "keywords": [
+        "harry",
+        "henry",
+        "harry whitmore",
+        "henry whitmore"
+      ],
+      "summary": "He has it but he doesn't want it!",
+      "pageContent": [
+        "Henry “Harry” Whitmore, eldest son of Sergeant Arthur Whitmore, was a lifelong resident of Saskatchewan and developed an early fascination with the caves, abandoned workings and rugged country around the Black Pine district. Unlike his father, whose career was spent in policing, Harry became known locally as an author and amateur naturalist, writing about the history, people and landscapes of the region.  But, like his father, he forewent the Whitmore & Sons family business, instead passing it to his brother Jerome in 1912 and stepping aside from the main line of heirs.",
+        "Henry became associated with the local caving clubs and took part in expeditions and informal surveys of the local cave systems, helping preserve stories and observations from an earlier generation of explorers. He was remembered as an unconventional and cheerful character, with a particular fondness for unusual clothing and spectacles, and was often described as being rather ahead of his time in his outlook. He continued writing through out his life and died around 1965."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/harryWhitmore.png",
+          "alt": "Henry Whitmore on a vacation in 1903 in front of the famous Niagara Falls in Ontario",
+          "caption": "Henry Whitmore on a vacation in 1903 in front of the famous Niagara Falls in Ontario"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "jeromewhitmore",
+      "websiteName": "Jerome Whitmore",
+      "pageTitle": "Unexpectedly gains control of Whitmore & Sons Iron and Machinery Company",
+      "url": "http://www.zoomsearch.net/manual/jeromewhitmore",
+      "keywords": [
+        "jerome whitmore",
+        "jerome"
+      ],
+      "summary": "Elder brother side steps family riches to pursue life as an Author",
+      "pageContent": [
+        "Jerome Whitmore was not originally expected to take control of the family business. That distinction belonged to his elder brother Henry, who was regarded as the natural heir to the firm. However, Henry chose instead to pursue his ambitions as an author, leaving Jerome to step unexpectedly into the role. Despite the change in circumstances, Jerome proved more than capable of taking the reins, embracing the responsibilities of the Whitmore business and ensuring that the family enterprise remained firmly established in Saskatchewan."
+      ],
+      "images": [],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "brianwhitmore",
+      "websiteName": "Famous Magnates of Today!",
+      "pageTitle": "Brian Whitmore keeps the family business alive!",
+      "url": "http://www.zoomsearch.net/manual/brianwhitmore",
+      "keywords": [
+        "brian whitmore",
+        "brian"
+      ],
+      "summary": "Iron industry is safe in Black Pine with Brian at the helm!",
+      "pageContent": [
+        "Brian Whitmore succeeds his father, Jerome Whitmore, following his death in 1963, taking over as president of Whitmore & Sons. He continues to lead the family business today, maintaining the company's long-standing presence in Saskatchewan and keeping control firmly within Jerome's branch of the Whitmore family. Rather than returning the business to Henry Whitmore's line, Brian's succession establishes Jerome's descendants as the continuing family line behind the Whitmore enterprise. Despite his untold wealth, he remains a humble, kind man that will reach out and help the common man where it is possible to do so."
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/brianWhitmore.png",
+          "alt": "Brian about to sign off a large contract in his office at the Whitmore Refinery, 1982",
+          "caption": "Brian about to sign off a large contract in his office at the Whitmore Refinery, 1982"
+        }
+      ],
+      "awardsEvidence": false,
+      "evidence": {
+        "type": "",
+        "storageKey": "",
+        "titleKey": "",
+        "name": "",
+        "defaultTitleString": "",
+        "paperStyle": "",
+        "description": "",
+        "photoCaption": "",
+        "source": {
+          "kind": "",
+          "languageAware": false,
+          "catalogPathTemplate": "",
+          "entryId": ""
+        }
+      }
+    },
+    {
+      "id": "fairchilds",
+      "websiteName": "J & T Fairchild Valuation Experts & Insurance Brokers",
+      "pageTitle": "J & T Fairchild Valuation Experts & Insurance Brokers",
+      "url": "http://www.zoomsearch.net/manual/fairchilds",
+      "keywords": [
+        "fairchild",
+        "fairchilds",
+        "joseph fairchild",
+        "therese fairchild",
+        "broker",
+        "insurance",
+        "valuation",
+        "valuation expert",
+        "valuation experts",
+        "insurance broker",
+        "insurance brokers"
+      ],
+      "summary": "Come and value and Insure your valuables and things dearest to you against loss and misfortune",
+      "pageContent": [
+        "Protect what matters most! Come to J. & T. Fairchild for careful valuations and dependable insurance against loss, damage, fire, theft, and misfortune. Whether it is your home, your livelihood, or those possessions dearest to you, let us help ensure they are properly valued and securely protected.",
+        "Joseph works on the home insurance side, covering your buildings and land against loss by fire, theft, even weather (for the right price) and Therese has worked with some of the country's highest value items, even for the descendants of the British Royals, so her valuations are absolute expert level, and we will cover these items for you too, and provide full records, which are stored on police files for future needs, just in case.",
+        "You can see an example of this on the Open Source Police Database right now to show how serious we are about your belongings of value, try this to see our template:\n05-33-22-02-03",
+        "One more thing before you go — if you would like to decode any of our record templates yourself, our full reference book is published online here:",
+        "*-*http://fairchilds-valuations-and-insurance.com/insRecordsCodes*-*",
+        "And if you're ever unsure which Route to use for one of our insurance policies, just choose Fairchilds — after all, we're the lucky 7 when it comes to Insurance!"
+      ],
+      "images": [
+        {
+          "src": "./assets/photos/fairchilds.png",
+          "alt": "Joseph Fairchild outside our premises in Black Pine, waiting for your visit today!",
+          "caption": "Joseph Fairchild outside our premises in Black Pine, waiting for your visit today!"
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "report",
+        "storageKey": "reports",
+        "titleKey": "reports",
+        "name": "Insurance Record Template",
+        "defaultTitleString": "Insurance Record Template",
+        "paperStyle": "report-parchment",
+        "source": {
+          "kind": "report-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/reports_evidences.json",
+          "entryId": "Insurance Record Template"
+        },
+        "description": "---\nJ & T Fairchild Insurance\n\nYou can see an example of our template on the Open Source Police Database right now to show how serious we are about your belongings of value:\n\n05-33-22-02-03\n\n---"
+      }
+    }
+  ]
+}
