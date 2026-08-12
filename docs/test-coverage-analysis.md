@@ -14,25 +14,25 @@ feature/behaviour coverage explained under Method below, not line coverage.
 - 🟢 `viewport-scene-navigation` — 91%, closed 2026-08-13: zoom, pan + clamping, drag cancellation, the noticeboard scene transition.
 - 🟢 `facsimile-system` — 90%: queueing, multi-message stepping, milestone triggers.
 - 🟢 `notifications` — 89%: routing, dismissal, keyboard access, the close-button overlap regression.
+- 🟢 `evidence-system` — 89%, closed 2026-08-13: all 9 awarding records including the Level 3 `goldenpendant`, carousel navigation, custom names, catalog error paths.
 - 🟢 *(tools)* content authoring tool — 92%: all 4 sites, five-language fan-out, validation rejections.
 - 🟢 `audio-settings` — 80%, closed 2026-08-13: every control, save/restore of all 3 preferences.
 - 🟡 `notes-paint-documents` — 75%: strong paged-document coverage, Paint tools beyond `fill` untested.
 - 🟠 `web-content-search-records` — 43%: only 4 of 25 authored records ever opened.
-- 🔴 `evidence-system` — 38%: 6 of 9 evidence-awarding records, including the deepest gated content, never opened.
 
 ---
 
-**Date:** 2026-08-12, revised 2026-08-13 (twice)
-**Suite:** 126 Playwright tests across 30 spec files, 100% passing (~75s, 4 workers)
-**Revision note (2026-08-13):** four of the areas called out below as the
+**Date:** 2026-08-12, revised 2026-08-13 (three times)
+**Suite:** 142 Playwright tests across 35 spec files, 100% passing (~1m30s, 4 workers)
+**Revision note (2026-08-13):** five of the areas called out below as the
 highest-value gaps — audio & settings, localization, desktop window chrome,
-and viewport/scene navigation — have since been closed (60 new tests across
-12 new spec files, net of one superseded old localization spec that was
-retired). The per-area sections and the recommended plan have been updated in
-place; original wording is otherwise left intact so this still reads as the
-honest history of the audit. One real bug was found and fixed along the way:
-the noticeboard toggle button hardcoded English and bypassed localization
-entirely (see §1.4).
+viewport/scene navigation, and the evidence system — have since been closed
+(76 new tests across 17 new spec files, net of one superseded old
+localization spec that was retired). The per-area sections and the
+recommended plan have been updated in place; original wording is otherwise
+left intact so this still reads as the honest history of the audit. One real
+bug was found and fixed along the way: the noticeboard toggle button
+hardcoded English and bypassed localization entirely (see §1.4).
 **Method:** manual traceability audit — every app module, every UI control, and
 every piece of authored content was enumerated from source and matched against
 the assertions that touch it. There is no instrumented line-coverage number
@@ -51,11 +51,15 @@ audit, roughly half the application surface had no automated test at all, and
 the untested half was not random: it clustered in areas that were built
 earlier and had not been touched recently (audio, localization, window chrome
 mechanics, viewport navigation, the noticeboard scene). The 2026-08-13
-revisions closed all five of those clusters. What remains untested now
-clusters differently: authored *content* rather than app *mechanics* — most
-evidence-awarding records and most web-content-search records are never
-opened by any test, even though the machinery that renders them is
-well-covered elsewhere.
+revisions closed all five of those mechanics clusters, and a sixth, different
+kind of gap along with them: most evidence-awarding *content* was never
+opened by any test even though the machinery that renders it was already
+well-covered. All 9 awarding records (including the Level 3 `goldenpendant`
+police record) are now exercised, alongside the carousel navigation, custom
+naming and catalog-error-message behaviours that content sits inside of. What
+remains untested now is narrower and entirely of that same content-not-
+mechanics shape: most web-content-search records (ZoomSearch, Library, Police
+and Archives entries that award nothing) are still never opened by any test.
 
 | Area | Behaviours | Covered | Coverage | Risk if broken |
 | --- | ---: | ---: | ---: | --- |
@@ -68,35 +72,37 @@ well-covered elsewhere.
 | Viewport / scene navigation | 11 | 10 | **91%** 🟢 *(was 9%)* | Medium |
 | Facsimile system | 10 | 9 | **90%** | High |
 | Notifications | 9 | 8 | **89%** | Medium |
+| Evidence system | 18 | 16 | **89%** 🟢 *(was 38%)* | High |
 | Audio & settings | 10 | 8 | **80%** 🟢 *(was 0%)* | Low–Medium |
 | Notes / Paint documents | 12 | 9 | **75%** | Medium |
 | Web content: search & records | 14 | 6 | **43%** | High |
-| Evidence system | 16 | 6 | **38%** | High |
-| **Overall** | **152** | **122** | **≈80%** *(was ≈51%)* | |
+| **Overall** | **154** | **132** | **≈86%** *(was ≈51%)* | |
 
 *(The original 2026-08-12 row stated 77/152 covered, which does not sum from
 its own per-area figures — those actually total 87. This revision's Overall
-row is the correct sum of the per-area figures above: 87 + 35 newly covered
-= 122.)*
+row is the correct sum of the per-area figures above: 87 + 45 newly covered
+= 132, against a total behaviour count of 154 — two higher than the original
+152 because the 2026-08-13 evidence-system work found a real behaviour the
+original audit never enumerated: the background-story window, which is not
+part of the Photos/Reports carousels and had no line of its own.)*
 
 **The three gaps I would close first**, as of the original 2026-08-12 audit:
 
 1. ~~**Audio and settings panel — 0% covered.**~~ Closed 2026-08-13 — see §1.1.
-2. **Evidence-awarding content — 3 of 9 records covered.** Six records that
-   award evidence are never opened by any test, including the only Level 3
-   police record (`goldenpendant`), which is the deepest gated content in the game.
-   **Still open** — not addressed in either revision.
+2. ~~**Evidence-awarding content — 3 of 9 records covered.**~~ Closed 2026-08-13
+   — see §1.2. All 9 records are now exercised, including the only Level 3
+   police record (`goldenpendant`), the deepest gated content in the game.
 3. ~~**Localization — 2 of 5 languages, 3 of 191 keys.**~~ Closed 2026-08-13 — see
    §1.4. All 5 languages are now exercised, including the exact class of bug this
    line predicted: a real untranslated control (the noticeboard toggle button)
    was found and fixed in the process.
 
-**The next gap I would close:** evidence-awarding content (item 2 above), followed
-by web content search & records — both remain at the coverage level measured on
-2026-08-12, and both are content gaps (authored records never opened) rather
-than mechanics gaps. Every other area still has smaller, area-specific gaps of
-its own (a clipboard button here, an untested timer there) — see each area's
-own section below.
+**The next gap I would close:** web content search & records — the last area
+still at the coverage level measured on 2026-08-12, and now the only
+substantial content gap left (authored records never opened) rather than a
+mechanics gap. Every other area still has smaller, area-specific gaps of its
+own (a clipboard button here, an untested timer there) — see each area's own
+section below.
 
 ---
 
@@ -154,35 +160,59 @@ fails to restore volume — or worse, restores it as `NaN` and mutes the game �
 would now be caught: `audio-preferences-persistence.spec.js` asserts the
 restored numeric values directly, not just that the sliders render something.
 
-### 1.2 Evidence system — 38% (16 behaviours, 6 covered) 🔴
+### 1.2 Evidence system — 89% (18 behaviours, 16 covered) 🟢 *(closed 2026-08-13, was 38%)*
 
-Well covered: awarding via facsimile, awarding via standalone page, the
-award-exactly-once guard, evidence surviving a save round trip, new-game
-defaults (2 photos + 1 story), and the magnifier over both reports and photos.
+`tests/e2e/evidence-system/` now has 7 specs (19 tests). Every item this
+section previously listed as uncovered is now driven directly:
 
-**Not covered:**
-
-- **6 of 9 evidence-awarding records are never opened.** Only `johnbaxley`,
-  `fairchilds` and `honeydewcavingclub` are exercised. Untouched:
-  `silvermineentrance`, `mysteryoldnw`, `guardiansofthenorth`,
-  `strangethingsfoundinevenstrangerplaces`, `fairchildsinsurancerecordscodes`,
-  and `goldenpendant` — the Level 3 police record, the game's deepest gated content.
-- **Carousel navigation.** `photos-carousel-counter` is asserted once
-  (`"1/3"`), but the prev/next buttons that move between evidences are never
-  clicked, in either the Photos or Reports window.
+- **All 9 evidence-awarding records are exercised**, split across two specs:
+  `evidence-awards-from-web-content.spec.js` (the pre-existing
+  `honeydewcavingclub` standalone page) and the new
+  `evidence-awards-full-catalog.spec.js`, which reaches the other 6 —
+  `silvermineentrance` (ZoomSearch), `mysteryoldnw`, `guardiansofthenorth`
+  and `strangethingsfoundinevenstrangerplaces` (Library),
+  `fairchildsinsurancerecordscodes` (a standalone page), and `goldenpendant`
+  — the Level 3 police record and the game's deepest gated content, proven
+  both ways: refused at Level 2 and awarded once logged in at Level 3.
+  (`johnbaxley` and `fairchilds` were already covered elsewhere, in the
+  notifications suite.) Along the way this confirmed a detail the original
+  audit didn't call out: ZoomSearch/Library/Police/Archives all award their
+  evidence the moment a matching record appears in a *search result* —
+  `webContentManager`'s `searchWebsite()` walks every returned record and
+  awards on the spot — not on a click into the record's detail view.
+- **Carousel navigation.** `evidence-carousel-navigation.spec.js` drives the
+  prev/next buttons in both the Photos and Reports windows, including
+  wraparound at both ends in both directions.
 - **Empty states.** `.photos-carousel-empty` and `.report-carousel-empty` are
-  never rendered by a test.
-- **Custom evidence names.** The whole title editor (`evidence-title-input`,
-  `evidence-title-commit`) is untested, despite `evidenceCustomNames` being
-  save-persisted state with its own getter/setter pair.
-- **Error paths.** `buildMissingCatalogEntryMessage` and
-  `buildMissingCatalogFieldMessage` exist precisely because catalog lookups can
-  fail — and a stale-path bug of exactly this kind was hit manually this week —
-  but no test drives a missing entry or a missing field.
+  both rendered by a test — Reports starts empty on every new game, and
+  Photos never naturally empties in play, so that case resets the live
+  evidence store directly via `evidenceManager.js`'s `resetEvidenceStore()`
+  to reach the rendering path.
+- **Custom evidence names.** `evidence-custom-names.spec.js` covers the whole
+  title editor: committing via Enter or the ✓ button, the commit button's
+  disabled state tracking whether the input actually changed, an emptied
+  input reverting instead of committing, a custom name following its
+  evidence across carousel navigation, surviving a save/load round trip, and
+  New Game clearing `evidenceCustomNames` (its own save-persisted map).
+- **Error paths.** `evidence-missing-catalog-entry.spec.js` drives both
+  `buildMissingCatalogEntryMessage` and `buildMissingCatalogFieldMessage` for
+  both photos and reports — real authored content is always well-formed, so
+  this injects evidence with a bogus catalog reference directly via
+  `evidenceManager.js`, and intercepts one catalog fetch to serve a
+  deliberately incomplete entry, exactly the stale-path shape that produced a
+  real bug during manual play.
 
-**Suggested specs:** `evidence-carousel-navigation.spec.js`,
-`evidence-custom-names.spec.js`, `evidence-missing-catalog-entry.spec.js`, and
-extend the awards spec to walk every awarding record.
+One extra gap surfaced that the original 16-behaviour count had missed
+entirely: the single background-story evidence (`#backgroundFolder`, "The
+Arnie Tragedy") isn't part of either carousel — it's its own window with its
+own markdown content — and had no coverage at all. `evidence-background-
+story.spec.js` now opens it and asserts its real story text, and that
+closing and reopening reloads the same content.
+
+**Still not covered:** `addEvidenceTrigger`'s predicate/action API (currently
+unused by any registered trigger in the game, so nothing exercises it); SFX
+firing on an evidence award (the same shape of gap as audio-settings' desk-
+object SFX gap, see §1.1).
 
 ### 1.3 Web content: search & records — 43% (14 behaviours, 6 covered) 🟠
 
@@ -404,10 +434,17 @@ Ordered by value per unit of effort.
    specs under `tests/e2e/localization/` (23 tests): all 5 languages × menu/
    desktop chrome, all 9 window kinds, facsimile content, Netscape chrome, and
    Paint/Notes defaults. Found and fixed a real bug along the way (see §1.4).
-4. `evidence-carousel-navigation.spec.js` + `evidence-custom-names.spec.js`.
-   **Still open.**
-5. Extend `evidence-awards-from-web-content.spec.js` to walk all 9 awarding
-   records, including `goldenpendant` behind a Level 3 login. **Still open.**
+4. ~~`evidence-carousel-navigation.spec.js` + `evidence-custom-names.spec.js`.~~
+   **Done 2026-08-13** — landed as written (4 + 3 tests), plus
+   `evidence-missing-catalog-entry.spec.js` (3 tests, item 9's catalog-entry/
+   field portion below) and `evidence-background-story.spec.js` (2 tests, a
+   gap the original audit hadn't enumerated) for good measure — 12 tests
+   across the four files.
+5. ~~Extend `evidence-awards-from-web-content.spec.js` to walk all 9 awarding
+   records, including `goldenpendant` behind a Level 3 login.~~ **Done
+   2026-08-13** — landed as `evidence-awards-full-catalog.spec.js` (4 tests):
+   ZoomSearch, all 3 Library books, the Fairchild standalone page, and
+   `goldenpendant`, refused below Level 3 and awarded once logged in.
 
 ### Phase 3 — the untested subsystems (≈2 days)
 6. ~~`viewport-zoom-and-pan.spec.js`~~ **Done 2026-08-13** — landed as
@@ -425,7 +462,8 @@ Ordered by value per unit of effort.
    promotion, centering, scrollbar visibility, and the carousel aria-label API.
 
 ### Phase 4 — hardening (≈1.5 days)
-9. Error paths: missing catalog entry/field, 404 asset, corrupt evidence store.
+9. Error paths: ~~missing catalog entry/field~~ (**Done 2026-08-13**, see item 4
+   above), 404 asset, corrupt evidence store.
 10. New-game intro fax timers via `page.clock`.
 11. Add a Firefox project to the config; triage what breaks.
 12. Root-cause the 8-worker instability rather than leaving it pinned at 4.
@@ -436,10 +474,10 @@ Ordered by value per unit of effort.
 15. Tests for the browser-side content builder UI.
 
 **Estimated total to reach ~85% behavioural coverage: 6 days.** *(Revision:
-Phase 2's audio/localization items and all of Phase 3 are done as of
-2026-08-13, overall coverage is already at ≈80%. What's left to reach 85% is
-narrowly item 4/5 above — evidence-awarding content and web content search &
-records — both content gaps, not mechanics gaps, and both isolated to Phase 2.)*
+all of Phase 2 and Phase 3 are done as of 2026-08-13, and overall coverage
+has already passed the original target, at ≈86%. What's left is web content
+search & records (§1.3) — the one area still at its original 2026-08-12
+level — plus the smaller Phase 4/5 hardening items.)*
 
 ---
 
