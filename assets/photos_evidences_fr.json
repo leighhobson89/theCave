@@ -5,83 +5,88 @@
       "photoPath": "./assets/photos/askewAndrew.png",
       "defaultTitleString": "Andrew and Arnie Spencer",
       "paperStyle": "photo-mounted-ivory",
-      "descriptionText": "﻿askewAndrew description (fr)\r\n\r\nNotes recorded by investigator.\r\n"
+      "descriptionText": "---\r\n\r\nLa seule photographie connue d'Andrew et Arnie Spencer ensemble, prise à la ferme familiale des Spencer à Black Pine durant l'été 1901 - ce même été fatidique où la tragédie eut lieu.\r\n\r\n---\r\n",
+      "captionText": "Andrew et Arnie Spencer, ferme Spencer, Black Pine, été 1901"
     },
     {
       "id": "caveEntrance",
       "photoPath": "./assets/photos/caveEntrance.png",
       "defaultTitleString": "Cave Entrance",
       "paperStyle": "photo-mounted-ivory",
-      "descriptionText": "﻿caveEntrance description (fr)\r\n\r\nNotes recorded by investigator.\r\n"
+      "descriptionText": "---\r\n\r\nPhoto prise en août 1901 par le photographe de la police John Baxley, montrant l'entrée de la grotte où s'est déroulée la tragédie d'Arnie Spencer en 1901.\r\n\r\n---\r\n",
+      "captionText": "Entrée de la grotte, août 1901"
     },
     {
       "id": "insideCaveLookingBack",
       "photoPath": "./assets/photos/insideCaveLookingBack.png",
       "defaultTitleString": "Inside Cave Looking Back",
       "paperStyle": "photo-mounted-linen",
-      "descriptionText": "﻿insideCaveLookingBack description (fr)\r\n\r\nNotes recorded by investigator.\r\n"
+      "descriptionText": "---\r\n\r\nInside Cave Looking Back description (fr)\r\n\r\nNotes consignées par l'enquêteur.\r\n---\r\n",
+      "captionText": "Vue depuis l'intérieur de la grotte, regardant vers l'entrée, août 1901"
     },
     {
       "id": "No More!",
       "photoPath": "./assets/photos/caveEntrance1851.png",
       "defaultTitleString": "No More!",
       "paperStyle": "photo-mounted",
-      "descriptionText": "No More! description (fr)"
+      "descriptionText": "---\r\n\r\nMine d'argent de Black Pine épuisée, 1er juillet 1851.\r\n\r\n---\r\n",
+      "captionText": "No More!"
     },
     {
       "id": "Search Party outside Black Pine Silver Mine Shaft B",
-      "defaultTitleString": "Search Party outside Black Pine Silver Mine Shaft B",
-      "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/searchParty.png",
-      "descriptionText": "Here we can see John in a rare photo with the Mounties Search Party in July 1901 before starting work in the Old Silver Mine at Black Pine, he is normally on the other side of the lens!",
-      "captionText": "John Baxley and the Mounties search party outside Black Pine Silver Mine Shaft B, July 1901"
+      "defaultTitleString": "Équipe de recherche devant le puits B de la mine d'argent de Black Pine",
+      "paperStyle": "photo-mounted",
+      "descriptionText": "---\r\n\r\nOn y voit John Baxley (en bas à gauche) sur une photo rare, avec le reste de l'équipe de recherche de la police montée en août 1901, avant le début des travaux dans l'ancienne mine d'argent de Black Pine - il se trouve d'ordinaire de l'autre côté de l'objectif !\r\n\r\n---\r\n",
+      "captionText": "Équipe de recherche de la police montée devant le puits B de la mine d'argent de Black Pine, août 1901"
     },
     {
       "id": "mysteriesOfTheOldNorthWest",
-      "defaultTitleString": "Preface of Mysteries of the Old North West",
+      "defaultTitleString": "Préface de Mysteries of the Old North West",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/mysteriesOldNW.png",
-      "captionText": "The preface of Hannah Fletcher's New Book \"Mysteries of the Old North West\"",
-      "descriptionText": "The preface of Hannah Fletcher's Investigative book \"The Mysteries of the Old North West\" is shown in this photo.  It looks an interesting book from what you gleam from this introduction."
+      "captionText": "La préface du nouveau livre de Hannah Fletcher \"Mysteries of the Old North West\"",
+      "descriptionText": "---\r\n\r\nCette photo montre la préface du livre d'enquête de Hannah Fletcher \"The Mysteries of the Old North West\". À en juger par cette introduction, cela semble être un livre intéressant.\r\n\r\n---\r\n"
     },
     {
       "id": "standalone-honeydewcavingclub-team",
-      "defaultTitleString": "The Honey Dew Caving Club Team in 1904",
+      "defaultTitleString": "L'équipe du Honey Dew Caving Club en 1904",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/honeydewcavingclub.png",
-      "captionText": "The Honey Dew Caving Club team photo from 1904.",
-      "descriptionText": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood"
+      "captionText": "La photo d'équipe du Honey Dew Caving Club prise en 1904.",
+      "descriptionText": "L'équipe du Honey Dew Caving Club en 1904, rangée du haut de gauche à droite : Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Rangée du bas de gauche à droite : Inconnu, Anthony Worthing, Sam Henderson, Paul Greenwood"
     },
     {
       "id": "standalone-honeydewcavingclub",
-      "defaultTitleString": "An Important and Historic Map of Black Pine Cave System",
+      "defaultTitleString": "Une carte importante et historique du réseau de grottes de Black Pine",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/minemap.png",
-      "captionText": "The Black Pine Cave System Collective Map, 1912",
-      "descriptionText": "---\nThe Black Pine Cave System Collective Map, 1912, painstakingly put together through all the collective efforts of the Honey Dew Caving Club from 1902-1911.  Special mention to the main contributor Thomas O'Rourke who tragically lost his life in 1911 abseiling in France was the main contributor, and the founder of the Caving Club.\n---"
+      "captionText": "La carte collective du réseau de grottes de Black Pine, 1912",
+      "descriptionText": "---\nLa carte collective du réseau de grottes de Black Pine, 1912, minutieusement réalisée grâce aux efforts collectifs du Honey Dew Caving Club entre 1902 et 1911. Mention spéciale pour le principal contributeur, Thomas O'Rourke, qui perdit tragiquement la vie en 1911 en pratiquant la descente en rappel en France ; il fut le principal contributeur et le fondateur du club de spéléologie.\n---"
     },
     {
       "id": "library-guardiansofthenorth",
       "defaultTitleString": "Guardians of the North",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/guardiansOfTheNorth.png",
-      "descriptionText": "﻿library-guardiansofthenorth description (fr)\r\n\r\nNotes recorded by investigator.\r\n"
+      "captionText": "\"Guardians of the North\" (1988) par Cat J. Roman",
+      "descriptionText": "---\r\n\r\nUne histoire des hommes et femmes honorables ayant servi dans les Territoires du Nord-Ouest, par Cat J. Roman (1988). Un recueil rétrospectif de témoignages personnels, de photographies et d'archives des premières années du corps de police - le même ouvrage qui a reproduit la photo de départ à la retraite du lieutenant William McLeod.\r\n\r\n---\r\n"
     },
     {
       "id": "Strange Things Found In Even Stranger Places",
       "defaultTitleString": "Strange Things Found In Even Stranger Places",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/strangethingsinevenstrangerplaces.png",
-      "captionText": "A missing page relating to a golden pendant found by search party member Lieutenant William McLeod in 1901.",
-      "descriptionText": "---\n\nA missing page relating to a golden pendant found by search party member Lieutenant William McLeod in 1901.\n\n---"
+      "captionText": "Une page manquante concernant un pendentif en or trouvé par le lieutenant William McLeod, membre de l'équipe de recherche, en 1901.",
+      "descriptionText": "---\n\nUne page manquante concernant un pendentif en or trouvé par le lieutenant William McLeod, membre de l'équipe de recherche, en 1901.\n\n---"
     },
     {
       "id": "GOLD PENDANT",
-      "defaultTitleString": "Gold Pendant",
+      "defaultTitleString": "Pendentif en or",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/worthingCross.png",
-      "captionText": "Golden Pendant with inscription P A WORTHING on its rear side connected to a broken section of fine gold chain",
-      "descriptionText": "---\n\nGolden Pendant with inscription:\n\nP A WORTHING\n\non its rear side, connected to a broken section of fine gold chain.\n\n---"
+      "captionText": "Pendentif en or portant l'inscription P A WORTHING au dos, relié à une section brisée d'une fine chaîne en or",
+      "descriptionText": "---\n\nPendentif en or portant l'inscription :\n\nP A WORTHING\n\nau dos, relié à une section brisée d'une fine chaîne en or.\n\n---"
     }
   ]
 }
