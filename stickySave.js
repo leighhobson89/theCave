@@ -1,4 +1,12 @@
-import { captureGameStatusForSaving } from './constantsAndGlobalVars.js';
+import {
+    captureGameStatusForSaving,
+    STICKY_SAVE_STORAGE_KEY,
+    STICKY_AUTOSAVE_INTERVAL_MS,
+    getAutosaveIntervalId,
+    setAutosaveIntervalId,
+    getUnloadFlushHandler,
+    setUnloadFlushHandler,
+} from './constantsAndGlobalVars.js';
 
 // Sticky save: an autosaved copy of the game held in localStorage so a browser
 // refresh (or closing and reopening the tab) can offer "Resume Game" instead of
@@ -8,11 +16,7 @@ import { captureGameStatusForSaving } from './constantsAndGlobalVars.js';
 // in saveLoadGame.js -- captureGameStatusForSaving() plus LZString -- so there
 // is only one save format in the project. The only difference is where the
 // resulting string is put.
-export const STICKY_SAVE_STORAGE_KEY = 'theCave:sticky-save';
-export const STICKY_AUTOSAVE_INTERVAL_MS = 60000;
-
-let autosaveIntervalId = null;
-let unloadFlushHandler = null;
+export { STICKY_SAVE_STORAGE_KEY, STICKY_AUTOSAVE_INTERVAL_MS };
 
 // localStorage throws rather than returning null in some privacy modes, and
 // LZString arrives from a CDN script tag, so every entry point degrades to
@@ -129,32 +133,33 @@ export function startStickyAutosave({
 } = {}) {
     stopStickyAutosave();
 
-    autosaveIntervalId = window.setInterval(() => {
+    setAutosaveIntervalId(window.setInterval(() => {
         const didWrite = writeStickySave();
         if (didWrite && typeof onAutosave === 'function') {
             onAutosave();
         }
-    }, intervalMs);
+    }, intervalMs));
 
     // Catches the common case of refreshing between two autosave ticks.
-    unloadFlushHandler = () => {
+    const flushHandler = () => {
         writeStickySave();
     };
-    window.addEventListener('beforeunload', unloadFlushHandler);
+    setUnloadFlushHandler(flushHandler);
+    window.addEventListener('beforeunload', flushHandler);
 }
 
 export function stopStickyAutosave() {
-    if (autosaveIntervalId !== null) {
-        window.clearInterval(autosaveIntervalId);
-        autosaveIntervalId = null;
+    if (getAutosaveIntervalId() !== null) {
+        window.clearInterval(getAutosaveIntervalId());
+        setAutosaveIntervalId(null);
     }
 
-    if (unloadFlushHandler) {
-        window.removeEventListener('beforeunload', unloadFlushHandler);
-        unloadFlushHandler = null;
+    if (getUnloadFlushHandler()) {
+        window.removeEventListener('beforeunload', getUnloadFlushHandler());
+        setUnloadFlushHandler(null);
     }
 }
 
 export function isStickyAutosaveRunning() {
-    return autosaveIntervalId !== null;
+    return getAutosaveIntervalId() !== null;
 }

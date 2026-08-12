@@ -1,6 +1,10 @@
 import { textEquals } from "./webContentManager.js";
 import { localize } from "./localization.js";
-import { getLanguage } from "./constantsAndGlobalVars.js";
+import {
+  getLanguage,
+  getLastSelectedArchiveProvince,
+  setLastSelectedArchiveProvince,
+} from "./constantsAndGlobalVars.js";
 
 // Generic CaveOS/Netscape chrome (buttons, field labels, status/empty
 // messages, table headers) is localized; the actual web-content records
@@ -9,8 +13,6 @@ import { getLanguage } from "./constantsAndGlobalVars.js";
 function t(key) {
   return localize(key, getLanguage());
 }
-
-let lastSelectedArchiveProvince = "Saskatchewan";
 
 function createElement(tagName, classNames = [], textContent = "") {
   const element = document.createElement(tagName);
@@ -1007,8 +1009,8 @@ function createArchivesPage({
     ],
     t("browserProvinceSelectorAriaLabel")
   );
-  if (lastSelectedArchiveProvince) {
-    provinceSelect.value = lastSelectedArchiveProvince;
+  if (getLastSelectedArchiveProvince()) {
+    provinceSelect.value = getLastSelectedArchiveProvince();
   }
   const searchButton = createButton(t("browserFindRecordsButton"), runSearch);
   form.append(
@@ -1030,7 +1032,7 @@ function createArchivesPage({
       queryInput.value = queryOverride;
     }
 
-    lastSelectedArchiveProvince = selectedProvince;
+    setLastSelectedArchiveProvince(selectedProvince);
 
     await runSiteSearch({
       searchWebsite,
@@ -1063,7 +1065,7 @@ function createArchivesPage({
   });
 
   provinceSelect.addEventListener("change", () => {
-    lastSelectedArchiveProvince = provinceSelect.value;
+    setLastSelectedArchiveProvince(provinceSelect.value);
   });
 
   wireEnterKeySubmit(queryInput, () => {

@@ -45,6 +45,38 @@ import {
   recordQuickLogin,
   resetQuickLoginState,
   restoreGameStatus,
+  REPORT_PAPER_STYLE_CLASS_PREFIX,
+  PHOTO_PAPER_STYLE_CLASS_PREFIX,
+  PHOTO_FRAME_ASPECT_RATIO,
+  PHOTO_FRAME_MAX_WIDTH,
+  PHOTO_FRAME_MAX_HEIGHT,
+  DEBUG_WINDOW_COLOR,
+  NOTES_TAB_COLORS,
+  NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS,
+  AUTOSAVE_INDICATOR_VISIBLE_MS,
+  AUTOSAVE_INDICATOR_FADE_MS,
+  NEW_GAME_WELCOME_FAX_DELAY_MS,
+  NEW_GAME_MISSING_REPORT_FAX_DELAY_MS,
+  getAshtrayAnimationTimeoutId,
+  setAshtrayAnimationTimeoutId,
+  getFacsimileFeedAnimationTimeoutId,
+  setFacsimileFeedAnimationTimeoutId,
+  getEvidenceMilestoneTriggersInitialized,
+  setEvidenceMilestoneTriggersInitialized,
+  getNextRecordOpenFaxTriggerId,
+  setNextRecordOpenFaxTriggerId,
+  getRecordOpenFaxTriggersInitialized,
+  setRecordOpenFaxTriggersInitialized,
+  getNotificationReleaseIntervalId,
+  setNotificationReleaseIntervalId,
+  getAutosaveIndicatorHideTimeoutId,
+  setAutosaveIndicatorHideTimeoutId,
+  getAutosaveIndicatorRemoveTimeoutId,
+  setAutosaveIndicatorRemoveTimeoutId,
+  getNewGameWelcomeFaxTimeoutId,
+  setNewGameWelcomeFaxTimeoutId,
+  getNewGameMissingReportFaxTimeoutId,
+  setNewGameMissingReportFaxTimeoutId,
 } from "./constantsAndGlobalVars.js";
 import {
   clearStickySave,
@@ -101,34 +133,9 @@ const notesWindowContentRefs = new WeakMap();
 const computerWindowContentRefs = new WeakMap();
 const facsimileWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
-const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
-const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
-const PHOTO_FRAME_ASPECT_RATIO = 16 / 9;
-const PHOTO_FRAME_MAX_WIDTH = 760;
-const PHOTO_FRAME_MAX_HEIGHT = Math.round(PHOTO_FRAME_MAX_WIDTH / PHOTO_FRAME_ASPECT_RATIO);
-const DEBUG_WINDOW_COLOR = "rgb(108, 255, 64)";
-const NOTES_TAB_COLORS = [
-  "#ffe2e2",
-  "#ffe9d6",
-  "#fff3c7",
-  "#eef7bf",
-  "#d9f7d2",
-  "#d2f4ef",
-  "#d9ebff",
-  "#e5deff",
-  "#f4dbff",
-  "#ffdff0",
-];
 let debugWindowController = null;
-let ashtrayAnimationTimeoutId = null;
-let facsimileFeedAnimationTimeoutId = null;
-let evidenceMilestoneTriggersInitialized = false;
 const recordOpenFaxTriggers = new Map();
-let nextRecordOpenFaxTriggerId = 1;
-let recordOpenFaxTriggersInitialized = false;
-const NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS = 3000;
 const notificationQueue = [];
-let notificationReleaseIntervalId = null;
 let notificationHostElement = null;
 
 const webContentManager = createWebContentManager({
@@ -176,11 +183,7 @@ function ensureNotificationHostElement() {
 // Fade in and fade out are both 0.75s, driven by one CSS transition; the
 // element is created once and reused, so overlapping saves can never stack
 // two indicators.
-const AUTOSAVE_INDICATOR_VISIBLE_MS = 1600;
-const AUTOSAVE_INDICATOR_FADE_MS = 750;
 let autosaveIndicatorElement = null;
-let autosaveIndicatorHideTimeoutId = null;
-let autosaveIndicatorRemoveTimeoutId = null;
 
 function ensureAutosaveIndicatorElement() {
   if (autosaveIndicatorElement?.isConnected) {
@@ -226,28 +229,28 @@ function refreshAutosaveIndicatorLanguage() {
 export function showAutosaveIndicator() {
   const indicator = ensureAutosaveIndicatorElement();
 
-  if (autosaveIndicatorHideTimeoutId !== null) {
-    window.clearTimeout(autosaveIndicatorHideTimeoutId);
-    autosaveIndicatorHideTimeoutId = null;
+  if (getAutosaveIndicatorHideTimeoutId() !== null) {
+    window.clearTimeout(getAutosaveIndicatorHideTimeoutId());
+    setAutosaveIndicatorHideTimeoutId(null);
   }
-  if (autosaveIndicatorRemoveTimeoutId !== null) {
-    window.clearTimeout(autosaveIndicatorRemoveTimeoutId);
-    autosaveIndicatorRemoveTimeoutId = null;
+  if (getAutosaveIndicatorRemoveTimeoutId() !== null) {
+    window.clearTimeout(getAutosaveIndicatorRemoveTimeoutId());
+    setAutosaveIndicatorRemoveTimeoutId(null);
   }
 
   indicator.classList.add("is-visible");
 
-  autosaveIndicatorHideTimeoutId = window.setTimeout(() => {
+  setAutosaveIndicatorHideTimeoutId(window.setTimeout(() => {
     indicator.classList.remove("is-visible");
-    autosaveIndicatorHideTimeoutId = null;
+    setAutosaveIndicatorHideTimeoutId(null);
 
     // The spinner keeps running behind an opacity transition otherwise; park
     // it once the fade-out has finished.
-    autosaveIndicatorRemoveTimeoutId = window.setTimeout(() => {
+    setAutosaveIndicatorRemoveTimeoutId(window.setTimeout(() => {
       indicator.classList.remove("is-active");
-      autosaveIndicatorRemoveTimeoutId = null;
-    }, AUTOSAVE_INDICATOR_FADE_MS);
-  }, AUTOSAVE_INDICATOR_VISIBLE_MS);
+      setAutosaveIndicatorRemoveTimeoutId(null);
+    }, AUTOSAVE_INDICATOR_FADE_MS));
+  }, AUTOSAVE_INDICATOR_VISIBLE_MS));
 
   indicator.classList.add("is-active");
 }
@@ -276,9 +279,9 @@ function normalizeNotificationType(type) {
 
 function releaseNextNotificationFromQueue() {
   if (!notificationQueue.length) {
-    if (notificationReleaseIntervalId) {
-      clearInterval(notificationReleaseIntervalId);
-      notificationReleaseIntervalId = null;
+    if (getNotificationReleaseIntervalId()) {
+      clearInterval(getNotificationReleaseIntervalId());
+      setNotificationReleaseIntervalId(null);
     }
     return;
   }
@@ -356,14 +359,14 @@ function releaseNextNotificationFromQueue() {
 }
 
 function ensureNotificationQueueReleaseLoop() {
-  if (notificationReleaseIntervalId) {
+  if (getNotificationReleaseIntervalId()) {
     return;
   }
 
   releaseNextNotificationFromQueue();
-  notificationReleaseIntervalId = window.setInterval(() => {
+  setNotificationReleaseIntervalId(window.setInterval(() => {
     releaseNextNotificationFromQueue();
-  }, NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS);
+  }, NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS));
 }
 
 // `target` is optional and names a desk object the notification is about
@@ -756,22 +759,17 @@ const MISSING_REPORT_FAX_CONFIG = {
   messageType: "urgent",
 };
 
-const NEW_GAME_WELCOME_FAX_DELAY_MS = 10000;
-const NEW_GAME_MISSING_REPORT_FAX_DELAY_MS = 30000;
-let newGameWelcomeFaxTimeoutId = null;
-let newGameMissingReportFaxTimeoutId = null;
-
 // Cancels any pending intro-fax timers from a previous new-game click so a
 // player who restarts before the sequence completes can't stack duplicates
 // or have a stale timer fire into a fresh evidence store.
 function cancelScheduledNewGameIntroFacsimiles() {
-  if (newGameWelcomeFaxTimeoutId !== null) {
-    window.clearTimeout(newGameWelcomeFaxTimeoutId);
-    newGameWelcomeFaxTimeoutId = null;
+  if (getNewGameWelcomeFaxTimeoutId() !== null) {
+    window.clearTimeout(getNewGameWelcomeFaxTimeoutId());
+    setNewGameWelcomeFaxTimeoutId(null);
   }
-  if (newGameMissingReportFaxTimeoutId !== null) {
-    window.clearTimeout(newGameMissingReportFaxTimeoutId);
-    newGameMissingReportFaxTimeoutId = null;
+  if (getNewGameMissingReportFaxTimeoutId() !== null) {
+    window.clearTimeout(getNewGameMissingReportFaxTimeoutId());
+    setNewGameMissingReportFaxTimeoutId(null);
   }
 }
 
@@ -780,23 +778,23 @@ function cancelScheduledNewGameIntroFacsimiles() {
 function scheduleNewGameIntroFacsimiles() {
   cancelScheduledNewGameIntroFacsimiles();
 
-  newGameWelcomeFaxTimeoutId = window.setTimeout(() => {
-    newGameWelcomeFaxTimeoutId = null;
+  setNewGameWelcomeFaxTimeoutId(window.setTimeout(() => {
+    setNewGameWelcomeFaxTimeoutId(null);
     queueConfiguredFacsimileReport(NEW_GAME_WELCOME_FAX_CONFIG, { animateFeed: true }).catch((error) => {
       console.error("Failed to queue new-game welcome facsimile:", error);
     });
-  }, NEW_GAME_WELCOME_FAX_DELAY_MS);
+  }, NEW_GAME_WELCOME_FAX_DELAY_MS));
 
-  newGameMissingReportFaxTimeoutId = window.setTimeout(() => {
-    newGameMissingReportFaxTimeoutId = null;
+  setNewGameMissingReportFaxTimeoutId(window.setTimeout(() => {
+    setNewGameMissingReportFaxTimeoutId(null);
     queueConfiguredFacsimileReport(MISSING_REPORT_FAX_CONFIG, { animateFeed: true }).catch((error) => {
       console.error("Failed to queue new-game missing-report facsimile:", error);
     });
-  }, NEW_GAME_WELCOME_FAX_DELAY_MS + NEW_GAME_MISSING_REPORT_FAX_DELAY_MS);
+  }, NEW_GAME_WELCOME_FAX_DELAY_MS + NEW_GAME_MISSING_REPORT_FAX_DELAY_MS));
 }
 
 function initializeEvidenceMilestoneTriggers() {
-  if (evidenceMilestoneTriggersInitialized) {
+  if (getEvidenceMilestoneTriggersInitialized()) {
     return;
   }
 
@@ -821,7 +819,7 @@ function initializeEvidenceMilestoneTriggers() {
     animateFeed: true,
   });
 
-  evidenceMilestoneTriggersInitialized = true;
+  setEvidenceMilestoneTriggersInitialized(true);
 }
 
 // Sent when the player opens (selects) Arthur Whitmore's police record —
@@ -860,7 +858,8 @@ function registerRecordOpenFaxTrigger({
     return null;
   }
 
-  const triggerId = nextRecordOpenFaxTriggerId++;
+  const triggerId = getNextRecordOpenFaxTriggerId();
+  setNextRecordOpenFaxTriggerId(triggerId + 1);
   recordOpenFaxTriggers.set(triggerId, {
     websiteId: normalizedWebsiteId,
     recordId: normalizedRecordId,
@@ -898,7 +897,7 @@ function handleBrowserRecordOpenedForFaxTriggers(detail) {
 }
 
 function initializeWebRecordFaxTriggers() {
-  if (recordOpenFaxTriggersInitialized) {
+  if (getRecordOpenFaxTriggersInitialized()) {
     return;
   }
 
@@ -910,7 +909,7 @@ function initializeWebRecordFaxTriggers() {
     animateFeed: true,
   });
 
-  recordOpenFaxTriggersInitialized = true;
+  setRecordOpenFaxTriggersInitialized(true);
 }
 
 function commitReadFacsimileReportToEvidence(report) {
@@ -1012,14 +1011,14 @@ function syncFacsimileVisualState(options = {}) {
   void facsimileElement.offsetWidth;
   facsimileElement.classList.add("is-receiving");
 
-  if (facsimileFeedAnimationTimeoutId) {
-    window.clearTimeout(facsimileFeedAnimationTimeoutId);
+  if (getFacsimileFeedAnimationTimeoutId()) {
+    window.clearTimeout(getFacsimileFeedAnimationTimeoutId());
   }
 
-  facsimileFeedAnimationTimeoutId = window.setTimeout(() => {
+  setFacsimileFeedAnimationTimeoutId(window.setTimeout(() => {
     facsimileElement.classList.remove("is-receiving");
-    facsimileFeedAnimationTimeoutId = null;
-  }, 1900);
+    setFacsimileFeedAnimationTimeoutId(null);
+  }, 1900));
 }
 
 function refreshOpenFacsimileWindows() {
@@ -1466,7 +1465,7 @@ function updateDesktopCalendarDate() {
   }
 
   const now = new Date();
-  const monthText = DESKTOP_CALENDAR_MONTH_FORMATTER
+  const monthText = getDesktopCalendarMonthFormatter(getLanguage())
     .format(now)
     .replace(/\./g, "")
     .toUpperCase();
@@ -1794,9 +1793,9 @@ function initializeStoryWindowControls() {
         return;
       }
 
-      if (ashtrayAnimationTimeoutId) {
-        clearTimeout(ashtrayAnimationTimeoutId);
-        ashtrayAnimationTimeoutId = null;
+      if (getAshtrayAnimationTimeoutId()) {
+        clearTimeout(getAshtrayAnimationTimeoutId());
+        setAshtrayAnimationTimeoutId(null);
       }
 
       const hasLitCigarette = ashtrayElement.classList.contains("has-lit-cig");
@@ -1804,14 +1803,14 @@ function initializeStoryWindowControls() {
       if (hasLitCigarette) {
         ashtrayElement.classList.add("is-extinguishing");
 
-        ashtrayAnimationTimeoutId = window.setTimeout(() => {
+        setAshtrayAnimationTimeoutId(window.setTimeout(() => {
           ashtrayElement.classList.remove("is-extinguishing");
           ashtrayElement.classList.remove("has-lit-cig");
           ashtrayElement.classList.add("has-extra-butt");
           setAshtrayHasLitCigarette(false);
           setAshtrayHasExtraButt(true);
-          ashtrayAnimationTimeoutId = null;
-        }, 620);
+          setAshtrayAnimationTimeoutId(null);
+        }, 620));
 
         return;
       }
@@ -1820,10 +1819,10 @@ function initializeStoryWindowControls() {
       ashtrayElement.classList.add("is-relighting");
       setAshtrayHasLitCigarette(true);
 
-      ashtrayAnimationTimeoutId = window.setTimeout(() => {
+      setAshtrayAnimationTimeoutId(window.setTimeout(() => {
         ashtrayElement.classList.remove("is-relighting");
-        ashtrayAnimationTimeoutId = null;
-      }, 620);
+        setAshtrayAnimationTimeoutId(null);
+      }, 620));
     };
 
     getElements().desktopAshtrayHotspot.addEventListener("click", activateAshtray);
@@ -2017,15 +2016,39 @@ function refreshOpenWindowLocalization() {
   });
 }
 
-// Built once: the clock ticks every second and Intl formatter construction is
-// comparatively expensive.
-const COMPUTER_CLOCK_DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
-});
+// Cached per language rather than built once: the clock ticks every second and
+// Intl formatter construction is comparatively expensive, but the formatted
+// month abbreviation must follow the player's selected language, not whatever
+// locale the system happens to be in.
+const COMPUTER_CLOCK_DATE_FORMATTER_BY_LANGUAGE = new Map();
 
-const DESKTOP_CALENDAR_MONTH_FORMATTER = new Intl.DateTimeFormat(undefined, { month: "short" });
+function getComputerClockDateFormatter(languageCode) {
+  if (!COMPUTER_CLOCK_DATE_FORMATTER_BY_LANGUAGE.has(languageCode)) {
+    COMPUTER_CLOCK_DATE_FORMATTER_BY_LANGUAGE.set(
+      languageCode,
+      new Intl.DateTimeFormat(languageCode, {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+      })
+    );
+  }
+
+  return COMPUTER_CLOCK_DATE_FORMATTER_BY_LANGUAGE.get(languageCode);
+}
+
+const DESKTOP_CALENDAR_MONTH_FORMATTER_BY_LANGUAGE = new Map();
+
+function getDesktopCalendarMonthFormatter(languageCode) {
+  if (!DESKTOP_CALENDAR_MONTH_FORMATTER_BY_LANGUAGE.has(languageCode)) {
+    DESKTOP_CALENDAR_MONTH_FORMATTER_BY_LANGUAGE.set(
+      languageCode,
+      new Intl.DateTimeFormat(languageCode, { month: "short" })
+    );
+  }
+
+  return DESKTOP_CALENDAR_MONTH_FORMATTER_BY_LANGUAGE.get(languageCode);
+}
 
 function updateComputerDesktopClock(refs) {
   if (!refs?.minuteHand || !refs?.hourHand || !refs?.secondHand || !refs?.dateText) {
@@ -2041,7 +2064,7 @@ function updateComputerDesktopClock(refs) {
   refs.minuteHand.style.transform = `rotate(${(minutes + seconds / 60) * 6}deg)`;
   refs.hourHand.style.transform = `rotate(${((hours % 12) + minutes / 60) * 30}deg)`;
 
-  refs.dateText.textContent = COMPUTER_CLOCK_DATE_FORMATTER.format(now);
+  refs.dateText.textContent = getComputerClockDateFormatter(getLanguage()).format(now);
 }
 
 function createComputerWindowContentElements() {

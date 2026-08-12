@@ -21,6 +21,51 @@ const BROWSER_ADDRESS_HISTORY_LIMIT = 10;
 export const NOTES_PAGE_COUNT = 10;
 export const PAINT_PAGE_COUNT = 10;
 
+// Desktop viewport / scene navigation (game.js)
+export const ZOOM_LEVELS = [0.60, 0.65, 0.85, 1];
+export const WORLD_WIDTH = 2600;
+export const WORLD_HEIGHT = 1800;
+export const PARALLAX_FACTOR = 0.1;
+export const SCENE_FADE_DURATION_MS = 750;
+
+// Menu language flag buttons, keyed by the language code they select (game.js, ui.js).
+export const LANGUAGE_BUTTON_KEYS_BY_CODE = new Map([
+  ["en", "btnEnglish"],
+  ["es", "btnSpanish"],
+  ["de", "btnGerman"],
+  ["it", "btnItalian"],
+  ["fr", "btnFrench"],
+]);
+
+// Desktop chrome / windows / notifications (ui.js)
+export const REPORT_PAPER_STYLE_CLASS_PREFIX = "report-paper-style-";
+export const PHOTO_PAPER_STYLE_CLASS_PREFIX = "photo-paper-style-";
+export const PHOTO_FRAME_ASPECT_RATIO = 16 / 9;
+export const PHOTO_FRAME_MAX_WIDTH = 760;
+export const PHOTO_FRAME_MAX_HEIGHT = Math.round(PHOTO_FRAME_MAX_WIDTH / PHOTO_FRAME_ASPECT_RATIO);
+export const DEBUG_WINDOW_COLOR = "rgb(108, 255, 64)";
+export const NOTES_TAB_COLORS = [
+  "#ffe2e2",
+  "#ffe9d6",
+  "#fff3c7",
+  "#eef7bf",
+  "#d9f7d2",
+  "#d2f4ef",
+  "#d9ebff",
+  "#e5deff",
+  "#f4dbff",
+  "#ffdff0",
+];
+export const NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS = 3000;
+export const AUTOSAVE_INDICATOR_VISIBLE_MS = 1600;
+export const AUTOSAVE_INDICATOR_FADE_MS = 750;
+export const NEW_GAME_WELCOME_FAX_DELAY_MS = 10000;
+export const NEW_GAME_MISSING_REPORT_FAX_DELAY_MS = 30000;
+
+// Sticky save (stickySave.js)
+export const STICKY_SAVE_STORAGE_KEY = "theCave:sticky-save";
+export const STICKY_AUTOSAVE_INTERVAL_MS = 60000;
+
 // Notes and Paint share one paged-document model; they differ only in how many
 // pages they hold, the default page title, and the field that stores the body.
 const NOTES_PAGE_SPEC = { count: NOTES_PAGE_COUNT, titlePrefix: "Page", bodyKey: "content" };
@@ -116,6 +161,39 @@ function readQuickLoginEntry(value) {
 }
 
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
+
+// Desktop viewport / scene navigation (game.js)
+let gameplayInteractionsInitialized = false;
+let currentZoomIndex = 0;
+let panX = 0;
+let panY = 0;
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let dragOriginPanX = 0;
+let dragOriginPanY = 0;
+let desktopObjectAudioBound = false;
+let zoomReadoutFadeTimeoutId = null;
+let sceneTransitionInProgress = false;
+
+// Desktop chrome / windows / notifications (ui.js)
+let ashtrayAnimationTimeoutId = null;
+let facsimileFeedAnimationTimeoutId = null;
+let evidenceMilestoneTriggersInitialized = false;
+let nextRecordOpenFaxTriggerId = 1;
+let recordOpenFaxTriggersInitialized = false;
+let notificationReleaseIntervalId = null;
+let autosaveIndicatorHideTimeoutId = null;
+let autosaveIndicatorRemoveTimeoutId = null;
+let newGameWelcomeFaxTimeoutId = null;
+let newGameMissingReportFaxTimeoutId = null;
+
+// Sticky save (stickySave.js)
+let autosaveIntervalId = null;
+let unloadFlushHandler = null;
+
+// Web content registry (webContentRegistry.js)
+let lastSelectedArchiveProvince = "Saskatchewan";
 
 // webContentManager is a factory (createWebContentManager), not a singleton
 // module like evidenceManager, and its one instance is owned by ui.js. ui.js
@@ -688,4 +766,212 @@ export function getHighestPoliceLoginLevel() {
 
 export function getNewspaperQuickLoginEnabled() {
   return getQuickLoginEntry("archives") !== null;
+}
+
+//---- game.js: desktop viewport / scene state ----
+
+export function getGameplayInteractionsInitialized() {
+  return gameplayInteractionsInitialized;
+}
+
+export function setGameplayInteractionsInitialized(value) {
+  gameplayInteractionsInitialized = value === true;
+}
+
+export function getCurrentZoomIndex() {
+  return currentZoomIndex;
+}
+
+export function setCurrentZoomIndex(value) {
+  currentZoomIndex = value;
+}
+
+export function getPanX() {
+  return panX;
+}
+
+export function setPanX(value) {
+  panX = value;
+}
+
+export function getPanY() {
+  return panY;
+}
+
+export function setPanY(value) {
+  panY = value;
+}
+
+export function getIsDragging() {
+  return isDragging;
+}
+
+export function setIsDragging(value) {
+  isDragging = value === true;
+}
+
+export function getDragStartX() {
+  return dragStartX;
+}
+
+export function setDragStartX(value) {
+  dragStartX = value;
+}
+
+export function getDragStartY() {
+  return dragStartY;
+}
+
+export function setDragStartY(value) {
+  dragStartY = value;
+}
+
+export function getDragOriginPanX() {
+  return dragOriginPanX;
+}
+
+export function setDragOriginPanX(value) {
+  dragOriginPanX = value;
+}
+
+export function getDragOriginPanY() {
+  return dragOriginPanY;
+}
+
+export function setDragOriginPanY(value) {
+  dragOriginPanY = value;
+}
+
+export function getDesktopObjectAudioBound() {
+  return desktopObjectAudioBound;
+}
+
+export function setDesktopObjectAudioBound(value) {
+  desktopObjectAudioBound = value === true;
+}
+
+export function getZoomReadoutFadeTimeoutId() {
+  return zoomReadoutFadeTimeoutId;
+}
+
+export function setZoomReadoutFadeTimeoutId(value) {
+  zoomReadoutFadeTimeoutId = value;
+}
+
+export function getSceneTransitionInProgress() {
+  return sceneTransitionInProgress;
+}
+
+export function setSceneTransitionInProgress(value) {
+  sceneTransitionInProgress = value === true;
+}
+
+//---- ui.js: desktop chrome / windows / notifications state ----
+
+export function getAshtrayAnimationTimeoutId() {
+  return ashtrayAnimationTimeoutId;
+}
+
+export function setAshtrayAnimationTimeoutId(value) {
+  ashtrayAnimationTimeoutId = value;
+}
+
+export function getFacsimileFeedAnimationTimeoutId() {
+  return facsimileFeedAnimationTimeoutId;
+}
+
+export function setFacsimileFeedAnimationTimeoutId(value) {
+  facsimileFeedAnimationTimeoutId = value;
+}
+
+export function getEvidenceMilestoneTriggersInitialized() {
+  return evidenceMilestoneTriggersInitialized;
+}
+
+export function setEvidenceMilestoneTriggersInitialized(value) {
+  evidenceMilestoneTriggersInitialized = value === true;
+}
+
+export function getNextRecordOpenFaxTriggerId() {
+  return nextRecordOpenFaxTriggerId;
+}
+
+export function setNextRecordOpenFaxTriggerId(value) {
+  nextRecordOpenFaxTriggerId = value;
+}
+
+export function getRecordOpenFaxTriggersInitialized() {
+  return recordOpenFaxTriggersInitialized;
+}
+
+export function setRecordOpenFaxTriggersInitialized(value) {
+  recordOpenFaxTriggersInitialized = value === true;
+}
+
+export function getNotificationReleaseIntervalId() {
+  return notificationReleaseIntervalId;
+}
+
+export function setNotificationReleaseIntervalId(value) {
+  notificationReleaseIntervalId = value;
+}
+
+export function getAutosaveIndicatorHideTimeoutId() {
+  return autosaveIndicatorHideTimeoutId;
+}
+
+export function setAutosaveIndicatorHideTimeoutId(value) {
+  autosaveIndicatorHideTimeoutId = value;
+}
+
+export function getAutosaveIndicatorRemoveTimeoutId() {
+  return autosaveIndicatorRemoveTimeoutId;
+}
+
+export function setAutosaveIndicatorRemoveTimeoutId(value) {
+  autosaveIndicatorRemoveTimeoutId = value;
+}
+
+export function getNewGameWelcomeFaxTimeoutId() {
+  return newGameWelcomeFaxTimeoutId;
+}
+
+export function setNewGameWelcomeFaxTimeoutId(value) {
+  newGameWelcomeFaxTimeoutId = value;
+}
+
+export function getNewGameMissingReportFaxTimeoutId() {
+  return newGameMissingReportFaxTimeoutId;
+}
+
+export function setNewGameMissingReportFaxTimeoutId(value) {
+  newGameMissingReportFaxTimeoutId = value;
+}
+
+//---- stickySave.js: autosave timer state ----
+
+export function getAutosaveIntervalId() {
+  return autosaveIntervalId;
+}
+
+export function setAutosaveIntervalId(value) {
+  autosaveIntervalId = value;
+}
+
+export function getUnloadFlushHandler() {
+  return unloadFlushHandler;
+}
+
+export function setUnloadFlushHandler(value) {
+  unloadFlushHandler = value;
+}
+
+//---- webContentRegistry.js: archive site UI state ----
+
+export function getLastSelectedArchiveProvince() {
+  return lastSelectedArchiveProvince;
+}
+
+export function setLastSelectedArchiveProvince(value) {
+  lastSelectedArchiveProvince = value;
 }

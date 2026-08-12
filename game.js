@@ -12,35 +12,39 @@ import {
   getLanguage,
   getGameInProgress,
   gameState,
+  ZOOM_LEVELS,
+  WORLD_WIDTH,
+  WORLD_HEIGHT,
+  PARALLAX_FACTOR,
+  SCENE_FADE_DURATION_MS,
+  LANGUAGE_BUTTON_KEYS_BY_CODE,
+  getGameplayInteractionsInitialized,
+  setGameplayInteractionsInitialized,
+  getCurrentZoomIndex,
+  setCurrentZoomIndex,
+  getPanX,
+  setPanX,
+  getPanY,
+  setPanY,
+  getIsDragging,
+  setIsDragging,
+  getDragStartX,
+  setDragStartX,
+  getDragStartY,
+  setDragStartY,
+  getDragOriginPanX,
+  setDragOriginPanX,
+  getDragOriginPanY,
+  setDragOriginPanY,
+  getDesktopObjectAudioBound,
+  setDesktopObjectAudioBound,
+  getZoomReadoutFadeTimeoutId,
+  setZoomReadoutFadeTimeoutId,
+  getSceneTransitionInProgress,
+  setSceneTransitionInProgress,
 } from "./constantsAndGlobalVars.js";
 
-// Menu language flag buttons, keyed by the language code they select.
-export const LANGUAGE_BUTTON_KEYS_BY_CODE = new Map([
-  ["en", "btnEnglish"],
-  ["es", "btnSpanish"],
-  ["de", "btnGerman"],
-  ["it", "btnItalian"],
-  ["fr", "btnFrench"],
-]);
-
-const ZOOM_LEVELS = [0.60, 0.65, 0.85, 1];
-const WORLD_WIDTH = 2600;
-const WORLD_HEIGHT = 1800;
-const PARALLAX_FACTOR = 0.1;
-const SCENE_FADE_DURATION_MS = 750;
-
-let gameplayInteractionsInitialized = false;
-let currentZoomIndex = 0;
-let panX = 0;
-let panY = 0;
-let isDragging = false;
-let dragStartX = 0;
-let dragStartY = 0;
-let dragOriginPanX = 0;
-let dragOriginPanY = 0;
-let desktopObjectAudioBound = false;
-let zoomReadoutFadeTimeoutId = null;
-let sceneTransitionInProgress = false;
+export { LANGUAGE_BUTTON_KEYS_BY_CODE };
 
 function waitForMs(duration) {
   return new Promise((resolve) => {
@@ -62,7 +66,7 @@ function getViewportRect() {
 
 function clampPan() {
   const rect = getViewportRect();
-  const zoom = ZOOM_LEVELS[currentZoomIndex];
+  const zoom = ZOOM_LEVELS[getCurrentZoomIndex()];
   const scaledWidth = WORLD_WIDTH * zoom;
   const scaledHeight = WORLD_HEIGHT * zoom;
 
@@ -71,8 +75,8 @@ function clampPan() {
   const maxPanX = 0;
   const maxPanY = 0;
 
-  panX = Math.min(maxPanX, Math.max(minPanX, panX));
-  panY = Math.min(maxPanY, Math.max(minPanY, panY));
+  setPanX(Math.min(maxPanX, Math.max(minPanX, getPanX())));
+  setPanY(Math.min(maxPanY, Math.max(minPanY, getPanY())));
 }
 
 function updateZoomReadout() {
@@ -80,7 +84,7 @@ function updateZoomReadout() {
     return;
   }
 
-  getElements().zoomReadout.textContent = `${localize("zoomLabel", getLanguage())} ${currentZoomIndex + 1}/${ZOOM_LEVELS.length}`;
+  getElements().zoomReadout.textContent = `${localize("zoomLabel", getLanguage())} ${getCurrentZoomIndex() + 1}/${ZOOM_LEVELS.length}`;
 }
 
 function showZoomReadoutTransient() {
@@ -90,13 +94,13 @@ function showZoomReadoutTransient() {
 
   getElements().zoomReadout.classList.add("is-visible");
 
-  if (zoomReadoutFadeTimeoutId !== null) {
-    window.clearTimeout(zoomReadoutFadeTimeoutId);
+  if (getZoomReadoutFadeTimeoutId() !== null) {
+    window.clearTimeout(getZoomReadoutFadeTimeoutId());
   }
 
-  zoomReadoutFadeTimeoutId = window.setTimeout(() => {
+  setZoomReadoutFadeTimeoutId(window.setTimeout(() => {
     getElements().zoomReadout.classList.remove("is-visible");
-  }, 1500);
+  }, 1500));
 }
 
 function updateTableLegPerspective(zoom) {
@@ -128,8 +132,8 @@ function updateTableLegPerspective(zoom) {
   legs.forEach(({ element, x, y }) => {
     const centeredScreenX = centerPanX + x * zoom;
     const centeredScreenY = centerPanY + y * zoom;
-    const currentScreenX = panX + x * zoom;
-    const currentScreenY = panY + y * zoom;
+    const currentScreenX = getPanX() + x * zoom;
+    const currentScreenY = getPanY() + y * zoom;
 
     const centeredDistance = Math.hypot(
       centeredScreenX - viewportCenterX,
@@ -210,16 +214,16 @@ function applySceneTransform() {
     return;
   }
 
-  const zoom = ZOOM_LEVELS[currentZoomIndex];
+  const zoom = ZOOM_LEVELS[getCurrentZoomIndex()];
   clampPan();
 
   const activeGameplayState = getActiveGameplayState();
   if (activeGameplayState === getDesktopState()) {
-    desktopWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-    desktopParallax.style.transform = `translate(${panX * PARALLAX_FACTOR}px, ${panY * PARALLAX_FACTOR}px) scale(${0.9 + zoom * 0.03})`;
+    desktopWorld.style.transform = `translate(${getPanX()}px, ${getPanY()}px) scale(${zoom})`;
+    desktopParallax.style.transform = `translate(${getPanX() * PARALLAX_FACTOR}px, ${getPanY() * PARALLAX_FACTOR}px) scale(${0.9 + zoom * 0.03})`;
     updateTableLegPerspective(zoom);
   } else if (activeGameplayState === getNoticeboardState()) {
-    noticeboardScene.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    noticeboardScene.style.transform = `translate(${getPanX()}px, ${getPanY()}px) scale(${zoom})`;
   }
 
   updateZoomReadout();
@@ -227,12 +231,12 @@ function applySceneTransform() {
 
 function focusWorldAtCenter() {
   const rect = getViewportRect();
-  const zoom = ZOOM_LEVELS[currentZoomIndex];
+  const zoom = ZOOM_LEVELS[getCurrentZoomIndex()];
   const scaledWidth = WORLD_WIDTH * zoom;
   const scaledHeight = WORLD_HEIGHT * zoom;
 
-  panX = (rect.width - scaledWidth) / 2;
-  panY = (rect.height - scaledHeight) / 2;
+  setPanX((rect.width - scaledWidth) / 2);
+  setPanY((rect.height - scaledHeight) / 2);
   clampPan();
 }
 
@@ -240,14 +244,14 @@ function handleWheelZoom(event) {
   audioManager.onUserGesture();
   event.preventDefault();
 
-  const previousZoom = ZOOM_LEVELS[currentZoomIndex];
+  const previousZoom = ZOOM_LEVELS[getCurrentZoomIndex()];
   if (event.deltaY > 0) {
-    currentZoomIndex = Math.max(0, currentZoomIndex - 1);
+    setCurrentZoomIndex(Math.max(0, getCurrentZoomIndex() - 1));
   } else {
-    currentZoomIndex = Math.min(ZOOM_LEVELS.length - 1, currentZoomIndex + 1);
+    setCurrentZoomIndex(Math.min(ZOOM_LEVELS.length - 1, getCurrentZoomIndex() + 1));
   }
 
-  if (ZOOM_LEVELS[currentZoomIndex] === previousZoom) {
+  if (ZOOM_LEVELS[getCurrentZoomIndex()] === previousZoom) {
     return;
   }
 
@@ -255,12 +259,12 @@ function handleWheelZoom(event) {
   const cx = rect.width / 2;
   const cy = rect.height / 2;
 
-  const worldX = (cx - panX) / previousZoom;
-  const worldY = (cy - panY) / previousZoom;
-  const nextZoom = ZOOM_LEVELS[currentZoomIndex];
+  const worldX = (cx - getPanX()) / previousZoom;
+  const worldY = (cy - getPanY()) / previousZoom;
+  const nextZoom = ZOOM_LEVELS[getCurrentZoomIndex()];
 
-  panX = cx - worldX * nextZoom;
-  panY = cy - worldY * nextZoom;
+  setPanX(cx - worldX * nextZoom);
+  setPanY(cy - worldY * nextZoom);
   showZoomReadoutTransient();
   applySceneTransform();
 }
@@ -272,11 +276,11 @@ function handlePointerDown(event) {
 
   audioManager.onUserGesture();
 
-  isDragging = true;
-  dragStartX = event.clientX;
-  dragStartY = event.clientY;
-  dragOriginPanX = panX;
-  dragOriginPanY = panY;
+  setIsDragging(true);
+  setDragStartX(event.clientX);
+  setDragStartY(event.clientY);
+  setDragOriginPanX(getPanX());
+  setDragOriginPanY(getPanY());
 
   if (getElements().desktopViewport) {
     getElements().desktopViewport.classList.add("is-dragging");
@@ -284,19 +288,19 @@ function handlePointerDown(event) {
 }
 
 function handlePointerMove(event) {
-  if (!isDragging) {
+  if (!getIsDragging()) {
     return;
   }
 
-  const deltaX = event.clientX - dragStartX;
-  const deltaY = event.clientY - dragStartY;
-  panX = dragOriginPanX + deltaX;
-  panY = dragOriginPanY + deltaY;
+  const deltaX = event.clientX - getDragStartX();
+  const deltaY = event.clientY - getDragStartY();
+  setPanX(getDragOriginPanX() + deltaX);
+  setPanY(getDragOriginPanY() + deltaY);
   applySceneTransform();
 }
 
 function cancelDrag() {
-  isDragging = false;
+  setIsDragging(false);
   if (getElements().desktopViewport) {
     getElements().desktopViewport.classList.remove("is-dragging");
   }
@@ -307,7 +311,7 @@ function handlePointerUp() {
 }
 
 function handlePointerLeave() {
-  if (!isDragging) {
+  if (!getIsDragging()) {
     return;
   }
 
@@ -340,7 +344,7 @@ function toggleSettingsMenu() {
 }
 
 async function handleNoticeboardButtonClick() {
-  if (sceneTransitionInProgress) {
+  if (getSceneTransitionInProgress()) {
     return;
   }
 
@@ -356,7 +360,7 @@ async function handleNoticeboardButtonClick() {
 }
 
 function bindDesktopObjectAudio() {
-  if (desktopObjectAudioBound) {
+  if (getDesktopObjectAudioBound()) {
     return;
   }
 
@@ -370,11 +374,11 @@ function bindDesktopObjectAudio() {
     });
   });
 
-  desktopObjectAudioBound = true;
+  setDesktopObjectAudioBound(true);
 }
 
 function initializeGameplayInteractions() {
-  if (gameplayInteractionsInitialized || !getElements().desktopViewport) {
+  if (getGameplayInteractionsInitialized() || !getElements().desktopViewport) {
     return;
   }
 
@@ -400,14 +404,14 @@ function initializeGameplayInteractions() {
 
   bindDesktopObjectAudio();
 
-  gameplayInteractionsInitialized = true;
+  setGameplayInteractionsInitialized(true);
 }
 
 export function startGame(resetView = false) {
   initializeGameplayInteractions();
 
   if (resetView) {
-    currentZoomIndex = 0;
+    setCurrentZoomIndex(0);
     focusWorldAtCenter();
   }
 
@@ -467,7 +471,7 @@ export function setGameState(newState) {
 }
 
 export async function transitionGameplayScene(targetState) {
-  if (!isGameplayState(targetState) || sceneTransitionInProgress) {
+  if (!isGameplayState(targetState) || getSceneTransitionInProgress()) {
     return;
   }
 
@@ -475,7 +479,7 @@ export async function transitionGameplayScene(targetState) {
     return;
   }
 
-  sceneTransitionInProgress = true;
+  setSceneTransitionInProgress(true);
 
   try {
     cancelDrag();
@@ -503,6 +507,6 @@ export async function transitionGameplayScene(targetState) {
 
     fadeOverlay.classList.remove("is-active");
   } finally {
-    sceneTransitionInProgress = false;
+    setSceneTransitionInProgress(false);
   }
 }
