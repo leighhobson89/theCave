@@ -85,6 +85,36 @@ let facsimileState = {
 let browserAddressHistory = [];
 let activeGameplayState = DESKTOP_STATE;
 
+// Quick login, keyed by websiteId ("police", "archives").
+//
+// Once the player manually authenticates above a site's public default level,
+// the credentials that achieved it are remembered so they can be replayed with
+// one click. Replaying goes back through the site's normal authenticate path
+// rather than writing a session directly, so quick login can never grant a
+// level the player did not actually earn manually. Only a *higher* level ever
+// overwrites what is stored, so the button tracks the high-water mark.
+let quickLoginState = {};
+
+function readQuickLoginEntry(value) {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const username = String(value.username ?? "").trim();
+  const password = String(value.password ?? "");
+  const accessLevel = Number(value.accessLevel);
+  if (!username || !password || !Number.isFinite(accessLevel)) {
+    return null;
+  }
+
+  return {
+    username,
+    password,
+    accessLevel,
+    accessLabel: String(value.accessLabel ?? "").trim(),
+  };
+}
+
 let currentDesktopWindowZIndex = DESKTOP_WINDOW_BASE_Z_INDEX;
 
 // webContentManager is a factory (createWebContentManager), not a singleton
@@ -164,6 +194,9 @@ export function setElements() {
     copyButtonSavePopup: document.getElementById("copyButtonSavePopup"),
     pasteButtonLoadPopup: document.getElementById("pasteButtonLoadPopup"),
     closeButtonSavePopup: document.getElementById("closeButtonSavePopup"),
+    newGameConfirmPopup: document.getElementById("newGameConfirmPopup"),
+    newGameConfirmCancelButton: document.getElementById("newGameConfirmCancelButton"),
+    newGameConfirmAcceptButton: document.getElementById("newGameConfirmAcceptButton"),
     overlay: document.getElementById("overlay"),
     sceneFadeOverlay: document.getElementById("sceneFadeOverlay"),
   };
@@ -203,6 +236,7 @@ export function captureGameStatusForSaving() {
   gameState.webContentSessions = webContentSessionsProvider
     ? webContentSessionsProvider.getSnapshot()
     : {};
+  gameState.quickLoginState = getQuickLoginState();
   gameState.activeGameplayState = getActiveGameplayState();
   gameState.currentScene = getActiveGameplayState();
 
@@ -234,6 +268,7 @@ export function restoreGameStatus(gameState) {
       if (webContentSessionsProvider) {
         webContentSessionsProvider.restoreSnapshot(gameState.webContentSessions || {});
       }
+      setQuickLoginState(gameState.quickLoginState);
       setActiveGameplayState(
         gameState.activeGameplayState
         || gameState.currentScene
@@ -581,4 +616,71 @@ export function resetFacsimileState() {
     pendingReports: [],
     consumedReportIds: [],
   };
+}
+
+export function getQuickLoginState() {
+  const snapshot = {};
+  Object.keys(quickLoginState).forEach((websiteId) => {
+    const entry = readQuickLoginEntry(quickLoginState[websiteId]);
+    if (entry) {
+      snapshot[websiteId] = entry;
+    }
+  });
+
+  return snapshot;
+}
+
+export function setQuickLoginState(value) {
+  const nextState = {};
+  if (value && typeof value === "object") {
+    Object.keys(value).forEach((rawWebsiteId) => {
+      const websiteId = String(rawWebsiteId).trim().toLowerCase();
+      const entry = readQuickLoginEntry(value[rawWebsiteId]);
+      if (websiteId && entry) {
+        nextState[websiteId] = entry;
+      }
+    });
+  }
+
+  quickLoginState = nextState;
+}
+
+export function getQuickLoginEntry(websiteId) {
+  const key = String(websiteId || "").trim().toLowerCase();
+  return key ? readQuickLoginEntry(quickLoginState[key]) : null;
+}
+
+// Stores `entry` only when it beats the level already recorded for the site,
+// which is what keeps the remembered level a high-water mark. Returns true when
+// the stored entry actually changed.
+export function recordQuickLogin(websiteId, entry) {
+  const key = String(websiteId || "").trim().toLowerCase();
+  const nextEntry = readQuickLoginEntry(entry);
+  if (!key || !nextEntry) {
+    return false;
+  }
+
+  const existing = readQuickLoginEntry(quickLoginState[key]);
+  if (existing && existing.accessLevel >= nextEntry.accessLevel) {
+    return false;
+  }
+
+  quickLoginState[key] = nextEntry;
+  return true;
+}
+
+export function resetQuickLoginState() {
+  quickLoginState = {};
+}
+
+export function getPoliceQuickLoginEnabled() {
+  return getQuickLoginEntry("police") !== null;
+}
+
+export function getHighestPoliceLoginLevel() {
+  return getQuickLoginEntry("police")?.accessLevel ?? 0;
+}
+
+export function getNewspaperQuickLoginEnabled() {
+  return getQuickLoginEntry("archives") !== null;
 }

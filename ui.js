@@ -41,7 +41,18 @@ import {
   setBrowserAddressHistory,
   getNextDesktopWindowZIndex,
   registerWebContentSessionsProvider,
+  getQuickLoginEntry,
+  recordQuickLogin,
+  resetQuickLoginState,
+  restoreGameStatus,
 } from "./constantsAndGlobalVars.js";
+import {
+  clearStickySave,
+  hasStickySave,
+  readStickySave,
+  startStickyAutosave,
+  writeStickySave,
+} from "./stickySave.js";
 import {
   addEvidenceTrigger,
   createEvidence,
@@ -120,6 +131,12 @@ let notificationHostElement = null;
 
 const webContentManager = createWebContentManager({
   awardEvidence: awardWebContentEvidence,
+  // Quick-login credentials are game-state, not UI state: they live in
+  // constantsAndGlobalVars so they ride along in every save.
+  quickLogin: {
+    get: (websiteId) => getQuickLoginEntry(websiteId),
+    record: (websiteId, entry) => recordQuickLogin(websiteId, entry),
+  },
 });
 
 registerDefaultWebContentSites(webContentManager);
@@ -142,6 +159,86 @@ function ensureNotificationHostElement() {
   document.body.appendChild(host);
   notificationHostElement = host;
   return host;
+}
+
+// Autosave indicator -------------------------------------------------------
+//
+// Lives directly on <body> like the notification host, not inside #gameArea,
+// so it shows in every scene -- desktop, noticeboard, menu, with the computer
+// or any window open -- and is unaffected by scene switching.
+//
+// Fade in and fade out are both 0.75s, driven by one CSS transition; the
+// element is created once and reused, so overlapping saves can never stack
+// two indicators.
+const AUTOSAVE_INDICATOR_VISIBLE_MS = 1600;
+const AUTOSAVE_INDICATOR_FADE_MS = 750;
+let autosaveIndicatorElement = null;
+let autosaveIndicatorHideTimeoutId = null;
+let autosaveIndicatorRemoveTimeoutId = null;
+
+function ensureAutosaveIndicatorElement() {
+  if (autosaveIndicatorElement?.isConnected) {
+    return autosaveIndicatorElement;
+  }
+
+  const indicator = document.createElement("div");
+  indicator.classList.add("autosave-indicator");
+  indicator.setAttribute("role", "status");
+  indicator.setAttribute("aria-live", "polite");
+  indicator.innerHTML = `
+    <span class="autosave-indicator-icon" aria-hidden="true">
+      <span class="autosave-indicator-spinner"></span>
+      <svg class="autosave-indicator-disk" viewBox="0 0 24 24" focusable="false">
+        <path class="autosave-indicator-disk-body" d="M4 3h13l4 4v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>
+        <path class="autosave-indicator-disk-shutter" d="M8 3h7v6H8z"/>
+        <rect class="autosave-indicator-disk-slot" x="12" y="4.2" width="1.8" height="4"/>
+        <path class="autosave-indicator-disk-label" d="M6.5 13h11v8h-11z"/>
+        <path class="autosave-indicator-disk-lines" d="M8.5 15.5h7M8.5 18h4.5"/>
+      </svg>
+    </span>
+    <span class="autosave-indicator-text">Saving…</span>
+  `;
+
+  document.body.appendChild(indicator);
+  autosaveIndicatorElement = indicator;
+  return indicator;
+}
+
+// Safe to call at any time and at any frequency: a save arriving while the
+// indicator is still up simply restarts its visible window on the one element.
+export function showAutosaveIndicator() {
+  const indicator = ensureAutosaveIndicatorElement();
+
+  if (autosaveIndicatorHideTimeoutId !== null) {
+    window.clearTimeout(autosaveIndicatorHideTimeoutId);
+    autosaveIndicatorHideTimeoutId = null;
+  }
+  if (autosaveIndicatorRemoveTimeoutId !== null) {
+    window.clearTimeout(autosaveIndicatorRemoveTimeoutId);
+    autosaveIndicatorRemoveTimeoutId = null;
+  }
+
+  indicator.classList.add("is-visible");
+
+  autosaveIndicatorHideTimeoutId = window.setTimeout(() => {
+    indicator.classList.remove("is-visible");
+    autosaveIndicatorHideTimeoutId = null;
+
+    // The spinner keeps running behind an opacity transition otherwise; park
+    // it once the fade-out has finished.
+    autosaveIndicatorRemoveTimeoutId = window.setTimeout(() => {
+      indicator.classList.remove("is-active");
+      autosaveIndicatorRemoveTimeoutId = null;
+    }, AUTOSAVE_INDICATOR_FADE_MS);
+  }, AUTOSAVE_INDICATOR_VISIBLE_MS);
+
+  indicator.classList.add("is-active");
+}
+
+// One place that knows the autosave should light up the indicator, so the
+// three start points (New Game, Load, Resume) cannot disagree.
+function beginStickyAutosave() {
+  startStickyAutosave({ onAutosave: showAutosaveIndicator });
 }
 
 function normalizeNotificationType(type) {
@@ -180,6 +277,38 @@ function releaseNextNotificationFromQueue() {
   notificationElement.textContent = next.text;
   host.appendChild(notificationElement);
 
+  let dismiss = () => {};
+
+  // A notification that names a desk target becomes a shortcut to it. The host
+  // is `pointer-events: none`, so only these opt back in to receiving clicks.
+  if (next.target && NOTIFICATION_TARGETS[next.target]) {
+    notificationElement.classList.add("is-actionable");
+    notificationElement.setAttribute("role", "button");
+    notificationElement.setAttribute("tabindex", "0");
+    notificationElement.setAttribute("title", NOTIFICATION_TARGETS[next.target].hint);
+    notificationElement.setAttribute(
+      "aria-label",
+      `${next.text}. ${NOTIFICATION_TARGETS[next.target].hint}`
+    );
+
+    const activate = () => {
+      // Dismiss first so the notification cannot be double-fired while the
+      // window it asked for is opening.
+      dismiss();
+      openNotificationTarget(next.target);
+    };
+
+    notificationElement.addEventListener("click", activate);
+    notificationElement.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      activate();
+    });
+  }
+
   requestAnimationFrame(() => {
     notificationElement.classList.add("is-visible");
   });
@@ -189,12 +318,24 @@ function releaseNextNotificationFromQueue() {
   }
 
   const hideDelay = Math.max(200, next.time);
-  window.setTimeout(() => {
+  let removeTimeoutId = null;
+  const hideTimeoutId = window.setTimeout(() => {
+    notificationElement.classList.remove("is-visible");
+    removeTimeoutId = window.setTimeout(() => {
+      notificationElement.remove();
+    }, 260);
+  }, hideDelay);
+
+  dismiss = () => {
+    window.clearTimeout(hideTimeoutId);
+    if (removeTimeoutId !== null) {
+      window.clearTimeout(removeTimeoutId);
+    }
     notificationElement.classList.remove("is-visible");
     window.setTimeout(() => {
       notificationElement.remove();
     }, 260);
-  }, hideDelay);
+  };
 }
 
 function ensureNotificationQueueReleaseLoop() {
@@ -208,18 +349,23 @@ function ensureNotificationQueueReleaseLoop() {
   }, NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS);
 }
 
-export function showNotifcation(type, text, time, sound = false) {
+// `target` is optional and names a desk object the notification is about
+// ("facsimile", "reports", "photos"). When given, the notification becomes
+// clickable and acts as a shortcut to that window.
+export function showNotifcation(type, text, time, sound = false, target = "") {
   const normalizedText = String(text || "").trim();
   if (!normalizedText) {
     return;
   }
 
   const parsedTime = Number(time);
+  const normalizedTarget = String(target || "").trim().toLowerCase();
   const notification = {
     type: normalizeNotificationType(type),
     text: normalizedText,
     time: Number.isFinite(parsedTime) ? Math.max(200, parsedTime) : 2500,
     sound: typeof sound === "string" && sound.trim() ? sound.trim() : false,
+    target: NOTIFICATION_TARGETS[normalizedTarget] ? normalizedTarget : "",
   };
 
   notificationQueue.push(notification);
@@ -404,7 +550,8 @@ function queueFacsimileArrivalNotification(report, options = {}) {
     notificationType,
     notificationText,
     Number.isFinite(notificationDuration) ? notificationDuration : 4200,
-    notificationSound
+    notificationSound,
+    "facsimile"
   );
 }
 
@@ -819,7 +966,8 @@ function commitReadFacsimileReportToEvidence(report) {
       "reward",
       `New ${resolveLocalizedText("evidenceTypeReport", "Report")} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
       4000,
-      "evidenceGain"
+      "evidenceGain",
+      "reports"
     );
   }
 
@@ -942,7 +1090,8 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
         "reward",
         `New ${evidenceTypeLabel} ${resolveLocalizedText("notificationEvidenceUnlockedSuffix", "Evidence unlocked in your Evidence folder!")}`,
         4000,
-        "evidenceGain"
+        "evidenceGain",
+        evidenceType === "photo" ? "photos" : "reports"
       );
     }
 
@@ -967,38 +1116,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   getElements().newGameMenuButton.addEventListener("click", () => {
     audioManager.onUserGesture();
-    initializeEvidenceStoreForNewGame();
-    setEvidenceCustomNames({});
-    resetNotesPagesState();
-    resetPaintPagesState();
-    resetAshtrayState();
-    resetFacsimileState();
-    webContentManager.clearSessions();
-    syncAshtrayVisualState();
-    syncFacsimileVisualState({ animateFeed: false });
-    scheduleNewGameIntroFacsimiles();
-    setBeginGameStatus(true);
-    if (!getGameInProgress()) {
-      setGameInProgress(true);
+    // Starting over would overwrite the autosaved game, so ask first whenever
+    // there is actually something to lose.
+    if (hasStickySave()) {
+      openNewGameConfirmPopup();
+      return;
     }
-    disableActivateButton(
-      getElements().resumeGameMenuButton,
-      "active",
-      "btn-primary"
-    );
-    disableActivateButton(
-      getElements().saveGameButton,
-      "active",
-      "btn-primary"
-    );
-    setGameState(getDesktopState());
-    startGame(true);
-    audioManager.startBackgroundMusicForGame();
-    refreshAudioControlsDisplay();
+
+    beginNewGame();
   });
 
-  getElements().resumeGameMenuButton.addEventListener("click", () => {
+  getElements().newGameConfirmCancelButton.addEventListener("click", () => {
     audioManager.onUserGesture();
+    // Cancelling leaves the sticky save completely untouched.
+    closeNewGameConfirmPopup();
+  });
+
+  getElements().newGameConfirmAcceptButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    closeNewGameConfirmPopup();
+    clearStickySave();
+    beginNewGame();
+  });
+
+  getElements().resumeGameMenuButton.addEventListener("click", async () => {
+    audioManager.onUserGesture();
+    if (getElements().resumeGameMenuButton.classList.contains("disabled")) {
+      return;
+    }
+
+    // Nothing in memory yet means this is a resume after a refresh, so the
+    // sticky save has to be rehydrated before the scene is shown.
+    if (!getGameInProgress() && !(await restoreStickySaveIntoGame())) {
+      return;
+    }
+
     if (gameState === getMenuState()) {
       setGameState(getActiveGameplayState());
     }
@@ -1072,9 +1224,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         getElements().saveLoadPopup.classList.add("d-none");
         document.getElementById("overlay").classList.add("d-none");
         setGameInProgress(true);
+        setStickySaveHighlight(false);
         setGameState(getActiveGameplayState());
         startGame(false);
         audioManager.startBackgroundMusicForGame();
+        // A pasted save becomes the game in play, so it also becomes what a
+        // refresh should resume.
+        writeStickySave();
+        beginStickyAutosave();
       })
       .catch((error) => {
         console.error("Error loading game:", error);
@@ -1082,7 +1239,124 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   await handleLanguageChange(getLanguageSelected());
   setGameState(getMenuState());
+  // Done last: setGameState(menu) only enables Resume for an in-memory game, so
+  // the sticky-save offer has to be applied on top of it.
+  refreshStickySaveResumeOffer();
 });
+
+// Everything New Game resets, in one place so the button and the confirmation
+// dialog cannot drift apart.
+function beginNewGame() {
+  initializeEvidenceStoreForNewGame();
+  setEvidenceCustomNames({});
+  resetNotesPagesState();
+  resetPaintPagesState();
+  resetAshtrayState();
+  resetFacsimileState();
+  resetQuickLoginState();
+  webContentManager.clearSessions();
+  syncAshtrayVisualState();
+  syncFacsimileVisualState({ animateFeed: false });
+  scheduleNewGameIntroFacsimiles();
+  setBeginGameStatus(true);
+  if (!getGameInProgress()) {
+    setGameInProgress(true);
+  }
+  disableActivateButton(
+    getElements().resumeGameMenuButton,
+    "active",
+    "btn-primary"
+  );
+  disableActivateButton(
+    getElements().saveGameButton,
+    "active",
+    "btn-primary"
+  );
+  setStickySaveHighlight(false);
+  setGameState(getDesktopState());
+  startGame(true);
+  audioManager.startBackgroundMusicForGame();
+  refreshAudioControlsDisplay();
+  // Seed the sticky save immediately rather than waiting up to a minute, so a
+  // refresh straight after starting resumes this game and not the previous one.
+  writeStickySave();
+  beginStickyAutosave();
+}
+
+function openNewGameConfirmPopup() {
+  getElements().newGameConfirmPopup.classList.remove("d-none");
+  getElements().overlay.classList.remove("d-none");
+  getElements().newGameConfirmCancelButton.focus();
+}
+
+function closeNewGameConfirmPopup() {
+  getElements().newGameConfirmPopup.classList.add("d-none");
+  getElements().overlay.classList.add("d-none");
+}
+
+function setStickySaveHighlight(isHighlighted) {
+  getElements().resumeGameMenuButton.classList.toggle("has-sticky-save", isHighlighted);
+}
+
+// Makes Resume usable and obvious when a previous session is sitting in
+// localStorage. No-op once a game is already running in memory.
+function refreshStickySaveResumeOffer() {
+  if (getGameInProgress() || !hasStickySave()) {
+    return;
+  }
+
+  disableActivateButton(
+    getElements().resumeGameMenuButton,
+    "active",
+    "btn-primary"
+  );
+  setStickySaveHighlight(true);
+}
+
+// Rehydrates the autosaved game. Mirrors the load-from-string path so both
+// routes leave the app in the same state.
+async function restoreStickySaveIntoGame() {
+  const savedState = readStickySave();
+  if (!savedState) {
+    setStickySaveHighlight(false);
+    return false;
+  }
+
+  try {
+    await restoreGameStatus(savedState);
+  } catch (error) {
+    console.error("Error restoring sticky save:", error);
+    // A save we cannot read is worse than none: drop it so the broken offer
+    // does not persist across reloads.
+    clearStickySave();
+    setStickySaveHighlight(false);
+    disableActivateButton(
+      getElements().resumeGameMenuButton,
+      "disable",
+      "btn-primary"
+    );
+    return false;
+  }
+
+  cancelScheduledNewGameIntroFacsimiles();
+  setElements();
+  await handleLanguageChange(getLanguage());
+  syncAshtrayVisualState();
+  syncFacsimileVisualState({ animateFeed: false });
+  audioManager.syncFromSavedPreferences();
+  refreshAudioControlsDisplay();
+  setGameInProgress(true);
+  setBeginGameStatus(false);
+  disableActivateButton(
+    getElements().saveGameButton,
+    "active",
+    "btn-primary"
+  );
+  setStickySaveHighlight(false);
+  audioManager.startBackgroundMusicForGame();
+  beginStickyAutosave();
+  return true;
+}
 
 // Static chrome whose text is a straight localization lookup, keyed by the
 // getElements() property to write into.
@@ -1536,7 +1810,7 @@ function wireDesktopObjectTrigger({ triggerElement, windowKind, openWindow }) {
   });
 }
 
-function toggleExistingWindowsByKind(kind) {
+function findExistingWindowsByKind(kind) {
   const matchingWindows = [];
 
   activeDesktopWindows.forEach((windowController) => {
@@ -1544,6 +1818,12 @@ function toggleExistingWindowsByKind(kind) {
       matchingWindows.push(windowController);
     }
   });
+
+  return matchingWindows;
+}
+
+function toggleExistingWindowsByKind(kind) {
+  const matchingWindows = findExistingWindowsByKind(kind);
 
   if (!matchingWindows.length) {
     return false;
@@ -1554,6 +1834,56 @@ function toggleExistingWindowsByKind(kind) {
   });
 
   return true;
+}
+
+// Desk targets a notification can send the player to. Each reuses the exact
+// opener the desk object itself uses, so a notification click has the same
+// game-state consequences as opening the window by hand (for the facsimile,
+// that includes marking the pending message read on open and committing it to
+// evidence on close).
+const NOTIFICATION_TARGETS = {
+  facsimile: {
+    kind: "facsimile",
+    open: () => openFacsimileWindow(),
+    hint: "Open the facsimile machine",
+  },
+  reports: {
+    kind: "reports",
+    open: () => openReportsWindow(),
+    hint: "Open the reports folder",
+  },
+  photos: {
+    kind: "photos",
+    open: () => openPhotosWindow(),
+    hint: "Open the photos folder",
+  },
+};
+
+// Notification click: close the computer if it is open, then open (or surface)
+// the requested window. The computer is full-screen, so leaving it open would
+// bury whatever the notification just opened.
+function openNotificationTarget(target) {
+  const targetDefinition = NOTIFICATION_TARGETS[target];
+  if (!targetDefinition || !isGameplayState(gameState)) {
+    return;
+  }
+
+  audioManager.onUserGesture();
+  audioManager.playSfx("clickButton");
+
+  // Closing the computer window also closes its child app windows (Netscape,
+  // Notes, Paint) via its own onClose handler.
+  toggleExistingWindowsByKind("computer");
+
+  // Unlike the desk objects, a notification never toggles the target shut: if
+  // it is already open, just raise it.
+  const alreadyOpen = findExistingWindowsByKind(targetDefinition.kind);
+  if (alreadyOpen.length) {
+    bringDesktopWindowToFront(alreadyOpen[alreadyOpen.length - 1]);
+    return;
+  }
+
+  targetDefinition.open();
 }
 
 function registerDesktopWindow(windowController, kind) {

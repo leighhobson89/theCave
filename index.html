@@ -300,6 +300,16 @@
             <textarea id="loadSaveGameStringTextArea" class="save-load-input-field" aria-label=""></textarea>
         </div>
     </div>
+    <!--Shown before New Game overwrites an existing sticky (autosaved) game-->
+    <div id="newGameConfirmPopup" class="save-load-popup-container new-game-confirm-popup bg-dark p-4 rounded shadow-lg d-none"
+        role="alertdialog" aria-modal="true" aria-labelledby="newGameConfirmTitle" aria-describedby="newGameConfirmBody">
+        <div id="newGameConfirmTitle" class="new-game-confirm-title">Start a New Game?</div>
+        <div id="newGameConfirmBody" class="new-game-confirm-body">Starting a new game will overwrite your current saved game. This cannot be undone.</div>
+        <div class="new-game-confirm-actions">
+            <button id="newGameConfirmCancelButton" class="save-load-buttons btn btn-secondary btn-sm">Cancel</button>
+            <button id="newGameConfirmAcceptButton" class="save-load-buttons btn btn-danger btn-sm">Start New Game</button>
+        </div>
+    </div>
     <div id="overlay" class="d-none overlay"></div>
     <!-- LZString powers save-string compression in saveLoadGame.js. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>

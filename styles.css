@@ -1,3 +1,11 @@
+:root {
+    /* Topmost layer in the game. The autosave indicator must sit above every
+       window, dialog, notification, overlay and magnifier lens, so this is
+       deliberately far clear of the highest value used anywhere else (9990,
+       the evidence magnifier). Nothing else should use or exceed it. */
+    --z-autosave-indicator: 100000;
+}
+
 html,
 body {
     margin: 0;
@@ -311,9 +319,13 @@ button.disabled {
     -ms-user-select: none;
 }
 
+/* Bottom-right, not top-right: notifications became clickable, and the top
+   right corner is where every window's close button and the floating settings
+   cog live -- a stack of toasts there would swallow clicks meant for them.
+   Bottom-left is the autosave indicator, so this corner is the free one. */
 .notification-host {
     position: fixed;
-    top: 16px;
+    bottom: 16px;
     right: 16px;
     width: min(440px, calc(100vw - 32px));
     display: flex;
@@ -326,7 +338,7 @@ button.disabled {
 
 .game-notification {
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    transform: translateY(8px) scale(0.98);
     border-radius: 8px;
     border: 1px solid rgba(200, 217, 255, 0.34);
     background: linear-gradient(180deg, rgba(55, 82, 120, 0.95), rgba(29, 50, 79, 0.95));
@@ -345,6 +357,123 @@ button.disabled {
 .game-notification.is-visible {
     opacity: 1;
     transform: translateY(0) scale(1);
+}
+
+/* The host is pointer-events: none so notifications never block the desk.
+   Only notifications that lead somewhere opt back in to receiving clicks. */
+.game-notification.is-actionable {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.game-notification.is-actionable:hover,
+.game-notification.is-actionable:focus-visible {
+    border-color: rgba(226, 238, 255, 0.85);
+    box-shadow:
+        0 14px 32px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 0 0 1px rgba(226, 238, 255, 0.35);
+    outline: none;
+}
+
+.game-notification.is-actionable:active {
+    transform: translateY(1px) scale(0.995);
+}
+
+/* Autosave indicator -------------------------------------------------------
+   Anchored to the viewport (not to any window), so it is visible from every
+   game state. Fade in and fade out are the same 0.75s transition. */
+.autosave-indicator {
+    position: fixed;
+    left: 40px;
+    bottom: 40px;
+    z-index: var(--z-autosave-indicator);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px 9px 11px;
+    border-radius: 10px;
+    border: 1px solid rgba(200, 217, 255, 0.32);
+    background: linear-gradient(180deg, rgba(38, 54, 78, 0.94), rgba(20, 31, 48, 0.94));
+    box-shadow:
+        0 14px 30px rgba(0, 0, 0, 0.46),
+        inset 0 1px 0 rgba(255, 255, 255, 0.13);
+    backdrop-filter: blur(2px);
+    color: rgba(233, 242, 255, 0.96);
+    font-size: 0.86rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.75s ease-in-out, visibility 0s linear 0.75s;
+}
+
+.autosave-indicator.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.75s ease-in-out, visibility 0s linear 0s;
+}
+
+/* The spinner ring orbits the floppy disk sitting at the centre of the cell. */
+.autosave-indicator-icon {
+    position: relative;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+}
+
+.autosave-indicator-spinner {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(150, 189, 245, 0.2);
+    border-top-color: rgba(150, 200, 255, 0.95);
+    border-right-color: rgba(150, 200, 255, 0.55);
+}
+
+.autosave-indicator.is-active .autosave-indicator-spinner {
+    animation: autosave-spin 0.9s linear infinite;
+}
+
+.autosave-indicator-disk {
+    width: 16px;
+    height: 16px;
+}
+
+.autosave-indicator-disk-body {
+    fill: rgba(214, 231, 255, 0.95);
+}
+
+.autosave-indicator-disk-shutter {
+    fill: rgba(52, 74, 105, 0.95);
+}
+
+.autosave-indicator-disk-slot {
+    fill: rgba(214, 231, 255, 0.95);
+}
+
+.autosave-indicator-disk-label {
+    fill: rgba(52, 74, 105, 0.9);
+}
+
+.autosave-indicator-disk-lines {
+    stroke: rgba(214, 231, 255, 0.85);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    fill: none;
+}
+
+@keyframes autosave-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .autosave-indicator.is-active .autosave-indicator-spinner {
+        animation: none;
+    }
 }
 
 .game-notification-error {
@@ -3162,13 +3291,18 @@ button.disabled {
     font-family: "Courier New", "Lucida Console", monospace;
 }
 
+/* The right gutter keeps the results table (and so its trailing "Summary"
+   column) at its width, short of the page edge. The auth panel is offset by
+   that same variable, so its right edge lands on the content-box edge the table
+   ends on rather than out at the page edge -- one value, both edges, no drift. */
 .browser-page-shell-archives {
+    --archives-gutter: 240px;
     position: relative;
     min-height: 100%;
     background: linear-gradient(180deg, #474747 0%, #2c2c2c 100%);
     color: #eef0ee;
     font-family: "Arial", "Helvetica", sans-serif;
-    padding-right: 240px;
+    padding-right: var(--archives-gutter);
     padding-top: 3.6rem;
 }
 
@@ -3283,11 +3417,14 @@ button.disabled {
         7px 12px 0 -4px #d7c18c;
 }
 
+/* Offset by the shell's own gutter so its right edge sits on the content-box
+   edge -- the same edge the results table and its "Summary" column end on --
+   rather than out at the page edge where it used to be. */
 .browser-archives-auth {
     position: absolute;
     top: 0.7rem;
-    right: 0.7rem;
-    width: 210px;
+    right: var(--archives-gutter);
+    width: 250px;
     display: grid;
     gap: 0.35rem;
     padding: 0.55rem;
@@ -3417,6 +3554,19 @@ button.disabled {
     min-width: 0;
     padding-left: 0.35rem;
     padding-right: 0.35rem;
+}
+
+/* Quick login is a second full-width row directly beneath Login/Log Out. The
+   shared `flex: 1 1 0` above makes its single button span the whole row, so it
+   matches the combined width of the two buttons above it at any panel width. */
+.browser-auth-actions-quick {
+    margin-top: 0.05rem;
+}
+
+.browser-button-quick-login {
+    background: #d8e8ff;
+    border-color: #6c86ad;
+    font-weight: 700;
 }
 
 .browser-page-shell-library .browser-status-line,
@@ -3852,7 +4002,7 @@ button.disabled {
     }
 
     .browser-page-shell-archives {
-        padding-right: 0.8rem;
+        --archives-gutter: 0.8rem;
         padding-top: 0.8rem;
     }
 
@@ -5125,6 +5275,54 @@ button.disabled {
     flex-direction: column;
     padding: 1rem !important;
     backdrop-filter: blur(3px) saturate(95%);
+}
+
+/* Reuses the save/load popup chrome, but sized for a short confirmation
+   rather than a full-height text area. */
+.new-game-confirm-popup {
+    width: min(90vw, 520px);
+    min-height: 0;
+    gap: 0.9rem;
+    justify-content: center;
+}
+
+.new-game-confirm-popup.d-none {
+    display: none !important;
+}
+
+.new-game-confirm-title {
+    color: #f4f8ff;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.new-game-confirm-body {
+    color: #c9d7ec;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.new-game-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+/* Draws the eye to Resume when a sticky save was found on page load. */
+.menu-action-button.has-sticky-save {
+    box-shadow: 0 0 0 2px rgba(255, 225, 122, 0.85), 0 0 18px rgba(255, 205, 92, 0.55);
+    animation: sticky-save-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes sticky-save-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(255, 225, 122, 0.85), 0 0 14px rgba(255, 205, 92, 0.4); }
+    50% { box-shadow: 0 0 0 2px rgba(255, 235, 160, 1), 0 0 24px rgba(255, 205, 92, 0.75); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu-action-button.has-sticky-save {
+        animation: none;
+    }
 }
 
 @media (max-width: 768px) {

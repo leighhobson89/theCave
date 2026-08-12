@@ -475,6 +475,10 @@ function createAuthPanel({
   getSession,
   formatSession,
   invalidMessage,
+  getQuickLoginEntry,
+  recordManualLogin,
+  quickLoginWebsite,
+  formatQuickLoginLabel,
 }) {
   const panel = createElement("div", panelClassNames);
   panel.appendChild(createElement("div", ["browser-archives-auth-title"], titleText));
@@ -483,9 +487,46 @@ function createAuthPanel({
   const passwordInput = createInput({ type: "password", ariaLabel: passwordAriaLabel, placeholder: "Password" });
   const status = createStatusLine("Logged out.");
 
-  const loginButton = createButton("Login", async () => {
-    const session = await loginWebsite({ username: usernameInput.value, password: passwordInput.value });
+  // Sits on its own row under Login/Log Out and only exists once a manual login
+  // has banked a level worth replaying. `formatQuickLoginLabel` is what makes
+  // the same panel read "Quick Log in (Lvl 3)" for police and "Quick Subscriber
+  // Login" for the archives.
+  const quickLoginButton = createButton("", async () => {
+    const session = await quickLoginWebsite();
+    if (!session) {
+      return;
+    }
+
+    usernameInput.value = "";
+    passwordInput.value = "";
     status.textContent = session.authenticated ? formatSession(session) : invalidMessage;
+    syncQuickLoginButton();
+  });
+  quickLoginButton.classList.add("browser-button-quick-login");
+  quickLoginButton.setAttribute("aria-label", "Quick login");
+
+  const quickLoginRow = createElement("div", ["browser-auth-actions", "browser-auth-actions-quick"]);
+  quickLoginRow.appendChild(quickLoginButton);
+
+  function syncQuickLoginButton() {
+    const entry = typeof getQuickLoginEntry === "function" ? getQuickLoginEntry() : null;
+    const isAvailable = Boolean(entry) && typeof formatQuickLoginLabel === "function";
+    quickLoginRow.classList.toggle("d-none", !isAvailable);
+    if (isAvailable) {
+      const label = formatQuickLoginLabel(entry);
+      quickLoginButton.textContent = label;
+      quickLoginButton.setAttribute("aria-label", label);
+    }
+  }
+
+  const loginButton = createButton("Login", async () => {
+    const credentials = { username: usernameInput.value, password: passwordInput.value };
+    const session = await loginWebsite(credentials);
+    status.textContent = session.authenticated ? formatSession(session) : invalidMessage;
+    if (typeof recordManualLogin === "function") {
+      recordManualLogin(credentials, session);
+    }
+    syncQuickLoginButton();
   });
 
   const logoutButton = createButton("Log Out", async () => {
@@ -493,13 +534,15 @@ function createAuthPanel({
     usernameInput.value = "";
     passwordInput.value = "";
     status.textContent = formatSession(session);
+    syncQuickLoginButton();
   });
   logoutButton.classList.add("browser-button-logout");
 
   const actionsRow = createElement("div", ["browser-auth-actions"]);
   actionsRow.append(loginButton, logoutButton);
 
-  panel.append(usernameInput, passwordInput, actionsRow, status);
+  panel.append(usernameInput, passwordInput, actionsRow, quickLoginRow, status);
+  syncQuickLoginButton();
 
   const existingSession = getSession();
   if (existingSession?.authenticated) {
@@ -510,7 +553,7 @@ function createAuthPanel({
     });
   }
 
-  return { panel, status };
+  return { panel, status, syncQuickLoginButton };
 }
 
 // Resolves credentials to an account. Both the username and the password are
@@ -820,7 +863,14 @@ function createLibraryPage({ searchWebsite }) {
   return root;
 }
 
-function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
+function createPoliceRecordsPage({
+  loginWebsite,
+  searchWebsite,
+  getSession,
+  getQuickLoginEntry,
+  recordManualLogin,
+  quickLoginWebsite,
+}) {
   const root = document.createElement("div");
   root.classList.add("caveos-browser-page", "browser-page-police");
 
@@ -844,6 +894,10 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
     getSession,
     formatSession: (session) => `Logged in as: ${session.accessLabel || "Public"} (Level ${session.accessLevel ?? 0})`,
     invalidMessage: "Invalid login. Access remains Public (Level 0).",
+    getQuickLoginEntry,
+    recordManualLogin,
+    quickLoginWebsite,
+    formatQuickLoginLabel: (entry) => `Quick Log in (Lvl ${entry.accessLevel})`,
   });
 
   const form = document.createElement("table");
@@ -899,7 +953,14 @@ function createPoliceRecordsPage({ loginWebsite, searchWebsite, getSession }) {
   return root;
 }
 
-function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
+function createArchivesPage({
+  loginWebsite,
+  searchWebsite,
+  getSession,
+  getQuickLoginEntry,
+  recordManualLogin,
+  quickLoginWebsite,
+}) {
   const root = document.createElement("div");
   root.classList.add("caveos-browser-page", "browser-page-archives");
 
@@ -918,6 +979,10 @@ function createArchivesPage({ loginWebsite, searchWebsite, getSession }) {
     getSession,
     formatSession: (session) => `Logged in as: ${session.accessLabel || "Free"}`,
     invalidMessage: "Invalid login. Access remains Free.",
+    getQuickLoginEntry,
+    recordManualLogin,
+    quickLoginWebsite,
+    formatQuickLoginLabel: () => "Quick Subscriber Login",
   });
 
   const form = document.createElement("table");

@@ -3,9 +3,20 @@
 // sites, address-history replay, language switching and save/load round-trip.
 const { test, expect } = require("@playwright/test");
 
+// New Game asks for confirmation whenever an autosaved (sticky) game already
+// exists, which is true any time a game has been started earlier in the same
+// browser context. Accepting keeps the old "just start a new game" semantics.
+async function clickNewGame(page) {
+  await page.locator("#newGame").click();
+  const confirmPopup = page.locator("#newGameConfirmPopup");
+  if (!(await confirmPopup.evaluate((el) => el.classList.contains("d-none")))) {
+    await page.locator("#newGameConfirmAcceptButton").click();
+  }
+}
+
 async function startNewGame(page) {
   await page.goto("/");
-  await page.locator("#newGame").click();
+  await clickNewGame(page);
 }
 
 async function openNetscape(page) {
@@ -315,7 +326,7 @@ test("website logins persist through a real save/load round trip, and New Game c
   await page.locator("#closeButtonSavePopup").click();
 
   // New Game must not leave the previous login behind.
-  await page.locator("#newGame").click();
+  await clickNewGame(page);
   await openNetscape(page);
   await page.getByRole("button", { name: "Police Records" }).click();
   await expect(status).toHaveText("Logged in as: Public (Level 0)");

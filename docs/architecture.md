@@ -37,6 +37,7 @@ ui.js  (entry point, DOM wiring, all window construction)
 ├── localization.js             localization.json loader and localize()
 ├── desktopWindow.js            the draggable/resizable window component
 ├── saveLoadGame.js             save-string capture and restore
+├── stickySave.js               localStorage autosave + resume-after-refresh
 ├── webContentManager.js        website registry, sessions, search, evidence awards
 └── webContentRegistry.js       the four site definitions and their page renderers
 ```
@@ -54,6 +55,9 @@ On `DOMContentLoaded`, `ui.js`:
 4. Wires audio controls, desk-object click handlers, and the desktop calendar date.
 5. Binds the menu buttons, the language buttons, the save/load popup and the global keydown handler.
 6. `handleLanguageChange(getLanguageSelected())` then `setGameState(getMenuState())`.
+7. `refreshStickySaveResumeOffer()` — last, because `setGameState(getMenuState())`
+   only enables Resume for a game already in memory; this enables and highlights
+   it when a sticky save is found in `localStorage` instead (see §14).
 
 ---
 
@@ -471,6 +475,41 @@ the logins that existed when it was made — including "logged out," for a save
 made before this feature existed. New Game calls `webContentManager.clearSessions()`
 directly, since `ui.js` already holds the instance.
 
+### Quick login
+
+Once the player manually authenticates **above a site's public default level**,
+the credentials that achieved it are remembered so they can be replayed with one
+click. The button sits on its own full-width row directly beneath Login / Log
+Out and reads `Quick Log in (Lvl X)` on Police and `Quick Subscriber Login` on
+the Archives — one mechanism, two labels, supplied per-site by
+`formatQuickLoginLabel`.
+
+Three properties matter:
+
+- **It cannot escalate.** `quickLoginWebsite()` replays the stored username and
+  password through the site's ordinary `authenticate` path rather than writing a
+  session object directly, so it can only ever reproduce a level a manual login
+  already earned. Reaching Level 3 still requires typing Level 3 credentials once.
+- **It is a high-water mark.** `recordQuickLogin()` in
+  `constantsAndGlobalVars.js` only overwrites the stored entry when the new level
+  is *higher*, so logging back in at Level 1 does not downgrade a banked Level 3.
+- **A guest sign-in never counts.** `recordManualLogin()` ignores any login
+  resolving to access level 0, otherwise `public`/`public` or `free`/`free` would
+  offer a quick login to access the player already has.
+
+The credentials are **game state, not UI state**: they live in
+`quickLoginState` in `constantsAndGlobalVars.js`, ride along in
+`captureGameStatusForSaving()` under `quickLoginState`, are restored by
+`setQuickLoginState()`, and are wiped by `resetQuickLoginState()` on New Game.
+`webContentManager.js` reaches them through an injected `quickLogin: { get,
+record }` provider passed by `ui.js`, the same pattern already used for
+`awardEvidence` — the manager never imports game state itself.
+
+Named convenience readers (`getPoliceQuickLoginEnabled()`,
+`getHighestPoliceLoginLevel()`, `getNewspaperQuickLoginEnabled()`) derive from
+that one map rather than being stored separately, so there is a single source of
+truth and no way for the flags and the credentials to disagree.
+
 ### `webContentRegistry.js`
 
 Defines the four sites and their renderers. Shared building blocks:
@@ -535,7 +574,7 @@ Editing an evidence catalog by hand is still perfectly fine; they are plain
 
 ## 11. Notifications
 
-`showNotifcation(type, text, durationMs, sound)` (also exposed as
+`showNotifcation(type, text, durationMs, sound, target)` (also exposed as
 `window.showNotifcation`) pushes onto a queue that releases **one notification
 every 3 s** (`NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS`), so a burst of evidence
 awards does not stack on screen. The release interval stops itself when the
@@ -546,6 +585,40 @@ removed after `max(200, durationMs)` plus a 260 ms fade-out.
 
 Types map to CSS classes `game-notification-{type}`: `info` (default), `error`,
 `reward`, `fax-system`, `fax-intel`, `fax-credentials`, `fax-urgent`.
+
+### Clicking a notification
+
+The optional fifth argument, `target`, names a desk object the notification is
+about and turns it into a shortcut to that window. Valid values are the keys of
+`NOTIFICATION_TARGETS` in `ui.js`: `facsimile`, `reports`, `photos`. Omit it and
+the notification stays purely informational, exactly as before.
+
+`openNotificationTarget()` does three things, in order:
+
+1. Closes the computer window if it is open. The computer is full-screen, so
+   anything opened behind it would be invisible; its own `onClose` also closes
+   its child app windows (Netscape, Notes, Paint).
+2. If the target window is already open, raises it. Unlike the desk objects,
+   a notification never *toggles* its target shut — clicking "new evidence"
+   should never close the folder you are looking at.
+3. Otherwise opens it through the **same opener the desk object uses**
+   (`openFacsimileWindow` / `openReportsWindow` / `openPhotosWindow`), so the
+   game-state consequences are identical to opening it by hand. For the
+   facsimile that matters a lot: opening marks the pending message read and
+   closing commits it to evidence, and the shortcut goes through both.
+
+Consistency with manual opening is deliberate down to the details — the photos
+and reports carousels open at their current index rather than jumping to the
+newly awarded item, because that is what the folders do when clicked on the
+desk.
+
+The toasts live in the **bottom-right**. They used to be top-right, but that
+corner holds every window's close button and the floating settings cog; once
+notifications became clickable a stack of them there would swallow those
+clicks (which it briefly did — a close-button click was silently retried for
+15 s). Bottom-left is the autosave indicator, so bottom-right is the free
+corner. The host stays `pointer-events: none`; only notifications carrying a
+`target` opt back in via `.is-actionable`.
 
 > The exported name is misspelled (`showNotifcation`). It is left as-is because
 > it is a documented global used from the console and by tests.
@@ -594,7 +667,9 @@ Web content (`assets/web-content/*.json`) is **not** localized.
 
 ## 14. Save and load
 
-Saving is manual and string-based; there is no auto-save and no file download.
+There are two routes into and out of the same payload and the same encoding:
+the **manual copy/paste save string**, and the **sticky save** autosaved into
+`localStorage` (below). Neither has a file download.
 
 - `captureGameStatusForSaving()` builds the payload object.
 - `saveGame()` JSON-stringifies it, compresses it with `LZString.compressToEncodedURIComponent`, and puts the result in the popup's read-only text area for the player to copy.
@@ -613,11 +688,85 @@ The payload:
 | `facsimileState` | Pending and consumed faxes |
 | `browserAddressHistory` | Up to 10 address entries with replay data, de-duplicated by URL |
 | `webContentSessions` | Police Records and Canada Archives logins, by website id |
+| `quickLoginState` | Banked quick-login credentials per website id (see §9, "Quick login") |
 | `activeGameplayState` / `currentScene` | Which scene to restore |
 
 `restoreGameStatus()` is defensive throughout: every setter re-validates and
 clamps its input, and an unusable `evidenceStore` falls back to
 `initializeEvidenceStoreForNewGame()`.
+
+### Sticky save (`stickySave.js`)
+
+An autosaved copy of the game in `localStorage` under the namespaced key
+`theCave:sticky-save`, so refreshing or reopening the tab offers **Resume Game**
+instead of losing the session. It deliberately reuses
+`captureGameStatusForSaving()` + LZString — the *same* format as the copy/paste
+string, just stored somewhere else — so the project has one save format, not two.
+
+| Function | Notes |
+| --- | --- |
+| `writeStickySave()` | Serialises current state and stores it. Returns false rather than throwing. |
+| `readStickySave()` | Returns the parsed state, or null. **Clears** an unreadable entry so a corrupt save cannot fail on every subsequent load. |
+| `hasStickySave()` | Whether a resumable game exists. |
+| `clearStickySave()` | Removes only this key; unrelated `localStorage` entries are untouched. |
+| `startStickyAutosave({ onAutosave })` / `stopStickyAutosave()` | The 60s timer, plus a `beforeunload` flush. |
+
+Lifecycle notes:
+
+- `startStickyAutosave()` is **idempotent** — it stops any existing timer and
+  listener before installing new ones, so New Game → Load → Resume in one session
+  cannot stack duplicate intervals.
+- The autosave writes fresh state each tick (it calls
+  `captureGameStatusForSaving()` at write time), never a captured snapshot.
+- A `beforeunload` flush covers refreshing between two ticks.
+- New Game, Load Game and Resume all seed a write immediately rather than
+  leaving up to a minute where a refresh would resume the *previous* game.
+- Every entry point degrades quietly if `localStorage` throws (private-browsing
+  modes) or if the LZString CDN script is missing: the feature turns itself off
+  rather than breaking the game.
+
+### Autosave indicator
+
+`startStickyAutosave()` takes an `onAutosave` callback that fires **only after a
+timed autosave that actually wrote**, so the indicator reports a real save
+rather than just a timer tick. It is deliberately not called for the immediate
+seed writes (New Game / Load / Resume) or the `beforeunload` flush. `ui.js`
+wires it in one place, `beginStickyAutosave()`, so the three start points cannot
+disagree; `stickySave.js` itself stays DOM-free.
+
+`showAutosaveIndicator()` in `ui.js` shows a floppy-disk SVG inside a spinning
+ring with a "Saving…" label:
+
+- **One element, created once and reused**, so overlapping saves can never
+  stack two indicators — a save arriving while it is still up just restarts the
+  visible window and cancels the pending hide.
+- Appended to **`<body>`**, not `#gameArea`, so it shows in every state:
+  desktop, noticeboard, menu, and with any window (including the full-screen
+  computer) open.
+- `position: fixed; left: 40px; bottom: 40px`, anchored to the viewport.
+- Fade in and fade out are the same **0.75 s** `opacity` transition; the
+  element is visible for `AUTOSAVE_INDICATOR_VISIBLE_MS` (1.6 s) between them.
+  `visibility` is delayed by the fade duration so the hidden element cannot be
+  hit-tested. The spinner animation is parked (`.is-active` removed) once the
+  fade-out finishes rather than running invisibly forever.
+- `z-index: var(--z-autosave-indicator)` = **100000**, defined on `:root` as the
+  documented topmost layer. The next highest value anywhere is 9990 (the
+  evidence magnifier); nothing else should use or exceed the indicator's.
+
+**Resume flow.** On startup `refreshStickySaveResumeOffer()` enables the Resume
+button and adds `.has-sticky-save` (a pulsing highlight) when a save is found.
+Clicking Resume with no game in memory calls `restoreStickySaveIntoGame()`,
+which mirrors the load-from-string path so both routes end in the same state; a
+save that fails to restore is discarded and the button re-disabled. With a game
+already in memory (Escape → menu → Resume) it stays the plain "go back" path and
+does not touch `localStorage`.
+
+**New Game confirmation.** Because New Game overwrites the sticky save, it opens
+`#newGameConfirmPopup` first whenever `hasStickySave()` is true. Cancel leaves
+the stored save byte-for-byte untouched; confirming calls `clearStickySave()`
+then `beginNewGame()`. With no sticky save present, New Game starts immediately
+as before. `beginNewGame()` holds everything a new game resets, so the button
+and the dialog cannot drift apart.
 
 ---
 
@@ -665,6 +814,14 @@ npx playwright test tests/report-magnifier.spec.js
 | --- | --- |
 | `tests/report-magnifier.spec.js` | Report and photo magnifier geometry, standalone-page evidence awards, the full facsimile lifecycle (single, batch of five, next-message button), and the mine-map milestone fax |
 | `tests/regression-smoke.spec.js` | Notes and Paint paged documents (tabs, titles, per-page bodies, flood fill), all four web services including privilege gating, case-sensitive credentials, session persistence across a computer close, the Log Out button, address-history de-duplication and persistence, address-history replay, language switching, story-window retitling, and a save/load round trip |
+| `tests/quick-login-sticky-save.spec.js` | Quick login on both gated sites (availability, level display, no escalation past the manually earned level, high-water-mark behaviour, guest logins excluded) and its save/load round trip; sticky save (namespaced key, 60s autosave via `page.clock`, no duplicate timers, malformed-save recovery, unrelated keys untouched); Resume-after-refresh; the New Game confirmation (warn, cancel-preserves, confirm-overwrites); and the archives subscriber-login alignment at two viewport widths |
+
+| `tests/notifications-autosave-indicator.spec.js` | Notification click shortcuts for all three targets (computer always closed first, normal opened-flow preserved, already-open windows raised not toggled, keyboard access, no overlap with window close buttons) and the autosave indicator (driven by the real 60s autosave via `page.clock`, 0.75s fades, 40/40 placement, top z-index, single instance under rapid saves, visible from any state) |
+
+Note for anyone adding specs: clicking `#newGame` a second time in the same
+browser context now opens the overwrite confirmation, because the first game
+wrote a sticky save. Both suites use a `clickNewGame()` helper that accepts the
+dialog when it appears.
 
 `playwright.facsimile-video.config.js` is the same config with `video: "on"`,
 for capturing fax behaviour.

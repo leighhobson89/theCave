@@ -20,12 +20,21 @@ export function textEquals(source, query) {
   return normalizeText(source) === normalizeText(query);
 }
 
-export function createWebContentManager({ awardEvidence } = {}) {
+export function createWebContentManager({ awardEvidence, quickLogin } = {}) {
   const websiteRegistry = new Map();
   const websiteDataCache = new Map();
   const websiteSessions = new Map();
   const awardedEvidenceKeys = new Set();
   const awardEvidenceCallback = typeof awardEvidence === "function" ? awardEvidence : null;
+
+  // Quick-login credentials live in the game save (constantsAndGlobalVars), not
+  // here, so the owner injects read/write access the same way it injects
+  // awardEvidence. Absent a provider the feature is simply inert.
+  const quickLoginProvider = quickLogin
+    && typeof quickLogin.get === "function"
+    && typeof quickLogin.record === "function"
+    ? quickLogin
+    : null;
 
   async function loadWebsiteData(websiteId) {
     const definition = websiteRegistry.get(websiteId);
@@ -147,6 +156,55 @@ export function createWebContentManager({ awardEvidence } = {}) {
     return getSession(websiteId);
   }
 
+  function getQuickLoginEntry(websiteId) {
+    if (!quickLoginProvider) {
+      return null;
+    }
+
+    const entry = quickLoginProvider.get(normalizeText(websiteId));
+    return entry ? cloneJson(entry) : null;
+  }
+
+  // Called after a manual login succeeds. The provider decides whether the
+  // level actually beats what is already stored.
+  function recordManualLogin(websiteId, credentials, session) {
+    if (!quickLoginProvider || !session?.authenticated) {
+      return false;
+    }
+
+    const username = String(credentials?.username ?? "").trim();
+    const password = String(credentials?.password ?? "");
+    const accessLevel = Number(session?.accessLevel || 0);
+
+    // A guest/default sign-in is still "authenticated", but remembering it
+    // would offer the player a quick login to the access they already have.
+    if (!username || !password || accessLevel <= 0) {
+      return false;
+    }
+
+    return quickLoginProvider.record(normalizeText(websiteId), {
+      username,
+      password,
+      accessLevel,
+      accessLabel: String(session?.accessLabel ?? "").trim(),
+    }) === true;
+  }
+
+  // Replays the remembered credentials through the site's normal authenticate
+  // path, so no privilege level can be granted that a manual login did not
+  // already earn.
+  async function quickLoginWebsite(websiteId) {
+    const entry = getQuickLoginEntry(websiteId);
+    if (!entry) {
+      return null;
+    }
+
+    return loginWebsite(websiteId, {
+      username: entry.username,
+      password: entry.password,
+    });
+  }
+
   async function searchWebsite(websiteId, request = {}) {
     const definition = getWebsiteDefinition(websiteId);
     if (!definition) {
@@ -213,6 +271,9 @@ export function createWebContentManager({ awardEvidence } = {}) {
       getData: () => loadWebsiteData(websiteId),
       searchWebsite: (request) => searchWebsite(websiteId, request),
       loginWebsite: (credentials) => loginWebsite(websiteId, credentials),
+      getQuickLoginEntry: () => getQuickLoginEntry(websiteId),
+      recordManualLogin: (credentials, session) => recordManualLogin(websiteId, credentials, session),
+      quickLoginWebsite: () => quickLoginWebsite(websiteId),
     });
   }
 
@@ -222,6 +283,9 @@ export function createWebContentManager({ awardEvidence } = {}) {
     loadWebsiteData,
     getSession,
     loginWebsite,
+    getQuickLoginEntry,
+    recordManualLogin,
+    quickLoginWebsite,
     searchWebsite,
     createWebsitePage,
     getSessionsSnapshot,
