@@ -44,7 +44,7 @@ import {
   setSceneTransitionInProgress,
 } from "./constantsAndGlobalVars.js";
 
-export { LANGUAGE_BUTTON_KEYS_BY_CODE };
+export { LANGUAGE_BUTTON_KEYS_BY_CODE, updateNoticeboardButtonLabel };
 
 function waitForMs(duration) {
   return new Promise((resolve) => {
@@ -166,14 +166,11 @@ function updateNoticeboardButtonLabel() {
   }
 
   const activeGameplayState = getActiveGameplayState();
-  if (activeGameplayState === getDesktopState()) {
-    noticeboardButton.setAttribute("aria-label", "Go To Noticeboard");
-    noticeboardButton.title = "Go To Noticeboard";
-    return;
-  }
-
-  noticeboardButton.setAttribute("aria-label", "Go To Desktop");
-  noticeboardButton.title = "Go To Desktop";
+  const languageCode = getLanguage();
+  const labelKey = activeGameplayState === getDesktopState() ? "goToNoticeboardLabel" : "goToDesktopLabel";
+  const label = localize(labelKey, languageCode);
+  noticeboardButton.setAttribute("aria-label", label);
+  noticeboardButton.title = label;
 }
 
 function updateSceneVisibility() {

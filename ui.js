@@ -101,7 +101,7 @@ import {
   setEvidenceIndex,
   stepEvidenceIndex,
 } from "./evidenceManager.js";
-import { LANGUAGE_BUTTON_KEYS_BY_CODE, setGameState, startGame } from "./game.js";
+import { LANGUAGE_BUTTON_KEYS_BY_CODE, setGameState, startGame, updateNoticeboardButtonLabel } from "./game.js";
 import { audioManager } from "./audioManager.js";
 import { initLocalization, localize } from "./localization.js";
 import { DesktopWindow } from "./desktopWindow.js";
@@ -1415,9 +1415,10 @@ const LOCALIZED_ARIA_LABEL_BY_ELEMENT_KEY = {
 };
 
 // Static chrome whose aria-label AND title are the same localization lookup.
+// noticeboardButton is deliberately absent: its label depends on which scene
+// is active (see updateNoticeboardButtonLabel in game.js), not a fixed key.
 const LOCALIZED_ARIA_LABEL_AND_TITLE_BY_ELEMENT_KEY = {
   settingsToggle: "musicSettingsLabel",
-  noticeboardButton: "goToNoticeboardLabel",
 };
 
 function setElementsLanguageText() {
@@ -1449,6 +1450,7 @@ function setElementsLanguageText() {
 
   elements.zoomReadout.textContent = `${localize("zoomLabel", languageCode)} 3/5`;
 
+  updateNoticeboardButtonLabel();
   refreshMuteButtonLabel();
   refreshMusicTransportControls();
   refreshOpenWindowLocalization();
