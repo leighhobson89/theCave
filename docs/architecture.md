@@ -7,6 +7,7 @@ during the August 2026 audit (see [audit-2026-08-10.md](audit-2026-08-10.md)).
 Companion documents:
 
 - [evidence-system.md](evidence-system.md) — the evidence store and content catalogs, in depth
+- [progress-evidence-system.md](progress-evidence-system.md) — the separate progress evidence system and the noticeboard EVIDENCE envelope
 - [investigation-archives.md](investigation-archives.md) — the four in-game web services and their search rules
 - [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md) — how to trigger and test incoming faxes
 - [../tools/WEB_CONTENT_BUILDER_TOOL_MANUAL.md](../tools/WEB_CONTENT_BUILDER_TOOL_MANUAL.md) — the web content generator tool
@@ -30,8 +31,10 @@ no framework; `index.html` is opened directly (or served by any static server).
 ```
 ui.js  (entry point, DOM wiring, all window construction)
 ├── constantsAndGlobalVars.js   game state, element cache, save payload, all getters/setters
-│   └── evidenceManager.js      evidence store, blueprints, triggers
+│   ├── evidenceManager.js      evidence store, blueprints, triggers
+│   └── progressEvidenceManager.js  progress evidence registry and activated ids
 ├── evidenceManager.js
+├── progressEvidenceManager.js
 ├── game.js                     scene state machine, viewport zoom/pan, scene transitions
 ├── audioManager.js             music playlist, SFX, mute/volume
 ├── localization.js             localization.json loader and localize()
@@ -131,7 +134,8 @@ Two collections track open windows:
 - `desktopWindowKinds` — a `WeakMap` from controller to a *kind* string.
 
 The kinds are: `story`, `photos`, `reports`, `notes`, `facsimile`, `computer`,
-`computer-notes`, `computer-paint`, `computer-netscape`, `debug`.
+`computer-notes`, `computer-paint`, `computer-netscape`, `progress-evidence`,
+`debug`.
 
 `toggleExistingWindowsByKind(kind)` closes all open windows of a kind and
 returns `true`, which is how every desk object behaves as a toggle: clicking the
@@ -222,6 +226,20 @@ Lens position is clamped inside the overlay host, and the preview transform is
 clamped so the lens never shows past the content edges. Updates are batched into
 one `requestAnimationFrame` per pointer move, and the source element's `scroll`
 event re-runs the same frame.
+
+### The progress evidence carousel (the noticeboard envelope)
+
+A third carousel, built on the same `DesktopWindow` chrome but driven by a
+different system — see
+[progress-evidence-system.md](progress-evidence-system.md) for the whole thing.
+The differences worth knowing here:
+
+- It reads `progressEvidenceManager.js`, not the evidence store. An item shows only when `progressEvidenceActivated` **and** `progressEvidenceDeveloperEnabled` are both true.
+- **Three cards at once** (`PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT`), each about the browser window's height less a padding allowance, stepping one item at a time with wraparound.
+- Stepping is **animated, and moves by one card**: the departing card slides out and fades, the two that stay shuffle across into their neighbours' slots, and the arriving card slides in from the far side fading up. The strip is built one card wider for the duration and translated by a single measured card slot. `PROGRESS_EVIDENCE_SLIDE_MS` in `ui.js` and `--progress-evidence-slide-duration` in `styles.css` must agree.
+- Cards load the definition's `imagePath`, or `assets/photos/progressEvidenceImages/[progressEvidenceId].png` when it has none, and fall back to a placeholder card carrying the id when the file does not exist yet.
+- The registry is `assets/progressEvidence.json`, loaded at startup: one language-neutral file holding every website's and fax's id, image and two flags. Ids are five digits led by a service control digit (`0` ZoomSearch … `5` faxes) and are fixed there, never invented at runtime. The web content builder's Progress Evidence panel is what writes it.
+- The envelope is anchored to the **bottom-right corner of the corkboard** via the board's own `--noticeboard-board-*` custom properties, not fixed scene coordinates.
 
 ---
 
@@ -682,6 +700,7 @@ The payload:
 | `language`, `audioMuted`, `musicVolumePreference`, `sfxVolumePreference` | Settings |
 | `evidenceStore` | Full store snapshot: `nextEvidenceId`, `evidencesById`, `collections`, `indices` |
 | `evidenceCustomNames` | Player-renamed evidence, by id |
+| `progressEvidence` | Activated `progressEvidenceId`s only — the website/fax definitions stay in code. Absent in older saves, which restore as "nothing activated" (see [progress-evidence-system.md](progress-evidence-system.md) §6) |
 | `notesPages`, `notesActivePageIndex` | Ten notes pages |
 | `paintPages`, `paintActivePageIndex` | Ten sketches, each a data-URL snapshot |
 | `ashtrayHasLitCigarette`, `ashtrayHasExtraButt` | Ashtray state |
@@ -782,6 +801,7 @@ and the dialog cannot drift apart.
 | Ashtray | `#desktopAshtrayHotspot` | Toggles the lit cigarette; 620 ms extinguish/relight animations, state saved |
 | Facsimile | `#desktopFacsimileHotspot` | Toggles the FACSIMILE window |
 | Computer | `#desktopComputerHotspot` | Toggles the CaveOS window |
+| Evidence envelope | `#progressEvidenceEnvelope` | On the **noticeboard**, not the desk. Toggles the progress evidence carousel |
 
 The floating control cluster holds the settings (♫) toggle, which expands
 mute/transport/volume controls, and the noticeboard toggle, which runs the faded

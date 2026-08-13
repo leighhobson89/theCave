@@ -1,0 +1,283 @@
+{
+  "definitions": [
+    {
+      "progressEvidenceId": "00001",
+      "service": "zoomsearch",
+      "itemId": "silvermineentrance",
+      "label": "Black Pine Mine Exhausted",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": true
+    },
+    {
+      "progressEvidenceId": "00002",
+      "service": "zoomsearch",
+      "itemId": "johnbaxley",
+      "label": "John Baxley",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": true
+    },
+    {
+      "progressEvidenceId": "00003",
+      "service": "zoomsearch",
+      "itemId": "minecart",
+      "label": "We put the Wackiness in Gold Mining!",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "00004",
+      "service": "zoomsearch",
+      "itemId": "margaretmcleod",
+      "label": "Apples for All!",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "00005",
+      "service": "zoomsearch",
+      "itemId": "henrywhitmore",
+      "label": "Local Author is heir to the Whitmore Empire",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "00006",
+      "service": "zoomsearch",
+      "itemId": "jeromewhitmore",
+      "label": "Unexpectedly gains control of Whitmore & Sons Iron",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "00007",
+      "service": "zoomsearch",
+      "itemId": "brianwhitmore",
+      "label": "Brian Whitmore keeps the family business alive!",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "00008",
+      "service": "zoomsearch",
+      "itemId": "fairchilds",
+      "label": "J & T Fairchild Valuation Experts & Insurance Brokers",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "10001",
+      "service": "library",
+      "itemId": "mysteryoldnw",
+      "label": "Mysteries of the Old North West",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "10002",
+      "service": "library",
+      "itemId": "guardiansofthenorth",
+      "label": "Guardians Of The North",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "10003",
+      "service": "library",
+      "itemId": "strangethingsfoundinevenstrangerplaces",
+      "label": "Strange Things Found In Even Stranger Places",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20001",
+      "service": "police",
+      "itemId": "jamesfletcher",
+      "label": "Constable James Fletcher",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20002",
+      "service": "police",
+      "itemId": "emilebeaulieu",
+      "label": "Corporal Emile Beaulieu",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20003",
+      "service": "police",
+      "itemId": "williammcleod",
+      "label": "Lieutenant William McLeod",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20004",
+      "service": "police",
+      "itemId": "georgemackenzie",
+      "label": "Corporal George Mackenzie",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20005",
+      "service": "police",
+      "itemId": "thomasorourke",
+      "label": "Professional Cave Diver and Corporal",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20006",
+      "service": "police",
+      "itemId": "arthurwhitmore",
+      "label": "The Iron magnate who chose Policing first!",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20007",
+      "service": "police",
+      "itemId": "goldenpendant",
+      "label": "GOLD PENDANT",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20008",
+      "service": "police",
+      "itemId": "fairchildinsurancerecordexampletemplate",
+      "label": "Fairchild insurance record 05-33-22-02-03",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "20009",
+      "service": "police",
+      "itemId": "fairchildinsurancerecordworthingpendant",
+      "label": "Fairchild insurance record 09-24-49-02-07",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "30001",
+      "service": "archives",
+      "itemId": "hannahfletcher",
+      "label": "Local Author Hannah Fletcher publishes Husbands Cases",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "30002",
+      "service": "archives",
+      "itemId": "henrywhitmore",
+      "label": "Local Author publishes book with interesting topic",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "30003",
+      "service": "archives",
+      "itemId": "williammcleodfindpendant",
+      "label": "Remembering a great Guardian",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "30004",
+      "service": "archives",
+      "itemId": "tonyarrestedandreleased",
+      "label": "Local Man Arrested in connection with Spencer disappearance",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "40001",
+      "service": "standalone",
+      "itemId": "whitmoresonsironmachineryco",
+      "label": "Buy your Mining Machinery from Whitmore & Sons",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "40002",
+      "service": "standalone",
+      "itemId": "honeydewcavingclub",
+      "label": "An Important and Historic Club",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "40003",
+      "service": "standalone",
+      "itemId": "fairchildsinsurancerecordscodes",
+      "label": "Decode Book for Insurance Records",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "50001",
+      "service": "facsimile",
+      "itemId": "fax-welcome-arnie-tragedy",
+      "label": "Welcome to the Investigation fax",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "50002",
+      "service": "facsimile",
+      "itemId": "fax-missing-person-report",
+      "label": "Missing person report fax",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "50003",
+      "service": "facsimile",
+      "itemId": "fax-whitmore-police-credentials",
+      "label": "Whitmore police credentials fax",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    },
+    {
+      "progressEvidenceId": "50004",
+      "service": "facsimile",
+      "itemId": "fax-whitmore-level3-credentials",
+      "label": "Whitmore level 3 credentials fax",
+      "imagePath": "",
+      "progressEvidenceActivated": false,
+      "progressEvidenceDeveloperEnabled": false
+    }
+  ]
+}

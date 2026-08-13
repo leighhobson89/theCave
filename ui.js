@@ -101,6 +101,20 @@ import {
   setEvidenceIndex,
   stepEvidenceIndex,
 } from "./evidenceManager.js";
+import {
+  activateProgressEvidence,
+  activateProgressEvidenceForItem,
+  getEligibleProgressEvidence,
+  getProgressEvidence,
+  getProgressEvidenceEntries,
+  getProgressEvidenceIdForItem,
+  isProgressEvidenceActivated,
+  loadProgressEvidenceDefinitions,
+  PROGRESS_EVIDENCE_SERVICES,
+  resetProgressEvidence,
+  resolveProgressEvidenceImagePath,
+  setProgressEvidenceDeveloperEnabled,
+} from "./progressEvidenceManager.js";
 import { LANGUAGE_BUTTON_KEYS_BY_CODE, setGameState, startGame, updateNoticeboardButtonLabel } from "./game.js";
 import { audioManager } from "./audioManager.js";
 import { initLocalization, localize } from "./localization.js";
@@ -132,6 +146,7 @@ const reportsWindowContentRefs = new WeakMap();
 const notesWindowContentRefs = new WeakMap();
 const computerWindowContentRefs = new WeakMap();
 const facsimileWindowContentRefs = new WeakMap();
+const progressEvidenceWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 let debugWindowController = null;
 const recordOpenFaxTriggers = new Map();
@@ -526,6 +541,10 @@ function queueFacsimileReport(reportPayload, options = {}) {
   });
 
   queueFacsimileArrivalNotification(normalizedReport, options);
+
+  // "Received" is the milestone for a fax, so progress evidence is recorded on
+  // arrival rather than when the player gets round to reading it.
+  activateProgressEvidenceForFacsimileReport(normalizedReport.id);
 
   syncFacsimileVisualState({ animateFeed: options.animateFeed !== false });
   refreshOpenFacsimileWindows();
@@ -1119,10 +1138,17 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
+  // The progress evidence registry lives entirely in assets/progressEvidence.json
+  // (which the web content builder also writes), so it has to be loaded before
+  // anything can activate progress evidence.
+  await loadProgressEvidenceDefinitions();
   initializeEvidenceMilestoneTriggers();
   initializeWebRecordFaxTriggers();
   document.addEventListener("caveos-browser-record-opened", (event) => {
     handleBrowserRecordOpenedForFaxTriggers(event?.detail);
+    // Opening a website record is one of the milestones that records progress
+    // evidence. Keyed off the same detail fields as the fax triggers.
+    activateProgressEvidenceForWebRecord(event?.detail);
   });
   syncAshtrayVisualState();
   syncFacsimileVisualState({ animateFeed: false });
@@ -1269,6 +1295,7 @@ function beginNewGame() {
   resetPaintPagesState(localize("paintPageDefaultTitlePrefix", getLanguage()));
   resetAshtrayState();
   resetFacsimileState();
+  resetProgressEvidence();
   resetQuickLoginState();
   webContentManager.clearSessions();
   syncAshtrayVisualState();
@@ -1390,6 +1417,7 @@ const LOCALIZED_STATIC_TEXT_BY_ELEMENT_KEY = {
   reportsFolderLabel: "reports",
   photosFolderLabel: "photos",
   notesLabel: "notes",
+  progressEvidenceEnvelopeLabel: "progressEvidenceEnvelopeLabel",
   musicVolumeLabel: "musicVolume",
   sfxVolumeLabel: "sfxVolume",
   newGameConfirmTitle: "newGameConfirmTitle",
@@ -1411,6 +1439,7 @@ const LOCALIZED_ARIA_LABEL_BY_ELEMENT_KEY = {
   desktopFacsimileHotspot: "openFacsimileAriaLabel",
   desktopComputerHotspot: "openComputerAriaLabel",
   noticeboardScene: "noticeboardWorkspaceAriaLabel",
+  progressEvidenceEnvelope: "openProgressEvidenceEnvelopeAriaLabel",
   floatingSettings: "settingsMenuAriaLabel",
 };
 
@@ -1554,6 +1583,8 @@ function logEvidenceDebugSnapshot() {
   console.log("Language:", languageCode);
   console.log("Evidence store in memory (raw):", evidenceStoreSnapshot);
   console.log("Evidence store by collection with resolved paths:", resolvedEvidenceView);
+  console.log("Progress evidence activated (raw):", getProgressEvidence());
+  console.log("Progress evidence registry (both flags per item):", getProgressEvidenceEntries());
   console.log("Save payload object (captureGameStatusForSaving):", savePayloadSnapshot);
   console.log("Save payload JSON length:", serializedSavePayload.length);
 
@@ -1841,6 +1872,15 @@ function initializeStoryWindowControls() {
     windowKind: "computer",
     openWindow: openComputerWindow,
   });
+
+  // The manila EVIDENCE envelope on the noticeboard. It toggles like a desk
+  // object, and openProgressEvidenceWindow() re-reads the eligible progress
+  // evidence every time rather than reusing what was shown last.
+  wireDesktopObjectTrigger({
+    triggerElement: getElements().progressEvidenceEnvelope,
+    windowKind: "progress-evidence",
+    openWindow: openProgressEvidenceWindow,
+  });
 }
 
 // Desk objects (facsimile, computer) toggle their window on click or on
@@ -1984,6 +2024,12 @@ const DESKTOP_WINDOW_LOCALIZATION_BY_KIND = {
   "computer-paint": { titleKey: "computerPaintIconLabel", closeButtonAriaLabelKey: "closePaintWindowAriaLabel" },
   "computer-netscape": { title: "Netscape Navigator 3.0", closeButtonAriaLabelKey: "closeNetscapeWindowAriaLabel" },
   facsimile: { titleKey: "facsimileWindowTitle", closeButtonAriaLabelKey: "closeFacsimileWindowAriaLabel", refresh: updateFacsimileWindowContent },
+  "progress-evidence": {
+    titleKey: "progressEvidenceWindowTitle",
+    closeButtonAriaLabelKey: "closeProgressEvidenceWindowAriaLabel",
+    carousel: true,
+    refresh: updateProgressEvidenceWindowContent,
+  },
   computer: { titleKey: "computerWindowTitle", closeButtonAriaLabelKey: "closeComputerWindowAriaLabel" },
 };
 
@@ -3075,6 +3121,11 @@ function createComputerNetscapeWindowContentElements() {
     if (pageRecord.awardsEvidence === true && pageRecord.evidence) {
       awardWebContentEvidence(pageRecord.evidence, { websiteId: "standalone" });
     }
+
+    // Standalone pages are websites too, so visiting one records its progress
+    // evidence. They are not search results, so they never dispatch
+    // caveos-browser-record-opened and have to be activated here.
+    activateProgressEvidenceForStandalonePage(pageRecord.id);
 
     const renderedPageNode = createStandaloneTextPage(pageRecord);
     browserAddress.value = pageRecord.url;
@@ -5184,6 +5235,380 @@ function openPhotosWindow() {
 function openReportsWindow() {
   openEvidenceCarouselWindow(EVIDENCE_CAROUSEL_WINDOWS.reports);
 }
+
+// ---------------------------------------------------------------------------
+// Progress evidence — the manila EVIDENCE envelope on the noticeboard
+//
+// The envelope shows every progress evidence item where BOTH
+// progressEvidenceActivated (player progress) and
+// progressEvidenceDeveloperEnabled (developer decision) are true. See
+// progressEvidenceManager.js and docs/progress-evidence-system.md.
+// ---------------------------------------------------------------------------
+
+// Three cards on screen at once, per the design.
+const PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT = 3;
+
+// Must stay in step with --progress-evidence-slide-duration in styles.css: the
+// outgoing track is only replaced once its CSS transition has finished.
+const PROGRESS_EVIDENCE_SLIDE_MS = 320;
+
+// Which item sits leftmost in the strip. Purely view state — it is not saved,
+// and it is re-clamped against the live eligible list on every render, so the
+// envelope can never open onto a stale index.
+let progressEvidenceCarouselIndex = 0;
+
+// The one place that decides what a card actually shows. Today: the item's
+// PNG when it exists, and a placeholder card carrying the progressEvidenceId
+// when it does not. Replacing the placeholder later (or dropping it entirely
+// once every image is drawn) means editing this function and nothing else.
+function createProgressEvidenceCardMedia(progressEvidenceId) {
+  const imagePath = resolveProgressEvidenceImagePath(progressEvidenceId);
+  if (!imagePath) {
+    return createProgressEvidencePlaceholder(progressEvidenceId);
+  }
+
+  const image = document.createElement("img");
+  image.classList.add("progress-evidence-card-image");
+  image.alt = "";
+
+  // A missing PNG is the normal case while the artwork is still being made, so
+  // it swaps itself for the placeholder rather than leaving a broken image.
+  image.addEventListener("error", () => {
+    image.replaceWith(createProgressEvidencePlaceholder(progressEvidenceId));
+  }, { once: true });
+
+  image.src = imagePath;
+  return image;
+}
+
+function createProgressEvidencePlaceholder(progressEvidenceId) {
+  const placeholder = document.createElement("div");
+  placeholder.classList.add("progress-evidence-placeholder");
+
+  const caption = document.createElement("div");
+  caption.classList.add("progress-evidence-placeholder-caption");
+  caption.textContent = resolveLocalizedText("progressEvidencePlaceholderCaption", "Evidence pending");
+
+  const identifier = document.createElement("div");
+  identifier.classList.add("progress-evidence-placeholder-id");
+  identifier.textContent = progressEvidenceId;
+
+  placeholder.append(caption, identifier);
+  return placeholder;
+}
+
+// One card. The visible text is the progressEvidenceId itself for now; the
+// human-readable label rides along as the accessible name.
+function createProgressEvidenceCard(entry) {
+  const card = document.createElement("div");
+  card.classList.add("progress-evidence-card");
+  card.dataset.progressEvidenceId = entry.progressEvidenceId;
+  card.setAttribute("aria-label", entry.label || entry.progressEvidenceId);
+  card.title = entry.label || entry.progressEvidenceId;
+
+  const label = document.createElement("div");
+  label.classList.add("progress-evidence-card-label");
+  label.textContent = entry.progressEvidenceId;
+
+  card.append(createProgressEvidenceCardMedia(entry.progressEvidenceId), label);
+  return card;
+}
+
+// A strip of exactly `cardCount` cards starting at `startIndex`, wrapping
+// around the end of the collection the same way the evidence carousels do. The
+// caller decides the count: the settled strip never exceeds the number of
+// items, while a stepping strip is allowed one extra (which repeats an item
+// when there are only a few — exactly what a short physical carousel does).
+function buildProgressEvidenceTrack(entries, startIndex, cardCount) {
+  const track = document.createElement("div");
+  track.classList.add("progress-evidence-track");
+
+  if (!entries.length) {
+    const emptyState = document.createElement("div");
+    emptyState.classList.add("progress-evidence-empty");
+    emptyState.textContent = resolveLocalizedText("progressEvidenceEmptyMessage", "No evidence yet");
+    track.appendChild(emptyState);
+    return track;
+  }
+
+  for (let offset = 0; offset < cardCount; offset += 1) {
+    const wrappedIndex = ((startIndex + offset) % entries.length + entries.length) % entries.length;
+    track.appendChild(createProgressEvidenceCard(entries[wrappedIndex]));
+  }
+
+  return track;
+}
+
+// How far one card slot is, in pixels: a card's width plus the gap between
+// cards. Measured from a rendered track rather than assumed, since the card
+// width is derived from the window height. Returns 0 when there is nothing to
+// measure, which is the caller's cue to skip the animation.
+function measureProgressEvidenceCardStep(track) {
+  const card = track?.querySelector(".progress-evidence-card");
+  if (!card) {
+    return 0;
+  }
+
+  const cardWidth = card.getBoundingClientRect().width;
+  if (!cardWidth) {
+    return 0;
+  }
+
+  const trackStyle = window.getComputedStyle(track);
+  const gap = Number.parseFloat(trackStyle.columnGap || trackStyle.gap || "0");
+  return cardWidth + (Number.isFinite(gap) ? gap : 0);
+}
+
+// Swaps the visible strip by exactly one card, the way a physical stack of
+// photographs would move: the card leaving view slides out and fades, the two
+// staying on screen shuffle along into their new slots, and one new card slides
+// in from the far side, fading up.
+//
+// `direction` is 0 for a plain (re)render, 1 for Next and -1 for Previous.
+// `progressEvidenceCarouselIndex` has already been stepped by the time this
+// runs, so the four-card strip built for the animation starts one item earlier
+// than the new index for Next, and exactly at it for Previous.
+//
+// The extra card makes the row one slot wider than it settles at. Because the
+// track is centre-justified, that alone would shift everything half a slot, so
+// the animation runs from +half a slot to -half a slot (Next) or the reverse
+// (Previous) — a full slot of travel either way, with the stationary cards
+// landing exactly where their neighbours were.
+function renderProgressEvidenceTrack(refs, entries, direction) {
+  if (refs.slideTimeoutId !== null) {
+    window.clearTimeout(refs.slideTimeoutId);
+    refs.slideTimeoutId = null;
+  }
+
+  const settledCardCount = Math.min(PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT, entries.length);
+  const settledTrack = () => buildProgressEvidenceTrack(entries, progressEvidenceCarouselIndex, settledCardCount);
+  const existingTrack = refs.viewport.firstElementChild;
+  const cardStep = direction && existingTrack ? measureProgressEvidenceCardStep(existingTrack) : 0;
+
+  if (!direction || !cardStep) {
+    refs.viewport.replaceChildren(settledTrack());
+    return;
+  }
+
+  const isNext = direction > 0;
+  const steppingTrack = buildProgressEvidenceTrack(
+    entries,
+    isNext ? progressEvidenceCarouselIndex - 1 : progressEvidenceCarouselIndex,
+    settledCardCount + 1
+  );
+
+  const steppingCards = Array.from(steppingTrack.querySelectorAll(".progress-evidence-card"));
+  const leavingCard = isNext ? steppingCards[0] : steppingCards[steppingCards.length - 1];
+  const enteringCard = isNext ? steppingCards[steppingCards.length - 1] : steppingCards[0];
+
+  // `is-stepping` suppresses the transitions so the starting position and the
+  // incoming card's transparency are set without animating into them.
+  steppingTrack.classList.add("is-stepping", isNext ? "is-stepping-next" : "is-stepping-prev");
+  steppingTrack.style.setProperty(
+    "--progress-evidence-track-offset",
+    `${(isNext ? 1 : -1) * (cardStep / 2)}px`
+  );
+  enteringCard?.classList.add("is-card-entering");
+  refs.viewport.replaceChildren(steppingTrack);
+
+  // Read a layout property so that starting state is committed before the
+  // transitions come back on, otherwise the browser collapses both states into
+  // one frame and nothing animates.
+  void steppingTrack.offsetWidth;
+
+  window.requestAnimationFrame(() => {
+    steppingTrack.classList.remove("is-stepping");
+    steppingTrack.style.setProperty(
+      "--progress-evidence-track-offset",
+      `${(isNext ? -1 : 1) * (cardStep / 2)}px`
+    );
+    enteringCard?.classList.remove("is-card-entering");
+    leavingCard?.classList.add("is-card-leaving");
+  });
+
+  refs.slideTimeoutId = window.setTimeout(() => {
+    refs.slideTimeoutId = null;
+    refs.viewport.replaceChildren(settledTrack());
+  }, PROGRESS_EVIDENCE_SLIDE_MS);
+}
+
+function createProgressEvidenceWindowContentElements() {
+  const container = document.createElement("div");
+  container.classList.add("progress-evidence-carousel-container");
+
+  const controlsHost = document.createElement("div");
+  controlsHost.classList.add("progress-evidence-controls-host");
+
+  const counter = document.createElement("div");
+  counter.classList.add("progress-evidence-carousel-counter");
+  controlsHost.appendChild(counter);
+
+  const viewport = document.createElement("div");
+  viewport.classList.add("progress-evidence-viewport");
+
+  container.append(controlsHost, viewport);
+
+  return {
+    container,
+    controlsHost,
+    counter,
+    viewport,
+    slideTimeoutId: null,
+  };
+}
+
+// Re-reads the eligible collection from progressEvidenceManager every time, so
+// the envelope always reflects current progress rather than whatever it showed
+// when it was last opened.
+function updateProgressEvidenceWindowContent(windowController, { direction = 0 } = {}) {
+  const refs = progressEvidenceWindowContentRefs.get(windowController);
+  if (!refs) {
+    return;
+  }
+
+  const eligibleEntries = getEligibleProgressEvidence();
+  progressEvidenceCarouselIndex = eligibleEntries.length
+    ? ((progressEvidenceCarouselIndex % eligibleEntries.length) + eligibleEntries.length) % eligibleEntries.length
+    : 0;
+
+  refs.counter.textContent = eligibleEntries.length
+    ? `${progressEvidenceCarouselIndex + 1}/${eligibleEntries.length}`
+    : "0/0";
+
+  const hasEntries = eligibleEntries.length > 0;
+  if (windowController.previousButtonElement) {
+    windowController.previousButtonElement.disabled = !hasEntries;
+  }
+  if (windowController.nextButtonElement) {
+    windowController.nextButtonElement.disabled = !hasEntries;
+  }
+
+  renderProgressEvidenceTrack(refs, eligibleEntries, hasEntries ? direction : 0);
+}
+
+function stepProgressEvidenceCarousel(windowController, delta) {
+  const eligibleCount = getEligibleProgressEvidence().length;
+  if (!eligibleCount) {
+    return;
+  }
+
+  progressEvidenceCarouselIndex = ((progressEvidenceCarouselIndex + delta) % eligibleCount + eligibleCount) % eligibleCount;
+  updateProgressEvidenceWindowContent(windowController, { direction: delta > 0 ? 1 : -1 });
+}
+
+function openProgressEvidenceWindow() {
+  if (!getElements().gameArea) {
+    return;
+  }
+
+  let windowController = null;
+  windowController = new DesktopWindow({
+    parentElement: getElements().gameArea,
+    classNames: ["story-window", "progress-evidence-window"],
+    title: localize("progressEvidenceWindowTitle", getLanguage()),
+    showCarouselNavigation: true,
+    // Near full height so the cards can be about the height of the browser
+    // window less a small padding allowance (see --progress-evidence-card-height).
+    initialWidthRatio: 0.96,
+    initialHeightRatio: 0.98,
+    onNavigatePrevious: () => {
+      stepProgressEvidenceCarousel(windowController, -1);
+    },
+    onNavigateNext: () => {
+      stepProgressEvidenceCarousel(windowController, 1);
+    },
+    closeButtonAriaLabel: localize("closeProgressEvidenceWindowAriaLabel", getLanguage()),
+    onClose: () => {
+      const refs = progressEvidenceWindowContentRefs.get(windowController);
+      if (refs?.slideTimeoutId !== null && refs?.slideTimeoutId !== undefined) {
+        window.clearTimeout(refs.slideTimeoutId);
+        refs.slideTimeoutId = null;
+      }
+
+      unregisterDesktopWindow(windowController);
+      audioManager.playSfx("clickSwitch");
+    },
+  });
+
+  windowController.setCarouselAriaLabels({
+    previous: localize("previousImageAriaLabel", getLanguage()),
+    next: localize("nextImageAriaLabel", getLanguage()),
+  });
+
+  const contentRefs = createProgressEvidenceWindowContentElements();
+  windowController.setContent(contentRefs.container);
+  windowController.scrollContainerElement = contentRefs.container;
+
+  progressEvidenceWindowContentRefs.set(windowController, contentRefs);
+  registerDesktopWindow(windowController, "progress-evidence");
+
+  updateProgressEvidenceWindowContent(windowController);
+  windowController.open({ resizable: true, showScrollbar: false });
+  bringDesktopWindowToFront(windowController);
+  audioManager.playSfx("clickSwitch");
+}
+
+// Re-renders every open envelope window. Called after an activation so an
+// envelope left open while the player works picks the new item up.
+function refreshOpenProgressEvidenceWindows() {
+  findExistingWindowsByKind("progress-evidence").forEach((windowController) => {
+    updateProgressEvidenceWindowContent(windowController);
+  });
+}
+
+// Activation entry points. Each resolves the service + item to its
+// progressEvidenceId through the registry; items with no registry entry are
+// ignored rather than throwing.
+function activateProgressEvidenceForWebRecord(detail) {
+  const openedService = String(detail?.replay?.siteId || "").trim().toLowerCase();
+  const openedRecordId = String(detail?.recordId || "").trim();
+  if (!openedService || !openedRecordId) {
+    return;
+  }
+
+  if (activateProgressEvidenceForItem(openedService, openedRecordId)) {
+    refreshOpenProgressEvidenceWindows();
+  }
+}
+
+function activateProgressEvidenceForStandalonePage(pageId) {
+  if (activateProgressEvidenceForItem(PROGRESS_EVIDENCE_SERVICES.STANDALONE, pageId)) {
+    refreshOpenProgressEvidenceWindows();
+  }
+}
+
+function activateProgressEvidenceForFacsimileReport(reportId) {
+  if (activateProgressEvidenceForItem(PROGRESS_EVIDENCE_SERVICES.FACSIMILE, reportId)) {
+    refreshOpenProgressEvidenceWindows();
+  }
+}
+
+// Developer/console surface. `activateProgressEvidence` is the documented way
+// for any other part of the game to record a milestone; the rest are
+// inspection helpers and the developer-only display switch, which is never
+// touched by gameplay code.
+window.activateProgressEvidence = function activateProgressEvidenceFromGame(progressEvidenceId) {
+  const activated = activateProgressEvidence(progressEvidenceId);
+  if (activated) {
+    refreshOpenProgressEvidenceWindows();
+  }
+  return activated;
+};
+
+window.progressEvidenceDeveloperTools = {
+  getProgressEvidence: () => getProgressEvidence(),
+  getProgressEvidenceEntries: () => getProgressEvidenceEntries(),
+  getEligibleProgressEvidence: () => getEligibleProgressEvidence(),
+  getProgressEvidenceIdForItem: (service, itemId) => getProgressEvidenceIdForItem(service, itemId),
+  isProgressEvidenceActivated: (progressEvidenceId) => isProgressEvidenceActivated(progressEvidenceId),
+  setProgressEvidenceDeveloperEnabled: (progressEvidenceId, isEnabled) => {
+    const changed = setProgressEvidenceDeveloperEnabled(progressEvidenceId, isEnabled);
+    if (changed) {
+      refreshOpenProgressEvidenceWindows();
+    }
+    return changed;
+  },
+};
 
 function createFacsimileWindowContentElements() {
   const container = document.createElement("div");

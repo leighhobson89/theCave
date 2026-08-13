@@ -1,5 +1,10 @@
 const INJECT_API_URL = "http://localhost:5058/api/web-content/upsert";
 const NEXT_CASE_NUMBER_API_URL = "http://localhost:5058/api/web-content/next-police-case-number";
+const NEXT_PROGRESS_EVIDENCE_ID_API_URL = "http://localhost:5058/api/web-content/next-progress-evidence-id";
+
+// Where the Progress Evidence photo picker writes its paths. Must match
+// PROGRESS_EVIDENCE_IMAGE_DIRECTORY in progressEvidenceManager.js.
+const PROGRESS_EVIDENCE_IMAGE_DIRECTORY = "./assets/photos/progressEvidenceImages";
 
 const contentTypeSelect = document.getElementById("contentTypeSelect");
 const idInput = document.getElementById("idInput");
@@ -71,6 +76,14 @@ const standaloneImageCaptionAltInput = document.getElementById("standaloneImageC
 const standaloneApplyCaptionInput = document.getElementById("standaloneApplyCaptionInput");
 const standaloneApplyAltInput = document.getElementById("standaloneApplyAltInput");
 
+const progressEvidenceIdInput = document.getElementById("progressEvidenceIdInput");
+const allocateProgressEvidenceIdButton = document.getElementById("allocateProgressEvidenceIdButton");
+const progressEvidenceImageInput = document.getElementById("progressEvidenceImageInput");
+const chooseProgressEvidenceImageButton = document.getElementById("chooseProgressEvidenceImageButton");
+const progressEvidenceImagePicker = document.getElementById("progressEvidenceImagePicker");
+const progressEvidenceActivatedInput = document.getElementById("progressEvidenceActivatedInput");
+const progressEvidenceDeveloperEnabledInput = document.getElementById("progressEvidenceDeveloperEnabledInput");
+
 const previewButton = document.getElementById("previewButton");
 const injectButton = document.getElementById("injectButton");
 const clearButton = document.getElementById("clearButton");
@@ -113,6 +126,11 @@ const EVIDENCE_TYPE_PRESETS = {
 
 let lastEvidencePresetType = "report";
 let queuedEvidenceEntries = [];
+
+// Which service the progressEvidenceId currently in the field was allocated
+// for, so switching Content Type re-allocates instead of keeping an id whose
+// control digit names the wrong service.
+let lastAllocatedProgressEvidenceService = "";
 
 function setStatus(message) {
   status.textContent = message;
@@ -589,9 +607,62 @@ function buildArchivesEntry(common) {
   };
 }
 
+// The Progress Evidence panel applies to every content type and is mandatory,
+// so this throws rather than returning a partial result — which is what blocks
+// Preview and Inject alike, since both go through buildPayload().
+//
+// The id is allocated by the server (one past the highest already registered)
+// and is read-only in the form: a hand-typed one could collide with an id the
+// game has already handed to another item.
+function buildProgressEvidenceFields() {
+  const progressEvidenceId = String(progressEvidenceIdInput.value || "").trim();
+  if (!progressEvidenceId) {
+    throw new Error(
+      "Progress Evidence: no progressEvidenceId allocated yet. Start the inject API "
+      + "(node tools/web_content_builder_server.js) and press Allocate."
+    );
+  }
+
+  if (!/^\d{5}$/.test(progressEvidenceId)) {
+    throw new Error(
+      `Progress Evidence: '${progressEvidenceId}' is not a valid progressEvidenceId `
+      + "(a service control digit followed by a four-digit sequence)."
+    );
+  }
+
+  const progressEvidenceImage = String(progressEvidenceImageInput.value || "").trim();
+  if (!progressEvidenceImage) {
+    throw new Error("Progress Evidence: choose a progress evidence image before previewing or injecting.");
+  }
+
+  return {
+    progressEvidenceId,
+    progressEvidenceImage,
+    // Player progress: true means "count this as already reached", so it shows
+    // in the envelope straight away.
+    progressEvidenceActivated: Boolean(progressEvidenceActivatedInput.checked),
+    // Developer switch: with this off the item never appears, no matter what
+    // the player has done.
+    progressEvidenceDeveloperEnabled: Boolean(progressEvidenceDeveloperEnabledInput.checked),
+  };
+}
+
 function buildPayload() {
   const common = getCommonFields();
+  // Validated up front so a missing image or id is reported before any of the
+  // per-type "X is required" errors, and always for every content type.
+  const progressEvidenceFields = buildProgressEvidenceFields();
+  const payload = buildTypedPayload(common);
 
+  payload.entry = {
+    ...payload.entry,
+    ...progressEvidenceFields,
+  };
+
+  return payload;
+}
+
+function buildTypedPayload(common) {
   if (common.contentType === "standalone") {
     return buildStandaloneEntry(common);
   }
@@ -650,6 +721,53 @@ async function maybePrefillPoliceCaseNumber() {
   } catch (error) {
     // Silent: the field just stays blank, and the same error would show up
     // (and be visible) the moment the author tries Preview/Inject anyway.
+  }
+}
+
+// Asks the inject API for the next progressEvidenceId for a service — its
+// control digit followed by one past the highest sequence already registered
+// for it in assets/progressEvidence.json (see tools/progress_evidence_id.js,
+// which the server also uses). There is no local fallback: without the server
+// there is no reliable "current highest" to increment, and a guessed id would
+// collide with a real one.
+async function fetchNextProgressEvidenceId(service) {
+  let response;
+  try {
+    response = await fetch(`${NEXT_PROGRESS_EVIDENCE_ID_API_URL}?service=${encodeURIComponent(service)}`);
+  } catch (error) {
+    throw new Error("Inject API is offline. Start it with: node tools/web_content_builder_server.js");
+  }
+
+  if (!response.ok) {
+    throw new Error(`Progress evidence id allocation failed (${response.status})`);
+  }
+
+  const result = await response.json();
+  return String(result.progressEvidenceId || "").trim();
+}
+
+// Fills the read-only id field on load, after Clear, and whenever the Content
+// Type changes -- an id carries its service in its leading digit, so one
+// allocated for ZoomSearch is not a valid id for a Police record.
+//
+// Silent on failure: the field stays blank and the same error surfaces
+// (visibly) the moment the author tries Preview or Inject, which a blank id
+// blocks.
+async function maybePrefillProgressEvidenceId() {
+  const service = getCurrentType();
+  const hasCurrentId = Boolean(String(progressEvidenceIdInput.value || "").trim());
+  if (hasCurrentId && lastAllocatedProgressEvidenceService === service) {
+    return;
+  }
+
+  try {
+    progressEvidenceIdInput.value = await fetchNextProgressEvidenceId(service);
+    lastAllocatedProgressEvidenceService = service;
+  } catch (error) {
+    // Intentionally silent — see above. Clear any id belonging to the previous
+    // service rather than leaving a wrong one on screen.
+    progressEvidenceIdInput.value = "";
+    lastAllocatedProgressEvidenceService = "";
   }
 }
 
@@ -737,11 +855,16 @@ function clearForm() {
     evidenceDefaultTitleInput,
     evidenceDescriptionInput,
     evidencePhotoCaptionInput,
+    progressEvidenceIdInput,
+    progressEvidenceImageInput,
   ].forEach((element) => {
     element.value = "";
   });
 
   awardsEvidenceInput.checked = false;
+  progressEvidenceActivatedInput.checked = false;
+  progressEvidenceDeveloperEnabledInput.checked = false;
+  lastAllocatedProgressEvidenceService = "";
   queuedEvidenceEntries = [];
   standaloneBgColorInput.value = "#eceff3";
   standaloneBgColorPicker.value = "#eceff3";
@@ -844,6 +967,9 @@ function syncFieldStates() {
   setEvidenceFieldsDisabledState(!evidenceEnabled);
 
   void maybePrefillPoliceCaseNumber();
+  // Progress evidence applies to every content type, so its id is allocated
+  // regardless of which one is selected.
+  void maybePrefillProgressEvidenceId();
 }
 
 previewButton.addEventListener("click", () => {
@@ -942,6 +1068,37 @@ standaloneTextColorInput.addEventListener("input", () => {
   if (/^#[0-9a-fA-F]{6}$/.test(value)) {
     standaloneTextColorPicker.value = value;
   }
+});
+
+if (allocateProgressEvidenceIdButton) {
+  allocateProgressEvidenceIdButton.addEventListener("click", async () => {
+    const service = getCurrentType();
+    try {
+      progressEvidenceIdInput.value = await fetchNextProgressEvidenceId(service);
+      lastAllocatedProgressEvidenceService = service;
+      setStatus(`Allocated progressEvidenceId ${progressEvidenceIdInput.value} for ${service}.`);
+    } catch (error) {
+      setStatus(error.message);
+    }
+  });
+}
+
+chooseProgressEvidenceImageButton.addEventListener("click", () => {
+  progressEvidenceImagePicker.click();
+});
+
+// One image per record, so this replaces rather than appends -- unlike the
+// content Image paths picker, which merges into a list.
+progressEvidenceImagePicker.addEventListener("change", () => {
+  const [fileName] = Array.from(progressEvidenceImagePicker.files || [])
+    .map((file) => String(file?.name || "").trim())
+    .filter(Boolean);
+
+  if (fileName) {
+    progressEvidenceImageInput.value = `${PROGRESS_EVIDENCE_IMAGE_DIRECTORY}/${fileName}`;
+  }
+
+  progressEvidenceImagePicker.value = "";
 });
 
 chooseImagePathsButton.addEventListener("click", () => {

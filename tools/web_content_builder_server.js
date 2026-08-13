@@ -2,10 +2,20 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { nextCaseNumber } = require("./police_case_number");
+const {
+  isWellFormedProgressEvidenceId,
+  nextProgressEvidenceId,
+  serviceForProgressEvidenceId,
+} = require("./progress_evidence_id");
 
 const PORT = 5058;
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const ASSETS_DIR = path.join(PROJECT_ROOT, "assets");
+
+// The single registry of every progress evidence item in the game: one
+// language-neutral file, scanned to allocate ids and written to on every
+// upsert. The game loads the same file at startup.
+const PROGRESS_EVIDENCE_DEFINITIONS_PATH = path.join(ASSETS_DIR, "progressEvidence.json");
 
 const LANGUAGE_CODES = ["en", "de", "es", "fr", "it"];
 
@@ -370,6 +380,136 @@ function upsertEvidenceCatalogEntries(normalizedEntry) {
   return updates;
 }
 
+// ---------------------------------------------------------------------------
+// Progress evidence
+// ---------------------------------------------------------------------------
+
+// Ids are allocated per service, so the caller has to say which one it wants.
+function handleNextProgressEvidenceId(service) {
+  const progressEvidenceId = nextProgressEvidenceId(readJsonFile(PROGRESS_EVIDENCE_DEFINITIONS_PATH), service);
+  if (!progressEvidenceId) {
+    throw new Error(`Unknown service for progress evidence id allocation: '${service || "(none given)"}'.`);
+  }
+
+  return { progressEvidenceId, service };
+}
+
+// The builder's Progress Evidence panel is mandatory, so every entry arrives
+// carrying these fields. They are validated here as well as in the form,
+// because a malformed id would name a slot the game could never resolve, and a
+// mismatched control digit would put the item in the wrong service's block.
+function readProgressEvidenceFields(entry, service) {
+  const progressEvidenceId = String(entry?.progressEvidenceId ?? "").trim();
+  if (!progressEvidenceId) {
+    return null;
+  }
+
+  if (!isWellFormedProgressEvidenceId(progressEvidenceId)) {
+    throw new Error(
+      `progressEvidenceId must be five digits led by a known service control digit, got '${progressEvidenceId}'.`
+    );
+  }
+
+  const idService = serviceForProgressEvidenceId(progressEvidenceId);
+  if (idService !== service) {
+    throw new Error(
+      `progressEvidenceId '${progressEvidenceId}' belongs to service '${idService}', but the record is for '${service}'.`
+    );
+  }
+
+  const imagePath = String(entry?.progressEvidenceImage ?? "").trim();
+  if (!imagePath) {
+    throw new Error("progressEvidenceImage is required when progressEvidenceId is set.");
+  }
+
+  return {
+    progressEvidenceId,
+    imagePath,
+    progressEvidenceActivated: entry?.progressEvidenceActivated === true,
+    progressEvidenceDeveloperEnabled: entry?.progressEvidenceDeveloperEnabled === true,
+  };
+}
+
+// Upserts the record's progress evidence definition into
+// assets/progressEvidence.json, which the game merges into its registry at
+// startup. Matched on service + itemId, so re-injecting the same record updates
+// its definition in place instead of allocating a second id for it.
+function upsertProgressEvidenceDefinition(payload, progressEvidenceFields, label) {
+  if (!progressEvidenceFields) {
+    return null;
+  }
+
+  const definitionsJson = readJsonFile(PROGRESS_EVIDENCE_DEFINITIONS_PATH);
+  if (!Array.isArray(definitionsJson.definitions)) {
+    definitionsJson.definitions = [];
+  }
+
+  const service = payload.siteId;
+  const itemId = payload.entry.id;
+  const existingIndex = definitionsJson.definitions.findIndex((candidate) => (
+    candidate
+    && String(candidate.service || "").toLowerCase() === service
+    && String(candidate.itemId || "").toLowerCase() === itemId.toLowerCase()
+  ));
+
+  const definition = {
+    // An existing definition keeps the id it was already allocated: the form
+    // hands out a fresh one on every load, and honouring that for a re-inject
+    // would strand the id the player may already have activated.
+    progressEvidenceId: existingIndex >= 0
+      ? String(definitionsJson.definitions[existingIndex].progressEvidenceId || progressEvidenceFields.progressEvidenceId)
+      : progressEvidenceFields.progressEvidenceId,
+    service,
+    itemId,
+    label,
+    imagePath: progressEvidenceFields.imagePath,
+    progressEvidenceActivated: progressEvidenceFields.progressEvidenceActivated,
+    progressEvidenceDeveloperEnabled: progressEvidenceFields.progressEvidenceDeveloperEnabled,
+  };
+
+  const action = existingIndex >= 0 ? "updated" : "created";
+  if (existingIndex >= 0) {
+    definitionsJson.definitions[existingIndex] = definition;
+  } else {
+    definitionsJson.definitions.push(definition);
+  }
+
+  writeJsonFile(PROGRESS_EVIDENCE_DEFINITIONS_PATH, definitionsJson);
+
+  return {
+    action,
+    file: "assets/progressEvidence.json",
+    progressEvidenceId: definition.progressEvidenceId,
+    progressEvidenceActivated: definition.progressEvidenceActivated,
+    progressEvidenceDeveloperEnabled: definition.progressEvidenceDeveloperEnabled,
+    imagePath: definition.imagePath,
+  };
+}
+
+// The progress evidence registry owns these fields, exactly as the localized
+// evidence catalogs own description/caption, so they are stripped from the copy
+// written into the site content files rather than stored in both places.
+function stripProgressEvidenceFieldsForWebContentStorage(entry) {
+  const storedEntry = { ...entry };
+  delete storedEntry.progressEvidenceId;
+  delete storedEntry.progressEvidenceImage;
+  delete storedEntry.progressEvidenceActivated;
+  delete storedEntry.progressEvidenceDeveloperEnabled;
+  return storedEntry;
+}
+
+// The human-readable name for the definition: whichever title-ish field this
+// site type uses, falling back to the record id.
+function resolveProgressEvidenceLabel(entry) {
+  return firstNonEmptyString(
+    entry?.pageTitle,
+    entry?.headline,
+    entry?.title,
+    entry?.websiteName,
+    entry?.id
+  );
+}
+
 function normalizePayload(rawPayload) {
   const siteId = String(rawPayload.siteId || "").trim();
   const bucket = String(rawPayload.bucket || "").trim();
@@ -431,7 +571,16 @@ function handleUpsert(rawPayload) {
   const payload = normalizePayload(rawPayload);
 
   const evidenceCatalogUpdates = upsertEvidenceCatalogEntries(payload.entry);
-  const persistedEntry = sanitizeEvidenceForWebContentStorage(payload.entry);
+  const progressEvidenceFields = readProgressEvidenceFields(payload.entry, payload.siteId);
+  const progressEvidenceUpdate = upsertProgressEvidenceDefinition(
+    payload,
+    progressEvidenceFields,
+    resolveProgressEvidenceLabel(payload.entry)
+  );
+
+  const persistedEntry = stripProgressEvidenceFieldsForWebContentStorage(
+    sanitizeEvidenceForWebContentStorage(payload.entry)
+  );
   const siteContentUpdates = upsertSiteContentAcrossLanguages(payload, persistedEntry);
   const primaryUpdate = siteContentUpdates.find((update) => update.language === "en") || siteContentUpdates[0];
 
@@ -443,6 +592,7 @@ function handleUpsert(rawPayload) {
     targetFile: primaryUpdate.file,
     siteContentUpdates,
     evidenceCatalogUpdates,
+    progressEvidenceUpdate,
   };
 }
 
@@ -478,6 +628,18 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, handleNextPoliceCaseNumber());
     } catch (error) {
       sendText(res, 400, error.message || "Failed to generate a case number.");
+    }
+    return;
+  }
+
+  if (req.method === "GET" && req.url.startsWith("/api/web-content/next-progress-evidence-id")) {
+    try {
+      const requestUrl = new URL(req.url, `http://localhost:${PORT}`);
+      sendJson(res, 200, handleNextProgressEvidenceId(
+        String(requestUrl.searchParams.get("service") || "").trim().toLowerCase()
+      ));
+    } catch (error) {
+      sendText(res, 400, error.message || "Failed to allocate a progress evidence id.");
     }
     return;
   }

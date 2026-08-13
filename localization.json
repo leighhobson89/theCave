@@ -191,7 +191,13 @@
     "policeUsernameAriaLabel": "Police username",
     "policePasswordAriaLabel": "Police password",
     "archiveUsernameAriaLabel": "Archive username",
-    "archivePasswordAriaLabel": "Archive password"
+    "archivePasswordAriaLabel": "Archive password",
+    "progressEvidenceWindowTitle": "Progress Evidence",
+    "progressEvidenceEnvelopeLabel": "EVIDENCE",
+    "openProgressEvidenceEnvelopeAriaLabel": "Open the evidence envelope",
+    "closeProgressEvidenceWindowAriaLabel": "Close progress evidence window",
+    "progressEvidenceEmptyMessage": "No progress evidence collected yet",
+    "progressEvidencePlaceholderCaption": "Evidence pending"
   },
   "es": {
     "newGame": "Nuevo Juego",
@@ -385,7 +391,13 @@
     "policeUsernameAriaLabel": "Usuario de policía",
     "policePasswordAriaLabel": "Contraseña de policía",
     "archiveUsernameAriaLabel": "Usuario del archivo",
-    "archivePasswordAriaLabel": "Contraseña del archivo"
+    "archivePasswordAriaLabel": "Contraseña del archivo",
+    "progressEvidenceWindowTitle": "Pruebas de Progreso",
+    "progressEvidenceEnvelopeLabel": "PRUEBAS",
+    "openProgressEvidenceEnvelopeAriaLabel": "Abrir el sobre de pruebas",
+    "closeProgressEvidenceWindowAriaLabel": "Cerrar ventana de pruebas de progreso",
+    "progressEvidenceEmptyMessage": "Aún no se han reunido pruebas de progreso",
+    "progressEvidencePlaceholderCaption": "Prueba pendiente"
   },
   "de": {
     "newGame": "Neues Spiel",
@@ -579,7 +591,13 @@
     "policeUsernameAriaLabel": "Polizei-Benutzername",
     "policePasswordAriaLabel": "Polizei-Passwort",
     "archiveUsernameAriaLabel": "Archiv-Benutzername",
-    "archivePasswordAriaLabel": "Archiv-Passwort"
+    "archivePasswordAriaLabel": "Archiv-Passwort",
+    "progressEvidenceWindowTitle": "Fortschrittsbeweise",
+    "progressEvidenceEnvelopeLabel": "BEWEISE",
+    "openProgressEvidenceEnvelopeAriaLabel": "Den Beweisumschlag öffnen",
+    "closeProgressEvidenceWindowAriaLabel": "Fenster für Fortschrittsbeweise schließen",
+    "progressEvidenceEmptyMessage": "Noch keine Fortschrittsbeweise gesammelt",
+    "progressEvidencePlaceholderCaption": "Beweis ausstehend"
   },
   "it": {
     "newGame": "Nuovo gioco",
@@ -773,7 +791,13 @@
     "policeUsernameAriaLabel": "Nome utente polizia",
     "policePasswordAriaLabel": "Password polizia",
     "archiveUsernameAriaLabel": "Nome utente archivio",
-    "archivePasswordAriaLabel": "Password archivio"
+    "archivePasswordAriaLabel": "Password archivio",
+    "progressEvidenceWindowTitle": "Prove di Progresso",
+    "progressEvidenceEnvelopeLabel": "PROVE",
+    "openProgressEvidenceEnvelopeAriaLabel": "Apri la busta delle prove",
+    "closeProgressEvidenceWindowAriaLabel": "Chiudi finestra prove di progresso",
+    "progressEvidenceEmptyMessage": "Nessuna prova di progresso raccolta finora",
+    "progressEvidencePlaceholderCaption": "Prova in attesa"
   },
   "fr": {
     "newGame": "Nouveau jeu",
@@ -967,6 +991,12 @@
     "policeUsernameAriaLabel": "Nom d'utilisateur police",
     "policePasswordAriaLabel": "Mot de passe police",
     "archiveUsernameAriaLabel": "Nom d'utilisateur des archives",
-    "archivePasswordAriaLabel": "Mot de passe des archives"
+    "archivePasswordAriaLabel": "Mot de passe des archives",
+    "progressEvidenceWindowTitle": "Preuves de Progression",
+    "progressEvidenceEnvelopeLabel": "PREUVES",
+    "openProgressEvidenceEnvelopeAriaLabel": "Ouvrir l'enveloppe de preuves",
+    "closeProgressEvidenceWindowAriaLabel": "Fermer la fenêtre des preuves de progression",
+    "progressEvidenceEmptyMessage": "Aucune preuve de progression collectée pour l'instant",
+    "progressEvidencePlaceholderCaption": "Preuve en attente"
   }
 }

@@ -16,6 +16,7 @@ npm run test:e2e                 # Playwright suite
 | --- | --- |
 | [architecture.md](architecture.md) | **Start here.** How every component works: scenes and the viewport, the window system, evidence carousels, the story window, Notes and Paint, the facsimile, the CaveOS computer and Netscape, the web content system, notifications, audio, localization, save/load, the debug window, tests, and known issues |
 | [evidence-system.md](evidence-system.md) | The evidence store, content catalogs, the three unlock paths, evidence triggers, save validation, authoring rules |
+| [progress-evidence-system.md](progress-evidence-system.md) | The separate progress evidence system: milestone ids, the two flags, the noticeboard EVIDENCE envelope and its carousel, image/placeholder loading, the full website and fax audit |
 | [investigation-archives.md](investigation-archives.md) | The four in-game web services: exact search rules, real login credentials, record data, detail templates, standalone hidden pages, how to add records |
 | [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md) | Sending faxes, payload fields, the read-to-evidence lifecycle, milestone triggers, record-open triggers, validation steps |
 | [story-timeline.md](story-timeline.md) | Snapshot audit of every character, date and connection findable in the shipped story/evidence/web-content assets, plus known gaps and inconsistencies |
@@ -32,6 +33,8 @@ localization.json           per-language string maps (en, es, de, it, fr)
 ui.js                       entry point; DOM wiring and every window
 constantsAndGlobalVars.js   game state, element cache, save payload
 evidenceManager.js          evidence store, blueprints, triggers
+progressEvidenceManager.js  progress evidence registry loader, activated ids,
+                            eligibility, id allocation
 game.js                     scene state machine, zoom/pan, scene transitions
 desktopWindow.js            draggable/resizable window component
 audioManager.js             music and SFX
@@ -48,6 +51,9 @@ assets/
                                       (archives, library, police, zoomsearch,
                                       standalone-pages)
   photos/                            photo evidence images
+  photos/progressEvidenceImages/     progress evidence card images
+  progressEvidence.json              the progress evidence registry: every
+                                      website and fax, its id, image and flags
   web-content/schemas/*.json         formal record contracts
   flags/, fonts/
 

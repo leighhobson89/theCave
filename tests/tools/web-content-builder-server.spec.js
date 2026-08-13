@@ -10,6 +10,10 @@
 //      assets/en/police.json fresh on every call rather than trusting a
 //      separate counter, so it correctly picks up a case number the moment
 //      a record carrying it is actually injected.
+//   4. The Progress Evidence panel's server half: the progressEvidenceId
+//      allocator (GET /next-progress-evidence-id) and the upsert of a
+//      definition into assets/progressEvidence.json, with those fields
+//      stripped from the copy stored in the site content files.
 //
 // The server is a plain Node HTTP server (tools/web_content_builder_server.js),
 // not part of the app served by tests/support/static-server.cjs, so this spec
@@ -23,6 +27,10 @@ const fs = require("fs/promises");
 const fsSync = require("fs");
 const path = require("path");
 const { CASE_NUMBER_PATTERN, parseCaseNumber } = require("../../tools/police_case_number");
+const {
+  CONTROL_DIGIT_BY_SERVICE,
+  highestProgressEvidenceSequence,
+} = require("../../tools/progress_evidence_id");
 
 // tests/tools/ -> repo root.
 const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
@@ -30,6 +38,8 @@ const ASSETS_DIR = path.join(PROJECT_ROOT, "assets");
 const SERVER_SCRIPT = path.join(PROJECT_ROOT, "tools", "web_content_builder_server.js");
 const API_URL = "http://127.0.0.1:5058/api/web-content/upsert";
 const NEXT_CASE_NUMBER_API_URL = "http://127.0.0.1:5058/api/web-content/next-police-case-number";
+const NEXT_PROGRESS_EVIDENCE_ID_API_URL = "http://127.0.0.1:5058/api/web-content/next-progress-evidence-id";
+const PROGRESS_EVIDENCE_DEFINITIONS_PATH = path.join(ASSETS_DIR, "progressEvidence.json");
 const LANGUAGES = ["en", "de", "es", "fr", "it"];
 
 const SITE_FILE_BY_ID = {
@@ -132,6 +142,8 @@ test.afterAll(async () => {
     }
   }
 
+  await removeGeneratedProgressEvidenceDefinitions();
+
   // Don't just trust the removal loops above: re-read every site file and
   // every evidence catalog, in every language, and fail loudly if anything
   // tagged with this run's id prefix is still there. This is what actually
@@ -166,10 +178,72 @@ async function assertNoLeftoverTestContent() {
     }
   }
 
+  const progressEvidenceJson = await readProgressEvidenceDefinitions();
+  (progressEvidenceJson.definitions || [])
+    .filter((definition) => String(definition?.itemId || "").startsWith(RUN_ID))
+    .forEach((definition) => leftoverDescriptions.push(
+      `progress evidence definition in assets/progressEvidence.json: itemId '${definition.itemId}'`
+    ));
+
   expect(
     leftoverDescriptions,
     `Test teardown left content behind:\n${leftoverDescriptions.join("\n")}`
   ).toEqual([]);
+}
+
+async function readProgressEvidenceDefinitions() {
+  if (!fsSync.existsSync(PROGRESS_EVIDENCE_DEFINITIONS_PATH)) {
+    return { definitions: [] };
+  }
+
+  return readJsonFile(PROGRESS_EVIDENCE_DEFINITIONS_PATH);
+}
+
+async function findProgressEvidenceDefinition(service, itemId) {
+  const json = await readProgressEvidenceDefinitions();
+  return (json.definitions || []).find(
+    (definition) => definition?.service === service && definition?.itemId === itemId
+  ) || null;
+}
+
+// Progress evidence definitions are keyed by service + itemId, and every id this
+// suite creates carries the run prefix, so anything matching it is ours.
+async function removeGeneratedProgressEvidenceDefinitions() {
+  const json = await readProgressEvidenceDefinitions();
+  const definitions = Array.isArray(json.definitions) ? json.definitions : [];
+  const filtered = definitions.filter((definition) => !String(definition?.itemId || "").startsWith(RUN_ID));
+  if (filtered.length === definitions.length) {
+    return;
+  }
+
+  json.definitions = filtered;
+  await fs.writeFile(PROGRESS_EVIDENCE_DEFINITIONS_PATH, `${JSON.stringify(json, null, 2)}\n`, "utf8");
+}
+
+// The same file the server scans, read straight from disk.
+async function readHighestAllocatedSequence(service) {
+  return highestProgressEvidenceSequence(await readProgressEvidenceDefinitions(), service);
+}
+
+async function fetchNextProgressEvidenceId(service) {
+  const response = await apiContext.get(`${NEXT_PROGRESS_EVIDENCE_ID_API_URL}?service=${service}`);
+  expect(response.ok()).toBe(true);
+  const body = await response.json();
+  return String(body.progressEvidenceId || "");
+}
+
+// What the builder's Progress Evidence panel adds to every entry it sends.
+function progressEvidenceFields(progressEvidenceId, {
+  activated = false,
+  developerEnabled = false,
+  image = "./assets/photos/progressEvidenceImages/pwTestProgressEvidence.png",
+} = {}) {
+  return {
+    progressEvidenceId,
+    progressEvidenceImage: image,
+    progressEvidenceActivated: activated,
+    progressEvidenceDeveloperEnabled: developerEnabled,
+  };
 }
 
 async function removeRecordFromFile(filePath, bucket, id) {
@@ -210,10 +284,21 @@ async function removeCatalogEntryFromFile(filePath, entryId) {
   await fs.writeFile(filePath, `${JSON.stringify(json, null, 2)}\n`, "utf8");
 }
 
+// Registers a record for teardown before it is ever posted. Used directly by
+// the rejection tests: a payload the server is *supposed* to refuse writes
+// nothing, but if a refusal ever regresses into an acceptance, the record must
+// still be cleaned up — and assertNoLeftoverTestContent() will then be the
+// thing that fails, rather than the content files quietly gaining a malformed
+// record that breaks an unrelated spec later.
+function trackRecordForCleanup(siteId, bucket, id) {
+  createdRecords.push({ siteId, bucket, id });
+  return id;
+}
+
 // Posts a payload, records it for cleanup regardless of outcome, and returns
 // the parsed response plus the raw HTTP response (for status-code checks).
 async function inject(payload) {
-  createdRecords.push({ siteId: payload.siteId, bucket: payload.bucket, id: payload.entry.id });
+  trackRecordForCleanup(payload.siteId, payload.bucket, payload.entry.id);
 
   const evidenceEntries = Array.isArray(payload.entry.evidence)
     ? payload.entry.evidence
@@ -680,5 +765,223 @@ test.describe("web content builder server", () => {
     });
     expect(httpResponse.status()).toBe(400);
     expect(await httpResponse.text()).toContain("Unsupported bucket");
+  });
+
+  test("next-progress-evidence-id: allocates inside the requested service's block", async () => {
+    for (const [service, controlDigit] of Object.entries(CONTROL_DIGIT_BY_SERVICE)) {
+      // eslint-disable-next-line no-await-in-loop
+      const allocated = await fetchNextProgressEvidenceId(service);
+
+      // Five digits: the service's control digit, then one past the highest
+      // four-digit sequence already used inside that service's own block.
+      expect(allocated).toMatch(/^\d{5}$/);
+      expect(allocated.charAt(0)).toBe(controlDigit);
+      // eslint-disable-next-line no-await-in-loop
+      expect(Number(allocated.slice(1))).toBe((await readHighestAllocatedSequence(service)) + 1);
+    }
+
+    // Purely a read: asking twice without injecting anything hands out the same
+    // id, because nothing has claimed it yet.
+    expect(await fetchNextProgressEvidenceId("police")).toBe(await fetchNextProgressEvidenceId("police"));
+  });
+
+  test("next-progress-evidence-id: rejects a service it does not know", async () => {
+    const response = await apiContext.get(`${NEXT_PROGRESS_EVIDENCE_ID_API_URL}?service=notaservice`);
+    expect(response.status()).toBe(400);
+    expect(await response.text()).toContain("Unknown service");
+  });
+
+  test("next-progress-evidence-id: picks up a just-injected definition on the very next call", async () => {
+    const id = nextId("zoomsearch-progress-next-id");
+    const allocated = await fetchNextProgressEvidenceId("zoomsearch");
+
+    const { httpResponse } = await inject({
+      siteId: "zoomsearch",
+      bucket: "records",
+      entry: {
+        id,
+        websiteName: "Progress Evidence Test Site",
+        pageTitle: "Progress Evidence Test Page",
+        keywords: [id],
+        summary: "",
+        pageContent: ["Body."],
+        images: [],
+        ...noEvidence(),
+        ...progressEvidenceFields(allocated),
+      },
+    });
+    expect(httpResponse.ok()).toBe(true);
+
+    // The id just used is now taken, so the next allocation for that service
+    // moves past it — and no other service's block is disturbed.
+    expect(await fetchNextProgressEvidenceId("zoomsearch")).toBe(
+      `0${String(Number(allocated.slice(1)) + 1).padStart(4, "0")}`
+    );
+    expect((await fetchNextProgressEvidenceId("police")).charAt(0)).toBe("2");
+  });
+
+  test("progress evidence fields become a definition and are stripped from the site content", async () => {
+    const id = nextId("police-progress-definition");
+    const allocated = await fetchNextProgressEvidenceId("police");
+
+    const { httpResponse, body } = await inject({
+      siteId: "police",
+      bucket: "records",
+      entry: {
+        id,
+        title: "Progress Evidence Police Record",
+        keywords: [id],
+        summary: "",
+        report: ["Body."],
+        requiredPrivilegeLevel: 0,
+        images: [],
+        ...noEvidence(),
+        ...progressEvidenceFields(allocated, {
+          activated: true,
+          developerEnabled: true,
+          image: "./assets/photos/progressEvidenceImages/pwTestProgressEvidence.png",
+        }),
+      },
+    });
+
+    expect(httpResponse.ok()).toBe(true);
+    expect(body.progressEvidenceUpdate).toMatchObject({
+      action: "created",
+      file: "assets/progressEvidence.json",
+      progressEvidenceId: allocated,
+      progressEvidenceActivated: true,
+      progressEvidenceDeveloperEnabled: true,
+    });
+
+    // The registry owns these fields...
+    expect(await findProgressEvidenceDefinition("police", id)).toMatchObject({
+      progressEvidenceId: allocated,
+      service: "police",
+      itemId: id,
+      label: "Progress Evidence Police Record",
+      imagePath: "./assets/photos/progressEvidenceImages/pwTestProgressEvidence.png",
+      progressEvidenceActivated: true,
+      progressEvidenceDeveloperEnabled: true,
+    });
+
+    // ...so the site content copy carries none of them, in any language.
+    await expectRecordInEveryLanguage("police", "records", id, (entry) => {
+      expect(entry.progressEvidenceId).toBeUndefined();
+      expect(entry.progressEvidenceImage).toBeUndefined();
+      expect(entry.progressEvidenceActivated).toBeUndefined();
+      expect(entry.progressEvidenceDeveloperEnabled).toBeUndefined();
+    });
+  });
+
+  test("re-injecting a record updates its definition in place and keeps the id already allocated to it", async () => {
+    const id = nextId("archives-progress-reinject");
+    const firstAllocated = await fetchNextProgressEvidenceId("archives");
+
+    const buildPayload = (progressEvidenceId, options) => ({
+      siteId: "archives",
+      bucket: "records",
+      entry: {
+        id,
+        province: "Saskatchewan",
+        headline: "Progress Evidence Archives Headline",
+        publication: "Test Gazette",
+        keywords: [id],
+        summary: "",
+        article: ["Body."],
+        requiredAccessLevel: 0,
+        images: [],
+        ...noEvidence(),
+        ...progressEvidenceFields(progressEvidenceId, options),
+      },
+    });
+
+    await inject(buildPayload(firstAllocated, { activated: false, developerEnabled: false }));
+
+    // A second pass with a freshly allocated id (which is what the form would
+    // hand out after a reload) must not strand the id the game may already have
+    // recorded against this record.
+    const secondAllocated = await fetchNextProgressEvidenceId("archives");
+    expect(secondAllocated).not.toBe(firstAllocated);
+
+    const { body } = await inject(buildPayload(secondAllocated, {
+      activated: true,
+      developerEnabled: true,
+      image: "./assets/photos/progressEvidenceImages/pwTestProgressEvidenceUpdated.png",
+    }));
+
+    expect(body.progressEvidenceUpdate).toMatchObject({
+      action: "updated",
+      progressEvidenceId: firstAllocated,
+    });
+
+    const definitions = (await readProgressEvidenceDefinitions()).definitions || [];
+    expect(definitions.filter((definition) => definition.itemId === id)).toHaveLength(1);
+    expect(await findProgressEvidenceDefinition("archives", id)).toMatchObject({
+      progressEvidenceId: firstAllocated,
+      imagePath: "./assets/photos/progressEvidenceImages/pwTestProgressEvidenceUpdated.png",
+      progressEvidenceActivated: true,
+      progressEvidenceDeveloperEnabled: true,
+    });
+  });
+
+  test("rejects an entry carrying a progressEvidenceId with no image", async () => {
+    const httpResponse = await apiContext.post(API_URL, {
+      data: {
+        siteId: "zoomsearch",
+        bucket: "records",
+        entry: {
+          id: trackRecordForCleanup("zoomsearch", "records", nextId("zoomsearch-progress-no-image")),
+          websiteName: "x",
+          pageTitle: "x",
+          keywords: ["x"],
+          progressEvidenceId: "09999",
+          progressEvidenceImage: "",
+        },
+      },
+    });
+
+    expect(httpResponse.status()).toBe(400);
+    expect(await httpResponse.text()).toContain("progressEvidenceImage is required");
+  });
+
+  test("rejects an entry carrying a malformed progressEvidenceId", async () => {
+    const httpResponse = await apiContext.post(API_URL, {
+      data: {
+        siteId: "zoomsearch",
+        bucket: "records",
+        entry: {
+          id: trackRecordForCleanup("zoomsearch", "records", nextId("zoomsearch-progress-bad-id")),
+          websiteName: "x",
+          pageTitle: "x",
+          keywords: ["x"],
+          progressEvidenceId: "not-a-number",
+          progressEvidenceImage: "./assets/photos/progressEvidenceImages/x.png",
+        },
+      },
+    });
+
+    expect(httpResponse.status()).toBe(400);
+    expect(await httpResponse.text()).toContain("must be five digits led by a known service control digit");
+  });
+
+  test("rejects an entry whose progressEvidenceId control digit names a different service", async () => {
+    const httpResponse = await apiContext.post(API_URL, {
+      data: {
+        siteId: "zoomsearch",
+        bucket: "records",
+        entry: {
+          id: trackRecordForCleanup("zoomsearch", "records", nextId("zoomsearch-progress-wrong-service")),
+          websiteName: "x",
+          pageTitle: "x",
+          keywords: ["x"],
+          // Leading 2 is the Police block, but this is a ZoomSearch record.
+          progressEvidenceId: "29999",
+          progressEvidenceImage: "./assets/photos/progressEvidenceImages/x.png",
+        },
+      },
+    });
+
+    expect(httpResponse.status()).toBe(400);
+    expect(await httpResponse.text()).toContain("belongs to service 'police'");
   });
 });

@@ -145,6 +145,71 @@ function quickLoginRow(page, siteClass) {
 }
 
 // ---------------------------------------------------------------------------
+// Noticeboard and the progress evidence envelope
+// ---------------------------------------------------------------------------
+
+// Runs the real faded desktop -> noticeboard transition and waits for it to
+// finish, so the envelope is settled before anything clicks it.
+async function openNoticeboard(page) {
+  await page.locator("#noticeboardButton").click();
+  const noticeboard = page.locator("#noticeboardScene");
+  await expect(noticeboard).not.toHaveClass(/is-scene-hidden/);
+  await expect(page.locator("#sceneFadeOverlay")).not.toHaveClass(/is-active/);
+}
+
+function progressEvidenceEnvelope(page) {
+  return page.locator("#progressEvidenceEnvelope");
+}
+
+function progressEvidenceWindow(page) {
+  return page.locator(".progress-evidence-window");
+}
+
+function progressEvidenceCards(page) {
+  return progressEvidenceWindow(page).locator(".progress-evidence-card");
+}
+
+async function openProgressEvidenceEnvelope(page) {
+  await progressEvidenceEnvelope(page).click();
+  await expect(progressEvidenceWindow(page)).toBeVisible();
+}
+
+// The window opens nearly full-size over the board, so it is closed from its
+// own title-bar button rather than by clicking the envelope again — the same
+// reason closeComputer() exists.
+async function closeProgressEvidenceWindow(page) {
+  await progressEvidenceWindow(page).locator(".story-window-close").click();
+  await expect(progressEvidenceWindow(page)).toHaveCount(0);
+}
+
+// The persisted collection of activated progressEvidenceIds, read through the
+// documented developer surface rather than the save string.
+function readProgressEvidence(page) {
+  return page.evaluate(() => window.progressEvidenceDeveloperTools.getProgressEvidence());
+}
+
+// The documented way any part of the game records a milestone.
+function activateProgressEvidence(page, progressEvidenceId) {
+  return page.evaluate((id) => window.activateProgressEvidence(id), progressEvidenceId);
+}
+
+// The developer-only display switch. Not player progress — it decides whether
+// an activated item is allowed to appear in the envelope at all.
+function setProgressEvidenceDeveloperEnabled(page, progressEvidenceId, isEnabled) {
+  return page.evaluate(
+    ([id, enabled]) => window.progressEvidenceDeveloperTools.setProgressEvidenceDeveloperEnabled(id, enabled),
+    [progressEvidenceId, isEnabled]
+  );
+}
+
+function readProgressEvidenceEntry(page, progressEvidenceId) {
+  return page.evaluate(
+    (id) => window.progressEvidenceDeveloperTools.getProgressEvidenceEntries().find((entry) => entry.progressEvidenceId === id) || null,
+    progressEvidenceId
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Notifications
 // ---------------------------------------------------------------------------
 
@@ -264,6 +329,7 @@ function readStickySave(page) {
 
 module.exports = {
   STICKY_SAVE_KEY,
+  activateProgressEvidence,
   archivesLogOut,
   archivesLogin,
   archivesStatus,
@@ -274,6 +340,7 @@ module.exports = {
   closeComputer,
   closeFacsimile,
   closeNotes,
+  closeProgressEvidenceWindow,
   dumpEvidenceStore,
   evidenceEntriesIn,
   facsimileWindow,
@@ -286,17 +353,25 @@ module.exports = {
   openLibrary,
   openNetscape,
   openNotes,
+  openNoticeboard,
   openPaint,
   openPolice,
+  openProgressEvidenceEnvelope,
   openZoomSearch,
   policeLogOut,
   policeLogin,
   policeQuery,
   policeStatus,
+  progressEvidenceCards,
+  progressEvidenceEnvelope,
+  progressEvidenceWindow,
   queueFacsimileReport,
   quickLoginButton,
   quickLoginRow,
+  readProgressEvidence,
+  readProgressEvidenceEntry,
   readStickySave,
+  setProgressEvidenceDeveloperEnabled,
   readStickyWriteCount,
   startNewGame,
   visitBrowserUrl,

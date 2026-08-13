@@ -247,6 +247,27 @@
                     <div class="noticeboard-board-frame" aria-hidden="true">
                         <div class="noticeboard-corkboard"></div>
                     </div>
+
+                    <!-- Back of a manila envelope pinned to the corkboard, with a
+                         photograph sticking out of it. Clicking it opens the progress
+                         evidence carousel. Everything about where it sits and how big
+                         it is comes from the CSS custom properties on
+                         .progress-evidence-envelope in styles.css - see the block
+                         headed "Progress evidence envelope (noticeboard)". -->
+                    <button id="progressEvidenceEnvelope" class="progress-evidence-envelope desktop-hoverable" type="button" aria-label="Open the evidence envelope">
+                        <div class="progress-evidence-envelope-photo" aria-hidden="true">
+                            <div class="progress-evidence-envelope-photo-image"></div>
+                        </div>
+
+                        <div class="progress-evidence-envelope-body" aria-hidden="true">
+                            <div class="progress-evidence-envelope-flap progress-evidence-envelope-flap-left"></div>
+                            <div class="progress-evidence-envelope-flap progress-evidence-envelope-flap-right"></div>
+                            <div class="progress-evidence-envelope-flap progress-evidence-envelope-flap-bottom"></div>
+                            <div class="progress-evidence-envelope-flap progress-evidence-envelope-flap-top"></div>
+                            <div class="progress-evidence-envelope-clasp"></div>
+                            <div id="progressEvidenceEnvelopeLabel" class="progress-evidence-envelope-label">EVIDENCE</div>
+                        </div>
+                    </button>
                 </div>
 
                 <div id="zoomReadout" class="zoom-readout">Zoom 3/5</div>

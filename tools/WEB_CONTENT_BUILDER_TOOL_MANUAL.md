@@ -45,16 +45,22 @@ manually for now.
 
 All records are written into each file's `records` array.
 
+It also writes progress evidence definitions into one language-neutral file:
+- `assets/progressEvidence.json`
+
+See "Progress Evidence" below.
+
 ## Workflow
 1. Choose content type — every panel *below* Content Form greys out except
-   the one that applies (Evidence Fields is the one exception; it's always
-   active).
+   the one that applies (Evidence Fields and Progress Evidence are the two
+   exceptions; they're always active).
 2. Enter content ID.
 3. Fill the Content Form fields (used by every content type).
 4. Fill the fields in that type's own panel.
 5. Configure evidence metadata if needed.
-6. Generate preview.
-7. Confirm and inject.
+6. Fill the Progress Evidence panel — mandatory for every content type.
+7. Generate preview.
+8. Confirm and inject.
 
 When a record needs more than one evidence entry, use `Add Another Evidence` to queue the current draft, clear the form, and then fill the next evidence. The builder will emit a single `evidence` object for one entry or an array for multiple entries.
 
@@ -187,6 +193,60 @@ All presets also emit:
 - `source.languageAware = true`
 - `source.entryId = evidence.name`
 
+## Progress Evidence
+Every record also gets **progress evidence**: an entry in the persistent record
+of the player's progression through the investigation, shown on the manila
+EVIDENCE envelope on the noticeboard. This panel is active for every content
+type, and it is **mandatory** — Preview and Inject are both blocked until it is
+valid. Full system reference:
+[../docs/progress-evidence-system.md](../docs/progress-evidence-system.md).
+
+Controls:
+- `progressEvidenceId` — read-only. Allocated from
+  `GET /api/web-content/next-progress-evidence-id?service=<service>` on page
+  load, on Clear, and whenever the Content Type changes. It is deliberately not
+  typeable — a hand-entered id could collide with one the game has already
+  handed out. The `Allocate` button re-asks, which is what to press if the
+  Inject API was not running when the page loaded.
+
+  Ids are **five digits: a service control digit, then a four-digit sequence
+  within that service** — `0` Zoom Search, `1` Library, `2` Police, `3`
+  Archives, `4` Standalone, `5` received faxes. So `43222` is a standalone page
+  and `33333` is an archives record, readable at a glance. Each service counts
+  up in its own block, which is why switching Content Type allocates a new id:
+  an id belongs to one service and the server rejects a mismatch.
+- `Choose Progress Evidence Photo` — required. Writes
+  `./assets/photos/progressEvidenceImages/<file>`. The file does not have to
+  exist yet: in game a missing image falls back to a placeholder card showing
+  the id, so artwork can follow later.
+- `progressEvidenceActivated` — checked means "count this as already reached",
+  so it shows in the envelope immediately without the player doing anything.
+- `progressEvidenceDeveloperEnabled` — the display switch. **Both** flags must
+  be true for an item to appear; with this one off it stays hidden even when
+  activated is on.
+
+Blocked with a message in the status line when:
+- no id has been allocated (the Inject API was offline — start it and press
+  `Allocate`)
+- no progress evidence image has been chosen
+
+On Inject the server:
+- upserts a definition into `assets/progressEvidence.json`, matched on
+  service + record id. Re-injecting the same record **updates it in place and
+  keeps the id it was first allocated**, so an id the player may already have
+  activated is never stranded.
+- **strips** the four progress evidence fields from the copy written into the
+  site content files — the progress evidence registry owns them, the same way
+  the localized evidence catalogs own description and caption. They are never
+  stored in two places.
+- reports what it did under `progressEvidenceUpdate` in the response.
+
+`assets/progressEvidence.json` **is** the game's progress evidence registry — it
+loads it at startup — so a record authored here needs no code change to become
+real progress evidence. It is one language-neutral file rather than a field in
+each of the five translated content files, because an id and its two flags are
+the same fact in every language.
+
 ## Important
 When `Awards Evidence` is enabled, Inject now also upserts matching localized evidence catalog entries.
 
@@ -213,3 +273,5 @@ Notes:
 - IDs are slug-normalized.
 - Existing IDs are updated in place.
 - New IDs are appended.
+- A record's progress evidence definition is matched on service + record id, so
+  re-injecting updates it rather than allocating a second `progressEvidenceId`.

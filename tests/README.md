@@ -275,6 +275,18 @@ rollup) and "By suite" (per file).
 | `evidence-magnifier.spec.js` | Magnifier lens over report text (including after scrolling) and over photos (alignment at centre and edge) |
 | `evidence-awards-from-web-content.spec.js` | A standalone page awarding multiple evidences, each with its own reward toast |
 
+### `e2e/progress-evidence/`
+
+| Spec | Covers |
+| --- | --- |
+| `progress-evidence-activation-and-persistence.spec.js` | Nothing activated on a new game; `activateProgressEvidence()` adding an id; duplicate activation as a no-op; save/load round trip; a full save → reload → Resume cycle |
+| `progress-evidence-envelope-display.spec.js` | The two-flag eligibility rule in all four combinations, refresh-on-open, three cards at once |
+| `progress-evidence-images.spec.js` | `[progressEvidenceId].png` when it exists; the id-carrying placeholder when it does not |
+| `progress-evidence-carousel.spec.js` | Prev/next with wraparound, and the one-card slide: four cards mid-step, end cards fading, the middle pair holding opacity and landing in their neighbours' slots |
+| `progress-evidence-game-triggers.spec.js` | Activation from opening a website record, visiting a standalone page, and receiving a fax |
+| `progress-evidence-generated-definitions.spec.js` | Definitions written by the web content builder tool: registered at startup, authored activation and image path, and no redefining a shipped id |
+| `progress-evidence-existing-folders.spec.js` | Reports and Photos still behave exactly as before with progress evidence in play |
+
 ### `e2e/web-content-search-records/`
 
 | Spec | Covers |
@@ -310,7 +322,7 @@ Each folder's `README.md` describes what belongs there.
 
 | Spec | Covers |
 | --- | --- |
-| `web-content-builder-server.spec.js` | Content builder API: create/update records for all four sites plus standalone pages, with and without evidence, fanned out to all five language files; payload validation. Self-cleaning, with teardown verified by assertion |
+| `web-content-builder-server.spec.js` | Content builder API: create/update records for all four sites plus standalone pages, with and without evidence, fanned out to all five language files; the Police case number and progressEvidenceId allocators; the progress evidence definition upsert into `assets/progressEvidence.json`; payload validation. Self-cleaning, with teardown verified by assertion |
 
 ## Conventions
 

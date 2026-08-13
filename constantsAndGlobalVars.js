@@ -3,6 +3,10 @@ import {
   initializeEvidenceStoreForNewGame,
   setEvidenceStoreSnapshot,
 } from "./evidenceManager.js";
+import {
+  getProgressEvidenceSnapshot,
+  setProgressEvidenceSnapshot,
+} from "./progressEvidenceManager.js";
 
 //ELEMENTS
 let elements;
@@ -228,6 +232,8 @@ export function setElements() {
     gameArea: document.getElementById("gameArea"),
     desktopViewport: document.getElementById("desktopViewport"),
     noticeboardScene: document.getElementById("noticeboardScene"),
+    progressEvidenceEnvelope: document.getElementById("progressEvidenceEnvelope"),
+    progressEvidenceEnvelopeLabel: document.getElementById("progressEvidenceEnvelopeLabel"),
     deskParallax: document.getElementById("deskParallax"),
     deskWorld: document.getElementById("deskWorld"),
     deskTable: document.getElementById("deskTable"),
@@ -305,6 +311,10 @@ export function captureGameStatusForSaving() {
   gameState.sfxVolumePreference = getSfxVolumePreference();
   gameState.evidenceStore = getEvidenceStoreSnapshot();
   gameState.evidenceCustomNames = getEvidenceCustomNames();
+  // Just the activated progressEvidenceIds; the website/fax definitions
+  // themselves are code (progressEvidenceManager.js) and are never duplicated
+  // into the save.
+  gameState.progressEvidence = getProgressEvidenceSnapshot();
   gameState.notesPages = getNotesPages();
   gameState.notesActivePageIndex = getNotesActivePageIndex();
   gameState.paintPages = getPaintPages();
@@ -337,6 +347,11 @@ export function restoreGameStatus(gameState) {
       setMusicVolumePreference(gameState.musicVolumePreference);
       setSfxVolumePreference(gameState.sfxVolumePreference);
       setEvidenceCustomNames(gameState.evidenceCustomNames || {});
+      // A save written before progress evidence existed has no field here;
+      // setProgressEvidenceSnapshot() treats that as "nothing activated yet"
+      // rather than failing, so older saves keep loading. It also de-duplicates,
+      // so a hand-edited save cannot introduce repeated ids.
+      setProgressEvidenceSnapshot(gameState.progressEvidence);
       setNotesPages(gameState.notesPages);
       setNotesActivePageIndex(gameState.notesActivePageIndex ?? 0);
       setPaintPages(gameState.paintPages);

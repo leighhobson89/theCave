@@ -553,6 +553,15 @@ button.disabled {
 }
 
 .noticeboard-scene {
+    /* The board's geometry, shared with .noticeboard-board-frame below and with
+       the progress evidence envelope, which anchors itself to the board's
+       bottom-right corner rather than to fixed scene coordinates. Changing
+       these moves everything that depends on the board together. */
+    --noticeboard-board-width: 2040px;
+    --noticeboard-board-height: 1320px;
+    --noticeboard-board-border-width: 16px;
+    --noticeboard-corkboard-inset: 24px;
+
     position: absolute;
     width: 2600px;
     height: 1800px;
@@ -583,8 +592,8 @@ button.disabled {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 2040px;
-    height: 1320px;
+    width: var(--noticeboard-board-width);
+    height: var(--noticeboard-board-height);
     transform: translate(-50%, -50%);
     border-radius: 14px;
     border: 16px solid #5b2f10;
@@ -612,6 +621,210 @@ button.disabled {
             rgba(137, 95, 53, 0.84) 10px 15px),
         linear-gradient(180deg, #b6844f 0%, #99673b 100%);
     box-shadow: inset 0 10px 20px rgba(76, 44, 20, 0.2);
+}
+
+/* ---------------------------------------------------------------------------
+   Progress evidence envelope (noticeboard)
+
+   The back of a manila envelope pinned to the corkboard, with a photograph
+   sticking out from under its top flap. Clicking it opens the progress
+   evidence carousel (openProgressEvidenceWindow in ui.js).
+
+   It is pinned to the BOTTOM-RIGHT CORNER OF THE CORKBOARD, not to fixed scene
+   coordinates: the right/bottom offsets below are derived from the board's own
+   geometry (--noticeboard-board-* on .noticeboard-scene), so the envelope stays
+   in that corner if the board is ever resized, and sits in the same place on
+   every device and screen size.
+
+   EVERY position and size lives in the custom properties below, and nowhere
+   else - move the envelope by editing these values only:
+
+     --progress-evidence-envelope-inset-right   how far in from the corkboard's
+     --progress-evidence-envelope-inset-bottom  bottom-right corner it sits
+     --progress-evidence-envelope-width/-height the envelope's size
+     --progress-evidence-envelope-rotation      its tilt on the board
+     --progress-evidence-envelope-photo-*       the photo sticking out of it,
+                                                positioned relative to the
+                                                envelope's own top-left corner
+--------------------------------------------------------------------------- */
+/* Scoped to the scene so it outranks `.desktop-hoverable { position: relative }`,
+   which is declared later in this file. With left/top that override was
+   invisible (the envelope's static position is the scene's origin, so relative
+   offsets landed in the same place); with right/bottom it would push the
+   envelope off the board entirely. */
+.noticeboard-scene .progress-evidence-envelope {
+    --progress-evidence-envelope-inset-right: 130px;
+    --progress-evidence-envelope-inset-bottom: 120px;
+    --progress-evidence-envelope-width: 430px;
+    --progress-evidence-envelope-height: 300px;
+    --progress-evidence-envelope-rotation: -5deg;
+
+    --progress-evidence-envelope-photo-left: 196px;
+    --progress-evidence-envelope-photo-top: -76px;
+    --progress-evidence-envelope-photo-width: 168px;
+    --progress-evidence-envelope-photo-height: 150px;
+    --progress-evidence-envelope-photo-rotation: 7deg;
+
+    /* Distance from the scene edge to the inside face of the board: half the
+       board's outer size subtracted from the scene's centre line, plus the
+       frame border and the corkboard's own inset. The frame is not
+       border-box, so its border counts on top of the declared size. */
+    --progress-evidence-envelope-corkboard-edge-right: calc(
+        50%
+        - (var(--noticeboard-board-width) + 2 * var(--noticeboard-board-border-width)) / 2
+        + var(--noticeboard-board-border-width)
+        + var(--noticeboard-corkboard-inset)
+    );
+    --progress-evidence-envelope-corkboard-edge-bottom: calc(
+        50%
+        - (var(--noticeboard-board-height) + 2 * var(--noticeboard-board-border-width)) / 2
+        + var(--noticeboard-board-border-width)
+        + var(--noticeboard-corkboard-inset)
+    );
+
+    position: absolute;
+    right: calc(
+        var(--progress-evidence-envelope-corkboard-edge-right)
+        + var(--progress-evidence-envelope-inset-right)
+    );
+    bottom: calc(
+        var(--progress-evidence-envelope-corkboard-edge-bottom)
+        + var(--progress-evidence-envelope-inset-bottom)
+    );
+    width: var(--progress-evidence-envelope-width);
+    height: var(--progress-evidence-envelope-height);
+    transform: rotate(var(--progress-evidence-envelope-rotation));
+    transform-origin: center center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 3;
+}
+
+.progress-evidence-envelope-body {
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    border: 1px solid rgba(126, 92, 40, 0.7);
+    /* Manila card stock: warm buff paper with a faint fibre speckle. */
+    background:
+        radial-gradient(circle at 22% 18%, rgba(255, 244, 206, 0.35), transparent 46%),
+        radial-gradient(circle at 78% 82%, rgba(150, 111, 52, 0.22), transparent 52%),
+        repeating-linear-gradient(112deg,
+            rgba(255, 246, 214, 0.05) 0 3px,
+            rgba(150, 116, 58, 0.04) 3px 7px),
+        linear-gradient(180deg, #e2bd7c 0%, #d3a961 55%, #bf9450 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 246, 219, 0.5),
+        inset 0 -10px 22px rgba(112, 78, 30, 0.28),
+        0 14px 26px rgba(0, 0, 0, 0.42);
+    overflow: hidden;
+}
+
+/* The four folded-in flaps of an envelope seen from behind. Each is a triangle
+   cut with clip-path, tinted slightly darker than the body so the folds read. */
+.progress-evidence-envelope-flap {
+    position: absolute;
+    background: linear-gradient(180deg, rgba(216, 176, 108, 0.95), rgba(196, 152, 84, 0.95));
+    border: 1px solid rgba(124, 90, 40, 0.42);
+}
+
+.progress-evidence-envelope-flap-left {
+    inset: 0 auto 0 0;
+    width: 47%;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.progress-evidence-envelope-flap-right {
+    inset: 0 0 0 auto;
+    width: 47%;
+    clip-path: polygon(100% 0, 100% 100%, 0 50%);
+}
+
+.progress-evidence-envelope-flap-bottom {
+    inset: auto 0 0 0;
+    height: 46%;
+    clip-path: polygon(0 100%, 50% 0, 100% 100%);
+    background: linear-gradient(180deg, rgba(206, 164, 96, 0.95), rgba(186, 142, 76, 0.96));
+}
+
+/* The top flap sits over the others and over the base of the photo, which is
+   what makes the photo look tucked inside rather than laid on top. */
+.progress-evidence-envelope-flap-top {
+    inset: 0 0 auto 0;
+    height: 52%;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    background: linear-gradient(180deg, rgba(226, 190, 124, 0.97), rgba(203, 160, 90, 0.97));
+    box-shadow: 0 3px 8px rgba(94, 65, 24, 0.35);
+    z-index: 2;
+}
+
+.progress-evidence-envelope-clasp {
+    position: absolute;
+    left: 50%;
+    top: 52%;
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+    border-radius: 50%;
+    border: 1px solid rgba(96, 68, 24, 0.7);
+    background:
+        radial-gradient(circle at 34% 30%, rgba(255, 249, 224, 0.9), transparent 48%),
+        linear-gradient(180deg, #c8a55f 0%, #9c7736 100%);
+    box-shadow: 0 2px 4px rgba(70, 48, 14, 0.45);
+    z-index: 3;
+}
+
+.progress-evidence-envelope-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12%;
+    text-align: center;
+    /* Rubber-stamped onto the envelope back, under the folded flaps. */
+    color: rgba(96, 22, 18, 0.86);
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 2.1rem;
+    font-weight: 700;
+    letter-spacing: 0.36em;
+    text-indent: 0.36em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 0 rgba(255, 240, 208, 0.45);
+    z-index: 4;
+    pointer-events: none;
+}
+
+.progress-evidence-envelope-photo {
+    position: absolute;
+    left: var(--progress-evidence-envelope-photo-left);
+    top: var(--progress-evidence-envelope-photo-top);
+    width: var(--progress-evidence-envelope-photo-width);
+    height: var(--progress-evidence-envelope-photo-height);
+    transform: rotate(var(--progress-evidence-envelope-photo-rotation));
+    transform-origin: bottom center;
+    padding: 8px 8px 22px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #f7f1e2 0%, #eadfc6 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 10px 18px rgba(0, 0, 0, 0.38);
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+.progress-evidence-envelope-photo-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    background:
+        radial-gradient(circle at 30% 26%, rgba(226, 234, 244, 0.55), transparent 44%),
+        linear-gradient(160deg, #4d5b6b 0%, #2f3b49 46%, #1d252f 100%);
+    box-shadow: inset 0 0 0 1px rgba(24, 30, 38, 0.5);
+}
+
+.progress-evidence-envelope:hover .progress-evidence-envelope-photo {
+    transform: rotate(var(--progress-evidence-envelope-photo-rotation)) translateY(-8px);
 }
 
 .is-scene-hidden {
@@ -5488,3 +5701,208 @@ button.disabled {
     z-index: 998;
 }
 
+
+/* ---------------------------------------------------------------------------
+   Progress evidence carousel (the manila EVIDENCE envelope's contents)
+
+   Built on the same DesktopWindow carousel chrome as the Reports and Photos
+   folders (.desktop-window-carousel-layout supplies the < and > buttons), with
+   one difference: three cards are shown at once, and stepping slides the strip
+   along by exactly one card — one card out, one card in, the other two shuffled
+   across — rather than swapping the content instantly.
+
+     --progress-evidence-card-height    card height: the browser window height
+                                        less a small padding allowance
+     --progress-evidence-track-offset   how far the strip is currently shifted.
+                                        Set in pixels by ui.js from the measured
+                                        card width; not a tuning knob
+     --progress-evidence-slide-duration how long that movement takes; must stay
+                                        in step with PROGRESS_EVIDENCE_SLIDE_MS
+                                        in ui.js
+--------------------------------------------------------------------------- */
+/* Bigger than the .story-window default it inherits from, so three cards about
+   the height of the browser window actually fit. */
+.progress-evidence-window {
+    width: min(1500px, 96vw);
+    height: min(96vh, 1100px);
+}
+
+.progress-evidence-carousel-container {
+    --progress-evidence-card-padding: 220px;
+    --progress-evidence-card-height: calc(100vh - var(--progress-evidence-card-padding));
+    --progress-evidence-slide-duration: 320ms;
+
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    row-gap: 0.35rem;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 0.35rem 0.2rem;
+    overflow: hidden;
+}
+
+.progress-evidence-controls-host {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.36rem;
+}
+
+.progress-evidence-carousel-counter {
+    font-size: 0.84rem;
+    letter-spacing: 0.04em;
+    padding: 0.18rem 0.45rem;
+    border: 1px solid rgba(214, 224, 236, 0.22);
+    border-radius: 8px;
+    background: rgba(8, 12, 19, 0.72);
+    color: rgba(232, 241, 255, 0.88);
+}
+
+.progress-evidence-viewport {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The three visible cards. During a step the track holds a fourth card and
+   slides by exactly one card slot, so one card leaves, one arrives, and the two
+   that stay simply shuffle along — see renderProgressEvidenceTrack() in ui.js,
+   which sets --progress-evidence-track-offset in pixels from the measured card
+   width. */
+.progress-evidence-track {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    height: 100%;
+    transform: translateX(var(--progress-evidence-track-offset, 0px));
+    transition: transform var(--progress-evidence-slide-duration) ease-in-out;
+}
+
+/* Set while the starting position is established, so the track jumps there
+   instead of animating into it. Removing it on the next frame is what starts
+   the movement. */
+.progress-evidence-track.is-stepping,
+.progress-evidence-track.is-stepping .progress-evidence-card {
+    transition: none;
+}
+
+/* The card leaving view fades out as it goes; the arriving one fades up from
+   transparent as it slides in. */
+.progress-evidence-card.is-card-entering,
+.progress-evidence-card.is-card-leaving {
+    opacity: 0;
+}
+
+.progress-evidence-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Never shrinks: during a step the track carries a fourth card, and the
+       three on screen have to keep the exact size and spacing they settle at. */
+    flex: 0 0 auto;
+    /* About the browser window's height, less a small padding allowance, but
+       never taller than the window body it sits in. */
+    height: min(var(--progress-evidence-card-height), 100%);
+    /* Three cards plus their gaps always fit across the viewport, so all three
+       stay fully on screen at the narrowest supported window width. */
+    max-width: calc((100% - 3rem) / 3);
+    aspect-ratio: 3 / 4;
+    opacity: 1;
+    transition: opacity var(--progress-evidence-slide-duration) ease-in-out;
+    padding: 0.7rem 0.7rem 1.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(198, 182, 150, 0.55);
+    background:
+        radial-gradient(circle at 18% 16%, rgba(255, 244, 214, 0.5), transparent 42%),
+        linear-gradient(180deg, #f6efe0 0%, #eadcbc 58%, #dbc69f 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.74),
+        0 10px 20px rgba(0, 0, 0, 0.34);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.progress-evidence-card-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    background: rgba(20, 26, 34, 0.18);
+}
+
+/* Shown when [progressEvidenceId].png does not exist yet. Deliberately looks
+   like a blank evidence card awaiting artwork, not a broken image. */
+.progress-evidence-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    border: 2px dashed rgba(120, 92, 52, 0.55);
+    background:
+        repeating-linear-gradient(45deg,
+            rgba(196, 168, 121, 0.16) 0 12px,
+            rgba(168, 140, 96, 0.16) 12px 24px);
+    color: #4a3618;
+    text-align: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.progress-evidence-placeholder-caption {
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.72;
+}
+
+.progress-evidence-placeholder-id {
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+
+.progress-evidence-card-label {
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.35rem;
+    text-align: center;
+    color: #4a3618;
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.progress-evidence-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: rgba(218, 229, 244, 0.76);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 1rem;
+}

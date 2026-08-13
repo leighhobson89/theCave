@@ -175,6 +175,31 @@
       width: auto;
     }
 
+    /* A check-row placed inside a .grid spans the whole row, the same way
+       .field.full does. */
+    .check-row.full {
+      grid-column: 1 / -1;
+      margin-bottom: 0;
+    }
+
+    /* These labels are the system's exact identifiers (progressEvidenceId and
+       friends), so they opt out of the uppercasing every other label gets --
+       PROGRESSEVIDENCEACTIVATED is unreadable, and a renamed-looking flag would
+       be worse than an unstyled one. */
+    #progressEvidencePanel .field > span,
+    #progressEvidencePanel .check-row {
+      text-transform: none;
+      font-size: 0.8rem;
+    }
+
+    /* Allocated by the server, never typed: styled so it reads as a value the
+       form is showing rather than a field to fill in. */
+    input[readonly] {
+      background: rgba(8, 14, 23, 0.45);
+      color: var(--muted);
+      cursor: default;
+    }
+
     .row {
       margin-top: 0.8rem;
       display: flex;
@@ -342,9 +367,10 @@
           </p>
           <p>
             Panels grey out automatically the moment you pick a different
-            Content Type above, except <strong>Evidence Fields</strong>,
-            which stays active for every type — any record can award
-            evidence.
+            Content Type above, except <strong>Evidence Fields</strong> and
+            <strong>Progress Evidence</strong>, which stay active for every
+            type — any record can award evidence, and every record gets
+            progress evidence.
           </p>
           <table>
             <thead>
@@ -360,6 +386,7 @@
               <tr><td>Page Title, URL (required)</td><td>Standalone Page Fields</td><td>Standalone only</td></tr>
               <tr><td>Background/Text Color, Font Family</td><td>Standalone Page Styling</td><td>Standalone only</td></tr>
               <tr><td>Awards Evidence and its fields</td><td>Evidence Fields</td><td>All 5 types — never greyed out</td></tr>
+              <tr><td>progressEvidenceId (auto-allocated), Progress Evidence Image, both progress evidence flags</td><td>Progress Evidence</td><td>All 5 types — never greyed out, and mandatory</td></tr>
             </tbody>
           </table>
           <p style="margin-top: 0.5rem;">
@@ -645,6 +672,50 @@
             <span id="evidenceQueueStatus" class="status">No evidence queued.</span>
           </div>
           <p class="note">Report and photo evidence now map to their correct localized catalogs and presentation presets. Available for every content type — this panel is never greyed out.</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 0.7rem;">
+        <div class="panel" id="progressEvidencePanel">
+          <h2>Progress Evidence</h2>
+          <div class="grid" id="progressEvidenceFieldsGrid">
+            <label class="field">
+              <span>progressEvidenceId (allocated automatically, per service)</span>
+              <input id="progressEvidenceIdInput" type="text" readonly spellcheck="false" placeholder="Waiting for the inject API…">
+              <button id="allocateProgressEvidenceIdButton" class="secondary" type="button" style="margin-top:0.45rem;align-self:start;">Allocate</button>
+            </label>
+            <label class="field">
+              <span>Progress Evidence Image (required)</span>
+              <input id="progressEvidenceImageInput" type="text" spellcheck="false" placeholder="./assets/photos/progressEvidenceImages/example.png">
+              <button id="chooseProgressEvidenceImageButton" class="secondary" type="button" style="margin-top:0.45rem;align-self:start;">Choose Progress Evidence Photo</button>
+              <input id="progressEvidenceImagePicker" type="file" accept="image/*" hidden>
+            </label>
+            <label class="check-row full" for="progressEvidenceActivatedInput">
+              <input id="progressEvidenceActivatedInput" type="checkbox">
+              progressEvidenceActivated — put this in the envelope immediately
+            </label>
+            <label class="check-row full" for="progressEvidenceDeveloperEnabledInput">
+              <input id="progressEvidenceDeveloperEnabledInput" type="checkbox">
+              progressEvidenceDeveloperEnabled — allow this progress evidence to appear at all
+            </label>
+          </div>
+          <p class="note">
+            Mandatory for every content type: Preview and Inject are both blocked until the id has been
+            allocated and an image has been chosen. Both flags must be true for the item to show in the
+            noticeboard envelope — with <strong>developer enabled</strong> off it stays hidden even when
+            <strong>activated</strong> is on. The image defaults to
+            <code>./assets/photos/progressEvidenceImages</code>; a file that isn't there yet simply falls back
+            to a placeholder card in game.
+          </p>
+          <p class="note">
+            Ids are five digits: a <strong>service control digit</strong> then a four-digit sequence within
+            that service — <code>0</code> Zoom Search, <code>1</code> Library, <code>2</code> Police,
+            <code>3</code> Archives, <code>4</code> Standalone, <code>5</code> received faxes. So
+            <code>43222</code> is a standalone page and <code>33333</code> is an archives record. Changing
+            the Content Type re-allocates the id, because it belongs to the new service's block. Everything
+            is recorded in <code>assets/progressEvidence.json</code>, one language-neutral file for the whole
+            game — nothing is invented at runtime.
+          </p>
         </div>
       </div>
 
