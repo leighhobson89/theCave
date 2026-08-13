@@ -11,19 +11,35 @@ const {
   startNewGame,
 } = require("../../support/game-helpers");
 
+// Read from the registry the game itself loads, rather than restating its
+// contents here — the same technique browser-record-catalog.spec.js uses
+// against the site JSON. `progressEvidenceDeveloperEnabled` is an authoring
+// decision a developer is expected to change; asserting a hard-coded list of
+// enabled ids would turn every such change into a test failure.
+const progressEvidenceDefinitions = require("../../../assets/progressEvidence.json").definitions;
+
 test("a new game starts with no progress evidence activated", async ({ page }) => {
   await startNewGame(page);
 
   expect(await readProgressEvidence(page)).toEqual([]);
 
-  // Every registered item starts with progressEvidenceActivated false. The two
-  // shipped developer-enabled websites are enabled but still not activated,
-  // which is exactly the "developer enabled, not activated" case.
+  // Every registered item starts with progressEvidenceActivated false —
+  // including the developer-enabled ones, which is exactly the "developer
+  // enabled, not activated" case.
   const entries = await page.evaluate(() => window.progressEvidenceDeveloperTools.getProgressEvidenceEntries());
-  expect(entries.length).toBeGreaterThan(0);
+  expect(entries).toHaveLength(progressEvidenceDefinitions.length);
   expect(entries.every((entry) => entry.progressEvidenceActivated === false)).toBe(true);
-  expect(entries.filter((entry) => entry.progressEvidenceDeveloperEnabled === true).map((entry) => entry.progressEvidenceId))
-    .toEqual(["00001", "00002"]);
+
+  // The developer-enabled set is whatever the definitions file says, and at
+  // least one item must be enabled or nothing could ever reach the envelope.
+  const enabledInGame = entries
+    .filter((entry) => entry.progressEvidenceDeveloperEnabled === true)
+    .map((entry) => entry.progressEvidenceId);
+  const enabledInFile = progressEvidenceDefinitions
+    .filter((definition) => definition.progressEvidenceDeveloperEnabled === true)
+    .map((definition) => definition.progressEvidenceId);
+  expect(enabledInGame).toEqual(enabledInFile);
+  expect(enabledInFile.length).toBeGreaterThan(0);
 });
 
 test("activating progress evidence adds its progressEvidenceId to the collection", async ({ page }) => {

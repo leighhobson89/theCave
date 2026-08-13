@@ -5369,11 +5369,10 @@ function measureProgressEvidenceCardStep(track) {
 // runs, so the four-card strip built for the animation starts one item earlier
 // than the new index for Next, and exactly at it for Previous.
 //
-// The extra card makes the row one slot wider than it settles at. Because the
-// track is centre-justified, that alone would shift everything half a slot, so
-// the animation runs from +half a slot to -half a slot (Next) or the reverse
-// (Previous) — a full slot of travel either way, with the stationary cards
-// landing exactly where their neighbours were.
+// The strip is left-justified, so for Next the extra card simply hangs off the
+// right-hand end and the travel is a plain slot to the left. For Previous the
+// arriving card is prepended, which pushes the others right by a slot, so the
+// strip starts a slot to the left to hold them in place and animates back to 0.
 function renderProgressEvidenceTrack(refs, entries, direction) {
   if (refs.slideTimeoutId !== null) {
     window.clearTimeout(refs.slideTimeoutId);
@@ -5406,7 +5405,7 @@ function renderProgressEvidenceTrack(refs, entries, direction) {
   steppingTrack.classList.add("is-stepping", isNext ? "is-stepping-next" : "is-stepping-prev");
   steppingTrack.style.setProperty(
     "--progress-evidence-track-offset",
-    `${(isNext ? 1 : -1) * (cardStep / 2)}px`
+    isNext ? "0px" : `${-cardStep}px`
   );
   enteringCard?.classList.add("is-card-entering");
   refs.viewport.replaceChildren(steppingTrack);
@@ -5420,7 +5419,7 @@ function renderProgressEvidenceTrack(refs, entries, direction) {
     steppingTrack.classList.remove("is-stepping");
     steppingTrack.style.setProperty(
       "--progress-evidence-track-offset",
-      `${(isNext ? -1 : 1) * (cardStep / 2)}px`
+      isNext ? `${-cardStep}px` : "0px"
     );
     enteringCard?.classList.remove("is-card-entering");
     leavingCard?.classList.add("is-card-leaving");
@@ -5467,7 +5466,13 @@ function updateProgressEvidenceWindowContent(windowController, { direction = 0 }
   }
 
   const eligibleEntries = getEligibleProgressEvidence();
-  progressEvidenceCarouselIndex = eligibleEntries.length
+
+  // Everything fits on screen at three or fewer, so there is nothing to scroll
+  // through: the cards simply fill the strip left to right as the player
+  // collects them, and the navigation stays disabled until a fourth arrives.
+  const isCarouselNavigable = eligibleEntries.length > PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT;
+
+  progressEvidenceCarouselIndex = isCarouselNavigable
     ? ((progressEvidenceCarouselIndex % eligibleEntries.length) + eligibleEntries.length) % eligibleEntries.length
     : 0;
 
@@ -5475,20 +5480,21 @@ function updateProgressEvidenceWindowContent(windowController, { direction = 0 }
     ? `${progressEvidenceCarouselIndex + 1}/${eligibleEntries.length}`
     : "0/0";
 
-  const hasEntries = eligibleEntries.length > 0;
   if (windowController.previousButtonElement) {
-    windowController.previousButtonElement.disabled = !hasEntries;
+    windowController.previousButtonElement.disabled = !isCarouselNavigable;
   }
   if (windowController.nextButtonElement) {
-    windowController.nextButtonElement.disabled = !hasEntries;
+    windowController.nextButtonElement.disabled = !isCarouselNavigable;
   }
 
-  renderProgressEvidenceTrack(refs, eligibleEntries, hasEntries ? direction : 0);
+  renderProgressEvidenceTrack(refs, eligibleEntries, isCarouselNavigable ? direction : 0);
 }
 
+// A no-op unless there is more evidence than fits on screen, which matches the
+// disabled state of the nav buttons.
 function stepProgressEvidenceCarousel(windowController, delta) {
   const eligibleCount = getEligibleProgressEvidence().length;
-  if (!eligibleCount) {
+  if (eligibleCount <= PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT) {
     return;
   }
 

@@ -1,7 +1,11 @@
-// The progress evidence carousel: stepping in both directions (with the same
-// wraparound the Reports and Photos carousels have), and the animated slide +
-// fade that distinguishes it from them — the strip visibly moves and changes
-// opacity rather than the cards swapping instantly.
+// The progress evidence carousel: how it fills up before there is anything to
+// navigate, stepping in both directions (with the same wraparound the Reports
+// and Photos carousels have), and the animated slide + fade that distinguishes
+// it from them — the strip visibly moves one card along, rather than the cards
+// swapping instantly.
+//
+// Up to three items all fit on screen, so the navigation only becomes usable
+// once a fourth exists.
 const { test, expect } = require("@playwright/test");
 const {
   activateProgressEvidence,
@@ -198,11 +202,63 @@ test("the two cards that stay on screen keep their places rather than being repl
   expect(slotsAfter).toEqual(slotsBefore);
 });
 
-test("the carousel navigation is disabled while there is nothing to show", async ({ page }) => {
+test("the carousel navigation stays disabled until there is more evidence than fits on screen", async ({ page }) => {
   await startNewGame(page);
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
 
-  await expect(progressEvidenceWindow(page).locator(".carousel-nav-prev")).toBeDisabled();
-  await expect(progressEvidenceWindow(page).locator(".carousel-nav-next")).toBeDisabled();
+  const previousButton = progressEvidenceWindow(page).locator(".carousel-nav-prev");
+  const nextButton = progressEvidenceWindow(page).locator(".carousel-nav-next");
+  const counter = progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter");
+
+  // Nothing collected yet.
+  await expect(progressEvidenceCards(page)).toHaveCount(0);
+  await expect(previousButton).toBeDisabled();
+  await expect(nextButton).toBeDisabled();
+
+  // One, two, then three: the strip fills up and there is still nothing to
+  // navigate to, so both buttons stay disabled the whole way.
+  for (const [collected, progressEvidenceId] of ELIGIBLE_IDS.slice(0, 3).entries()) {
+    await activateProgressEvidence(page, progressEvidenceId);
+    await setProgressEvidenceDeveloperEnabled(page, progressEvidenceId, true);
+
+    await expect(progressEvidenceCards(page)).toHaveCount(collected + 1);
+    expect(await cardIds(page)).toEqual(ELIGIBLE_IDS.slice(0, collected + 1));
+    await expect(counter).toHaveText(`1/${collected + 1}`);
+    await expect(previousButton).toBeDisabled();
+    await expect(nextButton).toBeDisabled();
+  }
+
+  // The fourth is the one that cannot fit, so the carousel comes alive.
+  await activateProgressEvidence(page, ELIGIBLE_IDS[3]);
+  await setProgressEvidenceDeveloperEnabled(page, ELIGIBLE_IDS[3], true);
+
+  await expect(progressEvidenceCards(page)).toHaveCount(3);
+  await expect(counter).toHaveText("1/4");
+  await expect(previousButton).toBeEnabled();
+  await expect(nextButton).toBeEnabled();
+});
+
+test("the cards fill the strip from the left as they are collected", async ({ page }) => {
+  await startNewGame(page);
+  await activateProgressEvidence(page, ELIGIBLE_IDS[0]);
+
+  await openNoticeboard(page);
+  await openProgressEvidenceEnvelope(page);
+
+  // One card sits in the leftmost slot, not centred in the window.
+  const slotWithOne = await progressEvidenceCards(page).first().evaluate(
+    (card) => Math.round(card.getBoundingClientRect().left)
+  );
+
+  await activateProgressEvidence(page, ELIGIBLE_IDS[1]);
+  await expect(progressEvidenceCards(page)).toHaveCount(2);
+
+  // Collecting a second leaves the first exactly where it was and puts the new
+  // one to its right.
+  const slotsWithTwo = await progressEvidenceCards(page).evaluateAll(
+    (cards) => cards.map((card) => Math.round(card.getBoundingClientRect().left))
+  );
+  expect(slotsWithTwo[0]).toBe(slotWithOne);
+  expect(slotsWithTwo[1]).toBeGreaterThan(slotsWithTwo[0]);
 });

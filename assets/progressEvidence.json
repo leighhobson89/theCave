@@ -25,7 +25,7 @@
       "label": "We put the Wackiness in Gold Mining!",
       "imagePath": "./assets/photos/progressEvidenceImages/00003.png",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "00004",
@@ -34,7 +34,7 @@
       "label": "Apples for All!",
       "imagePath": "./assets/photos/progressEvidenceImages/00004.png",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "00005",
@@ -43,7 +43,7 @@
       "label": "Local Author is heir to the Whitmore Empire",
       "imagePath": "./assets/photos/progressEvidenceImages/00005.png",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "00006",

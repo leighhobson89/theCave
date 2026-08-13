@@ -384,9 +384,8 @@ anywhere else:
 
 Clicking the envelope opens a `DesktopWindow` of kind `progress-evidence`. It is
 built on the **same carousel chrome as the Reports and Photos folders** — the
-`<` and `>` buttons come from `DesktopWindow`'s `showCarouselNavigation`, the
-index wraps in both directions, and navigation is disabled on an empty
-collection, exactly as those two do.
+`<` and `>` buttons come from `DesktopWindow`'s `showCarouselNavigation` and the
+index wraps in both directions, exactly as those two do.
 
 - **It refreshes on open.** `updateProgressEvidenceWindowContent()` re-reads
   `getEligibleProgressEvidence()` every time and re-clamps the index against it,
@@ -395,6 +394,13 @@ collection, exactly as those two do.
 - **Three items at once.** `PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT` = 3. The strip
   shows items `index`, `index + 1`, `index + 2`, wrapping, so three cards stay on
   screen whenever three are eligible.
+- **It fills before it scrolls.** At three items or fewer everything is already
+  on screen, so the cards simply fill the strip left to right as the player
+  collects them (one card sits in the leftmost slot, not centred) and **both nav
+  buttons stay disabled** — 0, 1, 2 and 3 items alike. The fourth item is the
+  first that cannot fit, and that is when the carousel comes alive. The index is
+  pinned to 0 below that threshold, so the strip always reads in collection
+  order.
 - **Card size.** `--progress-evidence-card-height` is
   `calc(100vh - var(--progress-evidence-card-padding))` — the browser window's
   height less a small padding allowance — capped at the window body's height.
@@ -409,14 +415,16 @@ card slides in from the far side fading up. `renderProgressEvidenceTrack()`:
    item *earlier* than the new index (so the leaving card is still on it and the
    arriving card is on the end); for Previous it starts *at* the new index (so
    the arriving card leads and the leaving one trails).
-2. Inserts it with `is-stepping` — which suppresses the transitions — offset by
-   half a card slot, and the arriving card at `is-card-entering` (opacity 0).
-   The half-slot offset compensates for the extra card: the strip is centre-
-   justified, so a fourth card would otherwise shift everything by half a slot
-   on its own.
+2. Inserts it with `is-stepping` — which suppresses the transitions — at its
+   starting offset, with the arriving card at `is-card-entering` (opacity 0).
+   The strip is left-justified, so for Next the extra card just hangs off the
+   right-hand end and the start offset is 0; for Previous the arriving card is
+   prepended, pushing the others one slot right, so the strip starts one slot to
+   the left to hold them in place.
 3. On the next animation frame, removes `is-stepping` (transitions back on),
-   flips the offset to the other half slot — a full slot of travel — removes
-   `is-card-entering`, and adds `is-card-leaving` to the departing card.
+   moves the offset one full slot — to `-step` for Next, back to 0 for Previous
+   — removes `is-card-entering`, and adds `is-card-leaving` to the departing
+   card.
 4. After `PROGRESS_EVIDENCE_SLIDE_MS` (320 ms), replaces it with the clean
    three-card strip at the new index.
 
@@ -556,9 +564,14 @@ Activated by: the fax arriving (being queued), not by reading it.
 **Totals: 27 websites across five services, plus 4 received faxes — 31 items,
 all registered.**
 
+> The `Developer enabled` column above is the **shipped baseline**. It is the
+> one column here a developer is expected to change as content is released, so
+> `assets/progressEvidence.json` is always the live answer — check it there
+> rather than trusting this table. Nothing else in the audit moves.
+
 ---
 
-## 10. The two developer-enabled websites
+## 10. The two developer-enabled websites (shipped baseline)
 
 | `progressEvidenceId` | Website | Service | Why |
 | --- | --- | --- | --- |

@@ -5778,7 +5778,10 @@ button.disabled {
 .progress-evidence-track {
     display: flex;
     align-items: center;
-    justify-content: center;
+    /* Cards fill the three slots left to right, so a player holding one or two
+       sees them in the leftmost slots with the rest of the strip empty, rather
+       than floating in the middle. */
+    justify-content: flex-start;
     gap: 1rem;
     width: 100%;
     height: 100%;

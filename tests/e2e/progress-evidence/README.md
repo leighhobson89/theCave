@@ -32,9 +32,14 @@ definition upsert — is covered in
   `progressEvidenceDeveloperEnabled` is the developer's display switch and is set
   through `window.progressEvidenceDeveloperTools.setProgressEvidenceDeveloperEnabled(id, bool)`.
   A test that only sets one of them is testing the hidden case.
-- **Shipped developer-enabled defaults are `00001` and `00002`** (both ZoomSearch,
-  the game's two earliest websites). Everything else ships disabled, so a spec
-  that wants another item on screen has to enable it itself.
+- **Never hard-code which items are developer-enabled.** That flag is an
+  authoring decision a developer changes freely, so a spec that restates the
+  enabled set breaks the moment someone flips one. Either enable what the test
+  needs itself (`setProgressEvidenceDeveloperEnabled`) or read the expectation
+  from `assets/progressEvidence.json`, as
+  `progress-evidence-activation-and-persistence.spec.js` does. The shipped
+  baseline is `00001` and `00002` (both ZoomSearch, the game's two earliest
+  websites).
 - **Ids carry their service in the leading digit** — `0` ZoomSearch, `1` Library,
   `2` Police, `3` Archives, `4` Standalone, `5` faxes — so `20005` in a spec is a
   police record and `50003` is a fax. They come from `assets/progressEvidence.json`;
