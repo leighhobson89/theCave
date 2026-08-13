@@ -10,6 +10,17 @@ in this file describes current behaviour to design against — check
 
 ---
 
+- **2026-08-13: this doc, not shipped content, had Andrew Spencer's date of
+  death wrong.** §1's timeline and §2's character index both dated
+  Andrew's death to **28 Jul 1901**, sourced to the missing-person
+  report's line "confirmed by the local Coroner on 28 July." That clause
+  is the Coroner's formal confirmation date, not a second date of death —
+  `story_en.md` plays the whole sequence (Andrew stumbling into the
+  farmyard, being bandaged, and dying in Diane's arms) as one continuous,
+  unbroken scene with no day-break, so he in fact died the evening of
+  **27 Jul 1901**, the same day he returned from the cave. Corrected in
+  both places; the shipped `reports_evidences.json` text itself was never
+  wrong, just misread.
 - The handwritten police username on `mysteriesOldNW.png` previously read
   `james.f` against the live `j.fletcher` account; the art now reads
   `j.fletcher` and matches exactly. No longer outstanding, kept here as a
