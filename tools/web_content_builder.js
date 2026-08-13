@@ -1,33 +1,51 @@
 const INJECT_API_URL = "http://localhost:5058/api/web-content/upsert";
+const NEXT_CASE_NUMBER_API_URL = "http://localhost:5058/api/web-content/next-police-case-number";
 
 const contentTypeSelect = document.getElementById("contentTypeSelect");
 const idInput = document.getElementById("idInput");
-const urlInput = document.getElementById("urlInput");
-const websiteNameInput = document.getElementById("websiteNameInput");
-const titleInput = document.getElementById("titleInput");
-const summaryInput = document.getElementById("summaryInput");
 const bodyInput = document.getElementById("bodyInput");
 const imagesInput = document.getElementById("imagesInput");
 const chooseImagePathsButton = document.getElementById("chooseImagePathsButton");
 const imagePathsPicker = document.getElementById("imagePathsPicker");
 
-const zoomsearchFieldsPanel = document.getElementById("zoomsearchFieldsPanel");
-const libraryFieldsPanel = document.getElementById("libraryFieldsPanel");
-const policeFieldsPanel = document.getElementById("policeFieldsPanel");
-const archivesFieldsPanel = document.getElementById("archivesFieldsPanel");
-const standaloneStylePanel = document.getElementById("standaloneStylePanel");
+// Every field below this point lives in exactly one content type's panel --
+// see the "Field rules" <details> in the HTML. `.service-panel` elements
+// (each tagged with data-content-type) grey out and disable their own
+// inputs whenever they don't match the selected Content Type; nothing here
+// is read unless its panel is the active one, so there's nothing to
+// conflict between panels the way a single shared field once could.
+const servicePanels = Array.from(document.querySelectorAll(".service-panel"));
 
+const websiteNameInput = document.getElementById("websiteNameInput");
+const zoomTitleInput = document.getElementById("zoomTitleInput");
+const zoomUrlInput = document.getElementById("zoomUrlInput");
+const zoomSummaryInput = document.getElementById("zoomSummaryInput");
 const zoomKeywordsInput = document.getElementById("zoomKeywordsInput");
+
 const authorInput = document.getElementById("authorInput");
 const libraryPublicationTitleInput = document.getElementById("libraryPublicationTitleInput");
+const libraryPublisherInput = document.getElementById("libraryPublisherInput");
+const libraryPublicationYearInput = document.getElementById("libraryPublicationYearInput");
+const librarySummaryInput = document.getElementById("librarySummaryInput");
 
+const policeTitleInput = document.getElementById("policeTitleInput");
 const policeKeywordsInput = document.getElementById("policeKeywordsInput");
 const requiredPrivilegeInput = document.getElementById("requiredPrivilegeInput");
+const policeCaseNumberInput = document.getElementById("policeCaseNumberInput");
+const policeDateInput = document.getElementById("policeDateInput");
+const policeSummaryInput = document.getElementById("policeSummaryInput");
+const policeGenerateCaseNumberButton = document.getElementById("policeGenerateCaseNumberButton");
 
+const archivesHeadlineInput = document.getElementById("archivesHeadlineInput");
 const archiveProvinceInput = document.getElementById("archiveProvinceInput");
 const publicationInput = document.getElementById("publicationInput");
 const archivesKeywordsInput = document.getElementById("archivesKeywordsInput");
 const requiredAccessInput = document.getElementById("requiredAccessInput");
+const archivesDateInput = document.getElementById("archivesDateInput");
+const archivesSummaryInput = document.getElementById("archivesSummaryInput");
+
+const standaloneTitleInput = document.getElementById("standaloneTitleInput");
+const standaloneUrlInput = document.getElementById("standaloneUrlInput");
 
 const awardsEvidenceInput = document.getElementById("awardsEvidenceInput");
 const evidenceTypeInput = document.getElementById("evidenceTypeInput");
@@ -205,6 +223,15 @@ function parseLineList(value) {
     .filter(Boolean);
 }
 
+// Only sets the key when the trimmed value is non-empty, matching how
+// authored content omits a field entirely rather than storing it as "".
+function addIfPresent(target, key, rawValue) {
+  const value = String(rawValue || "").trim();
+  if (value) {
+    target[key] = value;
+  }
+}
+
 function parseImages(value) {
   return parseLineList(value).map((src) => ({
     src,
@@ -245,6 +272,10 @@ function getCurrentType() {
   return String(contentTypeSelect.value || "zoomsearch").trim();
 }
 
+// Content Type, Content ID, Main text and Images are the only fields every
+// content type reads identically -- everything else (title, URL, summary,
+// ...) is owned by exactly one type's own panel and read directly by that
+// type's build*Entry function below, not from here.
 function getCommonFields() {
   const contentType = getCurrentType();
   const id = slugifyId(idInput.value);
@@ -254,25 +285,33 @@ function getCommonFields() {
 
   idInput.value = id;
 
-  const url = String(urlInput.value || "").trim();
-  const title = String(titleInput.value || "").trim();
-  const summary = String(summaryInput.value || "").trim();
   const bodyLines = parseParagraphs(bodyInput.value);
   const images = parseImages(imagesInput.value);
-
-  if (contentType === "standalone" && !url) {
-    throw new Error("URL is required for Standalone Page content type.");
-  }
 
   return {
     contentType,
     id,
-    url,
-    title,
-    summary,
     bodyLines,
     images,
   };
+}
+
+// The title-equivalent field for whichever content type is currently
+// selected, falling back to the Content ID -- used for the evidence
+// "Default Title String" fallback and for each build*Entry's own title-ish
+// field further down.
+function getCurrentTitleOrId(common) {
+  const titleInputByType = {
+    zoomsearch: zoomTitleInput,
+    library: libraryPublicationTitleInput,
+    police: policeTitleInput,
+    archives: archivesHeadlineInput,
+    standalone: standaloneTitleInput,
+  };
+
+  const titleInputElement = titleInputByType[getCurrentType()];
+  const title = titleInputElement ? String(titleInputElement.value || "").trim() : "";
+  return title || common.id;
 }
 
 function buildEvidence(siteId, common, fallbackTitle) {
@@ -350,7 +389,7 @@ function queueCurrentEvidence(common) {
     throw new Error("Enable Awards Evidence before queueing another evidence.");
   }
 
-  const evidenceFields = buildEvidence(getCurrentType(), common, common.title || common.id);
+  const evidenceFields = buildEvidence(getCurrentType(), common, getCurrentTitleOrId(common));
   if (!evidenceFields.evidence || typeof evidenceFields.evidence !== "object") {
     throw new Error("Fill in the evidence fields before queueing another evidence.");
   }
@@ -389,7 +428,13 @@ function collectEvidenceEntries(siteId, common, fallbackTitle) {
 }
 
 function buildStandaloneEntry(common) {
-  const evidenceFields = collectEvidenceEntries("standalone", common, common.title || common.id);
+  const url = String(standaloneUrlInput.value || "").trim();
+  if (!url) {
+    throw new Error("URL is required for Standalone Page content type.");
+  }
+
+  const title = String(standaloneTitleInput.value || "").trim() || common.id;
+  const evidenceFields = collectEvidenceEntries("standalone", common, title);
   const images = buildEntryImages(common.images);
 
   return {
@@ -397,8 +442,8 @@ function buildStandaloneEntry(common) {
     bucket: "records",
     entry: {
       id: common.id,
-      title: common.title || common.id,
-      url: common.url,
+      title,
+      url,
       content: common.bodyLines.length ? common.bodyLines : [""],
       images,
       style: {
@@ -423,7 +468,7 @@ function buildZoomsearchEntry(common) {
     throw new Error("Zoom Search website name is required.");
   }
 
-  const pageTitle = common.title || common.id;
+  const pageTitle = String(zoomTitleInput.value || "").trim() || common.id;
   const evidenceFields = collectEvidenceEntries("zoomsearch", common, pageTitle);
   const images = buildEntryImages(common.images);
 
@@ -434,9 +479,9 @@ function buildZoomsearchEntry(common) {
       id: common.id,
       websiteName,
       pageTitle,
-      url: common.url || `http://www.zoomsearch.net/manual/${common.id}`,
+      url: String(zoomUrlInput.value || "").trim() || `http://www.zoomsearch.net/manual/${common.id}`,
       keywords,
-      summary: common.summary || "",
+      summary: String(zoomSummaryInput.value || "").trim(),
       pageContent: common.bodyLines,
       images,
       awardsEvidence: evidenceFields.awardsEvidence,
@@ -454,20 +499,28 @@ function buildLibraryEntry(common) {
   const evidenceFields = collectEvidenceEntries("library", common, publicationTitle);
   const images = buildEntryImages(common.images);
 
+  const entry = {
+    id: common.id,
+    author: String(authorInput.value || "").trim(),
+    title: publicationTitle,
+    keywords: [publicationTitle],
+    summary: String(librarySummaryInput.value || "").trim(),
+    extract: common.bodyLines,
+    images,
+    awardsEvidence: evidenceFields.awardsEvidence,
+    evidence: evidenceFields.evidence,
+  };
+
+  addIfPresent(entry, "publisher", libraryPublisherInput.value);
+  const rawPublicationYear = String(libraryPublicationYearInput.value || "").trim();
+  if (rawPublicationYear) {
+    entry.publicationYear = toNumberOrDefault(rawPublicationYear, rawPublicationYear);
+  }
+
   return {
     siteId: "library",
     bucket: "records",
-    entry: {
-      id: common.id,
-      author: String(authorInput.value || "").trim(),
-      title: publicationTitle,
-      keywords: [publicationTitle],
-      summary: common.summary || "",
-      extract: common.bodyLines,
-      images,
-      awardsEvidence: evidenceFields.awardsEvidence,
-      evidence: evidenceFields.evidence,
-    },
+    entry,
   };
 }
 
@@ -477,23 +530,29 @@ function buildPoliceEntry(common) {
     throw new Error("Police Records keywords are required.");
   }
 
-  const evidenceFields = collectEvidenceEntries("police", common, common.title || common.id);
+  const title = String(policeTitleInput.value || "").trim() || common.id;
+  const evidenceFields = collectEvidenceEntries("police", common, title);
   const images = buildEntryImages(common.images);
+
+  const entry = {
+    id: common.id,
+    title,
+    keywords,
+    summary: String(policeSummaryInput.value || "").trim(),
+    report: common.bodyLines,
+    requiredPrivilegeLevel: toNumberOrDefault(requiredPrivilegeInput.value, 0),
+    images,
+    awardsEvidence: evidenceFields.awardsEvidence,
+    evidence: evidenceFields.evidence,
+  };
+
+  addIfPresent(entry, "caseNumber", policeCaseNumberInput.value);
+  addIfPresent(entry, "date", policeDateInput.value);
 
   return {
     siteId: "police",
     bucket: "records",
-    entry: {
-      id: common.id,
-      title: common.title || common.id,
-      keywords,
-      summary: common.summary || "",
-      report: common.bodyLines,
-      requiredPrivilegeLevel: toNumberOrDefault(requiredPrivilegeInput.value, 0),
-      images,
-      awardsEvidence: evidenceFields.awardsEvidence,
-      evidence: evidenceFields.evidence,
-    },
+    entry,
   };
 }
 
@@ -503,26 +562,30 @@ function buildArchivesEntry(common) {
     throw new Error("Canada Newspaper Archive keywords are required.");
   }
 
-  const headline = common.title || common.id;
+  const headline = String(archivesHeadlineInput.value || "").trim() || common.id;
   const evidenceFields = collectEvidenceEntries("archives", common, headline);
   const images = buildEntryImages(common.images);
+
+  const entry = {
+    id: common.id,
+    province: String(archiveProvinceInput.value || "").trim(),
+    headline,
+    publication: String(publicationInput.value || "").trim(),
+    keywords,
+    summary: String(archivesSummaryInput.value || "").trim(),
+    article: common.bodyLines,
+    requiredAccessLevel: toNumberOrDefault(requiredAccessInput.value, 0),
+    images,
+    awardsEvidence: evidenceFields.awardsEvidence,
+    evidence: evidenceFields.evidence,
+  };
+
+  addIfPresent(entry, "date", archivesDateInput.value);
 
   return {
     siteId: "archives",
     bucket: "records",
-    entry: {
-      id: common.id,
-      province: String(archiveProvinceInput.value || "").trim(),
-      headline,
-      publication: String(publicationInput.value || "").trim(),
-      keywords,
-      summary: common.summary || "",
-      article: common.bodyLines,
-      requiredAccessLevel: toNumberOrDefault(requiredAccessInput.value, 0),
-      images,
-      awardsEvidence: evidenceFields.awardsEvidence,
-      evidence: evidenceFields.evidence,
-    },
+    entry,
   };
 }
 
@@ -550,6 +613,44 @@ function buildPayload() {
   }
 
   throw new Error(`Unsupported content type: ${common.contentType}`);
+}
+
+// Asks the inject API for the next Police caseNumber ("NNNNN-A", a random
+// 10-100 increment past the highest one currently in assets/en/police.json,
+// plus a random letter -- see tools/police_case_number.js, which the server
+// also uses). There's no local fallback generator: without the server there
+// is no reliable "current highest" to increment from.
+async function fetchNextPoliceCaseNumber() {
+  let response;
+  try {
+    response = await fetch(NEXT_CASE_NUMBER_API_URL);
+  } catch (error) {
+    throw new Error("Inject API is offline. Start it with: node tools/web_content_builder_server.js");
+  }
+
+  if (!response.ok) {
+    throw new Error(`Case number generation failed (${response.status})`);
+  }
+
+  const result = await response.json();
+  return String(result.caseNumber || "").trim();
+}
+
+// Auto-fills the Case Number field the moment Police is selected, but only
+// if the author hasn't already typed something in -- switching content type
+// back and forth, or a value restored some other way, is never overwritten
+// by this.
+async function maybePrefillPoliceCaseNumber() {
+  if (getCurrentType() !== "police" || String(policeCaseNumberInput.value || "").trim()) {
+    return;
+  }
+
+  try {
+    policeCaseNumberInput.value = await fetchNextPoliceCaseNumber();
+  } catch (error) {
+    // Silent: the field just stays blank, and the same error would show up
+    // (and be visible) the moment the author tries Preview/Inject anyway.
+  }
 }
 
 function renderPreview() {
@@ -604,20 +705,33 @@ async function injectPayload() {
 function clearForm() {
   [
     idInput,
-    urlInput,
-    websiteNameInput,
-    titleInput,
-    summaryInput,
     bodyInput,
     imagesInput,
+    websiteNameInput,
+    zoomTitleInput,
+    zoomUrlInput,
+    zoomSummaryInput,
     zoomKeywordsInput,
     authorInput,
     libraryPublicationTitleInput,
+    libraryPublisherInput,
+    libraryPublicationYearInput,
+    librarySummaryInput,
+    policeTitleInput,
     policeKeywordsInput,
+    policeCaseNumberInput,
+    policeDateInput,
+    policeSummaryInput,
+    requiredPrivilegeInput,
+    archivesHeadlineInput,
     archiveProvinceInput,
     archivesKeywordsInput,
+    archivesDateInput,
+    archivesSummaryInput,
     publicationInput,
     requiredAccessInput,
+    standaloneTitleInput,
+    standaloneUrlInput,
     standaloneImageCaptionAltInput,
     evidenceNameInput,
     evidenceDefaultTitleInput,
@@ -692,19 +806,33 @@ function prepareEvidenceFieldsForCheckedState() {
   updateEvidenceQueueStatus();
 }
 
-function syncFieldStates() {
+// Every panel stays visible always (so an author can see what a type
+// requires before switching to it), but only the panel matching the
+// selected Content Type stays interactive -- every other service panel is
+// dimmed and has its inputs disabled, so a value typed into a field that
+// doesn't apply can't be mistaken for one that does. The Evidence panel has
+// no data-content-type and is left out of this loop entirely: it applies to
+// every content type and is never greyed out.
+function updateServicePanelStates() {
   const contentType = getCurrentType();
-  const isStandalone = contentType === "standalone";
-  const isZoomsearch = contentType === "zoomsearch";
-  urlInput.required = isStandalone;
-  websiteNameInput.required = isZoomsearch;
 
-  // Keep all sections visible so authors can reference field requirements while switching types.
-  zoomsearchFieldsPanel.classList.remove("is-hidden");
-  libraryFieldsPanel.classList.remove("is-hidden");
-  policeFieldsPanel.classList.remove("is-hidden");
-  archivesFieldsPanel.classList.remove("is-hidden");
-  standaloneStylePanel.classList.remove("is-hidden");
+  servicePanels.forEach((panel) => {
+    const isActive = panel.dataset.contentType === contentType;
+    panel.classList.toggle("is-inactive", !isActive);
+
+    const badge = panel.querySelector(".inactive-badge");
+    if (badge) {
+      badge.hidden = isActive;
+    }
+
+    panel.querySelectorAll("input, select, textarea, button").forEach((element) => {
+      element.disabled = !isActive;
+    });
+  });
+}
+
+function syncFieldStates() {
+  updateServicePanelStates();
 
   const evidenceEnabled = awardsEvidenceInput.checked;
   if (evidenceEnabled) {
@@ -714,6 +842,8 @@ function syncFieldStates() {
   }
 
   setEvidenceFieldsDisabledState(!evidenceEnabled);
+
+  void maybePrefillPoliceCaseNumber();
 }
 
 previewButton.addEventListener("click", () => {
@@ -750,6 +880,17 @@ clearButton.addEventListener("click", () => {
 contentTypeSelect.addEventListener("change", () => {
   syncFieldStates();
 });
+
+if (policeGenerateCaseNumberButton) {
+  policeGenerateCaseNumberButton.addEventListener("click", async () => {
+    try {
+      policeCaseNumberInput.value = await fetchNextPoliceCaseNumber();
+      setStatus("Generated a new case number.");
+    } catch (error) {
+      setStatus(error.message);
+    }
+  });
+}
 
 awardsEvidenceInput.addEventListener("change", () => {
   syncFieldStates();

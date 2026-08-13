@@ -16,14 +16,43 @@ feature/behaviour coverage explained under Method below, not line coverage.
 - 🟢 `facsimile-system` — 90%: queueing, multi-message stepping, milestone triggers.
 - 🟢 `notifications` — 89%: routing, dismissal, keyboard access, the close-button overlap regression.
 - 🟢 `evidence-system` — 89%, closed 2026-08-13: all 9 awarding records including the Level 3 `goldenpendant`, carousel navigation, custom names, catalog error paths.
-- 🟢 *(tools)* content authoring tool — 92%: all 4 sites, five-language fan-out, validation rejections.
+- 🟢 *(tools)* content authoring tool — 92%: all 4 sites, five-language fan-out, validation rejections, the Police Case Number generator.
 - 🟢 `audio-settings` — 80%, closed 2026-08-13: every control, save/restore of all 3 preferences.
 - 🟡 `notes-paint-documents` — 75%: strong paged-document coverage, Paint tools beyond `fill` untested.
 
 ---
 
-**Date:** 2026-08-12, revised 2026-08-13 (four times)
-**Suite:** 154 Playwright tests across 38 spec files, 100% passing (~1m50s, 4 workers)
+**Date:** 2026-08-12, revised 2026-08-13 (six times)
+**Suite:** 156 Playwright tests across 38 spec files, 100% passing (~1m45s, 4 workers)
+**Revision note (2026-08-13, 6th pass):** the 5th pass's last 6 Police Date
+placeholders are now real content too, filled in directly (all `"1988"` —
+the same year as the "Guardians of the North" book that several of these
+officers' records already reference). **Every `TODONOW` placeholder in the
+project is now resolved** — `assets/*/{police,library,archives}.json` have
+none left in any of the 5 languages. `caseNumber`/`date` were also moved up
+to sit right after `title` on every Police record (ahead of `keywords`) for
+readability, in English and copied structurally to the other 4 languages
+along with their values, so all 5 stay identical in both content and field
+order. The still-useful synthetic-data coverage in
+`browser-detail-synthetic-fields.spec.js` remains (it proves fields no real
+record populates *on purpose* — Province/Officer/Classification/
+Declassification Status/References/Edition, see §1.3's second pass — not a
+temporary gap), but every "still `TODONOW`" note elsewhere in this document
+is now historical.
+**Revision note (2026-08-13, 5th pass):** follow-up to the 4th pass's §1.3
+finding. Library's Publisher/Publication Year and Archives' one missing Date
+were hand-authored in English and propagated to the other 4 languages;
+Police's Case Number — which can't safely be hand-authored, since the format
+requires an always-increasing, randomly-spaced number — now has a generator
+(`tools/police_case_number.js`, 2 new tests in
+`web-content-builder-server.spec.js`) that derives the next value by
+scanning `assets/en/police.json` rather than trusting a separate counter,
+and the tool auto-fills it the moment Police is selected. Police's Date got
+the same "scan the codebase for a real date" treatment as Archives': 3 of
+its 9 `TODONOW` records had an unambiguous date embedded in their own
+report text and were filled in; the other 6 stay `TODONOW` on purpose — see
+§1.3's third pass for why. 30 `TODONOW` placeholders remain, down from 385
+after the first pass and 115 after the second.
 **Revision note (2026-08-13, 4th pass):** web content search & records — the
 last area still sitting at its original 2026-08-12 level after the first
 three revision passes — is now closed too (12 new tests across 3 new spec
@@ -88,7 +117,7 @@ gap remains — it's a content-authoring backlog item, not a test gap.
 | Web content: search & records | 14 | 14 | **100%** 🟢 *(was 43%)* | High |
 | Persistence (save/load/sticky/resume) | 14 | 13 | **93%** | Critical — silent data loss |
 | Localization | 12 | 11 | **92%** 🟢 *(was 25%)* | Medium |
-| Content authoring tool (API) | 12 | 11 | **92%** | Medium |
+| Content authoring tool (API) | 13 | 12 | **92%** | Medium |
 | Web content: authentication & gating | 11 | 10 | **91%** | High |
 | Viewport / scene navigation | 11 | 10 | **91%** 🟢 *(was 9%)* | Medium |
 | Facsimile system | 10 | 9 | **90%** | High |
@@ -96,7 +125,7 @@ gap remains — it's a content-authoring backlog item, not a test gap.
 | Evidence system | 18 | 16 | **89%** 🟢 *(was 38%)* | High |
 | Audio & settings | 10 | 8 | **80%** 🟢 *(was 0%)* | Low–Medium |
 | Notes / Paint documents | 12 | 9 | **75%** | Medium |
-| **Overall** | **154** | **140** | **≈91%** *(was ≈51%)* | |
+| **Overall** | **155** | **141** | **≈91%** *(was ≈51%)* | |
 
 *(The original 2026-08-12 row stated 77/152 covered, which does not sum from
 its own per-area figures — those actually total 87. The first three
@@ -104,8 +133,11 @@ its own per-area figures — those actually total 87. The first three
 against a total behaviour count of 154 — two higher than the original 152
 because the evidence-system work found a real behaviour the original audit
 never enumerated: the background-story window, which is not part of the
-Photos/Reports carousels and had no line of its own. This fourth pass adds
-the remaining 8 web-content-search-records behaviours: 140/154 ≈ 91%.)*
+Photos/Reports carousels and had no line of its own. The fourth pass added
+the remaining 8 web-content-search-records behaviours (140/154), and its
+own follow-up work (§1.3's third pass, §1.12) added one more real,
+newly-covered behaviour of its own — the Police Case Number generator — for
+a new total of 141/155 ≈ 91%.)*
 
 **The three gaps I would close first**, as of the original 2026-08-12 audit:
 
@@ -252,21 +284,25 @@ item this section previously listed as uncovered is now driven directly:
   `web-content-authentication/` and, for the one Level 3 record
   (`goldenpendant`), by `evidence-system/evidence-awards-full-catalog.spec.js`.
 - **Detail-view field rendering.** The same spec asserts every metadata
-  label that real content actually populates (Author, Publication Year and
-  Summary on Library; Summary on Police; Publication, Province, Date and
-  Summary on Archives) and the section headings (Extract, Report, Article,
-  and that "Page Content" — a deliberately suppressed heading — never
-  renders as one). It also asserts the *absence* of the labels no real
-  record populates (see the finding below).
+  label that feeds a search-results table column on every record: Author,
+  Publisher, Publication Year and Summary on Library; Case Number, Date and
+  Summary on Police; Publication, Province, Date and Summary on Archives —
+  plus the section headings (Extract, Report, Article, and that "Page
+  Content" — a deliberately suppressed heading — never renders as one).
 - **References / Attachments blocks and the fields no authored record
-  populates.** `browser-detail-synthetic-fields.spec.js` intercepts each
-  site's catalog fetch (the same `page.route` technique
+  populates on purpose.** `webContentRegistry.js` can also render Province/
+  Officer/Classification/Declassification Status (Police), Province/
+  References (Library) and Edition (Archives) — none of which feed a table
+  column, so they were deliberately left out of both the content backfill
+  and the authoring tool (see the finding below).
+  `browser-detail-synthetic-fields.spec.js` intercepts each site's catalog
+  fetch (the same `page.route` technique
   `evidence-missing-catalog-entry.spec.js` uses) to inject one fully-formed
-  synthetic record per site, then asserts Case Number, Officer,
-  Classification, Declassification and Date (Police), Edition (Archives),
-  and Publisher/Province (Library) all render correctly, along with a
-  2-item References list and a 2-item Attachments list built from both a
-  plain string entry and a `{ label, value }` entry.
+  synthetic record per site, proving all of them still render correctly —
+  the only place they're tested at all, now that no real record ever
+  supplies them — along with a 2-item References list and a 2-item
+  Attachments list built from both a plain string entry and a
+  `{ label, value }` entry.
 - **`createImageGallery`.** Proven from real content throughout
   `browser-record-catalog.spec.js` — every record with authored images gets
   its figure count asserted, and records with none are asserted to render
@@ -282,22 +318,81 @@ item this section previously listed as uncovered is now driven directly:
   event wiring, not just a direct URL visit), and directly by address bar.
   Both confirm it awards no evidence, unlike the other two standalone pages.
 
-**A real finding, not a bug:** while writing real-data assertions for the
-metadata grid, several fields turned out to have no authored record that
-has ever populated them — `webContentRegistry.js`'s Case Number, Officer,
+**A real finding, not a bug — since fixed at the content and tooling level,
+scoped down, then fully resolved:** while writing real-data assertions for
+the metadata grid, several fields turned out to have no authored record that
+had ever populated them — `webContentRegistry.js`'s Case Number, Officer,
 Classification, Declassification and Edition fields, and Publisher/Province
-on Library records, are all working rendering code that has been dead in
+on Library records, were all working rendering code that had been dead in
 production content since it was written. Same story for `references` and
-`attachments`: `createKeyValueList` is fully wired up with nothing in the
-game's authored JSON that ever supplies it. This isn't a coverage gap —
-`browser-detail-synthetic-fields.spec.js` proves the rendering is correct
-using synthetic data — but it is a genuine content-authoring backlog item:
-if a future record finally populates one of these fields, this suite will
-already know what correct rendering looks like rather than discovering the
-wiring for the first time then.
+`attachments`: `createKeyValueList` was fully wired up with nothing in the
+game's authored JSON that ever supplied it. That was never a coverage gap —
+`browser-detail-synthetic-fields.spec.js` already proved the rendering was
+correct using synthetic data — but it was a genuine content-authoring
+backlog item, and it went through four rounds of action rather than staying
+just logged:
 
-**Still not covered:** nothing specific to this area. The residual item
-above is a content gap, not a test gap.
+1. **First pass:** every record missing *any* of these fields, in every one
+   of the 5 language files, was backfilled with a literal `"TODONOW"`
+   placeholder, and `tools/web_content_builder.js`/`.html` gained a form
+   field for every one of them.
+2. **Second pass, after review:** on reflection, only the fields that
+   actually feed a search-results table column earn their authoring
+   overhead — a blank one of *those* means an empty column in the results
+   table for every player who finds the record, a sharper failure mode than
+   a blank detail-view field nobody may ever scroll to. The rest (Province/
+   Officer/Classification/Declassification Status on Police, Province/
+   References on Library, Edition on Archives) were removed again: the
+   `"TODONOW"` placeholder, the JSON key entirely, and the form field all
+   came back out, across all 5 languages. What remains backfilled is just
+   Case Number and Date (Police), Publisher and Publication Year (Library) —
+   Archives' Date/Province/Headline/Summary were already real content except
+   for one record's Date, now real content too (see next). 115 placeholders
+   remained at this point, down from the first pass's 385.
+   `tools/WEB_CONTENT_BUILDER_TOOL_MANUAL.md`'s "Service-Specific Fields"
+   section has the current, narrower list; the fields that were tried and
+   removed are called out there too, with a pointer back to
+   `browser-detail-synthetic-fields.spec.js` as the only place their
+   rendering is still checked.
+3. **Third pass: real content, and a generator for the one field that
+   can't be authored by hand.** Library's Publisher/Publication Year and
+   Archives' one missing Date were hand-authored in English and propagated
+   to the other 4 languages (they're facts, not prose, so they don't need
+   independent translation) — Archives' `henrywhitmore` date in particular
+   came from the record's *own* image caption, which already said "in 1907"
+   ("scan the codebase for any dates that point to these topics" surfaced it
+   directly). Police's Case Number can't be hand-authored the same way — the
+   format (`NNNNN-A`, a number that must always jump by a random 10-100, not
+   a fixed +1, so the sequence can't be walked or guessed) means picking one
+   by hand risks a collision or breaking the increasing sequence. Instead,
+   `tools/police_case_number.js` — a shared module used by both the server
+   and `tests/tools/web-content-builder-server.spec.js` — generates it by
+   scanning `assets/en/police.json` for the current highest, with no
+   separate counter file to drift out of sync. All 9 originally-authored
+   records were backfilled this way (starting from a highest of 0) and
+   propagated to the other languages; the tool now auto-fills the Case
+   Number field the moment Police is selected, with a "New" button to
+   regenerate. Police's Date got the same "scan the codebase" treatment as
+   Archives: of the 6 police records still missing one, 3 turned out to have
+   an explicit, unambiguous date embedded in their own report text
+   ("Date Recovered: 15/11/1901", two "Date of Valuation: …" lines) and were
+   filled in; the other 6 only have narrative dates (birth/career/death,
+   several per record) with no single one that clearly *is* "the record's
+   date", so they were deliberately left as `"TODONOW"` rather than guessed.
+4. **Fourth pass: the last 6.** Those 6 Police records got a real Date too
+   (all `"1988"`), filled in directly rather than scanned for. `caseNumber`
+   and `date` were also moved to sit right after `title` on every Police
+   record, ahead of `keywords`, in all 5 languages, purely for readability —
+   no value changed. Zero `TODONOW` placeholders remain anywhere in the
+   project.
+
+**Still not covered:** nothing specific to this area — every `TODONOW`
+placeholder this section ever tracked is now real content. The synthetic-data
+coverage in `browser-detail-synthetic-fields.spec.js` isn't a residual gap:
+it deliberately covers fields (Province/Officer/Classification/
+Declassification Status/References on Police and Library, Edition on
+Archives) that no real record populates *on purpose*, per the second pass
+above, so no authored content will ever reach that rendering path.
 
 ### 1.4 Localization — 92% (12 behaviours, 11 covered) 🟢 *(closed 2026-08-13, was 25%)*
 
@@ -457,14 +552,66 @@ already-open case, keyboard access, and the close-button overlap regression.
 arrive at once (`NOTIFICATION_QUEUE_RELEASE_INTERVAL_MS`) is never asserted as a
 *sequence* — the honeydew test only counts the final total.
 
-### 1.12 Content authoring tool — 92% (12 behaviours, 11 covered) 🟢
+### 1.12 Content authoring tool — 92% (13 behaviours, 12 covered) 🟢
 
 All four sites plus standalone, with and without evidence, multi-evidence,
 update-in-place, five-language fan-out, and three validation rejections. Teardown
-is verified by re-reading every file rather than assumed.
+is verified by re-reading every file rather than assumed. The server API's
+regression suite (`tests/tools/web-content-builder-server.spec.js`) still
+passes unchanged after the 2026-08-13 §1.3 follow-up's first two passes —
+adding, then partly removing again, form fields for Library/Police/Archives
+metadata (see §1.3) — because the server accepts whatever shape of `entry`
+the client sends it; neither pass needed a server-side change. What the
+form exposes today: Library gained Publisher and Publication Year; Police
+gained Case Number (auto-generated, see below) and Date; Archives already
+had every field it needed (Province, Publication) except Date, which it
+also gained. Every field that feeds a search-results table column is marked
+with a `†` in the form, with a legend at the bottom of the Content Form panel.
+
+The third pass added a genuinely new behaviour, and this one *is* covered by
+a committed test: `GET /api/web-content/next-police-case-number` generates
+Police's `NNNNN-A` case number by scanning `assets/en/police.json` for the
+current highest (via the shared `tools/police_case_number.js`) rather than
+trusting a separate counter. Two new tests in
+`web-content-builder-server.spec.js` cover it — that a freshly-generated
+number is well-formed and strictly within the current-highest-plus-10-to-100
+range, and that injecting a real record with a generated number is picked
+up by the *next* generation call (proving the scan actually reads live
+content, not a stale snapshot) — using the same self-cleaning
+`RUN_ID`-prefixed pattern as the rest of the suite.
+
+A fourth pass then removed a real conflict rather than just documenting it.
+The Content Form panel used to hold a single shared "Title / Headline"
+field that Zoom Search, Police, Archives and Standalone all read from — but
+Library never did (it always had its own separate Publication Title field),
+so filling in the shared field while Library was selected silently did
+nothing, and nothing in the UI signalled that. Tracing every panel's field
+usage in `web_content_builder.js` turned up two more of the same shape:
+URL is required for Standalone, optional for Zoom Search, and silently
+unused by Library/Police/Archives; Summary is used by all four searchable
+sites but not Standalone. The fix was structural, not cosmetic: every field
+that isn't identical across all five content types now lives inside that
+one type's own panel (Zoom Search gained its own Page Title/URL/Summary;
+Police gained its own Title/Summary; Archives' shared Title became its own
+Headline plus its own Summary; a new Standalone Page Fields panel holds
+Title/URL) rather than in a shared field a different type could silently
+ignore. Every panel but Evidence Fields (which every type can use) now
+greys out and disables its own inputs the instant a different Content Type
+is selected, so a field that doesn't apply is never just quietly wrong —
+it's visibly inert. A collapsible "Field rules" section at the top of the
+Content Form panel spells out the full field-to-panel-to-type mapping for
+quick reference.
 
 **Gap:** the browser-side builder UI (`tools/web_content_builder.js`) has no
-tests — only its server API does.
+tests in the committed suite — only its server API does. This is unchanged
+by any of the four passes above, including the field-ownership redesign;
+all were checked with ad hoc Playwright scripts against the real running
+server — form-filling every field for one record per content type and
+asserting the resulting Preview JSON (including that panel greying disables
+the right inputs and that Standalone's required-URL validation still fires)
+— not committed tests, all with zero browser console errors. Promoting
+those scripts into a real `tests/tools/` spec is still open work, same as
+the rest of this gap.
 
 ---
 

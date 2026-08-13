@@ -39,6 +39,8 @@
     {
       "id": "jamesfletcher",
       "title": "Constable James Fletcher",
+      "caseNumber": "00100-U",
+      "date": "1988",
       "keywords": [
         "james fletcher",
         "james"
@@ -76,6 +78,8 @@
     {
       "id": "emilebeaulieu",
       "title": "Corporal Emile Beaulieu",
+      "caseNumber": "00143-V",
+      "date": "1988",
       "keywords": [
         "emile",
         "emile beaulieu",
@@ -114,6 +118,8 @@
     {
       "id": "williammcleod",
       "title": "Lieutenant William McLeod",
+      "caseNumber": "00184-Q",
+      "date": "1988",
       "keywords": [
         "william",
         "william mcleod"
@@ -127,8 +133,8 @@
       "images": [
         {
           "src": "./assets/photos/williamMcLeod.png",
-          "alt": "Excerpt from the book \"Guardians of the North\", published in 1988, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920.",
-          "caption": "Excerpt from the book \"Guardians of the North\", published in 1988, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920."
+          "alt": "Excerpt from the book \"Guardians of the North\", published earlier this year, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920.",
+          "caption": "Excerpt from the book \"Guardians of the North\", published earlier this year, by Cat J Roman, featuring Lieutenant William McLeod receiving his Certificate of Honour at his retirement presentation in June 1920."
         }
       ],
       "awardsEvidence": false,
@@ -152,6 +158,8 @@
     {
       "id": "georgemackenzie",
       "title": "Corporal George Mackenzie",
+      "caseNumber": "00219-S",
+      "date": "1988",
       "keywords": [
         "george",
         "george mackenzie",
@@ -191,6 +199,8 @@
     {
       "id": "thomasorourke",
       "title": "Professional Cave Diver and Corporal",
+      "caseNumber": "00297-G",
+      "date": "1988",
       "keywords": [
         "thomas o'rourke",
         "thomas orourke",
@@ -233,6 +243,8 @@
     {
       "id": "arthurwhitmore",
       "title": "The Iron magnate who chose Policing first!",
+      "caseNumber": "00382-J",
+      "date": "1988",
       "keywords": [
         "whitmore",
         "arthur",
@@ -272,6 +284,8 @@
     {
       "id": "goldenpendant",
       "title": "GOLD PENDANT",
+      "caseNumber": "00481-X",
+      "date": "15/11/1901",
       "keywords": [
         "golden pendant",
         "pendant",
@@ -316,6 +330,8 @@
     {
       "id": "fairchildinsurancerecordexampletemplate",
       "title": "05-33-22-02-03",
+      "caseNumber": "00580-Z",
+      "date": "14/03/1901",
       "keywords": [
         "05-33-22-02-03"
       ],
@@ -358,6 +374,8 @@
     {
       "id": "fairchildinsurancerecordworthingpendant",
       "title": "09-24-49-02-07",
+      "caseNumber": "00617-O",
+      "date": "03/09/1893",
       "keywords": [
         "09-24-49-02-07"
       ],

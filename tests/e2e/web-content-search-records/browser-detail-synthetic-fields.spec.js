@@ -1,20 +1,26 @@
-// Proves the detail-view rendering code that no authored record currently
-// exercises. Case Number, Officer, Classification, Declassification and
-// Edition are all real fields `webContentRegistry.js` knows how to render
-// (see buildLibraryDetail / buildPoliceDetail / buildArchiveDetail), and
-// Publisher/Province on Library records likewise -- but no record in
-// library.json, police.json or archives.json currently populates any of
-// them, so browser-record-catalog.spec.js can only prove they're correctly
-// *absent*. The same is true of References (Library) and Attachments
-// (Police): `createKeyValueList` is real, shipped code with nothing in the
-// game's content that ever calls it.
+// Proves detail-view rendering code that real content deliberately never
+// exercises. Case Number and Date are now real, authored content on every
+// Police record (see browser-record-catalog.spec.js), so this file's real
+// contribution for those two is a *richer*, more varied set of values than
+// any single record shows -- but Officer, Classification, Declassification
+// Status and Province (Police), Province and References (Library), and
+// Edition (Archives) are a different case entirely: `webContentRegistry.js`
+// still renders all of them correctly (see buildLibraryDetail /
+// buildPoliceDetail / buildArchiveDetail), but as of the 2026-08-13
+// test-coverage follow-up none of them feed a search-results table column,
+// so they were deliberately left out of both the content backfill and
+// `tools/web_content_builder.js` -- see docs/test-coverage-analysis.md §1.3
+// and tools/WEB_CONTENT_BUILDER_TOOL_MANUAL.md. No real record populates
+// them, on purpose, which makes this the *only* place their rendering is
+// checked at all. It also covers ground no real record can: a
+// References/Attachments list with more than one entry, and a labeled
+// `{ label, value }` entry, neither of which a single-item authored list
+// would exercise.
 //
 // This intercepts each site's catalog fetch to add one deliberately
 // fully-populated synthetic record -- the same technique
 // evidence-missing-catalog-entry.spec.js uses to reach an otherwise
-// unreachable error path -- so a future content update that finally
-// populates one of these fields is checked against real, working rendering
-// rather than discovering the wiring is broken for the first time then.
+// unreachable error path.
 const { test, expect } = require("@playwright/test");
 const { startNewGame, openNetscape, openLibrary, openPolice, openArchives, policeQuery } = require("../../support/game-helpers");
 

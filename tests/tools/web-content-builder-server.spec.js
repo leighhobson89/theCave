@@ -1,11 +1,15 @@
 // Regression coverage for tools/web_content_builder_server.js, written after
-// the assets/<lang>/ restructure. Confirms two things:
+// the assets/<lang>/ restructure. Confirms three things:
 //   1. Content creation still works for all four web-content services plus
 //      standalone pages, with and without evidence (including multi-evidence
 //      and update-in-place).
 //   2. Every upsert now fans the same (English) entry out to all five
 //      language files, not just assets/en/, and evidence catalog entries
 //      still land in all five languages the way they did before.
+//   3. The Police caseNumber generator (GET /next-police-case-number) scans
+//      assets/en/police.json fresh on every call rather than trusting a
+//      separate counter, so it correctly picks up a case number the moment
+//      a record carrying it is actually injected.
 //
 // The server is a plain Node HTTP server (tools/web_content_builder_server.js),
 // not part of the app served by tests/support/static-server.cjs, so this spec
@@ -18,12 +22,14 @@ const { spawn } = require("child_process");
 const fs = require("fs/promises");
 const fsSync = require("fs");
 const path = require("path");
+const { CASE_NUMBER_PATTERN, parseCaseNumber } = require("../../tools/police_case_number");
 
 // tests/tools/ -> repo root.
 const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
 const ASSETS_DIR = path.join(PROJECT_ROOT, "assets");
 const SERVER_SCRIPT = path.join(PROJECT_ROOT, "tools", "web_content_builder_server.js");
 const API_URL = "http://127.0.0.1:5058/api/web-content/upsert";
+const NEXT_CASE_NUMBER_API_URL = "http://127.0.0.1:5058/api/web-content/next-police-case-number";
 const LANGUAGES = ["en", "de", "es", "fr", "it"];
 
 const SITE_FILE_BY_ID = {
@@ -497,6 +503,60 @@ test.describe("web content builder server", () => {
 
     await expectCatalogEntryInEveryLanguage("report", reportEntryId);
     await expectCatalogEntryInEveryLanguage("photo", photoEntryId);
+  });
+
+  test("next-police-case-number: returns a well-formed case number strictly higher than the current highest", async () => {
+    const before = await readJsonFile(siteFilePath("en", "police"));
+    const highestBefore = before.records.reduce((highest, record) => {
+      const parsed = parseCaseNumber(record?.caseNumber);
+      return parsed !== null && parsed > highest ? parsed : highest;
+    }, 0);
+
+    const httpResponse = await apiContext.get(NEXT_CASE_NUMBER_API_URL);
+    expect(httpResponse.ok()).toBe(true);
+    const body = await httpResponse.json();
+
+    expect(body.caseNumber).toMatch(CASE_NUMBER_PATTERN);
+    const generatedNumber = parseCaseNumber(body.caseNumber);
+    // The random increment is 10-100 inclusive.
+    expect(generatedNumber).toBeGreaterThanOrEqual(highestBefore + 10);
+    expect(generatedNumber).toBeLessThanOrEqual(highestBefore + 100);
+  });
+
+  test("next-police-case-number: picks up a just-injected record's case number on the very next call", async () => {
+    const first = await apiContext.get(NEXT_CASE_NUMBER_API_URL);
+    const firstCaseNumber = (await first.json()).caseNumber;
+    const firstNumber = parseCaseNumber(firstCaseNumber);
+
+    const id = nextId("police-casenum");
+    await inject({
+      siteId: "police",
+      bucket: "records",
+      entry: {
+        id,
+        title: "Case Number Generation Test Record",
+        keywords: ["case number generation test"],
+        summary: "Summary.",
+        report: ["Report body."],
+        requiredPrivilegeLevel: 0,
+        caseNumber: firstCaseNumber,
+        images: [],
+        ...noEvidence(),
+      },
+    });
+
+    // Confirm the record actually landed with that exact case number before
+    // trusting the next generation to have seen it.
+    await expectRecordInEveryLanguage("police", "records", id, (entry) => {
+      expect(entry.caseNumber).toBe(firstCaseNumber);
+    });
+
+    const second = await apiContext.get(NEXT_CASE_NUMBER_API_URL);
+    const secondCaseNumber = (await second.json()).caseNumber;
+    const secondNumber = parseCaseNumber(secondCaseNumber);
+
+    expect(secondCaseNumber).toMatch(CASE_NUMBER_PATTERN);
+    expect(secondNumber).toBeGreaterThanOrEqual(firstNumber + 10);
   });
 
   test("archives: creates a record with photo evidence", async () => {

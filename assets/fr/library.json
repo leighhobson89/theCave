@@ -38,7 +38,8 @@
           "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "mysteriesOfTheOldNorthWest"
         }
-      }
+      },
+      "publisher": "Heritage Press"
     },
     {
       "id": "guardiansofthenorth",
@@ -73,7 +74,8 @@
           "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "library-guardiansofthenorth"
         }
-      }
+      },
+      "publisher": "BullFrog Publishing"
     },
     {
       "id": "strangethingsfoundinevenstrangerplaces",
@@ -109,7 +111,9 @@
           "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
           "entryId": "Strange Things Found In Even Stranger Places"
         }
-      }
+      },
+      "publisher": "Yellowstone Press",
+      "publicationYear": "1907"
     }
   ]
 }

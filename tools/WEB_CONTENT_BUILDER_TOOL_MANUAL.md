@@ -15,6 +15,8 @@ localized evidence catalog entries.
 - UI: [web_content_builder.html](web_content_builder.html)
 - Logic: [web_content_builder.js](web_content_builder.js)
 - Inject API: [web_content_builder_server.js](web_content_builder_server.js)
+- Police Case Number allocation (shared by the server and the test suite):
+  [police_case_number.js](police_case_number.js)
 
 ## Start Inject API
 Run from the repository root; the server writes to that root, so there is no
@@ -44,25 +46,110 @@ manually for now.
 All records are written into each file's `records` array.
 
 ## Workflow
-1. Choose content type.
+1. Choose content type — every panel *below* Content Form greys out except
+   the one that applies (Evidence Fields is the one exception; it's always
+   active).
 2. Enter content ID.
-3. Fill shared fields.
-4. Fill service-specific fields.
-5. Configure standalone style if needed.
-6. Configure evidence metadata if needed.
-7. Generate preview.
-8. Confirm and inject.
+3. Fill the Content Form fields (used by every content type).
+4. Fill the fields in that type's own panel.
+5. Configure evidence metadata if needed.
+6. Generate preview.
+7. Confirm and inject.
 
 When a record needs more than one evidence entry, use `Add Another Evidence` to queue the current draft, clear the form, and then fill the next evidence. The builder will emit a single `evidence` object for one entry or an array for multiple entries.
 
-## Shared Fields
+## Field Ownership (2026-08-13 redesign)
+Every field lives in exactly one panel, and each panel maps to exactly one
+content type — nothing is shared or duplicated across panels, so there's
+nothing that can conflict between them. Earlier revisions of this tool had
+a single shared "Title / Headline" field in the Content Form panel that
+every content type *except* Library read from — Library had (and still
+has) its own separate Publication Title field, so filling in the shared one
+while Library was selected silently did nothing. That's the shape of bug
+this ownership model rules out categorically: a field that isn't wired to
+the currently-active type's build function now lives inside a panel that's
+visibly greyed out and functionally disabled, rather than sitting in a
+panel that's always active but sometimes secretly ignored.
+
+The Content Form panel keeps only the handful of fields every content type
+reads identically:
 - Content Type
 - Content ID
-- URL
-- Title / Headline
-- Summary
 - Main text
 - Image paths
+- Image Caption / Alt Text
+- Image Text Application
+
+A collapsible "Field rules" section at the top of the Content Form panel
+repeats the full field-to-panel-to-type mapping in table form for quick
+reference in the tool itself.
+
+Fields marked with `†` appear as a column in that content type's search
+results table — leaving one blank means that column renders empty for
+every player who finds the record. A legend at the bottom of the Content
+Form panel repeats this. All other fields are metadata-only: they render in
+the record's detail view (or, for Keywords/Required Privilege/Access Level,
+aren't rendered at all — they only drive search matching and gating).
+
+`webContentRegistry.js` can render several metadata fields this tool
+doesn't expose at all (Province, Officer, Classification, Declassification
+Status and a References/Attachments list on Police; Province and References
+on Library; Edition on Archives) — none of them feed a table column, so
+they were tried in the 2026-08-13 test-coverage follow-up, found to not be
+worth the authoring overhead for content that never surfaces in search
+results, and removed again. Proven only by synthetic data in
+`tests/e2e/web-content-search-records/browser-detail-synthetic-fields.spec.js`.
+Add a field back to the relevant panel if a real record ever needs one.
+
+## Service-Specific Fields
+- **Zoom Search:** Website Name `†` (required), Page Title `†`, URL
+  (optional — defaults to `zoomsearch.net/manual/<id>` if left blank),
+  Summary `†`, Keywords
+- **Library Archive:** Author `†`, Publication Title `†`, Publisher `†`,
+  Publication Year `†`, Summary `†` — no URL field; Library records don't
+  have one
+- **Police Records:** Title `†`, Case Number `†` (auto-generated — see
+  below), Date `†`, Summary `†`, Keywords, Required Privilege Level — no
+  URL field
+- **Canada Newspaper Archive:** Headline `†`, Province `†`, Date `†`,
+  Summary `†`, Publication (optional), Keywords, Required Access Level —
+  no URL field
+- **Standalone Page:** Page Title, URL (required) — in its own "Standalone
+  Page Fields" panel, alongside "Standalone Page Styling" (Background/Text
+  Color, Font Family); neither has a `†` field, since standalone pages
+  aren't listed in any search results table
+
+Every field above is written to the record only when non-blank (except
+Publication, which is always written, even empty, and the required fields
+each type validates before Preview/Inject will proceed), matching how
+authored content already omits a field entirely rather than storing it as
+an empty string.
+
+## Police Case Number Generation
+Case Number follows a fixed format, `NNNNN-A`: a zero-padded number that
+always increases by a random amount between 10 and 100 (never a fixed +1,
+so the sequence can't be walked or guessed), followed by a random uppercase
+letter. The moment Police is selected as the content type, an empty Case
+Number field is auto-filled by asking the inject API
+(`GET /api/web-content/next-police-case-number`) for the next one; the
+"New" button next to the field always fetches a fresh one, overwriting
+whatever's there. Both the field and the button leave the value fully
+editable — the generator is a starting suggestion, not a lock.
+
+There is no separate counter file recording "the highest number so far".
+`tools/police_case_number.js` (shared by the server and by
+`tests/tools/web-content-builder-server.spec.js`) derives it by scanning
+`assets/en/police.json`'s existing `caseNumber` values on every request, so
+the JSON itself is always the single source of truth and can't drift out of
+sync with a forgotten or lost counter file. One consequence: two prefill
+requests in a row without an actual inject in between (e.g. opening the
+Police panel, then Clear, then Police again) can each independently
+generate a number from the same base and needn't be increasing relative to
+each other — only a real, saved record raises the baseline for the next
+generation. All 9 originally-authored Police records were backfilled this
+way on 2026-08-13, starting from a highest of 0 (no real case numbers
+existed yet); the values then propagated to the other 4 language files,
+since a case number is a fact, not translated prose.
 
 ## Standalone Styling
 - Background Color text field

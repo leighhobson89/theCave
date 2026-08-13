@@ -3,11 +3,26 @@
 // pages covered by their own specs) so none of them silently rot. Record data
 // is read straight from the same JSON the app fetches, the same technique the
 // localization suite uses against localization.json, so a content edit cannot
-// desync a test from the source it's checking. Real metadata fields, section
-// headings and image galleries are asserted along the way from real content;
-// the fields no authored record currently populates (Case Number, Officer,
-// Classification, Declassification, Publisher, Edition) are proven separately
-// against synthetic data in browser-detail-synthetic-fields.spec.js.
+// desync a test from the source it's checking. Every metadata field that
+// feeds a search-results table column, every section heading and every image
+// gallery is asserted along the way from real content.
+//
+// Case Number and Date (Police), Publisher and Publication Year (Library),
+// and Date (Archives) were, as of the 2026-08-13 audit, wired-up rendering
+// code with nothing in the game's authored JSON that ever populated them --
+// see docs/test-coverage-analysis.md §1.3. Every record missing one of those
+// fields has since been backfilled with real content (across all 5
+// languages) -- this loop asserts whatever value is actually on the record,
+// so it keeps working regardless of what that value is.
+//
+// A few other fields the app can render (Province/Officer/Classification/
+// Declassification Status on Police, Province/References on Library, Edition
+// on Archives) were deliberately NOT backfilled or added to the content
+// tool: none of them feed a table column, so authoring them for every record
+// wasn't judged worth the overhead. `webContentRegistry.js` still renders
+// them correctly if a record ever supplies one by hand -- proven with
+// synthetic data in browser-detail-synthetic-fields.spec.js -- but no real
+// record does, on purpose.
 const { test, expect } = require("@playwright/test");
 const {
   startNewGame,
@@ -36,10 +51,6 @@ function metadataItem(scope, label) {
 
 async function expectMetadataValue(scope, label, value) {
   await expect(metadataItem(scope, label).locator(".browser-detail-meta-value")).toHaveText(value);
-}
-
-async function expectNoMetadataItem(scope, label) {
-  await expect(metadataItem(scope, label)).toHaveCount(0);
 }
 
 test.describe("ZoomSearch", () => {
@@ -92,16 +103,8 @@ test.describe("Library", () => {
       await expect(detail.locator(".browser-record-title")).toHaveText(record.title);
       await expectMetadataValue(detail, "Author", record.author);
       await expectMetadataValue(detail, "Summary", record.summary);
-      if (record.publicationYear) {
-        await expectMetadataValue(detail, "Publication Year", String(record.publicationYear));
-      } else {
-        await expectNoMetadataItem(detail, "Publication Year");
-      }
-      // Publisher and Province are never authored on any Library record --
-      // see browser-detail-synthetic-fields.spec.js for proof the field
-      // itself renders correctly once populated.
-      await expectNoMetadataItem(detail, "Publisher");
-      await expectNoMetadataItem(detail, "Province");
+      await expectMetadataValue(detail, "Publication Year", String(record.publicationYear));
+      await expectMetadataValue(detail, "Publisher", record.publisher);
 
       await expect(detail.locator(".browser-detail-section-title", { hasText: "Extract" })).toBeVisible();
 
@@ -156,16 +159,8 @@ test.describe("Police Records", () => {
 
       await expect(detail.locator(".browser-record-title")).toHaveText(record.title);
       await expectMetadataValue(detail, "Summary", record.summary);
-      // None of the real police records carry caseNumber, province, officer,
-      // classification, declassificationStatus or date -- see
-      // browser-detail-synthetic-fields.spec.js for proof those labels
-      // render correctly once a record actually supplies them.
-      await expectNoMetadataItem(detail, "Case Number");
-      await expectNoMetadataItem(detail, "Province");
-      await expectNoMetadataItem(detail, "Officer");
-      await expectNoMetadataItem(detail, "Classification");
-      await expectNoMetadataItem(detail, "Declassification");
-      await expectNoMetadataItem(detail, "Date");
+      await expectMetadataValue(detail, "Case Number", record.caseNumber);
+      await expectMetadataValue(detail, "Date", record.date);
 
       await expect(detail.locator(".browser-detail-section-title", { hasText: "Report" })).toBeVisible();
 
@@ -217,16 +212,8 @@ test.describe("Canada Newspaper Archive", () => {
       await expect(detail.locator(".browser-record-title-headline")).toHaveText(record.headline);
       await expectMetadataValue(detail, "Publication", record.publication);
       await expectMetadataValue(detail, "Province", record.province);
-      // Not every Archives record carries a date (henrywhitmore doesn't).
-      if (record.date) {
-        await expectMetadataValue(detail, "Date", record.date);
-      } else {
-        await expectNoMetadataItem(detail, "Date");
-      }
+      await expectMetadataValue(detail, "Date", record.date);
       await expectMetadataValue(detail, "Summary", record.summary);
-      // No Archives record carries an edition -- see
-      // browser-detail-synthetic-fields.spec.js.
-      await expectNoMetadataItem(detail, "Edition");
 
       await expect(detail.locator(".browser-detail-section-title", { hasText: "Article" })).toBeVisible();
 

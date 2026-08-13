@@ -218,6 +218,93 @@
       display: none !important;
     }
 
+    .table-marker {
+      color: var(--warn);
+      font-weight: 700;
+      margin-left: 0.2rem;
+      cursor: help;
+    }
+
+    .legend {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin: 0.6rem 0 0;
+    }
+
+    .legend .table-marker {
+      margin-left: 0;
+      margin-right: 0.3rem;
+    }
+
+    /* Service panels grey out (visually and functionally, via [disabled] on
+       their inputs) whenever the selected Content Type isn't theirs, so a
+       field that plainly doesn't apply can't be mistaken for one that does.
+       The Evidence panel has no data-content-type and is never greyed out --
+       every content type can award evidence. */
+    .service-panel {
+      transition: opacity 0.15s ease;
+    }
+
+    .service-panel.is-inactive {
+      opacity: 0.4;
+    }
+
+    .service-panel .inactive-badge {
+      font-weight: 400;
+      font-size: 0.72rem;
+      text-transform: none;
+      letter-spacing: normal;
+      color: var(--muted);
+      margin-left: 0.4rem;
+    }
+
+    .rules {
+      margin-bottom: 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.55rem 0.8rem;
+      background: rgba(8, 14, 23, 0.5);
+    }
+
+    .rules summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.02em;
+    }
+
+    .rules-body {
+      margin-top: 0.65rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .rules-body p {
+      margin: 0 0 0.5rem;
+    }
+
+    .rules-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.3rem;
+    }
+
+    .rules-body th,
+    .rules-body td {
+      text-align: left;
+      padding: 0.32rem 0.5rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .rules-body th {
+      color: var(--text);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
     @media (max-width: 1100px) {
       .grid {
         grid-template-columns: 1fr 1fr;
@@ -239,6 +326,51 @@
 
     <section class="panel">
       <h2>Content Form</h2>
+
+      <details class="rules">
+        <summary>Field rules — which fields apply to which content type</summary>
+        <div class="rules-body">
+          <p>
+            Every field below lives in exactly one place: the fields here in
+            <strong>Content Form</strong> are used identically by all five
+            content types, and everything else lives in its own type's panel
+            further down. Nothing is duplicated or shared across panels, so
+            there's nothing to conflict — if a field is visible in an active
+            (non-greyed) panel, filling it in affects that record; if a
+            panel is greyed out, its fields are disabled and ignored, no
+            matter what's typed into them.
+          </p>
+          <p>
+            Panels grey out automatically the moment you pick a different
+            Content Type above, except <strong>Evidence Fields</strong>,
+            which stays active for every type — any record can award
+            evidence.
+          </p>
+          <table>
+            <thead>
+              <tr><th>Field</th><th>Lives in</th><th>Applies to</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Content Type, Content ID</td><td>Content Form</td><td>All 5 types</td></tr>
+              <tr><td>Main text, Image paths, Image Caption/Alt, Image Text Application</td><td>Content Form</td><td>All 5 types</td></tr>
+              <tr><td>Website Name †, Page Title †, URL, Summary †, Keywords</td><td>Zoom Search Fields</td><td>Zoom Search only</td></tr>
+              <tr><td>Author †, Publication Title †, Publisher †, Publication Year †, Summary †</td><td>Library Archive Fields</td><td>Library only</td></tr>
+              <tr><td>Title †, Case Number † (auto-generated), Date †, Summary †, Keywords, Required Privilege Level</td><td>Police Records Fields</td><td>Police only</td></tr>
+              <tr><td>Headline †, Province †, Date †, Summary †, Publication, Keywords, Required Access Level</td><td>Canada Newspaper Archive Fields</td><td>Archives only</td></tr>
+              <tr><td>Page Title, URL (required)</td><td>Standalone Page Fields</td><td>Standalone only</td></tr>
+              <tr><td>Background/Text Color, Font Family</td><td>Standalone Page Styling</td><td>Standalone only</td></tr>
+              <tr><td>Awards Evidence and its fields</td><td>Evidence Fields</td><td>All 5 types — never greyed out</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top: 0.5rem;">
+            <span class="table-marker">†</span>Appears as a column in that
+            content type's search results table. A blank one leaves that
+            column empty in-game for every player who finds the record —
+            worth double-checking before injecting.
+          </p>
+        </div>
+      </details>
+
       <div class="grid">
         <label class="field">
           <span>Content Type</span>
@@ -254,26 +386,6 @@
         <label class="field">
           <span>Content ID (required)</span>
           <input id="idInput" type="text" placeholder="e.g. sun-echo-relay" spellcheck="false">
-        </label>
-
-        <label class="field" id="urlField">
-          <span>URL (optional)</span>
-          <input id="urlInput" type="text" placeholder="http://example.local/page" spellcheck="false">
-        </label>
-
-        <label class="field" id="websiteNameField">
-          <span>Website Name (required for Zoom Search)</span>
-          <input id="websiteNameInput" type="text" placeholder="Trailwatch Survey Board" spellcheck="false">
-        </label>
-
-        <label class="field">
-          <span>Title / Headline</span>
-          <input id="titleInput" type="text" placeholder="Record title" spellcheck="false">
-        </label>
-
-        <label class="field">
-          <span>Summary</span>
-          <input id="summaryInput" type="text" placeholder="One-line summary" spellcheck="false">
         </label>
 
         <label class="field full">
@@ -307,9 +419,25 @@
       </div>
 
       <div class="two-col">
-        <div class="panel" id="zoomsearchFieldsPanel">
-          <h2>Zoom Search Fields</h2>
+        <div class="panel service-panel" id="zoomsearchFieldsPanel" data-content-type="zoomsearch">
+          <h2>Zoom Search Fields<span class="inactive-badge" hidden>(not this content type)</span></h2>
           <div class="grid">
+            <label class="field">
+              <span>Website Name (required)<span class="table-marker" title="Appears as a column in the Zoom Search results table">†</span></span>
+              <input id="websiteNameInput" type="text" placeholder="Trailwatch Survey Board" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Page Title<span class="table-marker" title="Appears as a column in the Zoom Search results table">†</span></span>
+              <input id="zoomTitleInput" type="text" placeholder="Record title" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>URL (optional — defaults to zoomsearch.net/manual/&lt;id&gt;)</span>
+              <input id="zoomUrlInput" type="text" placeholder="http://example.local/page" spellcheck="false">
+            </label>
+            <label class="field full">
+              <span>Summary<span class="table-marker" title="Appears as a column in the Zoom Search results table">†</span></span>
+              <input id="zoomSummaryInput" type="text" placeholder="One-line summary" spellcheck="false">
+            </label>
             <label class="field full">
               <span>Keywords</span>
               <input id="zoomKeywordsInput" type="text" placeholder="relay, signal tower, archive" spellcheck="false">
@@ -317,26 +445,56 @@
           </div>
         </div>
 
-        <div class="panel" id="libraryFieldsPanel">
-          <h2>Library Archive Fields</h2>
+        <div class="panel service-panel" id="libraryFieldsPanel" data-content-type="library">
+          <h2>Library Archive Fields<span class="inactive-badge" hidden>(not this content type)</span></h2>
           <div class="grid">
             <label class="field">
-              <span>Author</span>
+              <span>Author<span class="table-marker" title="Appears as a column in the Library results table">†</span></span>
               <input id="authorInput" type="text" placeholder="Author name" spellcheck="false">
             </label>
             <label class="field">
-              <span>Publication Title</span>
+              <span>Publication Title<span class="table-marker" title="Appears as a column in the Library results table">†</span></span>
               <input id="libraryPublicationTitleInput" type="text" placeholder="Notebook of River Marks" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Publisher<span class="table-marker" title="Appears as a column in the Library results table">†</span></span>
+              <input id="libraryPublisherInput" type="text" placeholder="Frontier Press" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Publication Year<span class="table-marker" title="Appears as a column in the Library results table">†</span></span>
+              <input id="libraryPublicationYearInput" type="text" placeholder="1906" spellcheck="false">
+            </label>
+            <label class="field full">
+              <span>Summary<span class="table-marker" title="Appears as a column in the Library results table">†</span></span>
+              <input id="librarySummaryInput" type="text" placeholder="One-line summary" spellcheck="false">
             </label>
           </div>
         </div>
-
       </div>
 
       <div class="two-col">
-        <div class="panel" id="policeFieldsPanel">
-          <h2>Police Records Fields</h2>
+        <div class="panel service-panel" id="policeFieldsPanel" data-content-type="police">
+          <h2>Police Records Fields<span class="inactive-badge" hidden>(not this content type)</span></h2>
           <div class="grid">
+            <label class="field">
+              <span>Title<span class="table-marker" title="Appears as a column in the Police results table">†</span></span>
+              <input id="policeTitleInput" type="text" placeholder="Record title" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Case Number<span class="table-marker" title="Appears as a column in the Police results table">†</span></span>
+              <div class="input-with-button">
+                <input id="policeCaseNumberInput" type="text" placeholder="00042-A" spellcheck="false">
+                <button id="policeGenerateCaseNumberButton" class="secondary" type="button" aria-label="Generate a new case number" title="Generate a new case number">New</button>
+              </div>
+            </label>
+            <label class="field">
+              <span>Date<span class="table-marker" title="Appears as a column in the Police results table">†</span></span>
+              <input id="policeDateInput" type="text" placeholder="1 January 1900" spellcheck="false">
+            </label>
+            <label class="field full">
+              <span>Summary<span class="table-marker" title="Appears as a column in the Police results table">†</span></span>
+              <input id="policeSummaryInput" type="text" placeholder="One-line summary" spellcheck="false">
+            </label>
             <label class="field">
               <span>Keywords</span>
               <input id="policeKeywordsInput" type="text" placeholder="director file, station log" spellcheck="false">
@@ -348,12 +506,24 @@
           </div>
         </div>
 
-        <div class="panel" id="archivesFieldsPanel">
-          <h2>Canada Newspaper Archive Fields</h2>
+        <div class="panel service-panel" id="archivesFieldsPanel" data-content-type="archives">
+          <h2>Canada Newspaper Archive Fields<span class="inactive-badge" hidden>(not this content type)</span></h2>
           <div class="grid">
             <label class="field">
-              <span>Province</span>
+              <span>Headline<span class="table-marker" title="Appears as a column in the Archives results table">†</span></span>
+              <input id="archivesHeadlineInput" type="text" placeholder="Record headline" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Province<span class="table-marker" title="Appears as a column in the Archives results table">†</span></span>
               <input id="archiveProvinceInput" type="text" placeholder="Saskatchewan" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>Date<span class="table-marker" title="Appears as a column in the Archives results table">†</span></span>
+              <input id="archivesDateInput" type="text" placeholder="1906" spellcheck="false">
+            </label>
+            <label class="field full">
+              <span>Summary<span class="table-marker" title="Appears as a column in the Archives results table">†</span></span>
+              <input id="archivesSummaryInput" type="text" placeholder="One-line summary" spellcheck="false">
             </label>
             <label class="field">
               <span>Publication (optional)</span>
@@ -372,8 +542,22 @@
       </div>
 
       <div class="two-col">
-        <div class="panel" id="standaloneStylePanel">
-          <h2>Standalone Page Styling</h2>
+        <div class="panel service-panel" id="standaloneFieldsPanel" data-content-type="standalone">
+          <h2>Standalone Page Fields<span class="inactive-badge" hidden>(not this content type)</span></h2>
+          <div class="grid">
+            <label class="field">
+              <span>Page Title</span>
+              <input id="standaloneTitleInput" type="text" placeholder="Page title" spellcheck="false">
+            </label>
+            <label class="field">
+              <span>URL (required)</span>
+              <input id="standaloneUrlInput" type="text" placeholder="http://example.local/page" spellcheck="false">
+            </label>
+          </div>
+        </div>
+
+        <div class="panel service-panel" id="standaloneStylePanel" data-content-type="standalone">
+          <h2>Standalone Page Styling<span class="inactive-badge" hidden>(not this content type)</span></h2>
           <div class="grid">
             <label class="field">
               <span>Background Color</span>
@@ -405,9 +589,10 @@
               </select>
             </label>
           </div>
-          <p class="note">Applied only when Standalone Page content type is selected.</p>
         </div>
+      </div>
 
+      <div style="margin-top: 0.7rem;">
         <div class="panel" id="evidencePanel">
           <h2>Evidence Fields</h2>
           <label class="check-row" for="awardsEvidenceInput">
@@ -459,9 +644,11 @@
             <button id="addEvidenceButton" type="button">Add Another Evidence</button>
             <span id="evidenceQueueStatus" class="status">No evidence queued.</span>
           </div>
-          <p class="note">Report and photo evidence now map to their correct localized catalogs and presentation presets.</p>
+          <p class="note">Report and photo evidence now map to their correct localized catalogs and presentation presets. Available for every content type — this panel is never greyed out.</p>
         </div>
       </div>
+
+      <p class="legend"><span class="table-marker">†</span>Appears as a column in this content type's search results table.</p>
 
       <div class="row">
         <button id="previewButton" type="button">Generate Preview</button>

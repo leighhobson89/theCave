@@ -1,6 +1,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { nextCaseNumber } = require("./police_case_number");
 
 const PORT = 5058;
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -445,6 +446,16 @@ function handleUpsert(rawPayload) {
   };
 }
 
+// The source of truth for "what's the highest case number allocated so
+// far" is assets/en/police.json itself, not a separate counter -- scanned
+// fresh on every request, so it can't drift out of sync with the content.
+function handleNextPoliceCaseNumber() {
+  const filePath = path.join(ASSETS_DIR, "en", SITE_FILE_BY_ID.police);
+  const json = readJsonFile(filePath);
+  const records = Array.isArray(json.records) ? json.records : [];
+  return { caseNumber: nextCaseNumber(records) };
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") {
     sendText(res, 204, "");
@@ -458,6 +469,15 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, result);
     } catch (error) {
       sendText(res, 400, error.message || "Failed to process request.");
+    }
+    return;
+  }
+
+  if (req.method === "GET" && req.url === "/api/web-content/next-police-case-number") {
+    try {
+      sendJson(res, 200, handleNextPoliceCaseNumber());
+    } catch (error) {
+      sendText(res, 400, error.message || "Failed to generate a case number.");
     }
     return;
   }
