@@ -8,6 +8,7 @@ feature/behaviour coverage explained under Method below, not line coverage.
 
 - 🟢 `quick-login` — 100%, complete: the model the rest of the suite should look like.
 - 🟢 `desktop-window-chrome` — 100%, closed 2026-08-13: drag/resize/clamp/focus-stacking/carousel API, all driven directly.
+- 🟢 `web-content-search-records` — 100%, closed 2026-08-13: all 25 authored records opened, detail-view fields, References/Attachments and image galleries (the last two via synthetic data — see §1.3), the Whitmore standalone page.
 - 🟢 `persistence` — 93%, the strongest area: save/load/sticky/resume, autosave, corrupt-save recovery.
 - 🟢 `localization` — 92%, closed 2026-08-13: all 5 languages, 9 window kinds, found and fixed a real untranslated-button bug.
 - 🟢 `web-content-authentication` — 91%: login/logout, privilege gating, session persistence.
@@ -18,17 +19,28 @@ feature/behaviour coverage explained under Method below, not line coverage.
 - 🟢 *(tools)* content authoring tool — 92%: all 4 sites, five-language fan-out, validation rejections.
 - 🟢 `audio-settings` — 80%, closed 2026-08-13: every control, save/restore of all 3 preferences.
 - 🟡 `notes-paint-documents` — 75%: strong paged-document coverage, Paint tools beyond `fill` untested.
-- 🟠 `web-content-search-records` — 43%: only 4 of 25 authored records ever opened.
 
 ---
 
-**Date:** 2026-08-12, revised 2026-08-13 (three times)
-**Suite:** 142 Playwright tests across 35 spec files, 100% passing (~1m30s, 4 workers)
-**Revision note (2026-08-13):** five of the areas called out below as the
-highest-value gaps — audio & settings, localization, desktop window chrome,
-viewport/scene navigation, and the evidence system — have since been closed
-(76 new tests across 17 new spec files, net of one superseded old
-localization spec that was retired). The per-area sections and the
+**Date:** 2026-08-12, revised 2026-08-13 (four times)
+**Suite:** 154 Playwright tests across 38 spec files, 100% passing (~1m50s, 4 workers)
+**Revision note (2026-08-13, 4th pass):** web content search & records — the
+last area still sitting at its original 2026-08-12 level after the first
+three revision passes — is now closed too (12 new tests across 3 new spec
+files). All 25 authored records across ZoomSearch, Library, Police and
+Archives are now opened by some test, alongside detail-view metadata field
+rendering, section headings, image galleries, and the one standalone page
+(`whitmoresonsironmachineryco`) nothing else in the suite reached. See §1.3
+for a real finding along the way: several metadata fields and the
+References/Attachments blocks are wired-up, working code with no authored
+record that ever populates them — a content gap, not a test gap, proven by
+injecting synthetic data over the same catalog-fetch interception
+`evidence-missing-catalog-entry.spec.js` established.
+**Revision note (2026-08-13, earlier passes):** five of the areas called out
+below as the highest-value gaps — audio & settings, localization, desktop
+window chrome, viewport/scene navigation, and the evidence system — were
+closed first (76 new tests across 17 new spec files, net of one superseded
+old localization spec that was retired). The per-area sections and the
 recommended plan have been updated in place; original wording is otherwise
 left intact so this still reads as the honest history of the audit. One real
 bug was found and fixed along the way: the noticeboard toggle button
@@ -50,21 +62,30 @@ state rather than just "element is visible". As of the original 2026-08-12
 audit, roughly half the application surface had no automated test at all, and
 the untested half was not random: it clustered in areas that were built
 earlier and had not been touched recently (audio, localization, window chrome
-mechanics, viewport navigation, the noticeboard scene). The 2026-08-13
-revisions closed all five of those mechanics clusters, and a sixth, different
-kind of gap along with them: most evidence-awarding *content* was never
-opened by any test even though the machinery that renders it was already
-well-covered. All 9 awarding records (including the Level 3 `goldenpendant`
-police record) are now exercised, alongside the carousel navigation, custom
-naming and catalog-error-message behaviours that content sits inside of. What
-remains untested now is narrower and entirely of that same content-not-
-mechanics shape: most web-content-search records (ZoomSearch, Library, Police
-and Archives entries that award nothing) are still never opened by any test.
+mechanics, viewport navigation, the noticeboard scene). The first three
+2026-08-13 revision passes closed all five of those mechanics clusters, and a
+sixth, different kind of gap along with them: most evidence-awarding
+*content* was never opened by any test even though the machinery that
+renders it was already well-covered. All 9 awarding records (including the
+Level 3 `goldenpendant` police record) are now exercised, alongside the
+carousel navigation, custom naming and catalog-error-message behaviours that
+content sits inside of. The fourth pass closed the one area that same shape
+of gap had left behind: web content search & records, where most ZoomSearch,
+Library, Police and Archives entries award nothing and so had no path in
+through the evidence-system work — all 25 authored records are now opened by
+some test, and that pass surfaced a real, distinct finding of its own: several
+detail-view fields (Case Number, Officer, Classification, Declassification,
+Edition, Publisher/Province on Library) and the References/Attachments blocks
+are working, wired-up rendering code with no authored record that has ever
+populated them, in production or in any prior test. That code path is now
+proven correct against synthetic data (see §1.3), but the underlying content
+gap remains — it's a content-authoring backlog item, not a test gap.
 
 | Area | Behaviours | Covered | Coverage | Risk if broken |
 | --- | ---: | ---: | ---: | --- |
 | Quick login | 8 | 8 | **100%** | High |
 | Desktop window chrome | 13 | 13 | **100%** 🟢 *(was 23%)* | Medium |
+| Web content: search & records | 14 | 14 | **100%** 🟢 *(was 43%)* | High |
 | Persistence (save/load/sticky/resume) | 14 | 13 | **93%** | Critical — silent data loss |
 | Localization | 12 | 11 | **92%** 🟢 *(was 25%)* | Medium |
 | Content authoring tool (API) | 12 | 11 | **92%** | Medium |
@@ -75,16 +96,16 @@ and Archives entries that award nothing) are still never opened by any test.
 | Evidence system | 18 | 16 | **89%** 🟢 *(was 38%)* | High |
 | Audio & settings | 10 | 8 | **80%** 🟢 *(was 0%)* | Low–Medium |
 | Notes / Paint documents | 12 | 9 | **75%** | Medium |
-| Web content: search & records | 14 | 6 | **43%** | High |
-| **Overall** | **154** | **132** | **≈86%** *(was ≈51%)* | |
+| **Overall** | **154** | **140** | **≈91%** *(was ≈51%)* | |
 
 *(The original 2026-08-12 row stated 77/152 covered, which does not sum from
-its own per-area figures — those actually total 87. This revision's Overall
-row is the correct sum of the per-area figures above: 87 + 45 newly covered
-= 132, against a total behaviour count of 154 — two higher than the original
-152 because the 2026-08-13 evidence-system work found a real behaviour the
-original audit never enumerated: the background-story window, which is not
-part of the Photos/Reports carousels and had no line of its own.)*
+its own per-area figures — those actually total 87. The first three
+2026-08-13 revision passes brought the sum to 87 + 45 newly covered = 132,
+against a total behaviour count of 154 — two higher than the original 152
+because the evidence-system work found a real behaviour the original audit
+never enumerated: the background-story window, which is not part of the
+Photos/Reports carousels and had no line of its own. This fourth pass adds
+the remaining 8 web-content-search-records behaviours: 140/154 ≈ 91%.)*
 
 **The three gaps I would close first**, as of the original 2026-08-12 audit:
 
@@ -97,12 +118,11 @@ part of the Photos/Reports carousels and had no line of its own.)*
    line predicted: a real untranslated control (the noticeboard toggle button)
    was found and fixed in the process.
 
-**The next gap I would close:** web content search & records — the last area
-still at the coverage level measured on 2026-08-12, and now the only
-substantial content gap left (authored records never opened) rather than a
-mechanics gap. Every other area still has smaller, area-specific gaps of its
-own (a clipboard button here, an untested timer there) — see each area's own
-section below.
+**The next gap I would close:** ~~web content search & records — the last
+area still at the coverage level measured on 2026-08-12.~~ Closed 2026-08-13
+— see §1.3. All 25 authored records are now opened by some test. Every other
+area still has smaller, area-specific gaps of its own (a clipboard button
+here, an untested timer there) — see each area's own section below.
 
 ---
 
@@ -214,23 +234,70 @@ unused by any registered trigger in the game, so nothing exercises it); SFX
 firing on an evidence award (the same shape of gap as audio-settings' desk-
 object SFX gap, see §1.1).
 
-### 1.3 Web content: search & records — 43% (14 behaviours, 6 covered) 🟠
+### 1.3 Web content: search & records — 100% (14 behaviours, 14 covered) 🟢 *(closed 2026-08-13, was 43%)*
 
-Covered: ZoomSearch and Library happy-path search + detail, ZoomSearch empty
-state, Archives province+keyword requirement and province stickiness.
+`tests/e2e/web-content-search-records/` now has 6 specs (18 tests). Every
+item this section previously listed as uncovered is now driven directly:
 
-**Not covered:**
+- **All 25 authored records are opened.** `browser-record-catalog.spec.js`
+  loops every record in `zoomsearch.json` (8), `library.json` (3),
+  `police.json` (9, behind an Administrator login that clears every
+  authored `requiredPrivilegeLevel`) and `archives.json` (3, behind a
+  Subscriber login that clears every authored `requiredAccessLevel`),
+  reading the query terms straight from the same JSON the app fetches —
+  the same "read the source of truth, don't hand-copy it" technique the
+  localization suite established — so a content edit can't silently
+  desync the test from what it's checking. Police/Archives privilege
+  *gating* itself stays out of scope here; it's already covered by
+  `web-content-authentication/` and, for the one Level 3 record
+  (`goldenpendant`), by `evidence-system/evidence-awards-full-catalog.spec.js`.
+- **Detail-view field rendering.** The same spec asserts every metadata
+  label that real content actually populates (Author, Publication Year and
+  Summary on Library; Summary on Police; Publication, Province, Date and
+  Summary on Archives) and the section headings (Extract, Report, Article,
+  and that "Page Content" — a deliberately suppressed heading — never
+  renders as one). It also asserts the *absence* of the labels no real
+  record populates (see the finding below).
+- **References / Attachments blocks and the fields no authored record
+  populates.** `browser-detail-synthetic-fields.spec.js` intercepts each
+  site's catalog fetch (the same `page.route` technique
+  `evidence-missing-catalog-entry.spec.js` uses) to inject one fully-formed
+  synthetic record per site, then asserts Case Number, Officer,
+  Classification, Declassification and Date (Police), Edition (Archives),
+  and Publisher/Province (Library) all render correctly, along with a
+  2-item References list and a 2-item Attachments list built from both a
+  plain string entry and a `{ label, value }` entry.
+- **`createImageGallery`.** Proven from real content throughout
+  `browser-record-catalog.spec.js` — every record with authored images gets
+  its figure count asserted, and records with none are asserted to render
+  no gallery at all.
+- **Library, Police and Archives empty states.** Each now has its own test
+  asserting both the status line and the `.browser-results-empty` row
+  inside the results table for a genuine no-match search (not just an
+  empty query).
+- **The `whitmoresonsironmachineryco` standalone page.**
+  `browser-standalone-whitmore-page.spec.js` reaches it two ways: through
+  the mine-cart ZoomSearch article's real in-page `*-*delimited*-*` link
+  (proving `appendDelimitedLinkText` and the `caveos-browser-navigate`
+  event wiring, not just a direct URL visit), and directly by address bar.
+  Both confirm it awards no evidence, unlike the other two standalone pages.
 
-- **Only 4 of 25 authored records are ever opened.** ZoomSearch has 8 records,
-  Library 3, Police 9, Archives 3, standalone 3.
-- **Detail-view field rendering.** The metadata labels localized last week
-  (Author, Publisher, Case Number, Officer, Classification, Declassification,
-  Publication, Edition, Province, Date, Summary) and the section headings (Page
-  Content, Extract, Report, Article) are never asserted.
-- **References / Attachments blocks** and `createImageGallery` — untested.
-- **Library and Archives empty states** — only ZoomSearch's is asserted.
-- **The `whitmoresonsironmachineryco` standalone page** — reachable, has no
-  evidence, never visited by a test.
+**A real finding, not a bug:** while writing real-data assertions for the
+metadata grid, several fields turned out to have no authored record that
+has ever populated them — `webContentRegistry.js`'s Case Number, Officer,
+Classification, Declassification and Edition fields, and Publisher/Province
+on Library records, are all working rendering code that has been dead in
+production content since it was written. Same story for `references` and
+`attachments`: `createKeyValueList` is fully wired up with nothing in the
+game's authored JSON that ever supplies it. This isn't a coverage gap —
+`browser-detail-synthetic-fields.spec.js` proves the rendering is correct
+using synthetic data — but it is a genuine content-authoring backlog item:
+if a future record finally populates one of these fields, this suite will
+already know what correct rendering looks like rather than discovering the
+wiring for the first time then.
+
+**Still not covered:** nothing specific to this area. The residual item
+above is a content gap, not a test gap.
 
 ### 1.4 Localization — 92% (12 behaviours, 11 covered) 🟢 *(closed 2026-08-13, was 25%)*
 
@@ -436,7 +503,7 @@ Ordered by value per unit of effort.
    Paint/Notes defaults. Found and fixed a real bug along the way (see §1.4).
 4. ~~`evidence-carousel-navigation.spec.js` + `evidence-custom-names.spec.js`.~~
    **Done 2026-08-13** — landed as written (4 + 3 tests), plus
-   `evidence-missing-catalog-entry.spec.js` (3 tests, item 9's catalog-entry/
+   `evidence-missing-catalog-entry.spec.js` (3 tests, item 10's catalog-entry/
    field portion below) and `evidence-background-story.spec.js` (2 tests, a
    gap the original audit hadn't enumerated) for good measure — 12 tests
    across the four files.
@@ -460,24 +527,36 @@ Ordered by value per unit of effort.
    `desktop-window-focus-stacking.spec.js` (12 tests): drag + margin clamp,
    resize + min-size clamp, dynamic `setResizable()`, click-to-focus z-index
    promotion, centering, scrollbar visibility, and the carousel aria-label API.
+9. ~~Web content search & records: full record catalog, detail-view field
+   rendering, References/Attachments, and the `whitmoresonsironmachineryco`
+   standalone page.~~ **Done 2026-08-13 (4th pass)** — landed as
+   `tests/e2e/web-content-search-records/browser-record-catalog.spec.js`,
+   `browser-detail-synthetic-fields.spec.js` and
+   `browser-standalone-whitmore-page.spec.js` (12 tests): all 25 authored
+   records opened, real-content metadata/heading/gallery assertions, and a
+   synthetic-data proof (via the same catalog-fetch interception item 10
+   uses) that the fields no authored record populates still render
+   correctly. See §1.3 for the content-authoring-backlog finding this
+   surfaced.
 
 ### Phase 4 — hardening (≈1.5 days)
-9. Error paths: ~~missing catalog entry/field~~ (**Done 2026-08-13**, see item 4
-   above), 404 asset, corrupt evidence store.
-10. New-game intro fax timers via `page.clock`.
-11. Add a Firefox project to the config; triage what breaks.
-12. Root-cause the 8-worker instability rather than leaving it pinned at 4.
+10. Error paths: ~~missing catalog entry/field~~ (**Done 2026-08-13**, see item 4
+    above), 404 asset, corrupt evidence store.
+11. New-game intro fax timers via `page.clock`.
+12. Add a Firefox project to the config; triage what breaks.
+13. Root-cause the 8-worker instability rather than leaving it pinned at 4.
 
 ### Phase 5 — optional
-13. axe accessibility sweep per screen.
-14. Visual regression baselines for the magnifier and window chrome.
-15. Tests for the browser-side content builder UI.
+14. axe accessibility sweep per screen.
+15. Visual regression baselines for the magnifier and window chrome.
+16. Tests for the browser-side content builder UI.
 
 **Estimated total to reach ~85% behavioural coverage: 6 days.** *(Revision:
-all of Phase 2 and Phase 3 are done as of 2026-08-13, and overall coverage
-has already passed the original target, at ≈86%. What's left is web content
-search & records (§1.3) — the one area still at its original 2026-08-12
-level — plus the smaller Phase 4/5 hardening items.)*
+all of Phase 2 and Phase 3 are done as of 2026-08-13, including the 4th-pass
+addition of item 9, and overall coverage has already passed the original
+target, at ≈91%. What's left is only the smaller Phase 4/5 hardening items —
+every area identified in the original audit now has a spec folder of its
+own.)*
 
 ---
 
