@@ -22,13 +22,6 @@
 //
 // See docs/progress-evidence-system.md for the full developer guide.
 
-// Progress evidence images live here. A definition names its own image; where
-// it does not, the [progressEvidenceId].png convention applies. Derived on
-// every read (the same convention as the evidence catalog paths in
-// evidenceManager.js) so a rename here is the only place that has to change.
-export const PROGRESS_EVIDENCE_IMAGE_DIRECTORY = "./assets/photos/progressEvidenceImages";
-export const PROGRESS_EVIDENCE_IMAGE_PATH_TEMPLATE = `${PROGRESS_EVIDENCE_IMAGE_DIRECTORY}/{progressEvidenceId}.png`;
-
 // The registry: one definition per website and per received fax, for the whole
 // game. It is a single language-neutral JSON file rather than five per-language
 // copies, because a progressEvidenceId and its two flags are the same fact in
@@ -39,7 +32,9 @@ export const PROGRESS_EVIDENCE_IMAGE_PATH_TEMPLATE = `${PROGRESS_EVIDENCE_IMAGE_
 export const PROGRESS_EVIDENCE_DEFINITIONS_PATH = "./assets/progressEvidence.json";
 
 // The services a progress evidence item can come from. "facsimile" covers
-// received faxes; the rest are the in-game web services.
+// received faxes; "desktop" covers desktop items that are neither a website
+// nor a fax (e.g. opening the background story); the rest are the in-game web
+// services.
 export const PROGRESS_EVIDENCE_SERVICES = {
   ZOOMSEARCH: "zoomsearch",
   LIBRARY: "library",
@@ -47,6 +42,7 @@ export const PROGRESS_EVIDENCE_SERVICES = {
   ARCHIVES: "archives",
   STANDALONE: "standalone",
   FACSIMILE: "facsimile",
+  DESKTOP: "desktop",
 };
 
 // A progressEvidenceId is five digits: a leading control digit naming the
@@ -69,6 +65,7 @@ export const PROGRESS_EVIDENCE_CONTROL_DIGIT_BY_SERVICE = {
   [PROGRESS_EVIDENCE_SERVICES.ARCHIVES]: "3",
   [PROGRESS_EVIDENCE_SERVICES.STANDALONE]: "4",
   [PROGRESS_EVIDENCE_SERVICES.FACSIMILE]: "5",
+  [PROGRESS_EVIDENCE_SERVICES.DESKTOP]: "6",
 };
 
 const PROGRESS_EVIDENCE_SERVICE_BY_CONTROL_DIGIT = Object.fromEntries(
@@ -163,9 +160,6 @@ function registerProgressEvidenceDefinition(definition) {
     service,
     itemId: String(definition.itemId ?? "").trim(),
     label: String(definition.label ?? "").trim(),
-    // An explicit image beats the [progressEvidenceId].png convention. Blank
-    // means "use the convention".
-    imagePath: String(definition.imagePath ?? "").trim(),
     // Defaults for both flags are false.
     progressEvidenceActivated: false,
     progressEvidenceDeveloperEnabled: definition.progressEvidenceDeveloperEnabled === true,
@@ -328,25 +322,6 @@ export function setProgressEvidenceDeveloperEnabled(progressEvidenceId, isEnable
 
   entry.progressEvidenceDeveloperEnabled = isEnabled === true;
   return true;
-}
-
-// The image a progress evidence item should try to load: the explicit
-// `imagePath` its definition carries (what the builder tool's photo picker
-// writes), otherwise the [progressEvidenceId].png convention. Missing files are
-// the normal case while the art is still being drawn — see the placeholder in
-// ui.js's createProgressEvidenceCardMedia().
-export function resolveProgressEvidenceImagePath(progressEvidenceId) {
-  const normalizedId = normalizeProgressEvidenceId(progressEvidenceId);
-  if (!normalizedId) {
-    return "";
-  }
-
-  const authoredImagePath = progressEvidenceEntriesById.get(normalizedId)?.imagePath;
-  if (authoredImagePath) {
-    return authoredImagePath;
-  }
-
-  return PROGRESS_EVIDENCE_IMAGE_PATH_TEMPLATE.replaceAll("{progressEvidenceId}", normalizedId);
 }
 
 // --- Id allocation ---------------------------------------------------------

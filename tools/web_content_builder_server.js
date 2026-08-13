@@ -417,14 +417,8 @@ function readProgressEvidenceFields(entry, service) {
     );
   }
 
-  const imagePath = String(entry?.progressEvidenceImage ?? "").trim();
-  if (!imagePath) {
-    throw new Error("progressEvidenceImage is required when progressEvidenceId is set.");
-  }
-
   return {
     progressEvidenceId,
-    imagePath,
     progressEvidenceActivated: entry?.progressEvidenceActivated === true,
     progressEvidenceDeveloperEnabled: entry?.progressEvidenceDeveloperEnabled === true,
   };
@@ -462,7 +456,6 @@ function upsertProgressEvidenceDefinition(payload, progressEvidenceFields, label
     service,
     itemId,
     label,
-    imagePath: progressEvidenceFields.imagePath,
     progressEvidenceActivated: progressEvidenceFields.progressEvidenceActivated,
     progressEvidenceDeveloperEnabled: progressEvidenceFields.progressEvidenceDeveloperEnabled,
   };
@@ -482,7 +475,6 @@ function upsertProgressEvidenceDefinition(payload, progressEvidenceFields, label
     progressEvidenceId: definition.progressEvidenceId,
     progressEvidenceActivated: definition.progressEvidenceActivated,
     progressEvidenceDeveloperEnabled: definition.progressEvidenceDeveloperEnabled,
-    imagePath: definition.imagePath,
   };
 }
 

@@ -234,12 +234,12 @@ different system — see
 [progress-evidence-system.md](progress-evidence-system.md) for the whole thing.
 The differences worth knowing here:
 
-- It reads `progressEvidenceManager.js`, not the evidence store. An item shows only when `progressEvidenceActivated` **and** `progressEvidenceDeveloperEnabled` are both true.
+- It shows one **timeline photograph** per card, not a card per progress evidence item — see [progress-timeline-event-system.md](progress-timeline-event-system.md). `progressEvidenceManager.js` decides only which photographs are *unlocked* (via a timeline event's `unlockedByProgressEvidenceId`); it carries no image or card content of its own.
 - **Three cards at once** (`PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT`), each about the browser window's height less a padding allowance, stepping one item at a time with wraparound.
 - Stepping is **animated, and moves by one card**: the departing card slides out and fades, the two that stay shuffle across into their neighbours' slots, and the arriving card slides in from the far side fading up. The strip is built one card wider for the duration and translated by a single measured card slot. `PROGRESS_EVIDENCE_SLIDE_MS` in `ui.js` and `--progress-evidence-slide-duration` in `styles.css` must agree.
-- Cards load the definition's `imagePath`, or `assets/photos/progressEvidenceImages/[progressEvidenceId].png` when it has none, and fall back to a placeholder card carrying the id when the file does not exist yet.
-- The registry is `assets/progressEvidence.json`, loaded at startup: one language-neutral file holding every website's and fax's id, image and two flags. Ids are five digits led by a service control digit (`0` ZoomSearch … `5` faxes) and are fixed there, never invented at runtime. The web content builder's Progress Evidence panel is what writes it.
-- The envelope is anchored to the **bottom-right corner of the corkboard** via the board's own `--noticeboard-board-*` custom properties, not fixed scene coordinates.
+- Cards load `[progressTimeLineEventId].png` from `assets/progressEvidenceImages/`, falling back to a placeholder card carrying the id when the file does not exist yet.
+- The trigger registry is `assets/progressEvidence.json`, loaded at startup: one language-neutral file holding every website's and fax's id and two flags (no image). Ids are five digits led by a service control digit (`0` ZoomSearch … `5` faxes, `6` desktop items) and are fixed there, never invented at runtime. The web content builder's Progress Evidence panel is what writes it.
+- The envelope can be **dragged anywhere on the corkboard** by the player (see progress-timeline-event-system.md) — it only *starts* anchored near the middle of the board via the board's own `--noticeboard-board-*` custom properties, not fixed scene coordinates.
 
 ---
 

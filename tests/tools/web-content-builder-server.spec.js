@@ -236,11 +236,9 @@ async function fetchNextProgressEvidenceId(service) {
 function progressEvidenceFields(progressEvidenceId, {
   activated = false,
   developerEnabled = false,
-  image = "./assets/photos/progressEvidenceImages/pwTestProgressEvidence.png",
 } = {}) {
   return {
     progressEvidenceId,
-    progressEvidenceImage: image,
     progressEvidenceActivated: activated,
     progressEvidenceDeveloperEnabled: developerEnabled,
   };
@@ -839,7 +837,6 @@ test.describe("web content builder server", () => {
         ...progressEvidenceFields(allocated, {
           activated: true,
           developerEnabled: true,
-          image: "./assets/photos/progressEvidenceImages/pwTestProgressEvidence.png",
         }),
       },
     });
@@ -859,12 +856,13 @@ test.describe("web content builder server", () => {
       service: "police",
       itemId: id,
       label: "Progress Evidence Police Record",
-      imagePath: "./assets/photos/progressEvidenceImages/pwTestProgressEvidence.png",
       progressEvidenceActivated: true,
       progressEvidenceDeveloperEnabled: true,
     });
 
-    // ...so the site content copy carries none of them, in any language.
+    // ...so the site content copy carries none of them, in any language. A
+    // stray progressEvidenceImage is stripped too, defensively, even though the
+    // form no longer sends one.
     await expectRecordInEveryLanguage("police", "records", id, (entry) => {
       expect(entry.progressEvidenceId).toBeUndefined();
       expect(entry.progressEvidenceImage).toBeUndefined();
@@ -906,7 +904,6 @@ test.describe("web content builder server", () => {
     const { body } = await inject(buildPayload(secondAllocated, {
       activated: true,
       developerEnabled: true,
-      image: "./assets/photos/progressEvidenceImages/pwTestProgressEvidenceUpdated.png",
     }));
 
     expect(body.progressEvidenceUpdate).toMatchObject({
@@ -918,30 +915,9 @@ test.describe("web content builder server", () => {
     expect(definitions.filter((definition) => definition.itemId === id)).toHaveLength(1);
     expect(await findProgressEvidenceDefinition("archives", id)).toMatchObject({
       progressEvidenceId: firstAllocated,
-      imagePath: "./assets/photos/progressEvidenceImages/pwTestProgressEvidenceUpdated.png",
       progressEvidenceActivated: true,
       progressEvidenceDeveloperEnabled: true,
     });
-  });
-
-  test("rejects an entry carrying a progressEvidenceId with no image", async () => {
-    const httpResponse = await apiContext.post(API_URL, {
-      data: {
-        siteId: "zoomsearch",
-        bucket: "records",
-        entry: {
-          id: trackRecordForCleanup("zoomsearch", "records", nextId("zoomsearch-progress-no-image")),
-          websiteName: "x",
-          pageTitle: "x",
-          keywords: ["x"],
-          progressEvidenceId: "09999",
-          progressEvidenceImage: "",
-        },
-      },
-    });
-
-    expect(httpResponse.status()).toBe(400);
-    expect(await httpResponse.text()).toContain("progressEvidenceImage is required");
   });
 
   test("rejects an entry carrying a malformed progressEvidenceId", async () => {
@@ -955,7 +931,6 @@ test.describe("web content builder server", () => {
           pageTitle: "x",
           keywords: ["x"],
           progressEvidenceId: "not-a-number",
-          progressEvidenceImage: "./assets/photos/progressEvidenceImages/x.png",
         },
       },
     });
@@ -976,7 +951,6 @@ test.describe("web content builder server", () => {
           keywords: ["x"],
           // Leading 2 is the Police block, but this is a ZoomSearch record.
           progressEvidenceId: "29999",
-          progressEvidenceImage: "./assets/photos/progressEvidenceImages/x.png",
         },
       },
     });

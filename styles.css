@@ -558,13 +558,22 @@ button.disabled {
        bottom-right corner rather than to fixed scene coordinates. Changing
        these moves everything that depends on the board together. */
     --noticeboard-board-width: 2040px;
-    --noticeboard-board-height: 1320px;
+    /* Tall, not wide: the timeline snakes UP the board, so extra rows cost
+       height. Eight rows of six frames plus the oversized question-mark frame
+       at the top is what sets this number - see .progress-timeline-board. */
+    --noticeboard-board-height: 4180px;
     --noticeboard-board-border-width: 16px;
     --noticeboard-corkboard-inset: 24px;
 
+    /* One frame's width, shared by the frames, the snake's row maths and the
+       oversized final frame (which is a multiple of it). */
+    --progress-timeline-frame-width: 220px;
+
     position: absolute;
     width: 2600px;
-    height: 1800px;
+    /* Tall enough to hold the board above, which is centred inside it.
+       NOTICEBOARD_WORLD_HEIGHT in constantsAndGlobalVars.js must match this. */
+    height: 4520px;
     left: 0;
     top: 0;
     transform-origin: top left;
@@ -634,7 +643,13 @@ button.disabled {
 
 /* Sits on the corkboard itself, so it is anchored to the same geometry
    variables as .noticeboard-board-frame rather than to the much larger scene
-   (2600x1800) those elements are centred inside. */
+   those elements are centred inside.
+
+   The timeline snakes: earliest frame bottom-left, the row runs right, then
+   climbs and runs back left, and so on up the board. That is why the board is
+   column-reverse (row 0 at the bottom) and odd rows are row-reverse. The
+   oversized question-mark frame is the last child, so it lands at the very top.
+   See renderProgressTimeLineBoard() in ui.js. */
 .progress-timeline-board {
     position: absolute;
     left: 50%;
@@ -643,21 +658,99 @@ button.disabled {
     height: calc(var(--noticeboard-board-height) - 160px);
     transform: translate(-50%, -50%);
     display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    gap: 28px;
-    overflow-y: auto;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 34px;
     padding: 12px;
     box-sizing: border-box;
     z-index: 2;
 }
 
+.progress-timeline-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    /* Rows are centred on the board. The snake still reads correctly because
+       every full row spans the same width, so a reversed row starts directly
+       above where the row below finished. */
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.progress-timeline-row.is-reversed {
+    flex-direction: row-reverse;
+}
+
+/* The path the timeline travels, drawn between frames. Rotated rather than
+   swapped for a different glyph, so every arrow is the same shape. */
+.progress-timeline-arrow {
+    flex: 0 0 auto;
+    font-size: 2.1rem;
+    line-height: 1;
+    color: rgba(60, 38, 14, 0.72);
+    text-shadow: 0 1px 0 rgba(255, 240, 214, 0.5);
+    user-select: none;
+}
+
+.progress-timeline-arrow.is-left {
+    transform: rotate(180deg);
+}
+
+.progress-timeline-arrow.is-up {
+    transform: rotate(-90deg);
+}
+
+/* The oversized empty frame every arrow eventually leads to. Four times the
+   width of an ordinary frame; change the multiplier here and the question mark
+   scales with it. */
+.progress-timeline-final-frame {
+    --progress-timeline-final-frame-width: calc(var(--progress-timeline-frame-width) * 4);
+    align-self: center;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: var(--progress-timeline-final-frame-width);
+    padding: 26px;
+    border-radius: 6px;
+    border: 10px solid #5b3a1c;
+    background: linear-gradient(180deg, #d9c49a, #c0a778);
+    box-shadow:
+        0 14px 30px rgba(0, 0, 0, 0.42),
+        inset 0 2px 0 rgba(255, 240, 214, 0.4);
+    box-sizing: border-box;
+}
+
+.progress-timeline-final-frame-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border: 2px solid rgba(70, 46, 20, 0.5);
+    background: rgba(58, 40, 20, 0.24);
+}
+
+/* Sized off the frame rather than in rem, so it always fills the slot however
+   the multiplier above is tuned. */
+.progress-timeline-final-frame-question {
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: calc(var(--progress-timeline-final-frame-width) * 0.72);
+    font-weight: 700;
+    line-height: 1;
+    color: rgba(59, 42, 18, 0.85);
+    text-shadow: 0 4px 0 rgba(255, 240, 214, 0.35);
+}
+
 .progress-timeline-frame {
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    width: 200px;
+    width: var(--progress-timeline-frame-width);
     padding: 12px 12px 10px;
     border-radius: 3px;
     border: 3px solid #5b3a1c;
@@ -684,7 +777,7 @@ button.disabled {
 .progress-timeline-frame-slot .progress-evidence-card-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 /* The placeholder shrinks hard to fit a frame - it is the same element the
@@ -906,10 +999,14 @@ button.disabled {
         var(--progress-evidence-envelope-corkboard-edge-right)
         + var(--progress-evidence-envelope-inset-right)
     );
-    bottom: calc(
-        var(--progress-evidence-envelope-corkboard-edge-bottom)
-        + var(--progress-evidence-envelope-inset-bottom)
-    );
+    /* Anchored to the middle of the board, NOT its bottom edge. The corkboard is
+       now several screens tall, and the view opens centred on it, so a
+       bottom-anchored envelope started life far below the viewport - unreachable,
+       and with it no way to open the photograph pool at all. Sitting near the
+       centre puts it on screen the moment the noticeboard opens; from there the
+       player drags it up or down the board to wherever they are working (see
+       initializeProgressEvidenceEnvelopeDrag in ui.js). */
+    top: calc(50% - var(--progress-evidence-envelope-height) / 2);
     width: var(--progress-evidence-envelope-width);
     height: var(--progress-evidence-envelope-height);
     transform: rotate(var(--progress-evidence-envelope-rotation));
@@ -919,6 +1016,13 @@ button.disabled {
     background: transparent;
     cursor: pointer;
     z-index: 3;
+}
+
+/* While the player is repositioning the envelope on the corkboard. */
+.noticeboard-scene .progress-evidence-envelope.is-being-moved {
+    cursor: grabbing;
+    filter: brightness(1.06);
+    z-index: 4;
 }
 
 .progress-evidence-envelope-body {

@@ -309,6 +309,18 @@ Level-3 police login)
 
 ---
 
+## Desktop items (60001)
+
+### 60001 — Background story opened
+*itemId: `theArnieTragedyStory`*
+Not a website or fax — this milestone fires the moment the player opens the
+"The Arnie Tragedy" background story window on the desk (`openStoryWindow()`
+in `ui.js`). It carries no content of its own; the story text it marks as read
+is the `story.md` desk item, already present from the start of a new game.
+**Evidence granted:** ❌ None (a pure milestone, no Report/Photo of its own)
+
+---
+
 ## All login credentials that surface across these items
 
 | Site | Username | Password | Where it's revealed |
@@ -353,7 +365,7 @@ listed as (a)/(b) rather than reordered against each other.
 8. **1897** — Percival Worthing dies; policy continued in son Anthony's name.
    → **20009** — the "Endorsement 1897 — Notice of Succession" line on the same record.
 9. **pre-1901 ❓** — the Spencers settle at Black Pine, employing farmhands Simon and Tony.
-   → *background story only* — `story.md`, no progressEvidenceId; the passage describing John & Diane Spencer's move to the farm.
+   → *background story* — `story.md`, the passage describing John & Diane Spencer's move to the farm; unlocked by **60001**, opening the story window itself (not a line inside it).
 10. **Jul 1901 (day 1) ❓** — the boys find the hidden cave, warned by a stranger on the path.
     → *background story only* — `story.md`, no progressEvidenceId.
 11. **27 Jul 1901** — both boys enter Shaft B; Andrew returns fatally injured and dies that evening.

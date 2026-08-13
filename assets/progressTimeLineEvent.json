@@ -4,35 +4,10 @@
       "progressTimeLineEventId": "0100",
       "year": "001798",
       "unlockedByProgressEvidenceId": "40001",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Whitmore & Sons Iron & Machinery Co. is founded.",
-        "de": "",
-        "es": "",
-        "fr": "",
-        "it": ""
-      }
-    },
-    {
-      "progressTimeLineEventId": "0110",
-      "year": "001840",
-      "unlockedByProgressEvidenceId": "40001",
-      "progressTimeLineEventDeveloperEnabled": false,
-      "description": {
-        "en": "Whitmore & Sons machinery begins supplying the Black Pine Silver Mine.",
-        "de": "",
-        "es": "",
-        "fr": "",
-        "it": ""
-      }
-    },
-    {
-      "progressTimeLineEventId": "0120",
-      "year": "001877",
-      "unlockedByProgressEvidenceId": "40001",
-      "progressTimeLineEventDeveloperEnabled": false,
-      "description": {
-        "en": "The Whitmore & Sons Foundry is photographed.",
         "de": "",
         "es": "",
         "fr": "",
@@ -43,6 +18,7 @@
       "progressTimeLineEventId": "0130",
       "year": "071851",
       "unlockedByProgressEvidenceId": "00001",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The Black Pine Silver Mine is officially declared \"Exhausted.\"",
@@ -56,7 +32,8 @@
       "progressTimeLineEventId": "0140",
       "year": "081888",
       "unlockedByProgressEvidenceId": "50002",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Andrew John Spencer is born.",
         "de": "",
@@ -69,7 +46,8 @@
       "progressTimeLineEventId": "0150",
       "year": "111891",
       "unlockedByProgressEvidenceId": "50002",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Askew Arnold \"Arnie\" Spencer is born.",
         "de": "",
@@ -82,7 +60,8 @@
       "progressTimeLineEventId": "0160",
       "year": "091893",
       "unlockedByProgressEvidenceId": "20009",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Percival Anthony Worthing insures a gold cross pendant with J & T Fairchild.",
         "de": "",
@@ -95,7 +74,8 @@
       "progressTimeLineEventId": "0170",
       "year": "001897",
       "unlockedByProgressEvidenceId": "20009",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Percival Anthony Worthing dies; the pendant's policy passes to his son, Anthony Worthing.",
         "de": "",
@@ -107,8 +87,9 @@
     {
       "progressTimeLineEventId": "0180",
       "year": "001900",
-      "unlockedByProgressEvidenceId": "",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "unlockedByProgressEvidenceId": "60001",
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "John & Diane Spencer settle at a farm near Black Pine, employing farmhands Simon and Tony.",
         "de": "",
@@ -121,7 +102,8 @@
       "progressTimeLineEventId": "0190",
       "year": "071901",
       "unlockedByProgressEvidenceId": "",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The Spencer boys discover a hidden, overgrown cave entrance and are warned off by a stranger on the path.",
         "de": "",
@@ -134,6 +116,7 @@
       "progressTimeLineEventId": "0200",
       "year": "071901",
       "unlockedByProgressEvidenceId": "50002",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Andrew and Askew \"Arnie\" Spencer enter the abandoned B Shaft; Andrew returns fatally injured and dies that evening. Arnie is never found.",
@@ -147,7 +130,8 @@
       "progressTimeLineEventId": "0210",
       "year": "071901",
       "unlockedByProgressEvidenceId": "50002",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The local Coroner confirms Andrew Spencer's cause of death.",
         "de": "",
@@ -160,6 +144,7 @@
       "progressTimeLineEventId": "0220",
       "year": "081901",
       "unlockedByProgressEvidenceId": "00002",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The NWMP search party — Whitmore, Baxley, O'Rourke, McLeod and others — works the cave and the old mine.",
@@ -170,35 +155,10 @@
       }
     },
     {
-      "progressTimeLineEventId": "0230",
-      "year": "081901",
-      "unlockedByProgressEvidenceId": "",
-      "progressTimeLineEventDeveloperEnabled": false,
-      "description": {
-        "en": "\"Cave Entrance\" is photographed by police photographer John Baxley.",
-        "de": "",
-        "es": "",
-        "fr": "",
-        "it": ""
-      }
-    },
-    {
-      "progressTimeLineEventId": "0240",
-      "year": "081901",
-      "unlockedByProgressEvidenceId": "",
-      "progressTimeLineEventDeveloperEnabled": false,
-      "description": {
-        "en": "The only known photograph of Andrew and Arnie Spencer together is taken at the family farm.",
-        "de": "",
-        "es": "",
-        "fr": "",
-        "it": ""
-      }
-    },
-    {
       "progressTimeLineEventId": "0250",
       "year": "091901",
       "unlockedByProgressEvidenceId": "40002",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Thomas O'Rourke founds the Honey Dew Caving Club; the team's first photograph is taken.",
@@ -212,7 +172,8 @@
       "progressTimeLineEventId": "0260",
       "year": "101901",
       "unlockedByProgressEvidenceId": "50002",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The NWMP files a three-month progress report on the missing-person case.",
         "de": "",
@@ -225,6 +186,7 @@
       "progressTimeLineEventId": "0270",
       "year": "111901",
       "unlockedByProgressEvidenceId": "20007",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Lt. William McLeod recovers a gold pendant from the flooded bottom of Shaft 'B'.",
@@ -238,6 +200,7 @@
       "progressTimeLineEventId": "0280",
       "year": "111901",
       "unlockedByProgressEvidenceId": "30004",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The pendant's engraving is matched to a Fairchild policy; Anthony Worthing is questioned and released without charge.",
@@ -251,7 +214,8 @@
       "progressTimeLineEventId": "0290",
       "year": "121901",
       "unlockedByProgressEvidenceId": "20005",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The search for Arnie continues informally for years before going cold.",
         "de": "",
@@ -264,7 +228,8 @@
       "progressTimeLineEventId": "0300",
       "year": "001903",
       "unlockedByProgressEvidenceId": "00005",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Henry Whitmore is photographed on vacation at Niagara Falls.",
         "de": "",
@@ -277,6 +242,7 @@
       "progressTimeLineEventId": "0310",
       "year": "001905",
       "unlockedByProgressEvidenceId": "20006",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Arthur Whitmore is a respected Sergeant, valued for his knowledge of the surrounding country.",
@@ -290,6 +256,7 @@
       "progressTimeLineEventId": "0320",
       "year": "001906",
       "unlockedByProgressEvidenceId": "10001",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Hannah Fletcher publishes \"Mysteries of the Old North West.\"",
@@ -303,6 +270,7 @@
       "progressTimeLineEventId": "0330",
       "year": "001907",
       "unlockedByProgressEvidenceId": "30002",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Henry \"Harry\" Whitmore publishes \"Strange Things Found In Even Stranger Places.\"",
@@ -316,6 +284,7 @@
       "progressTimeLineEventId": "0340",
       "year": "001911",
       "unlockedByProgressEvidenceId": "20005",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Cpl. Thomas O'Rourke dies in an abseiling accident in France.",
@@ -329,7 +298,8 @@
       "progressTimeLineEventId": "0350",
       "year": "001912",
       "unlockedByProgressEvidenceId": "00006",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Henry Whitmore formally passes control of Whitmore & Sons to his brother Jerome.",
         "de": "",
@@ -342,6 +312,7 @@
       "progressTimeLineEventId": "0360",
       "year": "001912",
       "unlockedByProgressEvidenceId": "40002",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The Honey Dew Caving Club is formally defunct; its collective cave map is released.",
@@ -355,7 +326,8 @@
       "progressTimeLineEventId": "0370",
       "year": "001915",
       "unlockedByProgressEvidenceId": "20002",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Cpl. Emile Beaulieu retires from the NWMP and becomes a professional climber.",
         "de": "",
@@ -368,6 +340,7 @@
       "progressTimeLineEventId": "0380",
       "year": "061920",
       "unlockedByProgressEvidenceId": "20003",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Lt. William McLeod receives his Certificate of Honour at his retirement presentation.",
@@ -381,6 +354,7 @@
       "progressTimeLineEventId": "0390",
       "year": "001928",
       "unlockedByProgressEvidenceId": "00002",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "John Baxley retires from the NWMP and joins the Forestry Imaging Enthusiasts.",
@@ -394,7 +368,8 @@
       "progressTimeLineEventId": "0400",
       "year": "001931",
       "unlockedByProgressEvidenceId": "20004",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Cpl. George Mackenzie retires from the NWMP.",
         "de": "",
@@ -407,7 +382,8 @@
       "progressTimeLineEventId": "0410",
       "year": "001934",
       "unlockedByProgressEvidenceId": "20001",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Constable James Fletcher retires, having been awarded the King's Police Medal.",
         "de": "",
@@ -420,7 +396,8 @@
       "progressTimeLineEventId": "0420",
       "year": "001951",
       "unlockedByProgressEvidenceId": "20001",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "James Fletcher dies.",
         "de": "",
@@ -433,7 +410,8 @@
       "progressTimeLineEventId": "0430",
       "year": "001952",
       "unlockedByProgressEvidenceId": "20004",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "George Mackenzie, aged 80, has his celebrated moustache measured before a crowd.",
         "de": "",
@@ -446,7 +424,8 @@
       "progressTimeLineEventId": "0440",
       "year": "001952",
       "unlockedByProgressEvidenceId": "30003",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "A family polaroid is taken of William and Margaret McLeod collecting apples, dedicated \"For Teresa.\"",
         "de": "",
@@ -459,7 +438,8 @@
       "progressTimeLineEventId": "0450",
       "year": "001954",
       "unlockedByProgressEvidenceId": "20004",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "George Mackenzie dies.",
         "de": "",
@@ -472,7 +452,8 @@
       "progressTimeLineEventId": "0460",
       "year": "001955",
       "unlockedByProgressEvidenceId": "20002",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Emile Beaulieu dies, aged 84.",
         "de": "",
@@ -485,7 +466,8 @@
       "progressTimeLineEventId": "0470",
       "year": "001957",
       "unlockedByProgressEvidenceId": "30003",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "William McLeod dies peacefully, aged 87.",
         "de": "",
@@ -498,7 +480,8 @@
       "progressTimeLineEventId": "0480",
       "year": "001963",
       "unlockedByProgressEvidenceId": "00007",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Jerome Whitmore dies; his son Brian succeeds him as president of Whitmore & Sons.",
         "de": "",
@@ -511,7 +494,8 @@
       "progressTimeLineEventId": "0490",
       "year": "001965",
       "unlockedByProgressEvidenceId": "00005",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Henry \"Harry\" Whitmore dies.",
         "de": "",
@@ -524,7 +508,8 @@
       "progressTimeLineEventId": "0500",
       "year": "001972",
       "unlockedByProgressEvidenceId": "20002",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Rockface Monthly posthumously features Emile Beaulieu on its cover.",
         "de": "",
@@ -537,7 +522,8 @@
       "progressTimeLineEventId": "0510",
       "year": "001982",
       "unlockedByProgressEvidenceId": "00007",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "Brian Whitmore is photographed signing a contract at the Whitmore Refinery.",
         "de": "",
@@ -550,6 +536,7 @@
       "progressTimeLineEventId": "0520",
       "year": "001988",
       "unlockedByProgressEvidenceId": "10002",
+      "availableFromStart": false,
       "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "\"Guardians of the North,\" by Cat J Roman, is published.",
@@ -563,7 +550,8 @@
       "progressTimeLineEventId": "0530",
       "year": "009999",
       "unlockedByProgressEvidenceId": "50001",
-      "progressTimeLineEventDeveloperEnabled": false,
+      "availableFromStart": false,
+      "progressTimeLineEventDeveloperEnabled": true,
       "description": {
         "en": "The player begins investigating the Arnie Spencer case.",
         "de": "",

@@ -1,25 +1,32 @@
 # `e2e/progress-evidence/`
 
 The progress evidence system: the persistent record of investigation milestones
-the player has reached, and the manila EVIDENCE envelope on the noticeboard that
-displays them.
+the player has reached. `progressEvidenceActivated` is player progress, set
+when a website record opens, a standalone page is visited, or a fax arrives;
+`progressEvidenceDeveloperEnabled` is the developer's separate switch for
+whether that milestone can be reached at all.
 
-Implementation: [`progressEvidenceManager.js`](../../../progressEvidenceManager.js),
-the progress evidence section of [`ui.js`](../../../ui.js), and the envelope /
-carousel CSS blocks in [`styles.css`](../../../styles.css). The developer guide
-is [`docs/progress-evidence-system.md`](../../../docs/progress-evidence-system.md).
+Implementation: [`progressEvidenceManager.js`](../../../progressEvidenceManager.js)
+and the progress evidence activation call sites in
+[`ui.js`](../../../ui.js). The developer guide is
+[`docs/progress-evidence-system.md`](../../../docs/progress-evidence-system.md).
+
+**This system has no display of its own any more.** The manila EVIDENCE
+envelope on the noticeboard now shows the corkboard timeline's photographs, not
+a card per progress evidence item — that coverage (the envelope, its carousel,
+image/placeholder rendering) lives in
+[`../progress-timeline/`](../progress-timeline/), not here. A
+`progressEvidenceId` here is purely a milestone/trigger id that a timeline
+event's `unlockedByProgressEvidenceId` points at.
 
 ## Scope
 
 | Spec | Covers |
 | --- | --- |
 | `progress-evidence-activation-and-persistence.spec.js` | Nothing activated on a new game; `activateProgressEvidence()` adds an id; duplicate activation is a no-op; save preserves and load restores the collection; a full save → reload → Resume cycle |
-| `progress-evidence-envelope-display.spec.js` | The two-flag eligibility rule in all four combinations, the envelope refreshing on open, and three cards on screen at once |
-| `progress-evidence-images.spec.js` | `[progressEvidenceId].png` displayed when it exists; the placeholder card carrying the id when it does not |
-| `progress-evidence-carousel.spec.js` | Prev/next navigation in both directions, and the one-card slide: four cards mid-step, the end cards fading, the middle pair holding their opacity and landing in their neighbours' slots |
-| `progress-evidence-game-triggers.spec.js` | Activation from opening a website record and from receiving a fax, each reflected in the envelope |
-| `progress-evidence-generated-definitions.spec.js` | The registry file (`assets/progressEvidence.json`): definitions registered at startup, authored activation, authored image path, duplicate ids refused, and the real file's service-coded ids |
-| `progress-evidence-existing-folders.spec.js` | The Reports and Photos carousels are unaffected by the new system |
+| `progress-evidence-game-triggers.spec.js` | Activation from opening a website record, visiting a standalone page, and receiving a fax, and that both flags land correctly on the resulting entry |
+| `progress-evidence-generated-definitions.spec.js` | The registry file (`assets/progressEvidence.json`): definitions registered at startup, authored activation, duplicate ids refused, and the real file's service-coded ids |
+| `progress-evidence-existing-folders.spec.js` | The Reports and Photos carousels are unaffected by this system |
 
 The server half of the builder's Progress Evidence panel — id allocation and the
 definition upsert — is covered in
@@ -44,13 +51,13 @@ definition upsert — is covered in
   `2` Police, `3` Archives, `4` Standalone, `5` faxes — so `20005` in a spec is a
   police record and `50003` is a fax. They come from `assets/progressEvidence.json`;
   none are invented at runtime.
-- **`assets/photos/progressEvidenceImages/00001.png` exists; `00002.png`
-  deliberately does not.** That pair is what lets the image and placeholder
-  paths both be covered against real content.
 - **Stub `assets/progressEvidence.json`, never write it.** These specs run in
   parallel with everything else, so a real write would be visible to any other
   spec that happened to load the page mid-run. `page.route` before the first
   navigation is the pattern — see `progress-evidence-generated-definitions.spec.js`.
+- **If a spec needs to see something rendered — a card, a carousel step, an
+  image or its placeholder — it belongs in `../progress-timeline/`, not here.**
+  That system owns the envelope now; this one only owns milestone bookkeeping.
 - Helpers live in [`../../support/game-helpers.js`](../../support/game-helpers.js)
   (`openNoticeboard`, `openProgressEvidenceEnvelope`, `readProgressEvidence`,
   `activateProgressEvidence`, `setProgressEvidenceDeveloperEnabled`).

@@ -62,6 +62,11 @@ test("the progress evidence window and the evidence folders coexist", async ({ p
 
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
+  // One card: 00001 unlocks the single photograph for frame 0130, and no
+  // timeline event is currently `availableFromStart` (see
+  // progressTimeLineEventManager.js). This test only cares that the envelope
+  // renders normally alongside the other folders, not about the exact pool
+  // size.
   await expect(progressEvidenceCards(page)).toHaveCount(1);
   await closeProgressEvidenceWindow(page);
 

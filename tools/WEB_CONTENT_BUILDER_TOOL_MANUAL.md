@@ -215,14 +215,13 @@ Controls:
   and `33333` is an archives record, readable at a glance. Each service counts
   up in its own block, which is why switching Content Type allocates a new id:
   an id belongs to one service and the server rejects a mismatch.
-- `Progress Evidence Image` — required, and **prefilled for you** as
-  `./assets/photos/progressEvidenceImages/[progressEvidenceId].png` as soon as
-  the id is allocated, re-derived whenever the id changes. Normally there is
-  nothing to do here at all. `Choose Progress Evidence Photo` overrides it when
-  the artwork is named something else, and a path you picked or typed is never
-  overwritten by a later re-allocation. The file does not have to exist yet: in
-  game a missing image falls back to a placeholder card showing the id, so
-  artwork can follow later.
+
+  This id carries no artwork of its own — it is purely the **milestone/trigger**
+  that a corkboard timeline event points at (`unlockedByProgressEvidenceId` in
+  `assets/progressTimeLineEvent.json`) to decide when *that* system's
+  photograph is revealed to the player. See
+  [`docs/progress-timeline-event-system.md`](../docs/progress-timeline-event-system.md)
+  for how to name and place that artwork.
 - `progressEvidenceActivated` — checked means "count this as already reached",
   so it shows in the envelope immediately without the player doing anything.
 - `progressEvidenceDeveloperEnabled` — the display switch. **Both** flags must

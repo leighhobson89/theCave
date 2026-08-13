@@ -16,7 +16,8 @@ npm run test:e2e                 # Playwright suite
 | --- | --- |
 | [architecture.md](architecture.md) | **Start here.** How every component works: scenes and the viewport, the window system, evidence carousels, the story window, Notes and Paint, the facsimile, the CaveOS computer and Netscape, the web content system, notifications, audio, localization, save/load, the debug window, tests, and known issues |
 | [evidence-system.md](evidence-system.md) | The evidence store, content catalogs, the three unlock paths, evidence triggers, save validation, authoring rules |
-| [progress-evidence-system.md](progress-evidence-system.md) | The separate progress evidence system: milestone ids, the two flags, the noticeboard EVIDENCE envelope and its carousel, image/placeholder loading, the full website and fax audit |
+| [progress-evidence-system.md](progress-evidence-system.md) | The separate progress evidence system: milestone ids, the two flags, and the full website and fax audit. No image/display concept of its own any more -- see the next row |
+| [progress-timeline-event-system.md](progress-timeline-event-system.md) | The corkboard timeline: the dated frames, the noticeboard EVIDENCE envelope's pool of draggable photographs, the snaking board layout, image/placeholder loading, and the id/artwork naming convention |
 | [investigation-archives.md](investigation-archives.md) | The four in-game web services: exact search rules, real login credentials, record data, detail templates, standalone hidden pages, how to add records |
 | [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md) | Sending faxes, payload fields, the read-to-evidence lifecycle, milestone triggers, record-open triggers, validation steps |
 | [story-timeline.md](story-timeline.md) | Snapshot audit of every character, date and connection findable in the shipped story/evidence/web-content assets, plus known gaps and inconsistencies |
@@ -51,9 +52,15 @@ assets/
                                       (archives, library, police, zoomsearch,
                                       standalone-pages)
   photos/                            photo evidence images
-  photos/progressEvidenceImages/     progress evidence card images
+  progressEvidenceImages/            corkboard timeline photographs, named
+                                      [progressTimeLineEventId].png
   progressEvidence.json              the progress evidence registry: every
-                                      website and fax, its id, image and flags
+                                      website and fax, its id and flags
+                                      (no image of its own -- see
+                                      progressTimeLineEvent.json)
+  progressTimeLineEvent.json         the corkboard timeline registry: one
+                                      dated frame per event, each unlocked by
+                                      a progressEvidenceId
   web-content/schemas/*.json         formal record contracts
   flags/, fonts/
 

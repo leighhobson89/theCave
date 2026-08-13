@@ -33,6 +33,12 @@ export const PAINT_PAGE_COUNT = 10;
 export const ZOOM_LEVELS = [0.60, 0.65, 0.85, 1];
 export const WORLD_WIDTH = 2600;
 export const WORLD_HEIGHT = 1800;
+// The noticeboard scene is much taller than the desk: the progress timeline
+// snakes UP the corkboard, so every extra row of frames costs height. Panning is
+// clamped per scene (see clampPan in game.js) rather than against one shared
+// world height, or most of the board would be unreachable.
+// Must match .noticeboard-scene's height in styles.css.
+export const NOTICEBOARD_WORLD_HEIGHT = 4520;
 export const PARALLAX_FACTOR = 0.1;
 export const SCENE_FADE_DURATION_MS = 750;
 
@@ -136,6 +142,12 @@ let facsimileState = {
   consumedReportIds: [],
 };
 let browserAddressHistory = [];
+// Where the player has pinned the manila EVIDENCE envelope on the corkboard, in
+// noticeboard-world coordinates. null means "wherever the CSS anchors it",
+// which is the bottom-right of the board. The board is far taller than the
+// screen, so being able to move the envelope up to whatever row is being worked
+// on is what keeps it reachable at all.
+let progressEvidenceEnvelopePosition = null;
 let activeGameplayState = DESKTOP_STATE;
 
 // Quick login, keyed by websiteId ("police", "archives").
@@ -208,6 +220,20 @@ let lastSelectedArchiveProvince = "Saskatchewan";
 // registers a snapshot/restore provider here once at startup so save/load can
 // reach it without ui.js and constantsAndGlobalVars.js importing each other.
 let webContentSessionsProvider = null;
+
+export function getProgressEvidenceEnvelopePosition() {
+  return progressEvidenceEnvelopePosition
+    ? { ...progressEvidenceEnvelopePosition }
+    : null;
+}
+
+export function setProgressEvidenceEnvelopePosition(value) {
+  const x = Number(value?.x);
+  const y = Number(value?.y);
+  progressEvidenceEnvelopePosition = Number.isFinite(x) && Number.isFinite(y)
+    ? { x, y }
+    : null;
+}
 
 export function registerWebContentSessionsProvider(provider) {
   webContentSessionsProvider = provider
@@ -323,6 +349,7 @@ export function captureGameStatusForSaving() {
   // and locked. The frames and photographs themselves are content
   // (progressTimeLineEventManager.js) and are never duplicated here.
   gameState.progressTimeLineEvents = getProgressTimeLineEventSnapshot();
+  gameState.progressEvidenceEnvelopePosition = getProgressEvidenceEnvelopePosition();
   gameState.notesPages = getNotesPages();
   gameState.notesActivePageIndex = getNotesActivePageIndex();
   gameState.paintPages = getPaintPages();
@@ -366,6 +393,9 @@ export function restoreGameStatus(gameState) {
       // the live registry on the way in, so re-authoring a frame's answer can
       // never leave a stale "correct" baked into an old save.
       setProgressTimeLineEventSnapshot(gameState.progressTimeLineEvents);
+      // Absent in a save written before the envelope could be moved, which
+      // setProgressEvidenceEnvelopePosition() reads as "use the CSS anchor".
+      setProgressEvidenceEnvelopePosition(gameState.progressEvidenceEnvelopePosition);
       setNotesPages(gameState.notesPages);
       setNotesActivePageIndex(gameState.notesActivePageIndex ?? 0);
       setPaintPages(gameState.paintPages);

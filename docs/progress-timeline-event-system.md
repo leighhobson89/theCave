@@ -12,8 +12,8 @@ and they drag each one onto the frame whose date it belongs to.
 **An artwork file is named after the frame it belongs in:**
 
 ```
-assets/photos/progressTimeLineEventImages/0220.png   ->  frame 0220 (Aug 1901)
-assets/photos/progressTimeLineEventImages/0390.png   ->  frame 0390 (1928)
+assets/progressEvidenceImages/0220.png   ->  frame 0220 (Aug 1901)
+assets/progressEvidenceImages/0390.png   ->  frame 0390 (1928)
 ```
 
 That is the whole rule. If you are drawing the August 1901 search party, that
@@ -118,13 +118,98 @@ The hand-rolled version removes both failure modes:
 calls `preventDefault()`, so the inner `<img>` cannot start a second, competing
 native drag on the same press.
 
-### Window size is load-bearing
+### Which target wins when they overlap
 
-The envelope window opens at **0.62 x 0.52** of the viewport, not full-bleed. At
-its original 0.96 x 0.98 it covered the entire corkboard, which made a
-photograph already sitting in a frame impossible to pick up — the window was on
-top of it. Leaving the board visible around the window is what makes
-frame-to-frame and frame-to-envelope drags physically possible.
+The envelope window floats over the board, so a point can be inside both it and
+a frame at once. Which one takes the drop depends on where the drag began,
+because that is what the player is expressing:
+
+- **from the envelope** → they are placing, so **frames win**
+- **from a frame** → they may be putting it back, so the **envelope wins**
+
+### Window size and position are load-bearing
+
+The envelope window opens **small (0.32 x 0.38) and docked bottom-left**, not
+centred and not full-bleed. This is not cosmetic:
+
+- At the original 0.96 x 0.98 it covered the entire corkboard, so a photograph
+  already in a frame could never be picked up — the window was on top of it.
+- `DesktopWindow` centres by default, which puts it exactly over the middle of
+  the board where frames land when panned into view.
+- Pan clamping means a bottom-row frame cannot always be lifted *above* a
+  bottom-docked window, so the clear area has to be to the **side** of it.
+
+`focusNoticeboardOnElement()` (game.js) accordingly anchors a focused frame at
+**0.76 across, 0.34 down** rather than dead centre, keeping it clear of the
+envelope.
+
+---
+
+## Board layout — the snake
+
+Frames run in a boustrophedon: the **earliest is bottom-left**, the row runs
+right, then climbs a row and runs back **left**, and so on up the board. Arrows
+trace that path, and the last frame points up at an oversized question-mark
+frame centred at the top — the unanswered question the whole timeline is being
+built to answer.
+
+The snake is pure CSS once `renderProgressTimeLineBoard()` chunks the frames
+into rows of `PROGRESS_TIMELINE_FRAMES_PER_ROW` (6), centred on the board:
+
+- the board is `flex-direction: column-reverse`, so row 0 lands at the bottom;
+- odd rows get `flex-direction: row-reverse`, so they run right-to-left;
+- rows are `justify-content: center`; the snake still reads correctly because
+  every full row spans the same width, so a reversed row starts directly above
+  where the row below finished;
+- the question-mark frame is appended **last**, so column-reverse puts it at the
+  very top.
+
+Arrows are one glyph rotated three ways (`is-right`, `is-left`, `is-up`), so
+every arrow on the board is the same shape.
+
+### The board is tall, and that has consequences
+
+Eight rows of six plus the oversized frame put the corkboard at **4180px**
+inside a **4520px** scene. Two things follow:
+
+- **Pan clamping is per scene.** `WORLD_HEIGHT` (1800) still describes the desk;
+  the noticeboard uses `NOTICEBOARD_WORLD_HEIGHT`, selected by
+  `getActiveWorldHeight()` in game.js. Sharing one height would leave most of
+  the corkboard unreachable. **`NOTICEBOARD_WORLD_HEIGHT` must match
+  `.noticeboard-scene`'s height in styles.css.**
+- **Nothing can assume a frame is on screen.** Anything wanting to interact with
+  a particular frame must call `focusNoticeboardOnElement()` first.
+
+### Tuning knobs
+
+| Knob | Where | Effect |
+| --- | --- | --- |
+| `PROGRESS_TIMELINE_FRAMES_PER_ROW` | ui.js | Frames per row (6); more per row = fewer rows = shorter board. |
+| `--progress-timeline-frame-width` | `.noticeboard-scene` | One frame's width (220px). Height follows it via the slot's 3:4 aspect, so this scales a frame in both directions. The final frame is a multiple of it. |
+| `--progress-timeline-final-frame-width` | `.progress-timeline-final-frame` | Currently `frame-width * 4`. The question mark scales with it automatically. |
+| `--noticeboard-board-height` | `.noticeboard-scene` | Corkboard height. Raise it if rows are added. |
+| `NOTICEBOARD_WORLD_HEIGHT` | constantsAndGlobalVars.js | **Must** track `.noticeboard-scene`'s height. |
+
+---
+
+## No tooltips — until a frame locks in
+
+Neither a photograph in the envelope nor an unsettled frame on the board
+carries a `title` attribute, and neither exposes its event description as an
+accessible name either. A card's accessible name is its bare id; a frame's is
+only the date already printed on its face.
+
+Naming the event on hover would hand the player the answer while the frame is
+still in play — working out which frame a photograph belongs to *is* the
+puzzle. `progress-timeline-envelope.spec.js` asserts this for unsettled cards
+and frames so it cannot regress.
+
+**Once a frame locks**, the puzzle for it is over, so
+`renderProgressTimeLineFrameContent()` sets its `title` to the event's
+localized description at that point, and only at that point — never before,
+and (since a locked frame never unlocks) never removed again. This is a plain
+hover tooltip, not an accessible-name change: the frame's `aria-label` stays
+the bare date even once locked.
 
 ---
 
@@ -137,6 +222,7 @@ frame-to-frame and frame-to-envelope drags physically possible.
   "progressTimeLineEventId": "0220",
   "year": "081901",
   "unlockedByProgressEvidenceId": "00002",
+  "availableFromStart": false,
   "progressTimeLineEventDeveloperEnabled": true,
   "description": {
     "en": "The NWMP search party ... works the cave and the old mine.",
@@ -177,16 +263,55 @@ would sort December 1901 *after* 1903. That is why
 
 The milestone that reveals this photograph — a *trigger*, not an answer.
 Several events may share one (see the naming section above). A blank value
-means nothing reveals the photograph yet, so it can never reach the envelope.
+means nothing reveals the photograph yet, so it can never reach the envelope —
+unless `availableFromStart` says otherwise (below).
+
+### `availableFromStart`
+
+"Starter kit" evidence: the player has this photograph from the very first
+moment of a new game, with nothing to unlock at all. Checked *before*
+`unlockedByProgressEvidenceId` in `isProgressTimeLinePhotoUnlocked()`, so it
+overrides that field rather than needing it filled in — a blank
+`unlockedByProgressEvidenceId` is fine on a starter event, and a populated one
+(kept for lore/documentation reasons) is simply never consulted.
+
+**Currently no event uses this flag.** `0140` (Andrew born) and `0150` (Arnie
+born) used to be marked `availableFromStart`, but now unlock the ordinary way,
+via the missing-person-report fax (`50002`) — the same trigger their
+`unlockedByProgressEvidenceId` already named, so removing the flag was enough.
+`0180` (the Spencers settle at Black Pine) now unlocks via `60001`, the
+milestone recorded the moment the player opens the "Arnie Tragedy" background
+story window (see [progress-evidence-system.md](progress-evidence-system.md)'s
+`desktop` service) rather than being handed over regardless of anything the
+player does.
+
+The flag itself stays in the schema and in `isProgressTimeLinePhotoUnlocked()`
+even with nothing currently using it — it is the mechanism for handing a
+*future* event straight to the player from the first moment of a new game,
+with nothing to unlock, and is worth keeping for that.
+
+Unlike `unlockedByProgressEvidenceId`, there is nothing to *activate*: this is
+a pure content flag, evaluated fresh from the registry every time, so it needs
+no seeding on New Game and no save-file bookkeeping (contrast with
+`progressEvidenceManager.js`'s `authoredActivatedIds`/`seedAuthoredActivations`,
+which exists only because *that* system's "already true" state has to survive
+being reset).
 
 ### `progressTimeLineEventDeveloperEnabled`
 
 Whether this frame is on the board at all. Player progress never changes it.
 Events stay registered either way, so the full timeline can keep growing while
-the board shows only the curated subset. Currently **14 of 43** are enabled.
+the board shows only the curated subset. Currently **all 42 registered events**
+are enabled — the whole timeline is on the board.
 
 An unreleased frame also withholds its photograph from the envelope — otherwise
 the player would hold a picture with nowhere to put it.
+
+**Three events have no unlock trigger and are not starter evidence** — `0190`,
+`0230`, `0240`. They come from the background story or from photo-catalog
+entries that no page or fax reveals, so their frames render (the dates belong
+on the timeline) but can never be filled. Give them a trigger, mark them
+`availableFromStart`, or accept them as permanent gaps.
 
 ### `description`
 
@@ -199,7 +324,8 @@ back to `en`, then to `""`.
 
 ## Missing artwork — the fallback
 
-Only `0130.png` exists so far, so the fallback is the normal path.
+Only `0100`, `0130`, `0140`, `0150`, `0160`, `0170` and `0180` have artwork so
+far, so the fallback is still the normal path for most of the timeline.
 `createProgressEvidenceCardMedia()` attaches an `error` handler to the `<img>`;
 on a 404 it swaps itself for a placeholder printing:
 
@@ -260,20 +386,26 @@ were *made*. Anything needing chronological order must use
 
 ## Tests
 
-`tests/e2e/progress-timeline/` — 34 tests across three files:
+`tests/e2e/progress-timeline/` — 43 tests across three files:
 
-- **`progress-timeline-board.spec.js`** (21) — frame rendering and ordering,
+- **`progress-timeline-board.spec.js`** (26) — frame rendering and ordering,
   date formatting, one-milestone-unlocks-several-photographs, locked-out
   photographs, correct/incorrect placement, displacement, the × button,
   frame→frame and frame→envelope drags, the ghost appearing and the envelope
   fading mid-drag, a sub-threshold press staying a click, a miss leaving the
   photograph put, four-correct locking, locked-frame refusal, the missing-art
-  fallback, real artwork, save/load, reload, New Game.
+  fallback, real artwork, save/load, reload, New Game, plus the snaking layout,
+  the arrows turning with it, and the oversized question-mark frame.
 - **`progress-timeline-carousel.spec.js`** (7) — stepping, wraparound, the
-  slide/fade animation, fill-from-the-left, and the pool shrinking when a
-  photograph is placed. Ported from the old progressEvidence carousel suite.
-- **`progress-timeline-envelope.spec.js`** (6) — which photographs reach the
-  envelope and when.
+  slide/fade animation, unlocked photographs filling the strip from the left,
+  and the pool shrinking when a photograph is placed. Ported from the old
+  progressEvidence carousel suite.
+- **`progress-timeline-envelope.spec.js`** (10) — which photographs reach the
+  envelope and when, that an untriggered non-starter photograph never reaches
+  it, and that nothing carries a spoiler tooltip. No test currently exercises
+  `availableFromStart` actually bypassing the trigger check, since no event in
+  the registry uses the flag any more — see that field in the schema section
+  above.
 
 Drag tests drive a **real mouse** — `mouse.move` → `mouse.down` → stepped
 `mouse.move` → `mouse.up` — not synthetic events.
@@ -284,21 +416,43 @@ drag that did not work at all for a player. Synthetic events cannot tell you
 whether a drag can *start*. Anything testing this interaction must go through
 `page.mouse`.
 
+No event currently uses `availableFromStart`, so the pool genuinely starts
+empty and most assertions below say so directly. `progress-timeline-board.spec.js`
+still folds a `STARTER_PHOTO_IDS` baseline (read from the registry, not
+hardcoded) into its pool assertions via `sortedWithStarters()`, so it keeps
+working unchanged if a future event is ever marked `availableFromStart` again.
+
 ```bash
 npx playwright test tests/e2e/progress-timeline
 ```
 
-Full suite: **195 passed**.
+Full suite: **201 of 204 passed** — the 3 failures are the pre-existing
+envelope-position bug described in "Still to come" below, not a regression.
 
 ---
 
 ## Still to come
 
-- **Artwork** for the other 13 enabled frames.
+- **The envelope-position bug (3 known test failures).** The noticeboard scene
+  only recentres its pan on a brand-new game (`focusWorldAtCenter()` inside
+  `startGame(true)` in `game.js`), computed against whichever world height was
+  active *at that moment* — normally the desk's. Nothing recentres again when
+  the player actually navigates to the noticeboard, so its much taller world
+  (`NOTICEBOARD_WORLD_HEIGHT`) opens at an inherited, effectively arbitrary
+  pan. The envelope (anchored near the middle of *that* world) ends up off
+  the bottom of the screen, unreachable by mouse. This predates the drag
+  feature and is not caused by it — it needs a recentre call added to
+  whatever handles the desk→noticeboard transition, not a change to the
+  envelope's own CSS anchor or drag logic, both of which are already correct.
+  Failing until fixed: `progress-timeline-board.spec.js`'s
+  "a photograph can be dragged out of a frame back into the envelope", and
+  `progress-timeline-envelope.spec.js`'s two envelope-drag persistence tests.
+- **Artwork** for every frame past `0130.png`.
 - **The quiz phase.** The frames are the answer key; simple date questions can
   be generated straight from this registry.
 - **Localizing `description`** into `de`/`es`/`fr`/`it`, and the month
   abbreviations, which currently fall back to English.
-- **Tightening the enabled set.** Several enabled frames still share an unlock
-  trigger with a frame that is *not* enabled, which is fine, but the curated
-  list should be reviewed once the art plan is settled.
+- **`availableFromStart` events**, if a future fact should be handed to the
+  player from the first moment of a new game rather than unlocked — no event
+  currently uses the flag, but it is kept in the schema for exactly that. See
+  that field in the schema section above.

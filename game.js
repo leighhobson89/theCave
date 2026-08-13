@@ -15,6 +15,7 @@ import {
   ZOOM_LEVELS,
   WORLD_WIDTH,
   WORLD_HEIGHT,
+  NOTICEBOARD_WORLD_HEIGHT,
   PARALLAX_FACTOR,
   SCENE_FADE_DURATION_MS,
   LANGUAGE_BUTTON_KEYS_BY_CODE,
@@ -64,11 +65,20 @@ function getViewportRect() {
   return getElements().desktopViewport.getBoundingClientRect();
 }
 
+// The noticeboard scene is far taller than the desk, so the height panning is
+// clamped against depends on which scene is showing. Using one shared world
+// height would leave most of the corkboard unreachable.
+function getActiveWorldHeight() {
+  return getActiveGameplayState() === getNoticeboardState()
+    ? NOTICEBOARD_WORLD_HEIGHT
+    : WORLD_HEIGHT;
+}
+
 function clampPan() {
   const rect = getViewportRect();
   const zoom = ZOOM_LEVELS[getCurrentZoomIndex()];
   const scaledWidth = WORLD_WIDTH * zoom;
-  const scaledHeight = WORLD_HEIGHT * zoom;
+  const scaledHeight = getActiveWorldHeight() * zoom;
 
   const minPanX = Math.min(0, rect.width - scaledWidth);
   const minPanY = Math.min(0, rect.height - scaledHeight);
@@ -230,7 +240,7 @@ function focusWorldAtCenter() {
   const rect = getViewportRect();
   const zoom = ZOOM_LEVELS[getCurrentZoomIndex()];
   const scaledWidth = WORLD_WIDTH * zoom;
-  const scaledHeight = WORLD_HEIGHT * zoom;
+  const scaledHeight = getActiveWorldHeight() * zoom;
 
   setPanX((rect.width - scaledWidth) / 2);
   setPanY((rect.height - scaledHeight) / 2);
@@ -402,6 +412,38 @@ function initializeGameplayInteractions() {
   bindDesktopObjectAudio();
 
   setGameplayInteractionsInitialized(true);
+}
+
+// Pans the noticeboard so `element` sits in the middle of the viewport. The
+// board is taller than the screen at every zoom level, so anything that wants to
+// draw the player's attention to a particular frame has to bring it into view
+// rather than assume it is already there.
+export function focusNoticeboardOnElement(element, { horizontalAnchor = 0.5, verticalAnchor = 0.5 } = {}) {
+  if (!element || getActiveGameplayState() !== getNoticeboardState()) {
+    return false;
+  }
+
+  const viewportRect = getViewportRect();
+  const elementRect = element.getBoundingClientRect();
+
+  // Worked out as a delta between two on-screen rectangles rather than from
+  // offsetLeft/offsetTop. The board is absolutely positioned and centred with a
+  // translate(-50%, -50%), and the scene carries the zoom on its own transform,
+  // so offset coordinates do not describe where anything actually is.
+  // The anchors say where in the viewport the element should end up, as
+  // fractions of its width and height. The envelope window is docked bottom
+  // left, so callers wanting a frame to stay clear of it aim right rather than
+  // centre. Pan clamping means a frame in the bottom row cannot always be
+  // lifted above the window, so avoiding it horizontally is the reliable axis.
+  const anchorX = Math.min(0.9, Math.max(0.1, horizontalAnchor));
+  const anchorY = Math.min(0.9, Math.max(0.1, verticalAnchor));
+  const deltaX = (viewportRect.left + viewportRect.width * anchorX) - (elementRect.left + elementRect.width / 2);
+  const deltaY = (viewportRect.top + viewportRect.height * anchorY) - (elementRect.top + elementRect.height / 2);
+
+  setPanX(getPanX() + deltaX);
+  setPanY(getPanY() + deltaY);
+  applySceneTransform();
+  return true;
 }
 
 export function startGame(resetView = false) {

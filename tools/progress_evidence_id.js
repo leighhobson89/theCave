@@ -28,6 +28,7 @@ const CONTROL_DIGIT_BY_SERVICE = {
   archives: "3",
   standalone: "4",
   facsimile: "5",
+  desktop: "6",
 };
 
 const SERVICE_BY_CONTROL_DIGIT = Object.fromEntries(

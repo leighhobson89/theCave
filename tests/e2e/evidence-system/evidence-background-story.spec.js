@@ -27,3 +27,26 @@ test("closing and reopening the story window reloads the same content", async ({
   await page.locator("#backgroundFolder").click();
   await expect(page.locator(".story-document-text")).toContainText("John Spencer");
 });
+
+// Opening the story is progress evidence 60001 (service "desktop", itemId
+// "theArnieTragedyStory" — see docs/progress-evidence-system.md), which is in
+// turn the unlock trigger for timeline event 0180. A real click on the desk
+// icon, not a direct call into progressEvidenceManager, so this also proves
+// the wiring from the actual entry point a player uses.
+test("opening the background story unlocks timeline event 0180", async ({ page }) => {
+  await startNewGame(page);
+
+  expect(await page.evaluate(
+    () => window.progressTimeLineEventDeveloperTools.isProgressTimeLinePhotoUnlocked("0180")
+  )).toBe(false);
+
+  await page.locator("#backgroundFolder").click();
+  await expect(page.locator(".desktop-window-header:has-text('The Arnie Tragedy')")).toBeVisible();
+
+  expect(await page.evaluate(
+    () => window.progressEvidenceDeveloperTools.isProgressEvidenceActivated("60001")
+  )).toBe(true);
+  expect(await page.evaluate(
+    () => window.progressTimeLineEventDeveloperTools.isProgressTimeLinePhotoUnlocked("0180")
+  )).toBe(true);
+});

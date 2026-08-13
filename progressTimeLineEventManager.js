@@ -35,7 +35,7 @@ export const PROGRESS_TIMELINE_EVENT_DEFINITIONS_PATH = "./assets/progressTimeLi
 // Artwork lives here, named after the progressTimeLineEventId it fits. A
 // definition may name its own file instead; where it does not, the
 // [progressTimeLineEventId].png convention applies.
-export const PROGRESS_TIMELINE_EVENT_IMAGE_DIRECTORY = "./assets/photos/progressTimeLineEventImages";
+export const PROGRESS_TIMELINE_EVENT_IMAGE_DIRECTORY = "./assets/progressEvidenceImages";
 export const PROGRESS_TIMELINE_EVENT_IMAGE_PATH_TEMPLATE =
   `${PROGRESS_TIMELINE_EVENT_IMAGE_DIRECTORY}/{progressTimeLineEventId}.png`;
 
@@ -132,6 +132,10 @@ function registerProgressTimeLineEventDefinition(definition) {
     // events legitimately share one trigger when a single page carries clues
     // about more than one date.
     unlockedByProgressEvidenceId: normalizeProgressEvidenceId(definition.unlockedByProgressEvidenceId),
+    // A "starter kit" photograph: in the player's hands from the very first
+    // moment of a new game, no milestone required. Bypasses
+    // unlockedByProgressEvidenceId entirely — see isProgressTimeLinePhotoUnlocked().
+    availableFromStart: definition.availableFromStart === true,
     // An explicit image beats the [progressTimeLineEventId].png convention.
     imagePath: String(definition.imagePath ?? "").trim(),
     description,
@@ -233,13 +237,19 @@ export function getBoardProgressTimeLineEvents() {
 // --- The photograph pool ---------------------------------------------------
 
 // A photograph exists for the player once the milestone that reveals it has
-// been reached. The frame must also be developer-enabled: an unreleased frame
-// must not leak its photograph into the envelope, or the player would hold a
-// picture with nowhere to put it.
+// been reached — or immediately, for a handful marked `availableFromStart`
+// ("starter kit" evidence the player is simply handed, nothing to unlock). The
+// frame must also be developer-enabled either way: an unreleased frame must not
+// leak its photograph into the envelope, or the player would hold a picture
+// with nowhere to put it.
 export function isProgressTimeLinePhotoUnlocked(progressTimeLineEventId) {
   const entry = progressTimeLineEventEntriesById.get(normalizeProgressTimeLineEventId(progressTimeLineEventId));
   if (!entry || entry.progressTimeLineEventDeveloperEnabled !== true) {
     return false;
+  }
+
+  if (entry.availableFromStart === true) {
+    return true;
   }
 
   if (!entry.unlockedByProgressEvidenceId) {

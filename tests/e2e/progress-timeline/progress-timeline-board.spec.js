@@ -14,6 +14,7 @@ const {
   loadSaveStringViaMenu,
   openNoticeboard,
   openProgressEvidenceEnvelope,
+  progressEvidenceWindow,
   startNewGame,
 } = require("../../support/game-helpers");
 
@@ -22,6 +23,24 @@ const progressTimeLineEventDefinitions = require("../../../assets/progressTimeLi
 const enabledDefinitions = progressTimeLineEventDefinitions.filter(
   (definition) => definition.progressTimeLineEventDeveloperEnabled === true
 );
+
+// No timeline event is currently `availableFromStart` (see
+// progressTimeLineEventManager.js) — the flag exists so a future event could
+// be handed to the player from the first moment of a new game, but nothing
+// uses it right now, so the pool starts genuinely empty. Read from the
+// registry rather than hardcoded, per this project's rule against restating
+// an authoring decision that changes freely, so these tests keep working
+// unchanged if that ever stops being true.
+const STARTER_PHOTO_IDS = progressTimeLineEventDefinitions
+  .filter((definition) => definition.availableFromStart === true)
+  .map((definition) => definition.progressTimeLineEventId)
+  .sort();
+
+// What any exact pool assertion should compare against once `ids` have been
+// unlocked — folds in the (currently empty) starter baseline above.
+function sortedWithStarters(...ids) {
+  return [...STARTER_PHOTO_IDS, ...ids].sort();
+}
 
 // Frames whose photographs all come from one milestone, so a single activation
 // puts a known set into the envelope.
@@ -77,7 +96,18 @@ async function unlockPhotos(page, frameIds) {
 // a player makes, which is the only way to catch the drag failing to start at
 // all. (The first version of these tests dispatched DragEvents directly and
 // therefore passed against a drag that did not work.)
+async function focusFrame(page, frameId) {
+  await page.evaluate(
+    (id) => window.progressTimeLineEventDeveloperTools.focusProgressTimeLineFrame(id),
+    frameId
+  );
+}
+
 async function dragPhoto(page, { photoId, fromFrameId = "", toFrameId = "", toEnvelope = false, release = true }) {
+  // The board is taller than the screen, so whichever frame the drag involves
+  // has to be panned into view before its coordinates mean anything.
+  await focusFrame(page, fromFrameId || toFrameId);
+
   const source = fromFrameId
     ? page.locator(
       `.progress-timeline-frame[data-progress-time-line-event-id="${fromFrameId}"] .progress-timeline-frame-slot`
@@ -159,7 +189,7 @@ test("a new game starts with empty frames and an empty envelope", async ({ page 
   await startNewGame(page);
   await openNoticeboard(page);
 
-  expect(await envelopePhotoIds(page)).toEqual([]);
+  expect(await envelopePhotoIds(page)).toEqual(STARTER_PHOTO_IDS);
   expect(await page.evaluate(
     () => window.progressTimeLineEventDeveloperTools.getProgressTimeLineEventPlacements()
   )).toEqual({});
@@ -177,8 +207,9 @@ test("one milestone can unlock several photographs, one per frame", async ({ pag
   await activateProgressEvidence(page, "00002");
   await openNoticeboard(page);
 
-  // One activation, two distinct photographs, each named after its own frame.
-  expect(await envelopePhotoIds(page)).toEqual(UNLOCK_00002_FRAMES);
+  // One activation, two distinct photographs, each named after its own frame
+  // (plus the starter baseline that is always present).
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters(...UNLOCK_00002_FRAMES));
 
   // Each is correct in its own frame, and both can be right at once — which is
   // the whole point of identifying a photograph by frame rather than by source.
@@ -252,7 +283,7 @@ test("a press that never moves is a click, not a drag", async ({ page }) => {
   await page.mouse.up();
 
   await expect(page.locator(".progress-timeline-photo-ghost")).toHaveCount(0);
-  expect(await envelopePhotoIds(page)).toEqual(["0130"]);
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters("0130"));
 });
 
 test("dropping a photograph somewhere that is neither a frame nor the envelope leaves it where it was", async ({ page }) => {
@@ -273,7 +304,7 @@ test("dropping a photograph somewhere that is neither a frame nor the envelope l
   expect(await page.evaluate(
     () => window.progressTimeLineEventDeveloperTools.getProgressTimeLineEventPlacements()
   )).toEqual({});
-  expect(await envelopePhotoIds(page)).toEqual(["0130"]);
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters("0130"));
 });
 
 test("dragging a photograph from the envelope into its frame records it correct and empties it from the envelope", async ({ page }) => {
@@ -282,7 +313,7 @@ test("dragging a photograph from the envelope into its frame records it correct 
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
 
-  expect(await envelopePhotoIds(page)).toEqual(["0130"]);
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters("0130"));
   expect(await dragPhoto(page, { photoId: "0130", toFrameId: "0130" })).toBe(true);
 
   expect(await readPlacement(page, "0130")).toEqual({
@@ -291,8 +322,9 @@ test("dragging a photograph from the envelope into its frame records it correct 
     isLocked: false,
   });
 
-  // Placed photographs leave the pool — there is only one of each.
-  expect(await envelopePhotoIds(page)).toEqual([]);
+  // Placed photographs leave the pool — there is only one of each. The
+  // starters are unaffected, since 0130 was never one of them.
+  expect(await envelopePhotoIds(page)).toEqual(STARTER_PHOTO_IDS);
 
   const target = frame(page, "0130");
   await expect(target).toHaveClass(/is-filled/);
@@ -322,12 +354,12 @@ test("the cross button returns a photograph to the envelope", async ({ page }) =
   await openNoticeboard(page);
 
   await place(page, "0130", "0130");
-  expect(await envelopePhotoIds(page)).toEqual([]);
+  expect(await envelopePhotoIds(page)).toEqual(STARTER_PHOTO_IDS);
 
   await frame(page, "0130").locator(".progress-timeline-frame-remove").click();
 
   expect(await readPlacement(page, "0130")).toBeNull();
-  expect(await envelopePhotoIds(page)).toEqual(["0130"]);
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters("0130"));
   await expect(frame(page, "0130")).not.toHaveClass(/is-filled/);
 });
 
@@ -351,12 +383,12 @@ test("a photograph can be dragged out of a frame back into the envelope", async 
   await openProgressEvidenceEnvelope(page);
 
   await place(page, "0130", "0130");
-  expect(await envelopePhotoIds(page)).toEqual([]);
+  expect(await envelopePhotoIds(page)).toEqual(STARTER_PHOTO_IDS);
 
   expect(await dragPhoto(page, { photoId: "0130", fromFrameId: "0130", toEnvelope: true })).toBe(true);
 
   expect(await readPlacement(page, "0130")).toBeNull();
-  expect(await envelopePhotoIds(page)).toEqual(["0130"]);
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters("0130"));
 });
 
 test("dropping onto an occupied frame displaces the photograph that was there", async ({ page }) => {
@@ -365,14 +397,14 @@ test("dropping onto an occupied frame displaces the photograph that was there", 
   await openNoticeboard(page);
 
   await place(page, "0220", "0390");
-  expect(await envelopePhotoIds(page)).toEqual(["0220"]);
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters("0220"));
 
   const result = await place(page, "0220", "0220");
   expect(result.isCorrect).toBe(true);
   expect(result.displacedPhotoId).toBe("0390");
 
   // The displaced photograph goes back to the pool rather than vanishing.
-  expect(await envelopePhotoIds(page)).toEqual(["0390"]);
+  expect(await envelopePhotoIds(page)).toEqual(sortedWithStarters("0390"));
 });
 
 test("four correct placements lock together, consecutive or not", async ({ page }) => {
@@ -400,6 +432,41 @@ test("four correct placements lock together, consecutive or not", async ({ page 
 
   await expect(frame(page, "0130")).toHaveClass(/is-locked/);
   await expect(frame(page, "0130")).toHaveAttribute("data-placement-locked", "true");
+});
+
+test("a frame's tooltip carries the event description once locked, and not before", async ({ page }) => {
+  await startNewGame(page);
+  const lockSet = ["0130", "0320", "0270", "0520"];
+  await unlockPhotos(page, lockSet);
+  await openNoticeboard(page);
+
+  const description = progressTimeLineEventDefinitions
+    .find((definition) => definition.progressTimeLineEventId === "0130").description.en;
+
+  // Empty frame: no tooltip.
+  expect(await frame(page, "0130").getAttribute("title")).toBeNull();
+
+  // Correctly placed but not yet locked: still no tooltip — the puzzle for
+  // this frame is not settled until the whole batch locks.
+  await place(page, "0130", "0130");
+  expect(await frame(page, "0130").getAttribute("title")).toBeNull();
+
+  // The fourth correct placement locks the batch.
+  await place(page, "0320", "0320");
+  await place(page, "0270", "0270");
+  await place(page, "0520", "0520");
+  await expect(frame(page, "0130")).toHaveClass(/is-locked/);
+
+  // Now, and only now, the tooltip carries the description.
+  await expect(frame(page, "0130")).toHaveAttribute("title", description);
+
+  // Permanent: still there after a full save/reload cycle re-renders the
+  // board from scratch, not just as a leftover from the moment it locked.
+  await page.reload();
+  await page.locator("#resumeFromMenu").click();
+  await expect(page.locator("#gameArea")).toBeVisible();
+  await openNoticeboard(page);
+  await expect(frame(page, "0130")).toHaveAttribute("title", description);
 });
 
 test("a locked frame cannot be emptied, replaced, or dragged out of", async ({ page }) => {
@@ -431,8 +498,8 @@ test("a locked frame cannot be emptied, replaced, or dragged out of", async ({ p
 
 test("a photograph with no artwork falls back to its id and filename in the envelope and the frame", async ({ page }) => {
   await startNewGame(page);
-  // 0320 has no PNG in assets/photos/progressTimeLineEventImages yet, which is
-  // the normal case while the art is being drawn.
+  // 0320 has no PNG in assets/progressEvidenceImages yet, which is the normal
+  // case while the art is being drawn.
   await unlockPhotos(page, ["0320"]);
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
@@ -450,13 +517,12 @@ test("a photograph with no artwork falls back to its id and filename in the enve
 
 test("a photograph whose artwork exists renders that image", async ({ page }) => {
   await startNewGame(page);
-  // 0130.png is the one piece of art currently in the folder.
   await unlockPhotos(page, ["0130"]);
   await openNoticeboard(page);
 
   expect(await page.evaluate(
     () => window.progressTimeLineEventDeveloperTools.resolveProgressTimeLineEventImagePath("0130")
-  )).toBe("./assets/photos/progressTimeLineEventImages/0130.png");
+  )).toBe("./assets/progressEvidenceImages/0130.png");
 
   await place(page, "0130", "0130");
 
@@ -535,8 +601,137 @@ test("a new game clears placements and locks but leaves the frames in place", as
   expect(await page.evaluate(
     () => window.progressTimeLineEventDeveloperTools.getLockedProgressTimeLineFrameIds()
   )).toEqual([]);
-  expect(await envelopePhotoIds(page)).toEqual([]);
+  // Back to the (currently empty) starter baseline — New Game clears player
+  // progress, and unlocking those four milestones was player progress.
+  expect(await envelopePhotoIds(page)).toEqual(STARTER_PHOTO_IDS);
 
   // The frames are content, not progress — they survive.
   await expect(frames(page)).toHaveCount(enabledDefinitions.length);
+});
+
+// ---------------------------------------------------------------------------
+// The snaking layout: earliest bottom-left, running right, then climbing and
+// running back left, with arrows following that path up to the oversized
+// question-mark frame at the top.
+// ---------------------------------------------------------------------------
+
+// The first and last frame of each row, read from the live enabled set rather
+// than hardcoded: which events are enabled is an authoring decision that
+// changes freely, and gaps in the id sequence (a retired or not-yet-placed
+// event) shift row boundaries just as much as the count does. Chunking the
+// same chronological order the board itself renders in is what keeps these
+// honest.
+const ROWS_OF_SIX = enabledDefinitions.reduce((rows, definition, index) => {
+  if (index % 6 === 0) {
+    rows.push([]);
+  }
+  rows[rows.length - 1].push(definition.progressTimeLineEventId);
+  return rows;
+}, []);
+const ROW0_FIRST = ROWS_OF_SIX[0][0];
+const ROW0_LAST = ROWS_OF_SIX[0][ROWS_OF_SIX[0].length - 1];
+const ROW1_FIRST = ROWS_OF_SIX[1][0];
+const ROW1_LAST = ROWS_OF_SIX[1][ROWS_OF_SIX[1].length - 1];
+
+async function frameBox(page, frameId) {
+  return frame(page, frameId).boundingBox();
+}
+
+test("every timeline event is on the board, none held back", async ({ page }) => {
+  await startNewGame(page);
+  await openNoticeboard(page);
+
+  // Every registered event is currently released, so the board is the whole
+  // timeline — not a fixed count, since which events exist and which are
+  // enabled both change as the timeline is authored.
+  expect(enabledDefinitions).toHaveLength(progressTimeLineEventDefinitions.length);
+  await expect(frames(page)).toHaveCount(progressTimeLineEventDefinitions.length);
+});
+
+test("rows hold six frames and are centred on the board", async ({ page }) => {
+  await startNewGame(page);
+  await openNoticeboard(page);
+
+  const rows = page.locator("#progressTimeLineBoard .progress-timeline-row");
+  await expect(rows.nth(0).locator(".progress-timeline-frame")).toHaveCount(6);
+
+  const board = await page.locator("#progressTimeLineBoard").boundingBox();
+  const row = await rows.nth(0).boundingBox();
+  expect(Math.abs((row.x + row.width / 2) - (board.x + board.width / 2))).toBeLessThan(4);
+});
+
+test("the timeline snakes: earliest bottom-left, running right, then climbing and running back left", async ({ page }) => {
+  await startNewGame(page);
+  await openNoticeboard(page);
+
+  const row0First = await frameBox(page, ROW0_FIRST);
+  const row0Last = await frameBox(page, ROW0_LAST);
+  const row1First = await frameBox(page, ROW1_FIRST);
+  const row1Last = await frameBox(page, ROW1_LAST);
+
+  // Bottom row runs left to right.
+  expect(row0First.x).toBeLessThan(row0Last.x);
+  expect(Math.abs(row0First.y - row0Last.y)).toBeLessThan(2);
+
+  // The row above sits higher up the board (smaller y).
+  expect(row1First.y).toBeLessThan(row0First.y);
+
+  // ...and runs the other way: its first frame is on the RIGHT, continuing from
+  // where the row below ended, and it travels back towards the left.
+  expect(row1First.x).toBeGreaterThan(row1Last.x);
+  expect(Math.abs(row1First.y - row1Last.y)).toBeLessThan(2);
+
+  // The turn happens where the previous row finished, not at the far end of the
+  // board. The tolerance allows for the turn arrow, which takes its own space at
+  // the row's outer edge and nudges the next row's start along by a little over
+  // one frame width.
+  expect(Math.abs(row1First.x - row0Last.x)).toBeLessThan(row0Last.width * 1.6);
+});
+
+test("arrows trace the path, turning with the snake", async ({ page }) => {
+  await startNewGame(page);
+  await openNoticeboard(page);
+
+  const rows = page.locator("#progressTimeLineBoard .progress-timeline-row");
+  // 44 events at six per row.
+  await expect(rows).toHaveCount(Math.ceil(progressTimeLineEventDefinitions.length / 6));
+
+  // A full row of six frames has five arrows between them plus one turn arrow
+  // climbing to the row above.
+  const bottomRowArrows = rows.nth(0).locator(".progress-timeline-arrow");
+  await expect(bottomRowArrows).toHaveCount(6);
+  await expect(bottomRowArrows.nth(0)).toHaveClass(/is-right/);
+  await expect(bottomRowArrows.nth(5)).toHaveClass(/is-up/);
+
+  // The row above runs the other way, so its arrows point the other way.
+  const secondRowArrows = rows.nth(1).locator(".progress-timeline-arrow");
+  await expect(secondRowArrows.nth(0)).toHaveClass(/is-left/);
+  await expect(secondRowArrows.nth(5)).toHaveClass(/is-up/);
+});
+
+test("an oversized question-mark frame sits at the top centre, above every dated frame", async ({ page }) => {
+  await startNewGame(page);
+  await openNoticeboard(page);
+
+  const finalFrame = page.locator("#progressTimeLineFinalFrame");
+  await expect(finalFrame).toHaveCount(1);
+  await expect(finalFrame.locator(".progress-timeline-final-frame-question")).toHaveText("?");
+
+  const finalBox = await finalFrame.boundingBox();
+  const ordinaryBox = await frameBox(page, ROW0_FIRST);
+
+  // Four times the width of an ordinary frame.
+  expect(finalBox.width).toBeGreaterThan(ordinaryBox.width * 3.5);
+
+  // Above every dated frame on the board.
+  const topOfDatedFrames = Math.min(...await frames(page).evaluateAll(
+    (elements) => elements.map((element) => element.getBoundingClientRect().top)
+  ));
+  expect(finalBox.y + finalBox.height).toBeLessThanOrEqual(topOfDatedFrames + 1);
+
+  // Centred across the board rather than sitting at one end.
+  const board = await page.locator("#progressTimeLineBoard").boundingBox();
+  const finalCentre = finalBox.x + finalBox.width / 2;
+  const boardCentre = board.x + board.width / 2;
+  expect(Math.abs(finalCentre - boardCentre)).toBeLessThan(4);
 });

@@ -2,10 +2,6 @@ const INJECT_API_URL = "http://localhost:5058/api/web-content/upsert";
 const NEXT_CASE_NUMBER_API_URL = "http://localhost:5058/api/web-content/next-police-case-number";
 const NEXT_PROGRESS_EVIDENCE_ID_API_URL = "http://localhost:5058/api/web-content/next-progress-evidence-id";
 
-// Where the Progress Evidence photo picker writes its paths. Must match
-// PROGRESS_EVIDENCE_IMAGE_DIRECTORY in progressEvidenceManager.js.
-const PROGRESS_EVIDENCE_IMAGE_DIRECTORY = "./assets/photos/progressEvidenceImages";
-
 const contentTypeSelect = document.getElementById("contentTypeSelect");
 const idInput = document.getElementById("idInput");
 const bodyInput = document.getElementById("bodyInput");
@@ -78,9 +74,6 @@ const standaloneApplyAltInput = document.getElementById("standaloneApplyAltInput
 
 const progressEvidenceIdInput = document.getElementById("progressEvidenceIdInput");
 const allocateProgressEvidenceIdButton = document.getElementById("allocateProgressEvidenceIdButton");
-const progressEvidenceImageInput = document.getElementById("progressEvidenceImageInput");
-const chooseProgressEvidenceImageButton = document.getElementById("chooseProgressEvidenceImageButton");
-const progressEvidenceImagePicker = document.getElementById("progressEvidenceImagePicker");
 const progressEvidenceActivatedInput = document.getElementById("progressEvidenceActivatedInput");
 const progressEvidenceDeveloperEnabledInput = document.getElementById("progressEvidenceDeveloperEnabledInput");
 
@@ -630,14 +623,8 @@ function buildProgressEvidenceFields() {
     );
   }
 
-  const progressEvidenceImage = String(progressEvidenceImageInput.value || "").trim();
-  if (!progressEvidenceImage) {
-    throw new Error("Progress Evidence: choose a progress evidence image before previewing or injecting.");
-  }
-
   return {
     progressEvidenceId,
-    progressEvidenceImage,
     // Player progress: true means "count this as already reached", so it shows
     // in the envelope straight away.
     progressEvidenceActivated: Boolean(progressEvidenceActivatedInput.checked),
@@ -769,32 +756,6 @@ async function maybePrefillProgressEvidenceId() {
     progressEvidenceIdInput.value = "";
     lastAllocatedProgressEvidenceService = "";
   }
-
-  syncProgressEvidenceImageToId();
-}
-
-// A path this form filled in itself, rather than one the author chose with the
-// photo picker or typed by hand.
-function isConventionProgressEvidenceImagePath(value) {
-  return new RegExp(`^${PROGRESS_EVIDENCE_IMAGE_DIRECTORY.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}/\\d+\\.png$`)
-    .test(String(value || "").trim());
-}
-
-// Keeps the image path on the [progressEvidenceId].png convention as the id
-// changes, so the common case needs no picking at all. An image the author
-// actually chose is never overwritten — only a blank field, or a convention
-// path left over from a previously allocated id.
-function syncProgressEvidenceImageToId() {
-  const progressEvidenceId = String(progressEvidenceIdInput.value || "").trim();
-  const currentImagePath = String(progressEvidenceImageInput.value || "").trim();
-
-  if (currentImagePath && !isConventionProgressEvidenceImagePath(currentImagePath)) {
-    return;
-  }
-
-  progressEvidenceImageInput.value = progressEvidenceId
-    ? `${PROGRESS_EVIDENCE_IMAGE_DIRECTORY}/${progressEvidenceId}.png`
-    : "";
 }
 
 function renderPreview() {
@@ -882,7 +843,6 @@ function clearForm() {
     evidenceDescriptionInput,
     evidencePhotoCaptionInput,
     progressEvidenceIdInput,
-    progressEvidenceImageInput,
   ].forEach((element) => {
     element.value = "";
   });
@@ -1102,31 +1062,12 @@ if (allocateProgressEvidenceIdButton) {
     try {
       progressEvidenceIdInput.value = await fetchNextProgressEvidenceId(service);
       lastAllocatedProgressEvidenceService = service;
-      syncProgressEvidenceImageToId();
       setStatus(`Allocated progressEvidenceId ${progressEvidenceIdInput.value} for ${service}.`);
     } catch (error) {
       setStatus(error.message);
     }
   });
 }
-
-chooseProgressEvidenceImageButton.addEventListener("click", () => {
-  progressEvidenceImagePicker.click();
-});
-
-// One image per record, so this replaces rather than appends -- unlike the
-// content Image paths picker, which merges into a list.
-progressEvidenceImagePicker.addEventListener("change", () => {
-  const [fileName] = Array.from(progressEvidenceImagePicker.files || [])
-    .map((file) => String(file?.name || "").trim())
-    .filter(Boolean);
-
-  if (fileName) {
-    progressEvidenceImageInput.value = `${PROGRESS_EVIDENCE_IMAGE_DIRECTORY}/${fileName}`;
-  }
-
-  progressEvidenceImagePicker.value = "";
-});
 
 chooseImagePathsButton.addEventListener("click", () => {
   imagePathsPicker.click();

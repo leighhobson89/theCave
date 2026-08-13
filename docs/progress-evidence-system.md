@@ -25,14 +25,26 @@ Files:
 | File | Role |
 | --- | --- |
 | [`../progressEvidenceManager.js`](../progressEvidenceManager.js) | The whole model: the registry of every website and fax, the activated collection, eligibility, id allocation, and the save snapshot |
-| [`../ui.js`](../ui.js) | The envelope's window, the three-card carousel, the image/placeholder loader, and the activation call sites |
+| [`../ui.js`](../ui.js) | The envelope's window, the three-card carousel, and the activation call sites |
 | [`../styles.css`](../styles.css) | Two blocks: "Progress evidence envelope (noticeboard)" and "Progress evidence carousel" |
 | [`../index.html`](../index.html) | The envelope markup inside `#noticeboardScene` |
-| [`../assets/photos/progressEvidenceImages/`](../assets/photos/progressEvidenceImages/) | The card images |
-| [`../assets/progressEvidence.json`](../assets/progressEvidence.json) | **The registry.** Every website and fax, with its id, image and both flags |
+| [`../assets/progressEvidence.json`](../assets/progressEvidence.json) | **The registry.** Every website and fax, with its id and both flags |
 | [`../tools/web_content_builder.html`](../tools/web_content_builder.html) | The **Progress Evidence** panel that authors a new item |
 | [`../tools/progress_evidence_id.js`](../tools/progress_evidence_id.js) | The server's `progressEvidenceId` allocator |
 | [`../tests/e2e/progress-evidence/`](../tests/e2e/progress-evidence/) | The E2E coverage |
+
+> **The envelope no longer renders this registry's own artwork.** Since the
+> corkboard timeline was added, the envelope carousel shows *that* system's
+> photographs (one per dated frame) instead of a card per progress evidence
+> item — see
+> [progress-timeline-event-system.md](progress-timeline-event-system.md).
+> A `progressEvidenceId` here is now purely a **milestone/trigger id**: what a
+> timeline event's `unlockedByProgressEvidenceId` points at to decide when its
+> photograph is revealed. `progressEvidenceManager.js` has no image concept of
+> its own any more, and `assets/progressEvidence.json` carries no `imagePath`
+> field — removed along with `resolveProgressEvidenceImagePath()`, the
+> `assets/photos/progressEvidenceImages/` folder, and the builder tool's image
+> picker, since nothing read them any longer.
 
 ---
 
@@ -61,7 +73,6 @@ service and every received fax, one definition each:
   "service": "zoomsearch",
   "itemId": "silvermineentrance",
   "label": "Black Pine Mine Exhausted",
-  "imagePath": "",
   "progressEvidenceActivated": false,
   "progressEvidenceDeveloperEnabled": true
 }
@@ -72,8 +83,7 @@ service and every received fax, one definition each:
 | `progressEvidenceId` | The id, fixed at authoring time (see "Id shape" below) |
 | `service` | Which in-game service it belongs to |
 | `itemId` | The record id inside that service's content JSON, or the fax config id |
-| `label` | Human-readable, for the audit and the card's tooltip |
-| `imagePath` | The card image. Every shipped definition names it explicitly, on the `[progressEvidenceId].png` convention; a blank one falls back to that same convention |
+| `label` | Human-readable, for the audit view |
 | `progressEvidenceActivated` | Authored activation — see below. Normally `false` |
 | `progressEvidenceDeveloperEnabled` | The developer's display switch |
 
@@ -134,6 +144,7 @@ the remaining four are that item's sequence within that service:
 | `3` | Canada Newspaper Archive |
 | `4` | Standalone pages |
 | `5` | Received faxes |
+| `6` | Desktop items (neither a website nor a fax — e.g. opening the background story) |
 
 So an id says where it came from with no lookup at all —
 `getProgressEvidenceServiceById()` just reads the leading digit. Four digits
@@ -210,15 +221,18 @@ until the developer enables it.
 | Opening a website record | `activateProgressEvidenceForWebRecord()`, on the `caveos-browser-record-opened` event | `detail.replay.siteId` + `detail.recordId` |
 | Visiting a standalone page | `activateProgressEvidenceForStandalonePage()`, in `navigateToStandalonePage()` | service `"standalone"` + the page's `id` |
 | Receiving a fax | `activateProgressEvidenceForFacsimileReport()`, in `queueFacsimileReport()` | service `"facsimile"` + the fax's `id` |
+| Opening the background story | `activateProgressEvidenceForDesktopItem()`, in `openStoryWindow()` | service `"desktop"` + itemId `"theArnieTragedyStory"` |
 
-All three go through `activateProgressEvidenceForItem(service, itemId)`, which
+All four go through `activateProgressEvidenceForItem(service, itemId)`, which
 looks the pair up in the registry and does nothing when there is no entry — an
 unregistered record or an ad-hoc test fax passes through harmlessly.
 
 Note the semantics: for a website the milestone is **opening the record**, not
 merely searching for it (the same distinction `registerRecordOpenFaxTrigger()`
 makes — see [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md)).
-For a fax it is **arrival**, not reading.
+For a fax it is **arrival**, not reading. For the background story it is
+**opening its window** — `openStoryWindow()` fires the call every time, but
+`activateProgressEvidence()` is idempotent, so only the first open counts.
 
 ### Adding a new trigger
 
@@ -291,15 +305,15 @@ the definition — no code change at all.
    dropped.
 2. Add a definition to `assets/progressEvidence.json` with its `service`,
    `itemId` and `label`. Leave `progressEvidenceDeveloperEnabled` off until the
-   artwork and the story beat are ready.
+   story beat it unlocks is ready.
 3. Make sure something activates it. If it is a website record or a fax, the
    three existing call sites already cover it — no code needed. Otherwise call
    `activateProgressEvidence(id)` from wherever that milestone happens.
-4. Set `imagePath` to `./assets/photos/progressEvidenceImages/[progressEvidenceId].png`
-   (or to whatever the artwork is actually called), and put the image there.
-   Until the file exists the placeholder covers it.
-5. Set `progressEvidenceDeveloperEnabled: true` when you want it in the
-   envelope.
+4. Point a timeline event's `unlockedByProgressEvidenceId` at this id — see
+   [progress-timeline-event-system.md](progress-timeline-event-system.md) —
+   which is what actually reveals a photograph to the player now.
+5. Set `progressEvidenceDeveloperEnabled: true` when you want the milestone to
+   be reachable at all.
 
 ---
 
@@ -438,45 +452,25 @@ and must be changed together.
 
 ## 8. Images and the placeholder
 
-Images live in `assets/photos/progressEvidenceImages/`, which is also where the
-builder tool's photo picker points.
+**This system has no images of its own any more.** `progressEvidence.json`
+used to carry an `imagePath` per definition (falling back to
+`[progressEvidenceId].png` in `assets/photos/progressEvidenceImages/`), and the
+envelope rendered that. Both the field and the folder are gone — removed once
+the envelope switched to showing the corkboard timeline's own photographs
+instead of a card per progress evidence item.
 
-**Every definition names its image explicitly**, on the naming convention:
+What renders in the envelope now, what a missing PNG falls back to, and the
+naming convention for that art (`[progressTimeLineEventId].png` in
+`assets/progressEvidenceImages/`) is documented in
+[progress-timeline-event-system.md](progress-timeline-event-system.md), not
+here. `createProgressEvidenceCardMedia()` in `ui.js` still does the actual
+image-or-placeholder rendering — the function kept its name across the switch
+— but it resolves artwork via `resolveProgressTimeLineEventImagePath()`, not
+anything in this file.
 
-```
-./assets/photos/progressEvidenceImages/[progressEvidenceId].png
-```
-
-for example `./assets/photos/progressEvidenceImages/00001.png` for
-`progressEvidenceId` `"00001"`. The builder prefills exactly this the moment an
-id is allocated, and re-derives it if the id changes, so authoring a record
-normally means touching the image field not at all — the photo picker is only
-for artwork that is named something else.
-
-A card resolves its image two ways, in order
-(`resolveProgressEvidenceImagePath()`):
-
-1. **The definition's `imagePath`**, which is the normal case.
-2. **The same naming convention**, when a hand-written definition leaves
-   `imagePath` blank. This fallback means an entry added by hand still finds its
-   artwork with no extra typing.
-
-The folder comes from `PROGRESS_EVIDENCE_IMAGE_DIRECTORY` in
-`progressEvidenceManager.js` and is re-derived on every render, so renaming it
-is a one-line change there (plus the matching constant in
-`tools/web_content_builder.js`, which the prefill and the picker both use).
-
-If the PNG is missing, the `<img>`'s own `error` handler replaces it with a
-portrait placeholder card carrying the `progressEvidenceId` as visible text (plus
-an "Evidence pending" caption). It is styled as a dashed, hatched evidence card
-so it reads as *awaiting artwork*, not as a broken image. A missing file
-therefore never breaks the viewer — the other cards render normally alongside it.
-
-All of this lives in **one function**, `createProgressEvidenceCardMedia()` in
-`ui.js`. When every image exists, deleting the placeholder branch there is the
-only change needed. Cards also currently print the `progressEvidenceId` under
-the image; that label is temporary and is the other thing to revisit once the
-artwork is complete.
+A `progressEvidenceId` is now purely a milestone/trigger id for that other
+system to point at (`unlockedByProgressEvidenceId`); it carries no visual of
+its own.
 
 ---
 
@@ -561,8 +555,16 @@ Activated by: the fax arriving (being queued), not by reading it.
 | Whitmore police credentials (`fax-whitmore-police-credentials`) | `WHITMORE_MINEMAP_MILESTONE_FAX_CONFIG`, on acquiring the mine-map photo | `50003` | false | false |
 | Whitmore level 3 credentials (`fax-whitmore-level3-credentials`) | `WHITMORE_LEVEL3_MILESTONE_FAX_CONFIG`, on opening Arthur Whitmore's police record | `50004` | false | false |
 
-**Totals: 27 websites across five services, plus 4 received faxes — 31 items,
-all registered.**
+### Desktop items (hardcoded in `ui.js`)
+
+Activated by: opening the desktop item, not reading it in full.
+
+| Item | Source | `progressEvidenceId` | Activated | Developer enabled |
+| --- | --- | --- | --- | --- |
+| Background story opened (`theArnieTragedyStory`) | `openStoryWindow()`, on opening the desktop story window | `60001` | false | false |
+
+**Totals: 27 websites across five services, plus 4 received faxes, plus 1
+desktop item — 32 items, all registered.**
 
 > The `Developer enabled` column above is the **shipped baseline**. It is the
 > one column here a developer is expected to change as content is released, so
@@ -597,9 +599,8 @@ this is what the panel does to this system.
 | Control | Effect |
 | --- | --- |
 | `progressEvidenceId` | Read-only. Allocated by `GET /api/web-content/next-progress-evidence-id?service=<service>` — the service's control digit plus one past its highest sequence in `assets/progressEvidence.json`. Changing the Content Type re-allocates it, since the id belongs to the new service's block. **Allocate** re-asks (useful if the API was not running when the page loaded) |
-| Progress Evidence Image | Required, and **prefilled from the id** as `./assets/photos/progressEvidenceImages/[progressEvidenceId].png`, re-derived whenever the id changes. The photo picker overrides it for artwork named something else, and a hand-picked path is never overwritten by a later re-allocation. Stored as the definition's `imagePath` |
-| `progressEvidenceActivated` | Seeds this id as already activated, so it is in the envelope immediately |
-| `progressEvidenceDeveloperEnabled` | The display switch. Off means hidden regardless of the flag above |
+| `progressEvidenceActivated` | Seeds this id as already activated, so the milestone counts as reached from the start of a new game |
+| `progressEvidenceDeveloperEnabled` | The display switch. Off means the milestone can never be reached, no matter what the player does |
 
 **On inject**, the server (`tools/web_content_builder_server.js`):
 
@@ -607,10 +608,10 @@ this is what the panel does to this system.
    `service` + `itemId`. Re-injecting the same record **updates it in place and
    keeps the id already allocated to it**, rather than stranding an id the
    player may already have activated.
-2. **Strips** the four progress evidence fields from the copy written into the
-   site content files — the registry owns them, exactly as the localized
-   evidence catalogs own description and caption. They are never stored twice,
-   and never once per language.
+2. **Strips** the progress evidence fields from the copy written into the site
+   content files — the registry owns them, exactly as the localized evidence
+   catalogs own description and caption. They are never stored twice, and
+   never once per language.
 3. Reports what it did under `progressEvidenceUpdate` in the response.
 
 It refuses an id that is not five digits led by a known control digit, or whose
