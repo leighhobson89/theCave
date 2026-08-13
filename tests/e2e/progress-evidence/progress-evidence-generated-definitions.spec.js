@@ -11,10 +11,6 @@
 const { test, expect } = require("@playwright/test");
 const {
   clickNewGame,
-  openNoticeboard,
-  openProgressEvidenceEnvelope,
-  progressEvidenceCards,
-  progressEvidenceWindow,
   readProgressEvidence,
   readProgressEvidenceEntry,
   startNewGame,
@@ -45,12 +41,6 @@ async function stubGeneratedDefinitions(page, definitions) {
   }));
 }
 
-function cardIds(page) {
-  return progressEvidenceCards(page).evaluateAll(
-    (cards) => cards.map((card) => card.dataset.progressEvidenceId)
-  );
-}
-
 test("a generated definition joins the registry with both of its flags", async ({ page }) => {
   await stubGeneratedDefinitions(page, [generatedDefinition({ progressEvidenceDeveloperEnabled: true })]);
   await startNewGame(page);
@@ -65,36 +55,31 @@ test("a generated definition joins the registry with both of its flags", async (
     progressEvidenceDeveloperEnabled: true,
   });
 
-  // Developer-enabled but not activated is still hidden, exactly as for a
-  // shipped item.
-  await openNoticeboard(page);
-  await openProgressEvidenceEnvelope(page);
-  await expect(progressEvidenceCards(page)).toHaveCount(0);
+  // Developer-enabled but not activated is still not player progress, exactly
+  // as for a shipped item.
+  expect(await readProgressEvidence(page)).toEqual([]);
 });
 
-test("a generated definition marked activated appears in the envelope immediately", async ({ page }) => {
+test("a generated definition marked activated is in the collection immediately", async ({ page }) => {
   await stubGeneratedDefinitions(page, [generatedDefinition({
     progressEvidenceActivated: true,
     progressEvidenceDeveloperEnabled: true,
   })]);
   await startNewGame(page);
 
-  // "In the envelope immediately" means the id is in the persistent collection
-  // from the start, without the player doing anything.
+  // "Activated immediately" means the id is in the persistent collection from
+  // the start, without the player doing anything.
   expect(await readProgressEvidence(page)).toEqual(["09001"]);
 
-  await openNoticeboard(page);
-  await openProgressEvidenceEnvelope(page);
-  expect(await cardIds(page)).toEqual(["09001"]);
-
-  // And it uses the image the tool's photo picker chose, not the
-  // [progressEvidenceId].png convention.
-  const image = progressEvidenceWindow(page).locator(".progress-evidence-card-image");
-  await expect(image).toHaveAttribute("src", GENERATED_IMAGE_PATH);
-  await expect.poll(() => image.evaluate((element) => element.naturalWidth)).toBeGreaterThan(0);
+  // And the definition keeps the image the tool's photo picker chose, rather
+  // than falling back to the [progressEvidenceId].png convention.
+  expect(await readProgressEvidenceEntry(page, "09001")).toMatchObject({
+    imagePath: GENERATED_IMAGE_PATH,
+    progressEvidenceActivated: true,
+  });
 });
 
-test("an activated generated definition still needs the developer flag to be shown", async ({ page }) => {
+test("an activated generated definition keeps its developer flag independent of activation", async ({ page }) => {
   await stubGeneratedDefinitions(page, [generatedDefinition({
     progressEvidenceActivated: true,
     progressEvidenceDeveloperEnabled: false,
@@ -102,10 +87,10 @@ test("an activated generated definition still needs the developer flag to be sho
   await startNewGame(page);
 
   expect(await readProgressEvidence(page)).toEqual(["09001"]);
-
-  await openNoticeboard(page);
-  await openProgressEvidenceEnvelope(page);
-  await expect(progressEvidenceCards(page)).toHaveCount(0);
+  expect(await readProgressEvidenceEntry(page, "09001")).toMatchObject({
+    progressEvidenceActivated: true,
+    progressEvidenceDeveloperEnabled: false,
+  });
 });
 
 test("an authored activation survives starting a new game", async ({ page }) => {

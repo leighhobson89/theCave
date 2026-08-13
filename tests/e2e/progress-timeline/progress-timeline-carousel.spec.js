@@ -1,11 +1,14 @@
-// The progress evidence carousel: how it fills up before there is anything to
-// navigate, stepping in both directions (with the same wraparound the Reports
-// and Photos carousels have), and the animated slide + fade that distinguishes
-// it from them — the strip visibly moves one card along, rather than the cards
-// swapping instantly.
+// The envelope carousel, now that the envelope holds timeline photographs: how
+// it fills up before there is anything to navigate, stepping in both directions
+// (with the same wraparound the Reports and Photos carousels have), and the
+// animated slide + fade that distinguishes it from them — the strip visibly
+// moves one card along, rather than the cards swapping instantly.
 //
-// Up to three items all fit on screen, so the navigation only becomes usable
-// once a fourth exists.
+// Up to three photographs all fit on screen, so the navigation only becomes
+// usable once a fourth exists.
+//
+// Ported from the progress-evidence carousel suite when the envelope stopped
+// holding progressEvidence cards and started holding the draggable photographs.
 const { test, expect } = require("@playwright/test");
 const {
   activateProgressEvidence,
@@ -13,15 +16,19 @@ const {
   openProgressEvidenceEnvelope,
   progressEvidenceCards,
   progressEvidenceWindow,
-  setProgressEvidenceDeveloperEnabled,
   startNewGame,
 } = require("../../support/game-helpers");
 
-const ELIGIBLE_IDS = ["00001", "00002", "00003", "00004"];
+// Four photographs, each unlocked by a milestone of its own, listed in the
+// chronological order the envelope shows them in. Deliberately not the
+// two-photographs-from-one-page cases (00002, 40002), because these tests need
+// to add exactly one photograph at a time.
+const PHOTO_IDS = ["0130", "0270", "0320", "0520"];
+const UNLOCK_TRIGGERS = ["00001", "20007", "10001", "10002"];
 
 function cardIds(page) {
   return progressEvidenceCards(page).evaluateAll(
-    (cards) => cards.map((card) => card.dataset.progressEvidenceId)
+    (cards) => cards.map((card) => card.dataset.progressTimeLinePhotoId)
   );
 }
 
@@ -29,20 +36,19 @@ function track(page) {
   return progressEvidenceWindow(page).locator(".progress-evidence-track");
 }
 
-async function openEnvelopeWithFourItems(page) {
+async function openEnvelopeWithFourPhotos(page) {
   await startNewGame(page);
 
-  for (const progressEvidenceId of ELIGIBLE_IDS) {
+  for (const progressEvidenceId of UNLOCK_TRIGGERS) {
     await activateProgressEvidence(page, progressEvidenceId);
-    await setProgressEvidenceDeveloperEnabled(page, progressEvidenceId, true);
   }
 
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
 }
 
-test("the carousel steps forward and back through the collection, wrapping at each end", async ({ page }) => {
-  await openEnvelopeWithFourItems(page);
+test("the carousel steps forward and back through the photographs, wrapping at each end", async ({ page }) => {
+  await openEnvelopeWithFourPhotos(page);
 
   const window = progressEvidenceWindow(page);
   const counter = window.locator(".progress-evidence-carousel-counter");
@@ -50,30 +56,30 @@ test("the carousel steps forward and back through the collection, wrapping at ea
   const nextButton = window.locator(".carousel-nav-next");
 
   await expect(counter).toHaveText("1/4");
-  expect(await cardIds(page)).toEqual(["00001", "00002", "00003"]);
+  expect(await cardIds(page)).toEqual(["0130", "0270", "0320"]);
   await expect(previousButton).toBeEnabled();
   await expect(nextButton).toBeEnabled();
 
   await nextButton.click();
   await expect(counter).toHaveText("2/4");
-  await expect.poll(() => cardIds(page)).toEqual(["00002", "00003", "00004"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0270", "0320", "0520"]);
 
   await nextButton.click();
   await expect(counter).toHaveText("3/4");
-  await expect.poll(() => cardIds(page)).toEqual(["00003", "00004", "00001"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0320", "0520", "0130"]);
 
   // Back the other way, and past the start so the index wraps to the end.
   await previousButton.click();
   await expect(counter).toHaveText("2/4");
-  await expect.poll(() => cardIds(page)).toEqual(["00002", "00003", "00004"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0270", "0320", "0520"]);
 
   await previousButton.click();
   await expect(counter).toHaveText("1/4");
-  await expect.poll(() => cardIds(page)).toEqual(["00001", "00002", "00003"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0130", "0270", "0320"]);
 
   await previousButton.click();
   await expect(counter).toHaveText("4/4");
-  await expect.poll(() => cardIds(page)).toEqual(["00004", "00001", "00002"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0520", "0130", "0270"]);
 });
 
 // Clicks a nav button and watches the whole step from inside the page,
@@ -102,7 +108,7 @@ async function stepAndSampleTransition(page, navButtonClass) {
     const stationaryCards = cards.filter((card) => card !== leavingCard && card !== enteringCard);
 
     const steppingClasses = trackElement.className;
-    const steppingCardIds = cards.map((card) => card.dataset.progressEvidenceId);
+    const steppingCardIds = cards.map((card) => card.dataset.progressTimeLinePhotoId);
     const startTranslateX = readTranslateX(trackElement);
 
     let leavingMinimumOpacity = 1;
@@ -125,8 +131,8 @@ async function stepAndSampleTransition(page, navButtonClass) {
     return {
       steppingClasses,
       steppingCardIds,
-      leavingCardId: leavingCard.dataset.progressEvidenceId,
-      enteringCardId: enteringCard.dataset.progressEvidenceId,
+      leavingCardId: leavingCard.dataset.progressTimeLinePhotoId,
+      enteringCardId: enteringCard.dataset.progressTimeLinePhotoId,
       leavingMinimumOpacity,
       enteringMaximumOpacity,
       stationaryMinimumOpacity,
@@ -136,16 +142,16 @@ async function stepAndSampleTransition(page, navButtonClass) {
 }
 
 test("stepping next moves the strip along by one card, not by all three", async ({ page }) => {
-  await openEnvelopeWithFourItems(page);
+  await openEnvelopeWithFourPhotos(page);
 
   const transition = await stepAndSampleTransition(page, ".carousel-nav-next");
 
   // Four cards during the step: the one leaving, the two shuffling along, and
   // the one arriving.
   expect(transition.steppingClasses).toContain("is-stepping-next");
-  expect(transition.steppingCardIds).toEqual(["00001", "00002", "00003", "00004"]);
-  expect(transition.leavingCardId).toBe("00001");
-  expect(transition.enteringCardId).toBe("00004");
+  expect(transition.steppingCardIds).toEqual(["0130", "0270", "0320", "0520"]);
+  expect(transition.leavingCardId).toBe("0130");
+  expect(transition.enteringCardId).toBe("0520");
 
   // The strip travels left, by one card slot rather than the whole strip.
   expect(transition.translateXDelta).toBeLessThan(0);
@@ -157,52 +163,52 @@ test("stepping next moves the strip along by one card, not by all three", async 
   expect(transition.stationaryMinimumOpacity).toBe(1);
 
   // Settled: three cards again, shifted along by exactly one.
-  await expect.poll(() => cardIds(page)).toEqual(["00002", "00003", "00004"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0270", "0320", "0520"]);
   await expect(progressEvidenceCards(page)).toHaveCount(3);
   await expect(track(page)).not.toHaveClass(/is-stepping/);
 });
 
 test("stepping previous moves the strip the other way, again by one card", async ({ page }) => {
-  await openEnvelopeWithFourItems(page);
+  await openEnvelopeWithFourPhotos(page);
 
   const transition = await stepAndSampleTransition(page, ".carousel-nav-prev");
 
   // The mirror image: the arriving card is prepended and the last one leaves.
   expect(transition.steppingClasses).toContain("is-stepping-prev");
-  expect(transition.steppingCardIds).toEqual(["00004", "00001", "00002", "00003"]);
-  expect(transition.leavingCardId).toBe("00003");
-  expect(transition.enteringCardId).toBe("00004");
+  expect(transition.steppingCardIds).toEqual(["0520", "0130", "0270", "0320"]);
+  expect(transition.leavingCardId).toBe("0320");
+  expect(transition.enteringCardId).toBe("0520");
 
   expect(transition.translateXDelta).toBeGreaterThan(0);
   expect(transition.leavingMinimumOpacity).toBeLessThan(1);
   expect(transition.enteringMaximumOpacity).toBeGreaterThan(0);
   expect(transition.stationaryMinimumOpacity).toBe(1);
 
-  await expect.poll(() => cardIds(page)).toEqual(["00004", "00001", "00002"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0520", "0130", "0270"]);
   await expect(progressEvidenceCards(page)).toHaveCount(3);
 });
 
 test("the two cards that stay on screen keep their places rather than being replaced", async ({ page }) => {
-  await openEnvelopeWithFourItems(page);
-  expect(await cardIds(page)).toEqual(["00001", "00002", "00003"]);
+  await openEnvelopeWithFourPhotos(page);
+  expect(await cardIds(page)).toEqual(["0130", "0270", "0320"]);
 
   const slotsBefore = await progressEvidenceCards(page).evaluateAll(
     (cards) => cards.map((card) => Math.round(card.getBoundingClientRect().left))
   );
 
   await progressEvidenceWindow(page).locator(".carousel-nav-next").click();
-  await expect.poll(() => cardIds(page)).toEqual(["00002", "00003", "00004"]);
+  await expect.poll(() => cardIds(page)).toEqual(["0270", "0320", "0520"]);
 
   const slotsAfter = await progressEvidenceCards(page).evaluateAll(
     (cards) => cards.map((card) => Math.round(card.getBoundingClientRect().left))
   );
 
-  // 00002 and 00003 have each moved one slot to the left: the position 00002
-  // now occupies is the one 00001 held, and 00003 sits where 00002 was.
+  // 0270 and 0320 have each moved one slot to the left: the position 0270 now
+  // occupies is the one 0130 held, and 0320 sits where 0270 was.
   expect(slotsAfter).toEqual(slotsBefore);
 });
 
-test("the carousel navigation stays disabled until there is more evidence than fits on screen", async ({ page }) => {
+test("the carousel navigation stays disabled until there are more photographs than fit on screen", async ({ page }) => {
   await startNewGame(page);
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
@@ -218,20 +224,18 @@ test("the carousel navigation stays disabled until there is more evidence than f
 
   // One, two, then three: the strip fills up and there is still nothing to
   // navigate to, so both buttons stay disabled the whole way.
-  for (const [collected, progressEvidenceId] of ELIGIBLE_IDS.slice(0, 3).entries()) {
+  for (const [collected, progressEvidenceId] of UNLOCK_TRIGGERS.slice(0, 3).entries()) {
     await activateProgressEvidence(page, progressEvidenceId);
-    await setProgressEvidenceDeveloperEnabled(page, progressEvidenceId, true);
 
     await expect(progressEvidenceCards(page)).toHaveCount(collected + 1);
-    expect(await cardIds(page)).toEqual(ELIGIBLE_IDS.slice(0, collected + 1));
+    expect(await cardIds(page)).toEqual(PHOTO_IDS.slice(0, collected + 1));
     await expect(counter).toHaveText(`1/${collected + 1}`);
     await expect(previousButton).toBeDisabled();
     await expect(nextButton).toBeDisabled();
   }
 
   // The fourth is the one that cannot fit, so the carousel comes alive.
-  await activateProgressEvidence(page, ELIGIBLE_IDS[3]);
-  await setProgressEvidenceDeveloperEnabled(page, ELIGIBLE_IDS[3], true);
+  await activateProgressEvidence(page, UNLOCK_TRIGGERS[3]);
 
   await expect(progressEvidenceCards(page)).toHaveCount(3);
   await expect(counter).toHaveText("1/4");
@@ -239,9 +243,9 @@ test("the carousel navigation stays disabled until there is more evidence than f
   await expect(nextButton).toBeEnabled();
 });
 
-test("the cards fill the strip from the left as they are collected", async ({ page }) => {
+test("the cards fill the strip from the left as photographs are unlocked", async ({ page }) => {
   await startNewGame(page);
-  await activateProgressEvidence(page, ELIGIBLE_IDS[0]);
+  await activateProgressEvidence(page, UNLOCK_TRIGGERS[0]);
 
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
@@ -251,14 +255,29 @@ test("the cards fill the strip from the left as they are collected", async ({ pa
     (card) => Math.round(card.getBoundingClientRect().left)
   );
 
-  await activateProgressEvidence(page, ELIGIBLE_IDS[1]);
+  await activateProgressEvidence(page, UNLOCK_TRIGGERS[1]);
   await expect(progressEvidenceCards(page)).toHaveCount(2);
 
-  // Collecting a second leaves the first exactly where it was and puts the new
+  // Unlocking a second leaves the first exactly where it was and puts the new
   // one to its right.
   const slotsWithTwo = await progressEvidenceCards(page).evaluateAll(
     (cards) => cards.map((card) => Math.round(card.getBoundingClientRect().left))
   );
+
   expect(slotsWithTwo[0]).toBe(slotWithOne);
   expect(slotsWithTwo[1]).toBeGreaterThan(slotsWithTwo[0]);
+});
+
+test("placing a photograph in a frame removes it from the carousel", async ({ page }) => {
+  await openEnvelopeWithFourPhotos(page);
+  await expect(progressEvidenceCards(page)).toHaveCount(3);
+
+  await page.evaluate(
+    () => window.progressTimeLineEventDeveloperTools.placePhotoOnProgressTimeLineFrame("0130", "0130")
+  );
+
+  // Down to three photographs in the pool, so the carousel goes quiet again.
+  await expect.poll(() => cardIds(page)).toEqual(["0270", "0320", "0520"]);
+  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter")).toHaveText("1/3");
+  await expect(progressEvidenceWindow(page).locator(".carousel-nav-next")).toBeDisabled();
 });

@@ -1,16 +1,15 @@
 // Progress evidence activated by real gameplay rather than by calling the API
 // directly: opening a website record, visiting a standalone page, and receiving
-// a fax. Each has to end up in the persistent collection and, once the
-// developer has enabled it, in the envelope.
+// a fax. Each has to end up in the persistent collection with its two flags set
+// correctly.
+//
+// What the envelope then *shows* is no longer asserted here: the envelope holds
+// timeline photographs, not progressEvidence cards, and which photographs an
+// activation unlocks is covered by tests/e2e/progress-timeline/.
 const { test, expect } = require("@playwright/test");
 const {
-  closeComputer,
   openNetscape,
-  openNoticeboard,
-  openProgressEvidenceEnvelope,
   openZoomSearch,
-  progressEvidenceCards,
-  progressEvidenceWindow,
   readProgressEvidence,
   readProgressEvidenceEntry,
   setProgressEvidenceDeveloperEnabled,
@@ -18,13 +17,7 @@ const {
   visitBrowserUrl,
 } = require("../../support/game-helpers");
 
-function cardIds(page) {
-  return progressEvidenceCards(page).evaluateAll(
-    (cards) => cards.map((card) => card.dataset.progressEvidenceId)
-  );
-}
-
-test("opening a website record activates its progress evidence and the envelope reflects it", async ({ page }) => {
+test("opening a website record activates its progress evidence", async ({ page }) => {
   await startNewGame(page);
   await openNetscape(page);
   await openZoomSearch(page);
@@ -48,12 +41,6 @@ test("opening a website record activates its progress evidence and the envelope 
     progressEvidenceActivated: true,
     progressEvidenceDeveloperEnabled: true,
   });
-
-  await closeComputer(page);
-  await openNoticeboard(page);
-  await openProgressEvidenceEnvelope(page);
-
-  expect(await cardIds(page)).toEqual(["00002"]);
 });
 
 test("visiting a standalone page activates its progress evidence", async ({ page }) => {
@@ -71,17 +58,16 @@ test("visiting a standalone page activates its progress evidence", async ({ page
     progressEvidenceDeveloperEnabled: false,
   });
 
-  await closeComputer(page);
-  await openNoticeboard(page);
-  await openProgressEvidenceEnvelope(page);
-  await expect(progressEvidenceCards(page)).toHaveCount(0);
-
-  // Enabling it as the developer is all that stands between it and the envelope.
+  // The developer switch is independent of player progress: flipping it changes
+  // only the flag, never the activation.
   await setProgressEvidenceDeveloperEnabled(page, "40001", true);
-  await expect.poll(() => cardIds(page)).toEqual(["40001"]);
+  expect(await readProgressEvidenceEntry(page, "40001")).toMatchObject({
+    progressEvidenceActivated: true,
+    progressEvidenceDeveloperEnabled: true,
+  });
 });
 
-test("receiving a fax activates its progress evidence and the envelope reflects it", async ({ page }) => {
+test("receiving a fax activates its progress evidence", async ({ page }) => {
   await startNewGame(page);
 
   // The real milestone chain: the Honeydew Caving Club page awards the mine-map
@@ -101,11 +87,8 @@ test("receiving a fax activates its progress evidence and the envelope reflects 
   });
 
   await setProgressEvidenceDeveloperEnabled(page, "50003", true);
-
-  await closeComputer(page);
-  await openNoticeboard(page);
-  await openProgressEvidenceEnvelope(page);
-
-  expect(await cardIds(page)).toEqual(["50003"]);
-  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter")).toHaveText("1/1");
+  expect(await readProgressEvidenceEntry(page, "50003")).toMatchObject({
+    progressEvidenceActivated: true,
+    progressEvidenceDeveloperEnabled: true,
+  });
 });

@@ -624,6 +624,225 @@ button.disabled {
 }
 
 /* ---------------------------------------------------------------------------
+   Progress timeline frames (noticeboard)
+
+   One empty picture frame per developer-enabled timeline event, pinned to the
+   corkboard in progressTimeLineEventId order with its date printed underneath.
+   The player drags a photograph out of the EVIDENCE envelope and drops it in.
+   See renderProgressTimeLineBoard() in ui.js.
+   --------------------------------------------------------------------------- */
+
+/* Sits on the corkboard itself, so it is anchored to the same geometry
+   variables as .noticeboard-board-frame rather than to the much larger scene
+   (2600x1800) those elements are centred inside. */
+.progress-timeline-board {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--noticeboard-board-width) - 160px);
+    height: calc(var(--noticeboard-board-height) - 160px);
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 28px;
+    overflow-y: auto;
+    padding: 12px;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+.progress-timeline-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 200px;
+    padding: 12px 12px 10px;
+    border-radius: 3px;
+    border: 3px solid #5b3a1c;
+    background: linear-gradient(180deg, #d9c49a, #c0a778);
+    box-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 240, 214, 0.4);
+    box-sizing: border-box;
+}
+
+/* Where the dropped photograph sits. Fixed aspect so an empty frame and a
+   filled one occupy exactly the same space and the board never reflows. */
+.progress-timeline-frame-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border: 1px solid rgba(70, 46, 20, 0.5);
+    background: rgba(58, 40, 20, 0.22);
+}
+
+.progress-timeline-frame-slot .progress-evidence-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* The placeholder shrinks hard to fit a frame - it is the same element the
+   envelope uses, where it has a whole card to fill. */
+.progress-timeline-frame-slot .progress-evidence-placeholder {
+    gap: 0.25rem;
+    padding: 0.3rem;
+    border-width: 1px;
+}
+
+.progress-timeline-frame-slot .progress-evidence-placeholder-caption {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+}
+
+.progress-timeline-frame-slot .progress-evidence-placeholder-id {
+    font-size: 1.9rem;
+    letter-spacing: 0.08em;
+}
+
+.progress-timeline-frame-slot .progress-evidence-placeholder-filename {
+    font-size: 0.7rem;
+}
+
+.progress-timeline-frame-date {
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #3b2a12;
+    text-align: center;
+}
+
+/* Live drag feedback. Correct/incorrect are deliberately quiet colour shifts
+   rather than text, so a filled frame never spells out the answer. */
+.progress-timeline-frame.is-drop-target {
+    border-color: #f0d68c;
+    box-shadow: 0 0 0 3px rgba(240, 214, 140, 0.6), 0 6px 14px rgba(0, 0, 0, 0.34);
+}
+
+.progress-timeline-frame.is-correct {
+    border-color: #4d7a3a;
+}
+
+.progress-timeline-frame.is-incorrect {
+    border-color: #8c4630;
+}
+
+.progress-evidence-card.is-dragging,
+.progress-timeline-frame-slot.is-dragging {
+    opacity: 0.45;
+}
+
+/* A locked frame is settled: no cross button, nothing draggable, and a brass
+   plate look so it reads as finished rather than merely correct. */
+.progress-timeline-frame.is-locked {
+    border-color: #9a7b32;
+    box-shadow:
+        0 0 0 2px rgba(214, 178, 92, 0.5),
+        0 6px 14px rgba(0, 0, 0, 0.34);
+}
+
+.progress-timeline-frame {
+    position: relative;
+}
+
+/* Returns the photograph in this frame to the envelope. Only rendered on an
+   unlocked, filled frame. */
+.progress-timeline-frame-remove {
+    position: absolute;
+    /* Inside the frame, not overhanging it: the board scrolls, and an
+       overhanging button on the top row gets clipped by that overflow. */
+    top: 4px;
+    right: 4px;
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    line-height: 1;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #f6e6c8;
+    background: #7a3320;
+    border: 2px solid #4a1d10;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-timeline-frame-remove:hover {
+    background: #99422a;
+}
+
+/* While a photograph is in flight the envelope fades back so the board is
+   visible underneath. When the drag started *in* the envelope it also stops
+   taking pointer events, so the frame below receives the drop; a drag out of a
+   frame leaves it interactive, because then the envelope is a valid target. */
+.progress-evidence-window.is-photo-drag-active {
+    opacity: 0.2;
+    transition: opacity 120ms ease-out;
+}
+
+.progress-evidence-window.is-photo-drag-passthrough {
+    pointer-events: none;
+}
+
+.progress-evidence-viewport.is-drop-target {
+    outline: 3px dashed rgba(240, 214, 140, 0.8);
+    outline-offset: -6px;
+}
+
+/* The photograph that follows the pointer during a drag. A copy of the card's
+   artwork, centred on the cursor and inert, so it never becomes its own drop
+   target - see createProgressTimeLinePhotoGhost() in ui.js. */
+.progress-timeline-photo-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 190px;
+    height: 253px;
+    transform: translate(-50%, -50%) rotate(-3deg);
+    pointer-events: none;
+    z-index: 99999;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(198, 182, 150, 0.55);
+    background: linear-gradient(180deg, #f6efe0 0%, #eadcbc 58%, #dbc69f 100%);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+    opacity: 0.94;
+}
+
+.progress-timeline-photo-ghost .progress-evidence-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.progress-timeline-photo-ghost .progress-evidence-placeholder {
+    gap: 0.2rem;
+    padding: 0.3rem;
+}
+
+.progress-timeline-photo-ghost .progress-evidence-placeholder-caption {
+    font-size: 0.5rem;
+}
+
+.progress-timeline-photo-ghost .progress-evidence-placeholder-id {
+    font-size: 1.4rem;
+}
+
+.progress-timeline-photo-ghost .progress-evidence-placeholder-filename {
+    font-size: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------
    Progress evidence envelope (noticeboard)
 
    The back of a manila envelope pinned to the corkboard, with a photograph
@@ -5879,6 +6098,16 @@ button.disabled {
     font-size: 2.4rem;
     font-weight: 700;
     letter-spacing: 0.16em;
+}
+
+/* The PNG the placeholder was looking for. Present so a developer can see which
+   file is missing without opening devtools - see createProgressEvidencePlaceholder(). */
+.progress-evidence-placeholder-filename {
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    opacity: 0.6;
+    word-break: break-all;
 }
 
 .progress-evidence-card-label {

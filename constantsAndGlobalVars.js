@@ -7,6 +7,10 @@ import {
   getProgressEvidenceSnapshot,
   setProgressEvidenceSnapshot,
 } from "./progressEvidenceManager.js";
+import {
+  getProgressTimeLineEventSnapshot,
+  setProgressTimeLineEventSnapshot,
+} from "./progressTimeLineEventManager.js";
 
 //ELEMENTS
 let elements;
@@ -315,6 +319,10 @@ export function captureGameStatusForSaving() {
   // themselves are code (progressEvidenceManager.js) and are never duplicated
   // into the save.
   gameState.progressEvidence = getProgressEvidenceSnapshot();
+  // Which photograph is in which frame, plus which frames have been validated
+  // and locked. The frames and photographs themselves are content
+  // (progressTimeLineEventManager.js) and are never duplicated here.
+  gameState.progressTimeLineEvents = getProgressTimeLineEventSnapshot();
   gameState.notesPages = getNotesPages();
   gameState.notesActivePageIndex = getNotesActivePageIndex();
   gameState.paintPages = getPaintPages();
@@ -352,6 +360,12 @@ export function restoreGameStatus(gameState) {
       // rather than failing, so older saves keep loading. It also de-duplicates,
       // so a hand-edited save cannot introduce repeated ids.
       setProgressEvidenceSnapshot(gameState.progressEvidence);
+      // A save written before the timeline board existed has no field here;
+      // setProgressTimeLineEventSnapshot() treats that as "nothing placed yet"
+      // rather than failing. Each placement's correctness is recomputed against
+      // the live registry on the way in, so re-authoring a frame's answer can
+      // never leave a stale "correct" baked into an old save.
+      setProgressTimeLineEventSnapshot(gameState.progressTimeLineEvents);
       setNotesPages(gameState.notesPages);
       setNotesActivePageIndex(gameState.notesActivePageIndex ?? 0);
       setPaintPages(gameState.paintPages);

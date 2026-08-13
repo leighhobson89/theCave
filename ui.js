@@ -115,6 +115,24 @@ import {
   resolveProgressEvidenceImagePath,
   setProgressEvidenceDeveloperEnabled,
 } from "./progressEvidenceManager.js";
+import {
+  getBoardProgressTimeLineEvents,
+  getCorrectlyPlacedProgressTimeLineFrameIds,
+  getEnvelopeProgressTimeLinePhotos,
+  getLockedProgressTimeLineFrameIds,
+  getProgressTimeLineEventDescription,
+  getProgressTimeLineEventEntries,
+  getProgressTimeLineEventPlacements,
+  getProgressTimeLineFramePlacement,
+  isProgressTimeLineFrameLocked,
+  isProgressTimeLinePhotoUnlocked,
+  loadProgressTimeLineEventDefinitions,
+  parseProgressTimeLineEventYear,
+  placePhotoOnProgressTimeLineFrame,
+  resetProgressTimeLineEventPlacements,
+  resolveProgressTimeLineEventImagePath,
+  returnProgressTimeLinePhotoToEnvelope,
+} from "./progressTimeLineEventManager.js";
 import { LANGUAGE_BUTTON_KEYS_BY_CODE, setGameState, startGame, updateNoticeboardButtonLabel } from "./game.js";
 import { audioManager } from "./audioManager.js";
 import { initLocalization, localize } from "./localization.js";
@@ -1142,6 +1160,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // (which the web content builder also writes), so it has to be loaded before
   // anything can activate progress evidence.
   await loadProgressEvidenceDefinitions();
+  // The timeline frames are content too, and the board cannot render until they
+  // are registered. Loaded alongside the progress evidence registry rather than
+  // lazily on first noticeboard visit, so a restored save has somewhere to put
+  // its placements immediately.
+  await loadProgressTimeLineEventDefinitions();
+  renderProgressTimeLineBoard();
   initializeEvidenceMilestoneTriggers();
   initializeWebRecordFaxTriggers();
   document.addEventListener("caveos-browser-record-opened", (event) => {
@@ -1296,6 +1320,10 @@ function beginNewGame() {
   resetAshtrayState();
   resetFacsimileState();
   resetProgressEvidence();
+  // Empties every frame on the corkboard. The frames themselves are content and
+  // stay put — only what the player put in them is cleared.
+  resetProgressTimeLineEventPlacements();
+  renderProgressTimeLineBoard();
   resetQuickLoginState();
   webContentManager.clearSessions();
   syncAshtrayVisualState();
@@ -1386,6 +1414,9 @@ async function restoreStickySaveIntoGame() {
   await handleLanguageChange(getLanguage());
   syncAshtrayVisualState();
   syncFacsimileVisualState({ animateFeed: false });
+  // The restored placements have to be drawn back into the frames; setElements()
+  // above has just re-read the scene, so the board is rebuilt from scratch.
+  renderProgressTimeLineBoard();
   audioManager.syncFromSavedPreferences();
   refreshAudioControlsDisplay();
   setGameInProgress(true);
@@ -5261,10 +5292,12 @@ let progressEvidenceCarouselIndex = 0;
 // PNG when it exists, and a placeholder card carrying the progressEvidenceId
 // when it does not. Replacing the placeholder later (or dropping it entirely
 // once every image is drawn) means editing this function and nothing else.
-function createProgressEvidenceCardMedia(progressEvidenceId) {
-  const imagePath = resolveProgressEvidenceImagePath(progressEvidenceId);
+// The artwork for one timeline photograph. Shared by the envelope carousel and
+// by a filled frame, so both fall back the same way.
+function createProgressEvidenceCardMedia(progressTimeLinePhotoId) {
+  const imagePath = resolveProgressTimeLineEventImagePath(progressTimeLinePhotoId);
   if (!imagePath) {
-    return createProgressEvidencePlaceholder(progressEvidenceId);
+    return createProgressEvidencePlaceholder(progressTimeLinePhotoId);
   }
 
   const image = document.createElement("img");
@@ -5274,14 +5307,26 @@ function createProgressEvidenceCardMedia(progressEvidenceId) {
   // A missing PNG is the normal case while the artwork is still being made, so
   // it swaps itself for the placeholder rather than leaving a broken image.
   image.addEventListener("error", () => {
-    image.replaceWith(createProgressEvidencePlaceholder(progressEvidenceId));
+    image.replaceWith(createProgressEvidencePlaceholder(progressTimeLinePhotoId));
   }, { once: true });
 
   image.src = imagePath;
   return image;
 }
 
-function createProgressEvidencePlaceholder(progressEvidenceId) {
+// The file an id resolves to, without its directory — what the placeholder
+// prints so a developer can see at a glance which PNG is missing.
+function getProgressTimeLinePhotoFileName(progressTimeLinePhotoId) {
+  const imagePath = resolveProgressTimeLineEventImagePath(progressTimeLinePhotoId);
+  return imagePath ? imagePath.split("/").pop() : "";
+}
+
+// Stands in for artwork that has not been drawn yet, in the envelope and in a
+// filled frame alike. It carries both the photograph's id and the PNG it was
+// looking for, which is the whole point: with almost no art in
+// assets/photos/progressTimeLineEventImages yet, this is what the
+// drag-and-drop is actually tested against.
+function createProgressEvidencePlaceholder(progressTimeLinePhotoId) {
   const placeholder = document.createElement("div");
   placeholder.classList.add("progress-evidence-placeholder");
 
@@ -5291,26 +5336,37 @@ function createProgressEvidencePlaceholder(progressEvidenceId) {
 
   const identifier = document.createElement("div");
   identifier.classList.add("progress-evidence-placeholder-id");
-  identifier.textContent = progressEvidenceId;
+  identifier.textContent = progressTimeLinePhotoId;
 
-  placeholder.append(caption, identifier);
+  const fileName = document.createElement("div");
+  fileName.classList.add("progress-evidence-placeholder-filename");
+  fileName.textContent = getProgressTimeLinePhotoFileName(progressTimeLinePhotoId);
+
+  placeholder.append(caption, identifier, fileName);
   return placeholder;
 }
 
-// One card. The visible text is the progressEvidenceId itself for now; the
-// human-readable label rides along as the accessible name.
+// One photograph waiting in the envelope. Its id is the progressTimeLineEventId
+// of the frame it was drawn for — see the header of
+// progressTimeLineEventManager.js for why a photograph is identified by its
+// frame rather than by the page it came from.
 function createProgressEvidenceCard(entry) {
+  const photoId = entry.progressTimeLineEventId;
+  const description = getProgressTimeLineEventDescription(photoId, getLanguage());
+
   const card = document.createElement("div");
   card.classList.add("progress-evidence-card");
-  card.dataset.progressEvidenceId = entry.progressEvidenceId;
-  card.setAttribute("aria-label", entry.label || entry.progressEvidenceId);
-  card.title = entry.label || entry.progressEvidenceId;
+  card.dataset.progressTimeLinePhotoId = photoId;
+  card.setAttribute("aria-label", description || photoId);
+  card.title = description || photoId;
+
+  makeProgressTimeLinePhotoDraggable(card, photoId, { fromFrameId: "" });
 
   const label = document.createElement("div");
   label.classList.add("progress-evidence-card-label");
-  label.textContent = entry.progressEvidenceId;
+  label.textContent = photoId;
 
-  card.append(createProgressEvidenceCardMedia(entry.progressEvidenceId), label);
+  card.append(createProgressEvidenceCardMedia(photoId), label);
   return card;
 }
 
@@ -5445,6 +5501,10 @@ function createProgressEvidenceWindowContentElements() {
   const viewport = document.createElement("div");
   viewport.classList.add("progress-evidence-viewport");
 
+  // The envelope is itself a drop target, so a photograph dragged out of a
+  // frame can be put back into the pool. There are no listeners for it here:
+  // the release is resolved from this element's geometry in
+  // resolveProgressTimeLineDropTarget().
   container.append(controlsHost, viewport);
 
   return {
@@ -5465,7 +5525,7 @@ function updateProgressEvidenceWindowContent(windowController, { direction = 0 }
     return;
   }
 
-  const eligibleEntries = getEligibleProgressEvidence();
+  const eligibleEntries = getEnvelopeProgressTimeLinePhotos();
 
   // Everything fits on screen at three or fewer, so there is nothing to scroll
   // through: the cards simply fill the strip left to right as the player
@@ -5493,7 +5553,7 @@ function updateProgressEvidenceWindowContent(windowController, { direction = 0 }
 // A no-op unless there is more evidence than fits on screen, which matches the
 // disabled state of the nav buttons.
 function stepProgressEvidenceCarousel(windowController, delta) {
-  const eligibleCount = getEligibleProgressEvidence().length;
+  const eligibleCount = getEnvelopeProgressTimeLinePhotos().length;
   if (eligibleCount <= PROGRESS_EVIDENCE_VISIBLE_CARD_COUNT) {
     return;
   }
@@ -5513,10 +5573,14 @@ function openProgressEvidenceWindow() {
     classNames: ["story-window", "progress-evidence-window"],
     title: localize("progressEvidenceWindowTitle", getLanguage()),
     showCarouselNavigation: true,
-    // Near full height so the cards can be about the height of the browser
-    // window less a small padding allowance (see --progress-evidence-card-height).
-    initialWidthRatio: 0.96,
-    initialHeightRatio: 0.98,
+    // Deliberately NOT full-bleed. The envelope is a working surface now: the
+    // player drags photographs out of it onto the frames behind, and drags them
+    // back. At the old 0.96 x 0.98 it covered the whole corkboard, so a
+    // photograph already sitting in a frame could not be picked up at all —
+    // the window was on top of it. Leaving the board visible around the window
+    // is what makes frame-to-frame and frame-to-envelope drags possible.
+    initialWidthRatio: 0.62,
+    initialHeightRatio: 0.52,
     onNavigatePrevious: () => {
       stepProgressEvidenceCarousel(windowController, -1);
     },
@@ -5599,6 +5663,429 @@ window.activateProgressEvidence = function activateProgressEvidenceFromGame(prog
     refreshOpenProgressEvidenceWindows();
   }
   return activated;
+};
+
+// ---------------------------------------------------------------------------
+// Progress timeline events — the dated frames pinned to the corkboard
+//
+// The frames are static: one per developer-enabled event, drawn in
+// progressTimeLineEventId order, each captioned with its own date. The player
+// drags a photograph out of the EVIDENCE envelope and drops it into a frame;
+// the drop is recorded with a correct/incorrect flag, which a later validation
+// pass over consecutive runs will read. See progressTimeLineEventManager.js and
+// docs/progress-timeline-event-system.md.
+// ---------------------------------------------------------------------------
+
+// Photograph dragging is built on pointer events and a floating ghost, NOT on
+// the HTML5 drag-and-drop API.
+//
+// Native DnD does not survive this screen. The envelope window opens at 96% x
+// 98%, so every frame the player is dragging towards sits *behind* it, which
+// means the drop has to pass through the window — and toggling pointer-events
+// on the window mid-drag is exactly the kind of thing that silently kills a
+// native drag in Chromium. On top of that, .desktop-viewport owns a pointerdown
+// handler for panning the scene, which competes for the same gesture. The
+// result was a drag that never started at all.
+//
+// Doing it by hand costs a few dozen lines and removes every one of those
+// failure modes: the drop target is resolved from geometry rather than from
+// hit-testing through a stack of elements, so it cannot be blocked by whatever
+// happens to be on top.
+
+// How far the pointer must travel before a press becomes a drag. Below this a
+// press is just a press, so clicking a card never accidentally lifts it.
+const PROGRESS_TIMELINE_DRAG_THRESHOLD_PX = 5;
+
+// The drag in flight, or null. One at a time, by construction.
+let activeProgressTimeLinePhotoDrag = null;
+
+// While a photograph is in flight the envelope window fades back so the board
+// underneath is visible, and stops taking pointer events so it cannot swallow
+// the release. Purely visual: the drop target is decided from geometry.
+function setProgressEvidenceWindowDragState(isDragging) {
+  findExistingWindowsByKind("progress-evidence").forEach((windowController) => {
+    const element = windowController.rootElement;
+    if (!element) {
+      return;
+    }
+
+    element.classList.toggle("is-photo-drag-active", isDragging === true);
+    element.classList.toggle("is-photo-drag-passthrough", isDragging === true);
+  });
+}
+
+// The thing that follows the pointer. A copy of the photograph, not the element
+// itself, so the card stays in the carousel (dimmed) while it is being moved.
+function createProgressTimeLinePhotoGhost(progressTimeLinePhotoId) {
+  const ghost = document.createElement("div");
+  ghost.classList.add("progress-timeline-photo-ghost");
+  ghost.appendChild(createProgressEvidenceCardMedia(progressTimeLinePhotoId));
+  document.body.appendChild(ghost);
+  return ghost;
+}
+
+// Which frame (or the envelope) is under the pointer, resolved from bounding
+// boxes rather than elementFromPoint. Geometry cannot be intercepted by an
+// overlay, which is the whole reason this is not native DnD.
+function resolveProgressTimeLineDropTarget(clientX, clientY) {
+  const frameElements = document.querySelectorAll(
+    "#progressTimeLineBoard .progress-timeline-frame"
+  );
+
+  for (const frameElement of frameElements) {
+    const rect = frameElement.getBoundingClientRect();
+    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+      return { kind: "frame", frameId: frameElement.dataset.progressTimeLineEventId };
+    }
+  }
+
+  const viewport = document.querySelector(".progress-evidence-viewport");
+  if (viewport) {
+    const rect = viewport.getBoundingClientRect();
+    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+      return { kind: "envelope" };
+    }
+  }
+
+  return { kind: "none" };
+}
+
+function updateProgressTimeLineDropHighlight(clientX, clientY) {
+  const target = resolveProgressTimeLineDropTarget(clientX, clientY);
+
+  document.querySelectorAll("#progressTimeLineBoard .progress-timeline-frame").forEach((frameElement) => {
+    frameElement.classList.toggle(
+      "is-drop-target",
+      target.kind === "frame" && frameElement.dataset.progressTimeLineEventId === target.frameId
+    );
+  });
+
+  const viewport = document.querySelector(".progress-evidence-viewport");
+  if (viewport) {
+    viewport.classList.toggle("is-drop-target", target.kind === "envelope");
+  }
+}
+
+function clearProgressTimeLineDropHighlight() {
+  document.querySelectorAll("#progressTimeLineBoard .progress-timeline-frame")
+    .forEach((frameElement) => frameElement.classList.remove("is-drop-target"));
+  document.querySelector(".progress-evidence-viewport")?.classList.remove("is-drop-target");
+}
+
+function finishProgressTimeLinePhotoDrag(clientX, clientY) {
+  const drag = activeProgressTimeLinePhotoDrag;
+  if (!drag) {
+    return;
+  }
+
+  activeProgressTimeLinePhotoDrag = null;
+  window.removeEventListener("pointermove", handleProgressTimeLinePhotoPointerMove, true);
+  window.removeEventListener("pointerup", handleProgressTimeLinePhotoPointerUp, true);
+  window.removeEventListener("pointercancel", handleProgressTimeLinePhotoPointerUp, true);
+
+  drag.sourceElement?.classList.remove("is-dragging");
+  drag.ghost?.remove();
+  clearProgressTimeLineDropHighlight();
+  setProgressEvidenceWindowDragState(false);
+
+  // A press that never passed the threshold was a click, not a drag.
+  if (!drag.hasStarted) {
+    return;
+  }
+
+  const target = resolveProgressTimeLineDropTarget(clientX, clientY);
+
+  if (target.kind === "frame") {
+    handleProgressTimeLineDrop(target.frameId, drag.progressTimeLinePhotoId);
+    return;
+  }
+
+  // Dropped on the envelope: only a photograph that came out of a frame has
+  // anything to undo.
+  if (target.kind === "envelope" && drag.fromFrameId) {
+    if (returnProgressTimeLinePhotoToEnvelope(drag.fromFrameId)) {
+      renderProgressTimeLineBoard();
+      refreshOpenProgressEvidenceWindows();
+      audioManager.playSfx("clickSwitch");
+    }
+  }
+
+  // Dropped anywhere else: the photograph stays exactly where it started.
+}
+
+function handleProgressTimeLinePhotoPointerMove(event) {
+  const drag = activeProgressTimeLinePhotoDrag;
+  if (!drag) {
+    return;
+  }
+
+  if (!drag.hasStarted) {
+    const travelled = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+    if (travelled < PROGRESS_TIMELINE_DRAG_THRESHOLD_PX) {
+      return;
+    }
+
+    drag.hasStarted = true;
+    drag.ghost = createProgressTimeLinePhotoGhost(drag.progressTimeLinePhotoId);
+    drag.sourceElement?.classList.add("is-dragging");
+    setProgressEvidenceWindowDragState(true);
+  }
+
+  drag.ghost.style.left = `${event.clientX}px`;
+  drag.ghost.style.top = `${event.clientY}px`;
+  updateProgressTimeLineDropHighlight(event.clientX, event.clientY);
+}
+
+function handleProgressTimeLinePhotoPointerUp(event) {
+  finishProgressTimeLinePhotoDrag(event.clientX, event.clientY);
+}
+
+// Wires one draggable photograph, whether it is sitting in the envelope
+// (fromFrameId "") or in a frame.
+function makeProgressTimeLinePhotoDraggable(element, progressTimeLinePhotoId, { fromFrameId = "" } = {}) {
+  // Native dragging is explicitly off: a stray HTML5 drag on the inner <img>
+  // would fight the pointer drag for the same gesture.
+  element.draggable = false;
+
+  element.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || activeProgressTimeLinePhotoDrag) {
+      return;
+    }
+
+    // Keep the gesture away from .desktop-viewport's scene-panning pointerdown
+    // handler, which would otherwise pan the board while the photograph moves.
+    event.preventDefault();
+    event.stopPropagation();
+
+    activeProgressTimeLinePhotoDrag = {
+      progressTimeLinePhotoId,
+      fromFrameId,
+      sourceElement: element,
+      startX: event.clientX,
+      startY: event.clientY,
+      hasStarted: false,
+      ghost: null,
+    };
+
+    window.addEventListener("pointermove", handleProgressTimeLinePhotoPointerMove, true);
+    window.addEventListener("pointerup", handleProgressTimeLinePhotoPointerUp, true);
+    window.addEventListener("pointercancel", handleProgressTimeLinePhotoPointerUp, true);
+  });
+
+  // The inner <img> is natively draggable; stop it starting a second, competing
+  // drag on the same press.
+  element.addEventListener("dragstart", (event) => event.preventDefault());
+}
+
+const PROGRESS_TIMELINE_MONTH_KEYS = [
+  "monthJanuaryShort", "monthFebruaryShort", "monthMarchShort", "monthAprilShort",
+  "monthMayShort", "monthJuneShort", "monthJulyShort", "monthAugustShort",
+  "monthSeptemberShort", "monthOctoberShort", "monthNovemberShort", "monthDecemberShort",
+];
+
+const PROGRESS_TIMELINE_MONTH_FALLBACKS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+// The reserved "no fixed in-fiction year" sentinel (see the developer guide).
+const PROGRESS_TIMELINE_UNDATED_YEAR = 9999;
+
+// The caption printed under a frame. A month of 00 prints the bare year, which
+// is the authored meaning of "month unknown" rather than a formatting failure.
+function formatProgressTimeLineEventDate(year) {
+  const parsed = parseProgressTimeLineEventYear(year);
+  if (!parsed) {
+    return "";
+  }
+
+  if (parsed.year === PROGRESS_TIMELINE_UNDATED_YEAR) {
+    return resolveLocalizedText("progressTimeLineUndatedLabel", "Present day");
+  }
+
+  if (!parsed.hasKnownMonth) {
+    return String(parsed.year);
+  }
+
+  const monthIndex = parsed.month - 1;
+  const monthName = resolveLocalizedText(
+    PROGRESS_TIMELINE_MONTH_KEYS[monthIndex],
+    PROGRESS_TIMELINE_MONTH_FALLBACKS[monthIndex]
+  );
+  return `${monthName} ${parsed.year}`;
+}
+
+// What sits inside a frame: the placed photograph when there is one, otherwise
+// an empty slot. Correctness is expressed as a class rather than as text, so the
+// frame does not spell out the answer.
+function renderProgressTimeLineFrameContent(frame, progressTimeLineEventId) {
+  const slot = frame.querySelector(".progress-timeline-frame-slot");
+  if (!slot) {
+    return;
+  }
+
+  slot.replaceChildren();
+  frame.classList.remove("is-filled", "is-correct", "is-incorrect", "is-locked");
+
+  const placement = getProgressTimeLineFramePlacement(progressTimeLineEventId);
+  if (!placement) {
+    frame.dataset.placedProgressTimeLinePhotoId = "";
+    frame.dataset.placementCorrect = "";
+    frame.dataset.placementLocked = "";
+    return;
+  }
+
+  frame.dataset.placedProgressTimeLinePhotoId = placement.progressTimeLinePhotoId;
+  frame.dataset.placementCorrect = placement.isCorrect ? "true" : "false";
+  frame.dataset.placementLocked = placement.isLocked ? "true" : "false";
+  frame.classList.add("is-filled", placement.isCorrect ? "is-correct" : "is-incorrect");
+
+  // The same media builder the envelope uses, so a frame falls back to the
+  // id-and-filename placeholder exactly the way a card does.
+  const media = createProgressEvidenceCardMedia(placement.progressTimeLinePhotoId);
+  slot.appendChild(media);
+
+  if (placement.isLocked) {
+    // A locked frame is settled: no cross button, and nothing to drag out.
+    frame.classList.add("is-locked");
+    return;
+  }
+
+  makeProgressTimeLinePhotoDraggable(slot, placement.progressTimeLinePhotoId, {
+    fromFrameId: progressTimeLineEventId,
+  });
+
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.classList.add("progress-timeline-frame-remove");
+  removeButton.textContent = "×";
+  removeButton.setAttribute(
+    "aria-label",
+    resolveLocalizedText("progressTimeLineRemovePhotoAriaLabel", "Return this photograph to the envelope")
+  );
+  removeButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (!returnProgressTimeLinePhotoToEnvelope(progressTimeLineEventId)) {
+      return;
+    }
+
+    renderProgressTimeLineBoard();
+    refreshOpenProgressEvidenceWindows();
+    audioManager.playSfx("clickSwitch");
+  });
+
+  frame.appendChild(removeButton);
+}
+
+function createProgressTimeLineFrame(entry) {
+  const frame = document.createElement("div");
+  frame.classList.add("progress-timeline-frame");
+  frame.dataset.progressTimeLineEventId = entry.progressTimeLineEventId;
+
+  const description = getProgressTimeLineEventDescription(entry.progressTimeLineEventId, getLanguage());
+  frame.setAttribute("aria-label", description || entry.progressTimeLineEventId);
+  frame.title = description || entry.progressTimeLineEventId;
+
+  const slot = document.createElement("div");
+  slot.classList.add("progress-timeline-frame-slot");
+
+  const date = document.createElement("div");
+  date.classList.add("progress-timeline-frame-date");
+  date.textContent = formatProgressTimeLineEventDate(entry.year);
+
+  frame.append(slot, date);
+
+  // No drop listeners here: the drag is pointer-based, and the release is
+  // resolved from frame geometry in resolveProgressTimeLineDropTarget().
+  return frame;
+}
+
+// Records a drop and redraws. Any photograph may be dropped in any frame:
+// a wrong one is stored as incorrect rather than bounced, which is what lets
+// the player lay the board out and be told later how they did. Only a matching
+// one counts towards the lock threshold.
+//
+// The whole board is redrawn rather than just this frame, because one drop can
+// move a photograph out of another frame, displace one back to the envelope,
+// and lock a batch — all at once.
+function handleProgressTimeLineDrop(progressTimeLineFrameId, progressTimeLinePhotoId) {
+  const placement = placePhotoOnProgressTimeLineFrame(progressTimeLineFrameId, progressTimeLinePhotoId);
+  if (!placement) {
+    return;
+  }
+
+  renderProgressTimeLineBoard();
+  refreshOpenProgressEvidenceWindows();
+
+  // Locking is the one thing on this board worth announcing: it is the player's
+  // only confirmation that a batch was right, since individual frames never say.
+  if (placement.lockedFrameIds.length) {
+    showNotifcation(
+      "reward",
+      resolveLocalizedText("progressTimeLineSectionValidated", "Timeline section validated"),
+      3000
+    );
+  }
+
+  audioManager.playSfx("clickSwitch");
+}
+
+// Draws every developer-enabled frame, in chronological order. Safe to call
+// again: it rebuilds the strip rather than appending to it, which is what makes
+// it usable as the "re-render after a load" hook too.
+function renderProgressTimeLineBoard() {
+  const noticeboardScene = getElements().noticeboardScene;
+  if (!noticeboardScene) {
+    return;
+  }
+
+  let board = noticeboardScene.querySelector(".progress-timeline-board");
+  if (!board) {
+    board = document.createElement("div");
+    board.classList.add("progress-timeline-board");
+    board.id = "progressTimeLineBoard";
+    noticeboardScene.appendChild(board);
+  }
+
+  board.replaceChildren();
+  getBoardProgressTimeLineEvents().forEach((entry) => {
+    const frame = createProgressTimeLineFrame(entry);
+    renderProgressTimeLineFrameContent(frame, entry.progressTimeLineEventId);
+    board.appendChild(frame);
+  });
+}
+
+window.progressTimeLineEventDeveloperTools = {
+  getProgressTimeLineEventEntries: () => getProgressTimeLineEventEntries(),
+  getBoardProgressTimeLineEvents: () => getBoardProgressTimeLineEvents(),
+  getEnvelopeProgressTimeLinePhotos: () => getEnvelopeProgressTimeLinePhotos(),
+  getProgressTimeLineEventPlacements: () => getProgressTimeLineEventPlacements(),
+  getProgressTimeLineFramePlacement: (frameId) => getProgressTimeLineFramePlacement(frameId),
+  getCorrectlyPlacedProgressTimeLineFrameIds: () => getCorrectlyPlacedProgressTimeLineFrameIds(),
+  getLockedProgressTimeLineFrameIds: () => getLockedProgressTimeLineFrameIds(),
+  isProgressTimeLineFrameLocked: (frameId) => isProgressTimeLineFrameLocked(frameId),
+  isProgressTimeLinePhotoUnlocked: (photoId) => isProgressTimeLinePhotoUnlocked(photoId),
+  getProgressTimeLineEventDescription: (id, language) => getProgressTimeLineEventDescription(id, language),
+  resolveProgressTimeLineEventImagePath: (photoId) => resolveProgressTimeLineEventImagePath(photoId),
+  formatProgressTimeLineEventDate: (year) => formatProgressTimeLineEventDate(year),
+  // The drop path, callable without a real drag, so the placement rules can be
+  // tested independently of the pointer interaction.
+  placePhotoOnProgressTimeLineFrame: (frameId, photoId) => {
+    const placement = placePhotoOnProgressTimeLineFrame(frameId, photoId);
+    if (placement) {
+      renderProgressTimeLineBoard();
+      refreshOpenProgressEvidenceWindows();
+    }
+    return placement;
+  },
+  returnProgressTimeLinePhotoToEnvelope: (frameId) => {
+    const returned = returnProgressTimeLinePhotoToEnvelope(frameId);
+    if (returned) {
+      renderProgressTimeLineBoard();
+      refreshOpenProgressEvidenceWindows();
+    }
+    return returned;
+  },
+  renderProgressTimeLineBoard: () => renderProgressTimeLineBoard(),
 };
 
 window.progressEvidenceDeveloperTools = {
