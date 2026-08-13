@@ -50,11 +50,11 @@
     },
     {
       "id": "standalone-honeydewcavingclub-team",
-      "defaultTitleString": "La squadra dell'Honey Dew Caving Club nel 1904",
+      "defaultTitleString": "La squadra dell'Honey Dew Caving Club nel settembre 1901",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/honeydewcavingclub.png",
-      "captionText": "La foto di squadra dell'Honey Dew Caving Club del 1904.",
-      "descriptionText": "La squadra dell'Honey Dew Caving Club nel 1904, fila superiore da sinistra a destra: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Fila inferiore da sinistra a destra: Sconosciuto, Anthony Worthing, Sam Henderson, Paul Greenwood"
+      "captionText": "La foto di squadra dell'Honey Dew Caving Club del settembre 1901.",
+      "descriptionText": "La squadra dell'Honey Dew Caving Club nel settembre 1901, fila superiore da sinistra a destra: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Fila inferiore da sinistra a destra: Sconosciuto, Anthony Worthing, Sam Henderson, Paul Greenwood"
     },
     {
       "id": "standalone-honeydewcavingclub",
@@ -62,7 +62,7 @@
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/minemap.png",
       "captionText": "La mappa collettiva del sistema di grotte di Black Pine, 1912",
-      "descriptionText": "---\nLa mappa collettiva del sistema di grotte di Black Pine, 1912, realizzata con grande cura grazie agli sforzi collettivi dell'Honey Dew Caving Club dal 1902 al 1911. Menzione speciale per il principale contributore, Thomas O'Rourke, che perse tragicamente la vita nel 1911 mentre praticava calata in corda doppia in Francia; fu il principale contributore e il fondatore del club di speleologia.\n---"
+      "descriptionText": "---\nLa mappa collettiva del sistema di grotte di Black Pine, 1912, realizzata con grande cura grazie agli sforzi collettivi dell'Honey Dew Caving Club dal 1901 al 1911. Menzione speciale per il principale contributore, Thomas O'Rourke, che perse tragicamente la vita nel 1911 mentre praticava calata in corda doppia in Francia; fu il principale contributore e il fondatore del club di speleologia.\n---"
     },
     {
       "id": "library-guardiansofthenorth",
@@ -87,6 +87,14 @@
       "photoPath": "./assets/photos/worthingCross.png",
       "captionText": "Ciondolo d'oro con l'incisione P A WORTHING sul retro, collegato a una sezione spezzata di una sottile catena d'oro",
       "descriptionText": "---\n\nCiondolo d'oro con l'incisione:\n\nP A WORTHING\n\nsul retro, collegato a una sezione spezzata di una sottile catena d'oro.\n\n---"
+    },
+    {
+      "id": "anthonyWorthing",
+      "defaultTitleString": "Photo Highlighting Anthony Worthing",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/honeydewcavingclubWorthingCircled.png",
+      "captionText": "Anthony Worthing highlighted in the photo of the recently formed Honey Dew Caving Club",
+      "descriptionText": "---\n\nAnthony Worthing highlighted in a September 1901 photo of the recently formed Honey Dew Caving Club\n\n---"
     }
   ]
 }

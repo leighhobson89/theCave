@@ -50,11 +50,11 @@
     },
     {
       "id": "standalone-honeydewcavingclub-team",
-      "defaultTitleString": "Das Team des Honey Dew Caving Club im Jahr 1904",
+      "defaultTitleString": "Das Team des Honey Dew Caving Club im September 1901",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/honeydewcavingclub.png",
-      "captionText": "Das Teamfoto des Honey Dew Caving Club aus dem Jahr 1904.",
-      "descriptionText": "Das Team des Honey Dew Caving Club im Jahr 1904, obere Reihe von links nach rechts: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Untere Reihe von links nach rechts: Unbekannt, Anthony Worthing, Sam Henderson, Paul Greenwood"
+      "captionText": "Das Teamfoto des Honey Dew Caving Club aus dem September 1901.",
+      "descriptionText": "Das Team des Honey Dew Caving Club im September 1901, obere Reihe von links nach rechts: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Untere Reihe von links nach rechts: Unbekannt, Anthony Worthing, Sam Henderson, Paul Greenwood"
     },
     {
       "id": "standalone-honeydewcavingclub",
@@ -62,7 +62,7 @@
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/minemap.png",
       "captionText": "Die Gemeinschaftskarte des Black-Pine-Höhlensystems, 1912",
-      "descriptionText": "---\nDie Gemeinschaftskarte des Black-Pine-Höhlensystems, 1912, mühevoll zusammengetragen aus den gemeinsamen Anstrengungen des Honey Dew Caving Club zwischen 1902 und 1911. Besondere Erwähnung verdient der Hauptbeitragende Thomas O'Rourke, der 1911 beim Abseilen in Frankreich tragisch ums Leben kam - er war der Hauptbeitragende und der Gründer des Caving Clubs.\n---"
+      "descriptionText": "---\nDie Gemeinschaftskarte des Black-Pine-Höhlensystems, 1912, mühevoll zusammengetragen aus den gemeinsamen Anstrengungen des Honey Dew Caving Club zwischen 1901 und 1911. Besondere Erwähnung verdient der Hauptbeitragende Thomas O'Rourke, der 1911 beim Abseilen in Frankreich tragisch ums Leben kam - er war der Hauptbeitragende und der Gründer des Caving Clubs.\n---"
     },
     {
       "id": "library-guardiansofthenorth",
@@ -87,6 +87,14 @@
       "photoPath": "./assets/photos/worthingCross.png",
       "captionText": "Goldener Anhänger mit der Gravur P A WORTHING auf der Rückseite, verbunden mit einem abgebrochenen Stück feiner Goldkette",
       "descriptionText": "---\n\nGoldener Anhänger mit der Gravur:\n\nP A WORTHING\n\nauf der Rückseite, verbunden mit einem abgebrochenen Stück feiner Goldkette.\n\n---"
+    },
+    {
+      "id": "anthonyWorthing",
+      "defaultTitleString": "Photo Highlighting Anthony Worthing",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/honeydewcavingclubWorthingCircled.png",
+      "captionText": "Anthony Worthing highlighted in the photo of the recently formed Honey Dew Caving Club",
+      "descriptionText": "---\n\nAnthony Worthing highlighted in a September 1901 photo of the recently formed Honey Dew Caving Club\n\n---"
     }
   ]
 }

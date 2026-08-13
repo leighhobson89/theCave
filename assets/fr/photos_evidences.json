@@ -50,11 +50,11 @@
     },
     {
       "id": "standalone-honeydewcavingclub-team",
-      "defaultTitleString": "L'équipe du Honey Dew Caving Club en 1904",
+      "defaultTitleString": "L'équipe du Honey Dew Caving Club en septembre 1901",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/honeydewcavingclub.png",
-      "captionText": "La photo d'équipe du Honey Dew Caving Club prise en 1904.",
-      "descriptionText": "L'équipe du Honey Dew Caving Club en 1904, rangée du haut de gauche à droite : Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Rangée du bas de gauche à droite : Inconnu, Anthony Worthing, Sam Henderson, Paul Greenwood"
+      "captionText": "La photo d'équipe du Honey Dew Caving Club prise en septembre 1901.",
+      "descriptionText": "L'équipe du Honey Dew Caving Club en septembre 1901, rangée du haut de gauche à droite : Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Rangée du bas de gauche à droite : Inconnu, Anthony Worthing, Sam Henderson, Paul Greenwood"
     },
     {
       "id": "standalone-honeydewcavingclub",
@@ -62,7 +62,7 @@
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/minemap.png",
       "captionText": "La carte collective du réseau de grottes de Black Pine, 1912",
-      "descriptionText": "---\nLa carte collective du réseau de grottes de Black Pine, 1912, minutieusement réalisée grâce aux efforts collectifs du Honey Dew Caving Club entre 1902 et 1911. Mention spéciale pour le principal contributeur, Thomas O'Rourke, qui perdit tragiquement la vie en 1911 en pratiquant la descente en rappel en France ; il fut le principal contributeur et le fondateur du club de spéléologie.\n---"
+      "descriptionText": "---\nLa carte collective du réseau de grottes de Black Pine, 1912, minutieusement réalisée grâce aux efforts collectifs du Honey Dew Caving Club entre 1901 et 1911. Mention spéciale pour le principal contributeur, Thomas O'Rourke, qui perdit tragiquement la vie en 1911 en pratiquant la descente en rappel en France ; il fut le principal contributeur et le fondateur du club de spéléologie.\n---"
     },
     {
       "id": "library-guardiansofthenorth",
@@ -87,6 +87,14 @@
       "photoPath": "./assets/photos/worthingCross.png",
       "captionText": "Pendentif en or portant l'inscription P A WORTHING au dos, relié à une section brisée d'une fine chaîne en or",
       "descriptionText": "---\n\nPendentif en or portant l'inscription :\n\nP A WORTHING\n\nau dos, relié à une section brisée d'une fine chaîne en or.\n\n---"
+    },
+    {
+      "id": "anthonyWorthing",
+      "defaultTitleString": "Photo Highlighting Anthony Worthing",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/honeydewcavingclubWorthingCircled.png",
+      "captionText": "Anthony Worthing highlighted in the photo of the recently formed Honey Dew Caving Club",
+      "descriptionText": "---\n\nAnthony Worthing highlighted in a September 1901 photo of the recently formed Honey Dew Caving Club\n\n---"
     }
   ]
 }

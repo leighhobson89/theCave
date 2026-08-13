@@ -1,14 +1,53 @@
 # Story Timeline & Character Audit
 
 A snapshot of every character, date and connection findable in the shipped
-assets as of **12 August 2026** (seventh pass). This is a developer
+assets as of **13 August 2026** (ninth pass). This is a developer
 reference, not player-facing content — it exists to keep new faxes, records
 and photos consistent with what's already been written, and it will go
 stale as soon as new content lands. Re-derive it (or at least re-check the
 "Known gaps and inconsistencies" section) after any story-content pass,
 rather than trusting it blindly.
 
-Since the previous pass: the `t.fairchild` Level 3 police credential —
+Since the previous pass: the eighth pass's audit became shipped content.
+`goldenpendant` (`police.json`, all 5 languages) now carries the November
+1901 follow-up note in-game — Anthony Worthing questioned and released
+without charge — not just as developer-doc analysis. Separately, and as a
+deliberate author decision rather than a correction, the Honey Dew Caving
+Club's founding *and* its team photo both moved from 1902/1904 to
+**September 1901**, so Anthony's club membership now predates his November
+1901 questioning instead of following it by a year. Two small ripple edits
+went with the founding-date move: "ten years of activity" became "just
+over a decade," and the collective map's compilation span became
+"1901–1911." All of §1's timeline, §2's character notes and §4's mystery
+threads are updated in place below; see
+[`story-timeline-fixed-inconsistencies.md`](story-timeline-fixed-inconsistencies.md)
+for the full list of touched files.
+
+Since the pass before that: a proposed new scene — Anthony Worthing
+discovering, via Harry Whitmore's 1907 book, that "his" pendant was found
+in 1901 and privately tearing the page out — was audited against every
+mention of "Worthing" and "pendant" in the shipped content for a suspected
+contradiction (that, as a Lieutenant running an active follow-up
+investigation, McLeod would plausibly have identified and questioned him
+back in 1901, which the 1907 "discovery" framing would then contradict).
+That instinct turned out to be right, and corrects an earlier, weaker
+reading logged the same day: the pendant's own record explicitly says
+"follow ups are being carried out to ascertain possible owners" (not
+"never established"), and Fairchild's insurance paperwork for the same
+pendant sits inside the police's own Level 3 files, not just Fairchild's —
+both support the police having identified Anthony via that follow-up.
+"Ownership... officially still open," which persists verbatim through the
+1957 obituary, reads better as *never disclosed publicly* than *never
+known privately*. The fix is a change of what the 1907 scene reveals, not
+a date change: not "the pendant was found" (he'd already know) but "it's
+now in print" — plus one real date correction, the caving club wasn't
+founded until **1902**, so any motive for Anthony joining it can't be
+dated 1901 and can't be "searching, unaware it was already found" once
+past that year either. See the rewritten "gold pendant" / "vandalised
+page" / "Simon and Tony" entries in §4, and the corrected entry in
+[`story-timeline-fixed-inconsistencies.md`](story-timeline-fixed-inconsistencies.md).
+
+Since the pass before that: the `t.fairchild` Level 3 police credential —
 previously a dead end — now gates real content. J & T Fairchild Valuation
 Experts & Insurance Brokers turns out to run a five-number coding system
 for their records (Colour–Object–Name–Document–Route), decodable via a
@@ -21,7 +60,7 @@ valuation for that same pendant, naming the original policyholder as
 **1897** death and the policy's continuation by his son, **Anthony
 Worthing** — the same name already sitting unremarked in the 1904 Honey
 Dew Caving Club photo. See §1, §2, §3 and §4 below for how all of this
-slots in, and the new entry in §5 for the one real gap it introduces.
+slots in.
 
 Sources audited: `assets/en/story.md`, `assets/{en,de,es,fr,it}/
 reports_evidences.json`, `assets/en/photos_evidences.json`, `assets/en/
@@ -54,18 +93,18 @@ career"), that's noted rather than invented.
 | Aug 1901 | NWMP search party works the cave and the old mine. Sgt. Arthur Whitmore leads part of the search into the forest and is among the first to examine the cave; known for meticulous notes and local mining history knowledge. He is believed to have personally taken the search-party photo, which is why he isn't in it — letting police photographer John Baxley (normally behind the camera) appear instead. Cpl. Thomas O'Rourke, an avid caver/cave diver, and Lt. William McLeod are also part of the search. | `police.json` (arthurwhitmore, thomasorourke, williammcleod); `zoomsearch.json` (johnbaxley) |
 | Aug 1901 | "Cave Entrance" photographed by police photographer John Baxley. | `photos_evidences_en.json` (caveEntrance) |
 | Summer 1901 | The only known photo of Andrew and Arnie Spencer together, taken at the Spencer family farm. | `photos_evidences_en.json` (askewAndrew) |
+| **Sep 1901** | **Thomas O'Rourke founds the Honey Dew Caving Club** in Saskatchewan — and the club's team photo is taken the same month. Top row: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Bottom row: Unknown, **Anthony Worthing**, Sam Henderson, Paul Greenwood. Not normally permitted into the high-profile, still-active Black Pine system, the club sneaks in occasionally over the following decade. | `standalone-pages.json` (honeydewcavingclub); `police.json` (thomasorourke); photo `honeydewcavingclub.png` |
 | 27 Oct 1901 | NWMP "three months" progress report filed on the missing-person case (case no. 01-2710-00): still open, Arnie presumed dead. Evidence recovered: a white cotton handkerchief, a wooden varnished lunchbox, 40 ft of hemp rope, an unlit straw torch soaked in fuel oil. | `reports_evidences_{en,de,es,fr,it}.json` (missingReport) |
-| 15 Nov 1901 | On a later return sweep of the flooded lower section of Shaft 'B' — the search area's third sweep overall — **Lt. William McLeod recovers a gold pendant**, engraved "P. A. WORTHING," on a broken chain, from a rock ledge beneath the water. This is after the October progress report was already filed, which is why that report has no mention of it; ownership is not established at the time. | `police.json` (williammcleod, goldenpendant); `archives.json` (williammcleodfindpendant) |
+| 15 Nov 1901 | On a later return sweep of the flooded lower section of Shaft 'B' — the search area's third sweep overall — **Lt. William McLeod recovers a gold pendant**, engraved "P. A. WORTHING," on a broken chain, from a rock ledge beneath the water. This is after the October progress report was already filed, which is why that report has no mention of it; ownership is not established at the time, but the pendant's own record logs an active follow-up to establish it. | `police.json` (williammcleod, goldenpendant); `archives.json` (williammcleodfindpendant) |
+| **Nov 1901** | Follow-up on the gold pendant's engraving matches it to Fairchild's 1893 policy; **Anthony Worthing is brought in and questioned**, then released without charge — no evidence ties him to Arnie's disappearance. The file stays classified and officially open rather than closed. | `police.json` (goldenpendant, added follow-up note) |
 | 1901 onward | The search for Arnie continues for years in a steadily more informal, "casual weekend divers" fashion, with no leads found in the mine; the case eventually goes cold. | `police.json` (thomasorourke) |
-| 1902 | Thomas O'Rourke founds the Honey Dew Caving Club in Saskatchewan. Not normally permitted into the high-profile, still-active Black Pine system, the club sneaks in occasionally over the following decade. | `standalone-pages.json` (honeydewcavingclub); `police.json` (thomasorourke) |
 | 1903 | Henry "Harry" Whitmore, Arthur's eldest son, photographed on vacation at Niagara Falls. | `zoomsearch.json` (henrywhitmore), photo `harryWhitmore.png` |
-| 1904 | Honey Dew Caving Club team photo. Top row: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Bottom row: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood. | photo `honeydewcavingclub.png` |
 | by 1905 | Arthur Whitmore is a respected Sergeant, valued for his knowledge of the surrounding country. | `police.json` (arthurwhitmore) |
 | 1906 | Hannah Fletcher — wife of NWMP search-party member and eventual retiree James Fletcher — publishes *Mysteries of the Old North West*, interviewing search-party witnesses about cold cases. Her husband's interview reveals a detail that contradicts the official account: **four sets of footprints, two of them adult**, found at the cave — versus witness accounts insisting only the two boys went in alone. | `library.json` (mysteryoldnw, `publicationYear`); `archives.json` (hannahfletcher, `date`) |
 | **1907** | Henry "Harry" Whitmore — having already forgone his inheritance in favour of writing — publishes ***Strange Things Found In Even Stranger Places***, a "wacky compendium" of fifty stories about objects and fossils turning up where they have no business being. The library's own copy has since had a page **torn out and vandalised**; a librarian's note asks anyone who knows who damaged it to come forward. The catalog description of that vandalised page directly names it as relating to **McLeod's 1901 gold pendant** — the book may be the missing link between the pendant and the case file that never recorded it. | `library.json` (strangethingsfoundinevenstrangerplaces); `archives.json` (henrywhitmore); photos `henryStrangeThings.png`, `strangethingsinevenstrangerplaces.png` |
 | 1911 | Cpl. Thomas O'Rourke dies in an abseiling accident in France while on vacation with his wife (photographed boarding the RMS *Tunisian* at Québec City Harbor beforehand). Posthumously awarded a Medal of Honor for contributions to policing. | `police.json` (thomasorourke), photo `thomasorourke.png` |
 | 1912 | Henry Whitmore formally passes control of Whitmore & Sons to his younger brother Jerome, stepping aside from the family business to remain an author/naturalist. | `zoomsearch.json` (henrywhitmore, jeromewhitmore) |
-| 1912 | Honey Dew Caving Club, without its founder, is formally defunct. Its defining achievement — the hand-drawn Black Pine Cave System Collective Map, painstakingly assembled 1902–1911 — is released and handed to police in hopes of reviving the cold case. | `standalone-pages.json` (honeydewcavingclub); `photos_evidences_en.json` (standalone-honeydewcavingclub) |
+| 1912 | Honey Dew Caving Club, without its founder, is formally defunct. Its defining achievement — the hand-drawn Black Pine Cave System Collective Map, painstakingly assembled 1901–1911 — is released and handed to police in hopes of reviving the cold case. | `standalone-pages.json` (honeydewcavingclub); `photos_evidences_en.json` (standalone-honeydewcavingclub) |
 | 1915 | Cpl. Emile Beaulieu retires from the NWMP and becomes a professional climber. | `police.json` (emilebeaulieu) |
 | Jun 1920 | Lt. William McLeod receives his Certificate of Honour at his NWMP retirement presentation (later reproduced in the 1988 book *Guardians of the North* by Cat J Roman). He and wife Margaret settle near Maple Grove, rural Ontario. | `police.json` (williammcleod), photo `williamMcLeod.png`; `zoomsearch.json` (margaretmcleod) |
 | 1928 | John Baxley retires from the NWMP and joins the "Forestry Imaging Enthusiasts" photography club. | `zoomsearch.json` (johnbaxley) |
@@ -92,16 +131,16 @@ career"), that's noted rather than invented.
 - **Andrew John Spencer** (b. 12 Aug 1888 – d. 28 Jul 1901) — elder brother. Returns from the cave fatally injured; his account of the second visit, cut short when he loses consciousness, is the only first-hand record of what happened.
 - **Askew Arnold "Arnie" Spencer** (b. 6 Nov 1891 – missing 27 Jul 1901, presumed dead) — the missing boy the entire case centers on.
 - **John & Diane Spencer** — the boys' parents; ex-banker turned farmer and his wife. Diane's reaction ("You'll never set foot in that forest again!") is the story's most direct emotional beat.
-- **Simon** and **Tony** — the Spencers' two farmhands, early thirties, present the morning the boys leave for the cave the second time. *Possible unconfirmed link:* the 1904 Honey Dew Caving Club photo has both a "Simon Cresswell" and an "Anthony Worthing" — Tony being a standard nickname for Anthony — same first names, same district, plausible timeframe, and *both* farmhands would map to *both* of these club members in the same photo. Nothing in the assets confirms either link, but the pair reinforces itself, and it's harder to read as coincidence now that an actual **Anthony Worthing** is independently documented (see "The Worthing family" below) inheriting a gold pendant from his father in 1897 — four years before McLeod recovers a gold pendant from the very cave these farmhands' employers' sons went missing in. Still nothing in the shipped content states outright that they're the same person. Worth deciding deliberately rather than by coincidence if this thread gets developed.
+- **Simon** and **Tony** — the Spencers' two farmhands, early thirties, present the morning the boys leave for the cave the second time. *Possible unconfirmed link:* the September 1901 Honey Dew Caving Club photo has both a "Simon Cresswell" and an "Anthony Worthing" — Tony being a standard nickname for Anthony — same first names, same district, and now a genuinely tight timeframe: both club members would have to be the very same two farmhands joining a brand-new caving club within about six weeks of the boys' disappearance. Nothing in the assets confirms either link, but the pair reinforces itself, and it's harder to read as coincidence now that an actual **Anthony Worthing** is independently documented (see "The Worthing family" below) inheriting a gold pendant from his father in 1897 — four years before McLeod recovers a gold pendant from the very cave these farmhands' employers' sons went missing in, and was brought in for questioning about it that same November. Still nothing in the shipped content states outright that they're the same person. Worth deciding deliberately rather than by coincidence if this thread gets developed.
 - **The stranger on the path** — unnamed man who tells the boys about the "bottomless" hole and the old mine, then vanishes into the trees. Never identified or revisited by any other asset. A loose thread by construction.
 
 ### North-West Mounted Police (the searchers)
 - **Sgt. Arthur Whitmore** — led part of the 1901 search, examined the cave, presumed photographer of the search-party photo. Arthur's grandson Brian later faxes the player for "information about our grandpa." Father of Henry and Jerome Whitmore (see family tree below).
 - **John Baxley** — police diver/photographer, worked the scene; later a founding-era member of "Forestry Imaging Enthusiasts," retiring from the NWMP in 1928.
-- **Cpl. Thomas O'Rourke** — search-party diver, founder of the Honey Dew Caving Club, dies in France in 1911; posthumous Medal of Honor.
+- **Cpl. Thomas O'Rourke** — search-party diver, founds the Honey Dew Caving Club in September 1901 (barely six weeks after the search itself), dies in France in 1911; posthumous Medal of Honor.
 - **Constable James Fletcher** — search participant, later awarded the King's Police Medal, retires 1934, dies 1951. Husband of author Hannah Fletcher.
 - **Cpl. Emile Beaulieu** — later a celebrated professional climber; retires 1915, dies 1955.
-- **Lt. William McLeod** — frontier officer, recovered a gold pendant engraved "P. A. WORTHING" during the 1901 search (Police Records Level 3, `goldenpendant`) that never made it into the case file, retires with honour in 1920, settles in Ontario with wife Margaret, dies 1957 aged 87 (obituary: "Remembering a great Guardian," *Maple Grove Times*).
+- **Lt. William McLeod** — frontier officer, recovered a gold pendant engraved "P. A. WORTHING" during the 1901 search (Police Records Level 3, `goldenpendant`) that never made it into the case file, ran the follow-up that identified and questioned Anthony Worthing that November, retires with honour in 1920, settles in Ontario with wife Margaret, dies 1957 aged 87 (obituary: "Remembering a great Guardian," *Maple Grove Times*).
 - **Cpl. George Mackenzie** — quietly dependable service, retires 1931, dies 1954; locally famous for the longest moustache in Canada.
 - **Administrator** — police-database account with no attached character. Level 5, `atlas`; still a loose thread.
 - **T. Fairchild** — not an NWMP officer. The Level 3 (`mapleLaw91`) credentials Brian Whitmore passes along are for a Police Records account tied to **J & T Fairchild Valuation Experts & Insurance Brokers** (see "Authors, family, and everyone else" below) rather than to a person named in any shipped record — no individual "T. Fairchild" is ever identified.
@@ -128,13 +167,19 @@ Percival Anthony Worthing (d. 1897) — insured a gold cross pendant with
  │   J & T Fairchild in 1893 (Policy No. T/1893/1122), engraved
  │   "P. A. WORTHING" on the reverse. That same pendant is recovered by
  │   Lt. William McLeod from the flooded lower section of Shaft 'B' during
- │   a November 1901 return sweep — ownership never established by the
- │   official investigation.
+ │   a November 1901 return sweep. McLeod's own report logs an active
+ │   follow-up to establish ownership, and Fairchild's insurance file for
+ │   the pendant ends up filed at the same Level 3 police clearance as the
+ │   pendant evidence itself — the connection to the Worthing family was
+ │   plausibly made privately within the investigation (see §4), even
+ │   though it was never disclosed publicly.
  └─ Anthony Worthing — Percival's son. The Fairchild policy is continued in
      his name per an endorsement on the same record, dated 1897. Also the
-     name entered for a member of the 1904 Honey Dew Caving Club team
-     photo — see the Simon/Tony naming coincidence above, now considerably
-     harder to read as coincidence, though still nowhere confirmed.
+     name entered for a member of the September 1901 Honey Dew Caving Club
+     team photo — see the Simon/Tony naming coincidence above, now
+     considerably harder to read as coincidence, though still nowhere
+     confirmed. Brought in and questioned that November once the pendant's
+     engraving was traced to the family policy; released without charge.
 ```
 Both records live at Police Records Level 3: `goldenpendant` (the pendant
 itself, as photo evidence) and `fairchildinsurancerecordworthingpendant`
@@ -145,7 +190,7 @@ are now reachable via clues already in the game — see `happypath.md` §8.
 - **Hannah Fletcher** — author of *Mysteries of the Old North West* (1906); James Fletcher's wife, living with him in Gray Stacks, Alberta.
 - **Margaret McLeod** — William's wife, ran an apple orchard near Maple Grove, Ontario.
 - **Teresa McLeod** — William and Margaret's daughter, identified by the handwritten dedication "Mum, Dad collecting apples, 1952. For Teresa" on the family orchard polaroid. Holds the archives Subscriber account (`t.mcleod` / `apple1`), whose credentials are themselves handwritten in the corner of the "Guardians of the North" evidence photo — see "Credentials hidden in evidence photos" below.
-- **Honey Dew Caving Club, 1904 roster** — Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone, Anthony Worthing, Sam Henderson, Paul Greenwood, plus one still-unidentified member. Only O'Rourke and Henry Whitmore have any further biography elsewhere.
+- **Honey Dew Caving Club, September 1901 roster** — Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone, Anthony Worthing, Sam Henderson, Paul Greenwood, plus one still-unidentified member. Only O'Rourke and Henry Whitmore have any further biography elsewhere.
 - **Cat J Roman** — author of *Guardians of the North* (1988), the source of McLeod's retirement photo. No other appearances.
 - **J & T Fairchild Valuation Experts & Insurance Brokers** — Joseph and Therese Fairchild's Black Pine valuation/insurance business (`zoomsearch.json`, `standalone-pages.json`). Publishes a public decode book explaining their five-number record codes (Colour–Object–Name–Document–Route) and, at Police Level 3, holds the Worthing pendant's insurance file. No individual named "T. Fairchild" appears anywhere — see the account note above.
 
@@ -181,9 +226,9 @@ Things that read as deliberate, unresolved hooks rather than mistakes —
 worth knowing about so future content doesn't accidentally "solve" or
 contradict them before they're meant to be addressed.
 
-- **The gold pendant.** William McLeod recovered a gold pendant on 15 November 1901 (per his 1957 obituary), during a return sweep that came *after* the official three-month case report — filed that October, listing only a handkerchief, a lunchbox, rope and a torch — had already gone in. That timing is why the report has no mention of it; the pendant's ownership is separately described as "classified... due to the investigation officially still remaining open," an in-universe gap that stays a gap even though the *player* can now identify the pendant as **Percival Anthony Worthing's**, later **Anthony Worthing's**, via the two Level 3 police records (see "The Worthing family" above). Nobody inside the fiction ever makes that connection.
-- **The vandalised page.** The library's copy of Harry Whitmore's 1907 book has had a page torn out. The catalog description of that missing page explicitly ties it to McLeod's pendant, making the book a plausible link between the pendant and the case that never recorded it. Nobody in the shipped content is on record as knowing who vandalised it.
-- **Simon and Tony the farmhands vs. Simon Cresswell and Anthony "Tony" Worthing.** Both 1901 farmhands share a first name with a member of the 1904 caving-club photo — see the character index above. If real, it would put both farmhands in the caving club three years after the tragedy, with Tony's own club membership doubling as a decade of unofficial searching for the very pendant now sitting, unrecognised, in police evidence.
+- **The gold pendant — now partly resolved in shipped content, 2026-08-13.** William McLeod recovered a gold pendant on 15 November 1901, during a return sweep that came *after* the official three-month case report — filed that October, listing only a handkerchief, a lunchbox, rope and a torch — had already gone in. The `goldenpendant` record now carries a follow-up note, dated that same November: the engraving was matched to Fairchild's insurance file, and **Anthony Worthing was brought in and questioned, then released without charge** — no evidence tied him to Arnie's disappearance. The file stays "classified... officially still open" (language repeated verbatim as late as the 1957 obituary) rather than closed — that's now explicitly a case of *never disclosed publicly*, not *never known privately*. This is the resolution of what was, earlier the same day, logged as an open mystery thread with two competing readings; the shipped follow-up note settles it in favour of the police having made the connection.
+- **The vandalised page — still open.** The library's copy of Harry Whitmore's 1907 book has had a page torn out. The catalog description of that missing page explicitly ties it to McLeod's pendant, making the book a plausible link between the pendant and the case that never recorded it. Nobody in the shipped content is on record as knowing who vandalised it, and nothing shipped names Anthony Worthing as the culprit — that's still undecided narrative territory, deliberately. If it's written as him, per the "gold pendant" entry above it can't be framed as him *learning for the first time* that his pendant was found — he's known that since being questioned in November 1901. What the book could give him in 1907 that he didn't have before: proof that a private, sealed police matter has surfaced in a **published, publicly available book** — a leak to suppress, not news to process.
+- **Simon and Tony the farmhands vs. Simon Cresswell and Anthony "Tony" Worthing.** Both 1901 farmhands share a first name with a member of the September 1901 caving-club photo — see the character index above. **Updated 2026-08-13:** the club (`standalone-pages.json`, `police.json` thomasorourke) is now dated to **September 1901**, barely six weeks after the tragedy and about two months before Anthony was questioned — tightening this coincidence considerably rather than loosening it. "Joined to search for his pendant, unaware it had already been found" still works *only* for that narrow September window; anything set after mid-November 1901 needs a different motive (guilt, curiosity about the place tied to his family's ordeal, or something else), since by then he'd have known it was already in evidence via the questioning.
 - **The stranger on the path.** Warns the boys about the hole, admits he hasn't heard the mine mentioned "in years," and is never seen again.
 - **T. Fairchild.** The Level 3 police credential resolves to a company (J & T Fairchild Valuation Experts & Insurance Brokers — see the character index above), not a person; no individual named "T. Fairchild" is ever identified (unlike `t.mcleod`, now identified as Teresa McLeod — see above).
 
@@ -194,25 +239,11 @@ contradict them before they're meant to be addressed.
 These are observations, not fixes — flagging them here rather than silently
 editing content that may be intentional or already slated for a rewrite.
 
-- The handwritten police username on `mysteriesOldNW.png` previously read
-  `james.f` against the live `j.fletcher` account; the art now reads
-  `j.fletcher` and matches exactly. No longer outstanding, kept here as a
-  record of the fix.
-- `09-24-49-02-07` previously had no discoverable code — the Fairchild
-  ZoomSearch page now closes that gap with a standing line ("we're the
-  lucky 07 when it comes to Insurance"), giving Route (`07`) directly and
-  Document (`02`, Insurance Policy) by context. Combined with Gold/
-  Pendant/Worthing from `goldenpendant`, all five segments are now
-  legitimately derivable — see `happypath.md` §8 step 18. (The decode
-  book's own tables had at one point dropped their leading zeros and
-  reshuffled the Name Index so Fairchild read `7`, but Hollingworth `22`
-  and Worthing `49` — the two values baked into shipped codes — kept
-  their exact original numbers, so nothing else needed to change at the
-  time. Leading zeros were later restored across all five index
-  categories — `7 — Fairchilds` is `07 — Fairchilds` again — so the
-  decode book's own formatting now matches the two-digit codes it
-  decodes; the numeric values themselves, including Fairchild's, never
-  changed.) No longer outstanding, kept here as a record of the fix.
+None currently open as of 13 August 2026 (ninth pass). Every item logged
+in this section previously has since been fixed in shipped content; see
+[`story-timeline-fixed-inconsistencies.md`](story-timeline-fixed-inconsistencies.md)
+for that history rather than trusting this section to be empty forever —
+re-check it after any future story-content pass, the same as this file.
 
 ---
 

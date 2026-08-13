@@ -148,6 +148,43 @@
           "entryId": ""
         }
       }
+    },
+    {
+      "id": "tonyarrestedandreleased",
+      "province": "Saskatchewan",
+      "headline": "Local Man Arrested in connection with Spencer disappearence",
+      "publication": "Black Pine Gazette",
+      "keywords": [
+        "anthony worthing"
+      ],
+      "summary": "Local Man Anthony Worthing arrested and later released in connection with disappearence of Arnie Spencer and death of Brother.",
+      "article": [
+        "Local man Anthony Worthing (pictured second from left, bottom row) of Black Pine was arrested and questioned by police over the disappearence of Askew Arnold Spencer in July this year, and the death of his brother Andrew Spencer.  The technicalities of the interview have not been disclosed but we have confirmation that he made a statement willingly and was later released without charge."
+      ],
+      "requiredAccessLevel": 1,
+      "images": [
+        {
+          "src": "./assets/photos/honeydewcavingclubWorthingCircled.png",
+          "alt": "Anthony Worthing highlighted in the photo of the recently formed Honey Dew Caving Club",
+          "caption": "Anthony Worthing highlighted in the photo of the recently formed Honey Dew Caving Club"
+        }
+      ],
+      "awardsEvidence": true,
+      "evidence": {
+        "type": "photo",
+        "storageKey": "photos",
+        "titleKey": "photos",
+        "name": "anthonyWorthing",
+        "defaultTitleString": "Photo Highlighting Anthony Worthing",
+        "paperStyle": "photo-mounted",
+        "source": {
+          "kind": "photo-localized-catalog-entry",
+          "languageAware": true,
+          "catalogPathTemplate": "./assets/{lang}/photos_evidences.json",
+          "entryId": "anthonyWorthing"
+        }
+      },
+      "date": "November 1901"
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Happy Path — the order a player would actually discover things
 
-As of **12 August 2026**. This traces the order a player would realistically
+As of **13 August 2026**. This traces the order a player would realistically
 proceed through the game **using only in-game flavour text as clues** — no
 out-of-game knowledge of exact search keywords, no JSON-reading. It turns
 out the content is almost entirely clue-chained once you follow it
@@ -146,8 +146,8 @@ requires Level 2, so it waits until §8.
    than following an explicit lead). His record's body ends with a live
    link: `http://honeydewcavingclub.com`.
 8. **Click the link.** The Honey Dew Caving Club page awards two photos
-   automatically (the 1904 team photo and the 1912 cave map). Picking up
-   the map specifically fires a fax automatically.
+   automatically (the September 1901 team photo and the 1912 cave map).
+   Picking up the map specifically fires a fax automatically.
 9. **Open Facsimile, close it.** "Message from Brian Whitmore" gives
    `b.whitmore` / `ironVeins15` — commits as Reports evidence.
 
@@ -206,17 +206,21 @@ requires Level 2, so it waits until §8.
     obituary above; already logged in as `t.fairchild`, Level 3, from step
     12). Awards the **GOLD PENDANT** photo evidence: a gold pendant
     engraved **"P. A. WORTHING,"** recovered by Lt. William McLeod from the
-    flooded lower section of Shaft 'B'. A new surname to chase — and, with
-    the decode book in hand, three of five code segments: Gold (`09`),
-    Pendant (`24`), Worthing (`49`).
+    flooded lower section of Shaft 'B'. The record's own follow-up note
+    goes further than the obituary did: in November 1901, the engraving
+    was traced to a Fairchild policy and **Anthony Worthing was brought in
+    and questioned, then released without charge**. A new surname to
+    chase — and, with the decode book in hand, three of five code
+    segments: Gold (`09`), Pendant (`24`), Worthing (`49`).
 18. **Police Records → search `09-24-49-02-07`** — composed from the three
     segments above plus Document/Route from step 13's hint (`02`
     Insurance Policy, `07` Fairchilds). Opens Fairchild's own insurance
     valuation for the pendant: names the original policyholder as
     **Percival Anthony Worthing** (d. 1897) and, via a later endorsement,
-    his son **Anthony Worthing** — the same name already sitting
-    unremarked in the 1904 club photo. Informational only, no further
-    evidence.
+    his son **Anthony Worthing** — the same name already sitting in the
+    September 1901 club photo, and now confirmed by step 17 as the same
+    man McLeod's follow-up questioned and released that November.
+    Informational only, no further evidence.
 
 ---
 
@@ -241,7 +245,18 @@ fired. See below for what's left dangling.
 - **The vandalised book page** (see `story-timeline.md` §4, "Current
   mystery threads") is left dangling — nothing in the shipped content
   resolves who tore it out, even after identifying Teresa McLeod and the
-  pendant's Worthing connection.
+  pendant's Worthing connection, and after the `goldenpendant` record
+  (as of 2026-08-13) started naming Anthony Worthing as questioned and
+  released. If a future scene resolves this as Anthony himself, it can't
+  be framed as him learning in 1907 that the pendant was found — the
+  shipped follow-up note already has him questioned about it in November
+  1901. What the book could give him in 1907 instead: proof that a
+  private, sealed police matter he's known about for years has just
+  leaked into a publicly available library book — a leak to suppress, not
+  news to process. "Ownership... officially still open" (repeated as late
+  as the 1957 obituary) still means the connection was never made
+  *public*, which is what keeps him free throughout — see
+  `story-timeline.md` §4 and §5 for the full history of this thread.
 
 **Full evidence inventory:** 10 photos (askewAndrew, caveEntrance, "No
 More!", "Search Party outside Black Pine Silver Mine Shaft B",

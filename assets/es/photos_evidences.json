@@ -50,11 +50,11 @@
     },
     {
       "id": "standalone-honeydewcavingclub-team",
-      "defaultTitleString": "El equipo del Honey Dew Caving Club en 1904",
+      "defaultTitleString": "El equipo del Honey Dew Caving Club en septiembre de 1901",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/honeydewcavingclub.png",
-      "captionText": "La fotografía del equipo del Honey Dew Caving Club de 1904.",
-      "descriptionText": "El equipo del Honey Dew Caving Club en 1904, fila superior de izquierda a derecha: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Fila inferior de izquierda a derecha: Desconocido, Anthony Worthing, Sam Henderson, Paul Greenwood"
+      "captionText": "La fotografía del equipo del Honey Dew Caving Club de septiembre de 1901.",
+      "descriptionText": "El equipo del Honey Dew Caving Club en septiembre de 1901, fila superior de izquierda a derecha: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Fila inferior de izquierda a derecha: Desconocido, Anthony Worthing, Sam Henderson, Paul Greenwood"
     },
     {
       "id": "standalone-honeydewcavingclub",
@@ -62,7 +62,7 @@
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/minemap.png",
       "captionText": "El mapa colectivo del sistema de cuevas de Black Pine, 1912",
-      "descriptionText": "---\nEl mapa colectivo del sistema de cuevas de Black Pine, 1912, elaborado minuciosamente gracias al esfuerzo conjunto del Honey Dew Caving Club entre 1902 y 1911. Mención especial para el principal colaborador, Thomas O'Rourke, quien perdió trágicamente la vida en 1911 haciendo rápel en Francia; fue el principal colaborador y el fundador del club de espeleología.\n---"
+      "descriptionText": "---\nEl mapa colectivo del sistema de cuevas de Black Pine, 1912, elaborado minuciosamente gracias al esfuerzo conjunto del Honey Dew Caving Club entre 1901 y 1911. Mención especial para el principal colaborador, Thomas O'Rourke, quien perdió trágicamente la vida en 1911 haciendo rápel en Francia; fue el principal colaborador y el fundador del club de espeleología.\n---"
     },
     {
       "id": "library-guardiansofthenorth",
@@ -87,6 +87,14 @@
       "photoPath": "./assets/photos/worthingCross.png",
       "captionText": "Colgante de oro con la inscripción P A WORTHING en su cara posterior, unido a un tramo roto de fina cadena de oro",
       "descriptionText": "---\n\nColgante de oro con la inscripción:\n\nP A WORTHING\n\nen su cara posterior, unido a un tramo roto de fina cadena de oro.\n\n---"
+    },
+    {
+      "id": "anthonyWorthing",
+      "defaultTitleString": "Photo Highlighting Anthony Worthing",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/honeydewcavingclubWorthingCircled.png",
+      "captionText": "Anthony Worthing highlighted in the photo of the recently formed Honey Dew Caving Club",
+      "descriptionText": "---\n\nAnthony Worthing highlighted in a September 1901 photo of the recently formed Honey Dew Caving Club\n\n---"
     }
   ]
 }

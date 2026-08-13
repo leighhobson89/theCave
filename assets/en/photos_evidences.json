@@ -50,11 +50,11 @@
     },
     {
       "id": "standalone-honeydewcavingclub-team",
-      "defaultTitleString": "The Honey Dew Caving Club Team in 1904",
+      "defaultTitleString": "The Honey Dew Caving Club Team in September 1901",
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/honeydewcavingclub.png",
-      "captionText": "The Honey Dew Caving Club team photo from 1904.",
-      "descriptionText": "The Honey Dew Caving Club Team in 1904, top row from left to right: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood"
+      "captionText": "The Honey Dew Caving Club team photo from September 1901.",
+      "descriptionText": "The Honey Dew Caving Club Team in September 1901, top row from left to right: Thomas O'Rourke, Simon Cresswell, Henry Whitmore, Robert Johnstone. Bottom row from left to right: Unknown, Anthony Worthing, Sam Henderson, Paul Greenwood"
     },
     {
       "id": "standalone-honeydewcavingclub",
@@ -62,7 +62,7 @@
       "paperStyle": "photo-mounted",
       "photoPath": "./assets/photos/minemap.png",
       "captionText": "The Black Pine Cave System Collective Map, 1912",
-      "descriptionText": "---\nThe Black Pine Cave System Collective Map, 1912, painstakingly put together through all the collective efforts of the Honey Dew Caving Club from 1902-1911.  Special mention to the main contributor Thomas O'Rourke who tragically lost his life in 1911 abseiling in France was the main contributor, and the founder of the Caving Club.\n---"
+      "descriptionText": "---\nThe Black Pine Cave System Collective Map, 1912, painstakingly put together through all the collective efforts of the Honey Dew Caving Club from 1901-1911.  Special mention to the main contributor Thomas O'Rourke who tragically lost his life in 1911 abseiling in France was the main contributor, and the founder of the Caving Club.\n---"
     },
     {
       "id": "library-guardiansofthenorth",
@@ -87,6 +87,14 @@
       "photoPath": "./assets/photos/worthingCross.png",
       "captionText": "Golden Pendant with inscription P A WORTHING on its rear side connected to a broken section of fine gold chain",
       "descriptionText": "---\n\nGolden Pendant with inscription:\n\nP A WORTHING\n\non its rear side, connected to a broken section of fine gold chain.\n\n---"
+    },
+    {
+      "id": "anthonyWorthing",
+      "defaultTitleString": "Photo Highlighting Anthony Worthing",
+      "paperStyle": "photo-mounted",
+      "photoPath": "./assets/photos/honeydewcavingclubWorthingCircled.png",
+      "captionText": "Anthony Worthing highlighted in the photo of the recently formed Honey Dew Caving Club",
+      "descriptionText": "---\n\nAnthony Worthing highlighted in a September 1901 photo of the recently formed Honey Dew Caving Club\n\n---"
     }
   ]
 }
