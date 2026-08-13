@@ -4,17 +4,22 @@ The images shown on the cards inside the noticeboard's manila EVIDENCE
 envelope. This folder is what the web content builder's **Progress Evidence**
 panel photo picker defaults to.
 
-Two ways an item finds its image, in order:
-
-1. **An explicit `imagePath`** on its registry entry — what the builder's photo
-   picker writes, so the file can be named anything:
-   `./assets/photos/progressEvidenceImages/black-pine-poster.png`
-2. **The naming convention**, when no `imagePath` is set — the file named after
-   the `progressEvidenceId`:
+Every registry entry names its image explicitly, on the convention "file named
+after the `progressEvidenceId`":
 
 ```
 assets/photos/progressEvidenceImages/00001.png    ->  progressEvidenceId "00001"
 ```
+
+The builder tool prefills that path as soon as an id is allocated, so an author
+normally drops the file in here under its id and touches nothing else. Two
+exceptions:
+
+- **Artwork named something else** — the builder's photo picker writes whatever
+  file you choose into `imagePath`, e.g.
+  `./assets/photos/progressEvidenceImages/black-pine-poster.png`.
+- **A hand-written entry with a blank `imagePath`** — falls back to the same
+  convention, so it still finds `[progressEvidenceId].png`.
 
 Both come from `resolveProgressEvidenceImagePath()` in
 [`../../../progressEvidenceManager.js`](../../../progressEvidenceManager.js),

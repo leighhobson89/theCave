@@ -215,10 +215,14 @@ Controls:
   and `33333` is an archives record, readable at a glance. Each service counts
   up in its own block, which is why switching Content Type allocates a new id:
   an id belongs to one service and the server rejects a mismatch.
-- `Choose Progress Evidence Photo` — required. Writes
-  `./assets/photos/progressEvidenceImages/<file>`. The file does not have to
-  exist yet: in game a missing image falls back to a placeholder card showing
-  the id, so artwork can follow later.
+- `Progress Evidence Image` — required, and **prefilled for you** as
+  `./assets/photos/progressEvidenceImages/[progressEvidenceId].png` as soon as
+  the id is allocated, re-derived whenever the id changes. Normally there is
+  nothing to do here at all. `Choose Progress Evidence Photo` overrides it when
+  the artwork is named something else, and a path you picked or typed is never
+  overwritten by a later re-allocation. The file does not have to exist yet: in
+  game a missing image falls back to a placeholder card showing the id, so
+  artwork can follow later.
 - `progressEvidenceActivated` — checked means "count this as already reached",
   so it shows in the envelope immediately without the player doing anything.
 - `progressEvidenceDeveloperEnabled` — the display switch. **Both** flags must

@@ -685,7 +685,7 @@
               <button id="allocateProgressEvidenceIdButton" class="secondary" type="button" style="margin-top:0.45rem;align-self:start;">Allocate</button>
             </label>
             <label class="field">
-              <span>Progress Evidence Image (required)</span>
+              <span>Progress Evidence Image (required, prefilled from the id)</span>
               <input id="progressEvidenceImageInput" type="text" spellcheck="false" placeholder="./assets/photos/progressEvidenceImages/example.png">
               <button id="chooseProgressEvidenceImageButton" class="secondary" type="button" style="margin-top:0.45rem;align-self:start;">Choose Progress Evidence Photo</button>
               <input id="progressEvidenceImagePicker" type="file" accept="image/*" hidden>
@@ -703,9 +703,10 @@
             Mandatory for every content type: Preview and Inject are both blocked until the id has been
             allocated and an image has been chosen. Both flags must be true for the item to show in the
             noticeboard envelope — with <strong>developer enabled</strong> off it stays hidden even when
-            <strong>activated</strong> is on. The image defaults to
-            <code>./assets/photos/progressEvidenceImages</code>; a file that isn't there yet simply falls back
-            to a placeholder card in game.
+            <strong>activated</strong> is on. The image is prefilled as
+            <code>./assets/photos/progressEvidenceImages/[progressEvidenceId].png</code> and follows the id if
+            it is re-allocated — pick a photo only when the file is named something else. Either way a file
+            that isn't there yet simply falls back to a placeholder card in game.
           </p>
           <p class="note">
             Ids are five digits: a <strong>service control digit</strong> then a four-digit sequence within

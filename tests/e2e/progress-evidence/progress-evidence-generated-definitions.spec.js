@@ -172,6 +172,12 @@ test("the real definitions file registers every website and fax with a service-c
   const ids = entries.map((entry) => entry.progressEvidenceId);
   expect(new Set(ids).size).toBe(ids.length);
 
+  // Every definition names its image explicitly, on the [progressEvidenceId].png
+  // convention, rather than leaning on the manager's fallback.
+  entries.forEach((entry) => {
+    expect(entry.imagePath).toBe(`./assets/photos/progressEvidenceImages/${entry.progressEvidenceId}.png`);
+  });
+
   // Every service is represented, so nothing was missed in the backfill.
   expect(new Set(entries.map((entry) => entry.service))).toEqual(
     new Set(Object.keys(controlDigitByService))

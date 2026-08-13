@@ -73,7 +73,7 @@ service and every received fax, one definition each:
 | `service` | Which in-game service it belongs to |
 | `itemId` | The record id inside that service's content JSON, or the fax config id |
 | `label` | Human-readable, for the audit and the card's tooltip |
-| `imagePath` | Explicit image. Blank means "use the `[progressEvidenceId].png` convention" |
+| `imagePath` | The card image. Every shipped definition names it explicitly, on the `[progressEvidenceId].png` convention; a blank one falls back to that same convention |
 | `progressEvidenceActivated` | Authored activation — see below. Normally `false` |
 | `progressEvidenceDeveloperEnabled` | The developer's display switch |
 
@@ -295,9 +295,9 @@ the definition — no code change at all.
 3. Make sure something activates it. If it is a website record or a fax, the
    three existing call sites already cover it — no code needed. Otherwise call
    `activateProgressEvidence(id)` from wherever that milestone happens.
-4. Put the image in `assets/photos/progressEvidenceImages/`, either named
-   `[progressEvidenceId].png` or named anything and pointed at by an explicit
-   `imagePath`. Until it exists the placeholder covers it.
+4. Set `imagePath` to `./assets/photos/progressEvidenceImages/[progressEvidenceId].png`
+   (or to whatever the artwork is actually called), and put the image there.
+   Until the file exists the placeholder covers it.
 5. Set `progressEvidenceDeveloperEnabled: true` when you want it in the
    envelope.
 
@@ -431,23 +431,32 @@ and must be changed together.
 ## 8. Images and the placeholder
 
 Images live in `assets/photos/progressEvidenceImages/`, which is also where the
-builder tool's photo picker points. A card resolves its image two ways, in
-order (`resolveProgressEvidenceImagePath()`):
+builder tool's photo picker points.
 
-1. **The definition's `imagePath`**, when it has one — what the picker writes,
-   so the file can be named anything:
-   `./assets/photos/progressEvidenceImages/black-pine.png`
-2. **The naming convention** otherwise:
+**Every definition names its image explicitly**, on the naming convention:
 
 ```
-assets/photos/progressEvidenceImages/[progressEvidenceId].png
+./assets/photos/progressEvidenceImages/[progressEvidenceId].png
 ```
 
-for example `assets/photos/progressEvidenceImages/00001.png` for
-`progressEvidenceId` `"00001"`. The folder comes from
-`PROGRESS_EVIDENCE_IMAGE_DIRECTORY` in `progressEvidenceManager.js` and is
-re-derived on every render, so renaming it is a one-line change there (plus the
-matching constant in `tools/web_content_builder.js`, which the picker uses).
+for example `./assets/photos/progressEvidenceImages/00001.png` for
+`progressEvidenceId` `"00001"`. The builder prefills exactly this the moment an
+id is allocated, and re-derives it if the id changes, so authoring a record
+normally means touching the image field not at all — the photo picker is only
+for artwork that is named something else.
+
+A card resolves its image two ways, in order
+(`resolveProgressEvidenceImagePath()`):
+
+1. **The definition's `imagePath`**, which is the normal case.
+2. **The same naming convention**, when a hand-written definition leaves
+   `imagePath` blank. This fallback means an entry added by hand still finds its
+   artwork with no extra typing.
+
+The folder comes from `PROGRESS_EVIDENCE_IMAGE_DIRECTORY` in
+`progressEvidenceManager.js` and is re-derived on every render, so renaming it
+is a one-line change there (plus the matching constant in
+`tools/web_content_builder.js`, which the prefill and the picker both use).
 
 If the PNG is missing, the `<img>`'s own `error` handler replaces it with a
 portrait placeholder card carrying the `progressEvidenceId` as visible text (plus
@@ -575,7 +584,7 @@ this is what the panel does to this system.
 | Control | Effect |
 | --- | --- |
 | `progressEvidenceId` | Read-only. Allocated by `GET /api/web-content/next-progress-evidence-id?service=<service>` — the service's control digit plus one past its highest sequence in `assets/progressEvidence.json`. Changing the Content Type re-allocates it, since the id belongs to the new service's block. **Allocate** re-asks (useful if the API was not running when the page loaded) |
-| Progress Evidence Image | Required. The photo picker writes `./assets/photos/progressEvidenceImages/<file>`; it is stored as the definition's `imagePath` |
+| Progress Evidence Image | Required, and **prefilled from the id** as `./assets/photos/progressEvidenceImages/[progressEvidenceId].png`, re-derived whenever the id changes. The photo picker overrides it for artwork named something else, and a hand-picked path is never overwritten by a later re-allocation. Stored as the definition's `imagePath` |
 | `progressEvidenceActivated` | Seeds this id as already activated, so it is in the envelope immediately |
 | `progressEvidenceDeveloperEnabled` | The display switch. Off means hidden regardless of the flag above |
 

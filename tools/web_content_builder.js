@@ -769,6 +769,32 @@ async function maybePrefillProgressEvidenceId() {
     progressEvidenceIdInput.value = "";
     lastAllocatedProgressEvidenceService = "";
   }
+
+  syncProgressEvidenceImageToId();
+}
+
+// A path this form filled in itself, rather than one the author chose with the
+// photo picker or typed by hand.
+function isConventionProgressEvidenceImagePath(value) {
+  return new RegExp(`^${PROGRESS_EVIDENCE_IMAGE_DIRECTORY.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}/\\d+\\.png$`)
+    .test(String(value || "").trim());
+}
+
+// Keeps the image path on the [progressEvidenceId].png convention as the id
+// changes, so the common case needs no picking at all. An image the author
+// actually chose is never overwritten — only a blank field, or a convention
+// path left over from a previously allocated id.
+function syncProgressEvidenceImageToId() {
+  const progressEvidenceId = String(progressEvidenceIdInput.value || "").trim();
+  const currentImagePath = String(progressEvidenceImageInput.value || "").trim();
+
+  if (currentImagePath && !isConventionProgressEvidenceImagePath(currentImagePath)) {
+    return;
+  }
+
+  progressEvidenceImageInput.value = progressEvidenceId
+    ? `${PROGRESS_EVIDENCE_IMAGE_DIRECTORY}/${progressEvidenceId}.png`
+    : "";
 }
 
 function renderPreview() {
@@ -1076,6 +1102,7 @@ if (allocateProgressEvidenceIdButton) {
     try {
       progressEvidenceIdInput.value = await fetchNextProgressEvidenceId(service);
       lastAllocatedProgressEvidenceService = service;
+      syncProgressEvidenceImageToId();
       setStatus(`Allocated progressEvidenceId ${progressEvidenceIdInput.value} for ${service}.`);
     } catch (error) {
       setStatus(error.message);
