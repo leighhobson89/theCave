@@ -2,9 +2,9 @@
 
 The progress evidence system: the persistent record of investigation milestones
 the player has reached. `progressEvidenceActivated` is player progress, set
-when a website record opens, a standalone page is visited, or a fax arrives;
-`progressEvidenceDeveloperEnabled` is the developer's separate switch for
-whether that milestone can be reached at all.
+when a website record opens, a standalone page is visited, or a fax is opened
+and consumed (not merely received); `progressEvidenceDeveloperEnabled` is the
+developer's separate switch for whether that milestone can be reached at all.
 
 Implementation: [`progressEvidenceManager.js`](../../../progressEvidenceManager.js)
 and the progress evidence activation call sites in

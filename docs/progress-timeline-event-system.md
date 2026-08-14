@@ -53,7 +53,7 @@ that ever stops being true, this is the assumption to revisit.
 | File | Holds |
 | --- | --- |
 | `evidenceManager.js` | The Reports/Photos/Story items the player collects and reads. |
-| `progressEvidenceManager.js` | The milestone ids recorded when a page is opened or a fax arrives. |
+| `progressEvidenceManager.js` | The milestone ids recorded when a page is opened or a fax is read. |
 | `progressTimeLineEventManager.js` | The frames, the photographs, and what has been placed where. |
 
 The dependency runs one way: the timeline asks progressEvidence whether a
@@ -64,8 +64,9 @@ the timeline.
 
 ## The flow, end to end
 
-1. The player opens a web record, visits a standalone page, or receives a fax.
-   That pushes a `progressEvidenceId` into the persisted collection.
+1. The player opens a web record, visits a standalone page, or opens and
+   consumes a fax. That pushes a `progressEvidenceId` into the persisted
+   collection.
    **No notification fires** — deliberately, so the player cannot
    reverse-engineer what triggered it.
 2. Every timeline event naming that id as its `unlockedByProgressEvidenceId`
@@ -167,6 +168,13 @@ into rows of `PROGRESS_TIMELINE_FRAMES_PER_ROW` (6), centred on the board:
 Arrows are one glyph rotated three ways (`is-right`, `is-left`, `is-up`), so
 every arrow on the board is the same shape.
 
+The two horizontal arrows are flex items sitting between frames, but the turn
+arrow (`is-up`) is not: it is appended **inside** the frame its row ends on and
+positioned absolutely, hanging above that frame, horizontally centred on it, in
+the gap the board leaves between rows. Being out of the row's flow it costs no
+layout — it cannot nudge the frames along or widen the row, which is why a
+reversed row lines up column-for-column with the row below it.
+
 ### The board is tall, and that has consequences
 
 Eight rows of six plus the oversized frame put the corkboard at **4180px**
@@ -210,6 +218,52 @@ localized description at that point, and only at that point — never before,
 and (since a locked frame never unlocks) never removed again. This is a plain
 hover tooltip, not an accessible-name change: the frame's `aria-label` stays
 the bare date even once locked.
+
+The one tooltip a frame *does* carry before locking is the player's own note
+(below), and that is deliberately the player's own words rather than anything
+the registry knows.
+
+---
+
+## The player's note
+
+Every unlocked frame carries a one-line text field above its photograph, plus a
+cross that empties it. The player can write as much as they like — the field
+scrolls sideways rather than wrapping — and hovering the photograph plays the
+whole note back as a tooltip.
+
+| Piece | Where |
+| --- | --- |
+| Storage | `progressTimeLineEventNotes` in `progressTimeLineEventManager.js`, frame id -> text |
+| Read / write | `getProgressTimeLineEventNote()` / `setProgressTimeLineEventNote()` |
+| Rendering | `renderProgressTimeLineFrameNote()` in `ui.js` |
+| Styling | `.progress-timeline-frame-note*` in `styles.css` |
+
+Notes ride in the same save payload as placements, under `notes`.
+
+**Locking a frame deletes its note.** A note is scaffolding for a question that
+is still open; once the frame is settled, the field and its cross are removed
+and the text is dropped from the save rather than left as something the player
+can see but never edit. `setProgressTimeLineEventNote()` refuses a locked
+frame, and `setProgressTimeLineEventSnapshot()` drops any note restored against
+one, so "locked frames have no note" holds for a loaded game too and not just
+for the session that locked them.
+
+Three things are load-bearing and easy to break:
+
+- **The row keeps its height when the field goes.** `.progress-timeline-frame-note`
+  is a fixed `--progress-timeline-frame-note-height`, so a locking frame does
+  not shrink and reflow every row around it.
+- **The frame's photo-remove cross is positioned below that row**, off the same
+  variable. Without that it lands on top of the note's own clear button.
+- **The field stops `pointerdown` from propagating.** The noticeboard pans from
+  a pointerdown anywhere in the viewport, so without it a click into the field
+  — or a drag to select the text in it — drags the whole corkboard instead.
+
+The note tooltip sits on the **slot**, not the frame, for two reasons: it must
+not fire over the input the player is typing into, and leaving a locked frame's
+slot untitled lets the browser fall through to the frame's own `title`, which
+is how the description takes over cleanly at lock.
 
 ---
 
@@ -344,7 +398,8 @@ before any artwork exists — which is what the suite does.
 ```js
 gameState.progressTimeLineEvents = {
   placements: { "0130": "0130", ... },   // frame id -> photograph id
-  lockedFrameIds: ["0130", "0270", ...]
+  lockedFrameIds: ["0130", "0270", ...],
+  notes: { "0320": "the book one?" }     // frame id -> the player's own text
 };
 ```
 
@@ -355,8 +410,8 @@ dropped from the lock list on load, and a photograph appearing in two frames in
 a hand-edited save keeps only its first occurrence.
 
 A save written before this system existed has no field, treated as "nothing
-placed yet". New Game clears placements and locks; the frames survive, being
-content.
+placed yet". New Game clears placements, locks and notes; the frames survive,
+being content.
 
 ---
 
@@ -374,6 +429,7 @@ content.
 | `getCorrectlyPlacedProgressTimeLineFrameIds()` | Correct frames, **chronological**. |
 | `getLockedProgressTimeLineFrameIds()` | Validated, settled frames. |
 | `isProgressTimeLinePhotoUnlocked(photoId)` | Whether it has reached the envelope. |
+| `getProgressTimeLineEventNote(frameId)` | The player's note on that frame, or `""`. |
 | `placePhotoOnProgressTimeLineFrame(frameId, photoId)` | The drop path, without a real drag. |
 | `returnProgressTimeLinePhotoToEnvelope(frameId)` | What the × button does. |
 | `formatProgressTimeLineEventDate(year)` | The `MMYYYY` → caption formatter. |
@@ -386,23 +442,27 @@ were *made*. Anything needing chronological order must use
 
 ## Tests
 
-`tests/e2e/progress-timeline/` — 43 tests across three files:
+`tests/e2e/progress-timeline/` — 51 tests across three files:
 
-- **`progress-timeline-board.spec.js`** (26) — frame rendering and ordering,
+- **`progress-timeline-board.spec.js`** (33) — frame rendering and ordering,
   date formatting, one-milestone-unlocks-several-photographs, locked-out
   photographs, correct/incorrect placement, displacement, the × button,
   frame→frame and frame→envelope drags, the ghost appearing and the envelope
   fading mid-drag, a sub-threshold press staying a click, a miss leaving the
-  photograph put, four-correct locking, locked-frame refusal, the missing-art
-  fallback, real artwork, save/load, reload, New Game, plus the snaking layout,
-  the arrows turning with it, and the oversized question-mark frame.
+  photograph put, four-correct locking, the locked-frame description tooltip,
+  locked-frame refusal, the note field (typing, the clear cross, the hover
+  tooltip, surviving a reload, and being removed and cleared on lock without
+  the row shrinking), the missing-art fallback, real artwork, save/load,
+  reload, New Game, plus the snaking layout, the arrows turning with it, and
+  the oversized question-mark frame.
 - **`progress-timeline-carousel.spec.js`** (7) — stepping, wraparound, the
   slide/fade animation, unlocked photographs filling the strip from the left,
   and the pool shrinking when a photograph is placed. Ported from the old
   progressEvidence carousel suite.
-- **`progress-timeline-envelope.spec.js`** (10) — which photographs reach the
+- **`progress-timeline-envelope.spec.js`** (11) — which photographs reach the
   envelope and when, that an untriggered non-starter photograph never reaches
-  it, and that nothing carries a spoiler tooltip. No test currently exercises
+  it, that a card is the bare photograph with no id printed on it, and that
+  nothing carries a spoiler tooltip. No test currently exercises
   `availableFromStart` actually bypassing the trigger check, since no event in
   the registry uses the flag any more — see that field in the schema section
   above.
@@ -414,7 +474,19 @@ This matters. The first version of these tests dispatched `DragEvent`s directly
 with `page.evaluate`, which exercised the handlers and passed 18/18 against a
 drag that did not work at all for a player. Synthetic events cannot tell you
 whether a drag can *start*. Anything testing this interaction must go through
-`page.mouse`.
+`page.mouse`. The note field is typed into the same way — a real click to focus
+it and real keystrokes, never by assigning `.value`.
+
+Driving a real mouse is necessary but not sufficient: a real-mouse test can
+still be vacuous. "Using the note field does not drag the board underneath it"
+originally dragged **rightward**, and pan is clamped to a maximum of 0
+(`clampPan()` in game.js) with the focused frame already at that limit — so the
+board could not have moved either way and the test passed against a deliberately
+removed guard. It now drags leftward, and
+"the same drag started on the frame body does pan the board" sits next to it as
+the control that proves the gesture moves the board when nothing suppresses it.
+Both were verified by removing the guard and watching the first fail and the
+second pass.
 
 No event currently uses `availableFromStart`, so the pool genuinely starts
 empty and most assertions below say so directly. `progress-timeline-board.spec.js`
@@ -426,27 +498,29 @@ working unchanged if a future event is ever marked `availableFromStart` again.
 npx playwright test tests/e2e/progress-timeline
 ```
 
-Full suite: **201 of 204 passed** — the 3 failures are the pre-existing
-envelope-position bug described in "Still to come" below, not a regression.
+The three long-standing envelope-position failures are fixed: the noticeboard
+now opens at the bottom of the board (`focusNoticeboardAtBottom()`), which is
+where the envelope rests, so it is on screen and reachable from the moment the
+scene appears.
 
 ---
 
 ## Still to come
 
-- **The envelope-position bug (3 known test failures).** The noticeboard scene
-  only recentres its pan on a brand-new game (`focusWorldAtCenter()` inside
-  `startGame(true)` in `game.js`), computed against whichever world height was
-  active *at that moment* — normally the desk's. Nothing recentres again when
-  the player actually navigates to the noticeboard, so its much taller world
-  (`NOTICEBOARD_WORLD_HEIGHT`) opens at an inherited, effectively arbitrary
-  pan. The envelope (anchored near the middle of *that* world) ends up off
-  the bottom of the screen, unreachable by mouse. This predates the drag
-  feature and is not caused by it — it needs a recentre call added to
-  whatever handles the desk→noticeboard transition, not a change to the
-  envelope's own CSS anchor or drag logic, both of which are already correct.
-  Failing until fixed: `progress-timeline-board.spec.js`'s
-  "a photograph can be dragged out of a frame back into the envelope", and
-  `progress-timeline-envelope.spec.js`'s two envelope-drag persistence tests.
+- **The two earliest frames cannot be dragged out of while the envelope window
+  is open.** The window docks bottom-left over that corner of the board, and pan
+  clamping cannot push `0100` or `0130` out from under it — they are already at
+  the left edge of the scene — so a press on either lands on the window and no
+  drag starts. Every other frame focuses clear of it, and the player can always
+  close or move the window, so this is a rough edge rather than a dead end.
+  `progress-timeline-board.spec.js` picks a frame clear of the window
+  (`FRAME_CLEAR_OF_ENVELOPE_WINDOW`) and says why.
+- **The envelope's right edge is clipped on narrow viewports.** The scene is
+  wider than the corkboard and the view is centred horizontally, so at around
+  1400 CSS px the rightmost ~50px of the envelope sits outside the viewport.
+  It is still visible and clickable, and the whole corkboard is on screen;
+  fixing it properly means either nudging the envelope left onto the board or
+  anchoring the camera to the scene's bottom-right instead of bottom-centre.
 - **Artwork** for every frame past `0130.png`.
 - **The quiz phase.** The frames are the answer key; simple date questions can
   be generated straight from this registry.

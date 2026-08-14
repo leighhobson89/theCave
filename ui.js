@@ -121,6 +121,7 @@ import {
   getLockedProgressTimeLineFrameIds,
   getProgressTimeLineEventDescription,
   getProgressTimeLineEventEntries,
+  getProgressTimeLineEventNote,
   getProgressTimeLineEventPlacements,
   getProgressTimeLineFramePlacement,
   isProgressTimeLineFrameLocked,
@@ -131,6 +132,7 @@ import {
   resetProgressTimeLineEventPlacements,
   resolveProgressTimeLineEventImagePath,
   returnProgressTimeLinePhotoToEnvelope,
+  setProgressTimeLineEventNote,
 } from "./progressTimeLineEventManager.js";
 import { LANGUAGE_BUTTON_KEYS_BY_CODE, focusNoticeboardOnElement, setGameState, startGame, updateNoticeboardButtonLabel } from "./game.js";
 import { audioManager } from "./audioManager.js";
@@ -563,10 +565,9 @@ function queueFacsimileReport(reportPayload, options = {}) {
 
   queueFacsimileArrivalNotification(normalizedReport, options);
 
-  // "Received" is the milestone for a fax, so progress evidence is recorded on
-  // arrival rather than when the player gets round to reading it.
-  activateProgressEvidenceForFacsimileReport(normalizedReport.id);
-
+  // Progress evidence is recorded when the message is opened and consumed
+  // (commitReadFacsimileReportToEvidence()), not on arrival — see that
+  // function for the activation call.
   syncFacsimileVisualState({ animateFeed: options.animateFeed !== false });
   refreshOpenFacsimileWindows();
   return true;
@@ -1013,6 +1014,10 @@ function commitReadFacsimileReportToEvidence(report) {
     pendingReports: remainingPendingReports,
     consumedReportIds: uniqueConsumedIds,
   });
+
+  // The milestone for a fax is the machine being opened and the message
+  // consumed (closing the window or stepping past it), not merely arriving.
+  activateProgressEvidenceForFacsimileReport(normalizedReport.id);
 
   syncFacsimileVisualState({ animateFeed: false });
   refreshOpenFacsimileWindows();
@@ -5375,11 +5380,11 @@ function createProgressEvidenceCard(entry) {
 
   makeProgressTimeLinePhotoDraggable(card, photoId, { fromFrameId: "" });
 
-  const label = document.createElement("div");
-  label.classList.add("progress-evidence-card-label");
-  label.textContent = photoId;
-
-  card.append(createProgressEvidenceCardMedia(photoId), label);
+  // The artwork alone, filling the whole card. The id is deliberately not
+  // printed under it: the photograph is what the player reasons about, and the
+  // id is only ever bookkeeping. It stays on the card as `aria-label` and as
+  // the data attribute, so both assistive tech and the tests can still name it.
+  card.appendChild(createProgressEvidenceCardMedia(photoId));
   return card;
 }
 
@@ -5969,6 +5974,98 @@ function formatProgressTimeLineEventDate(year) {
   return `${monthName} ${parsed.year}`;
 }
 
+// The player's note is shown on hover of the photograph itself, which is what
+// they are trying to place. Put on the slot rather than the frame so it does
+// not also fire over the input they are typing into — and so that on a locked
+// frame, where the slot carries no title, the browser falls through to the
+// frame's own title and shows the event description instead.
+function applyProgressTimeLineNoteTooltip(slot, noteText) {
+  if (!slot) {
+    return;
+  }
+
+  const trimmedNote = String(noteText || "").trim();
+  if (trimmedNote) {
+    slot.title = trimmedNote;
+    return;
+  }
+
+  slot.removeAttribute("title");
+}
+
+// The note row above a frame: a one-line field the player can write anything
+// in, plus a cross that empties it.
+//
+// The row itself is always present and always the same height, even on a locked
+// frame that no longer has a field in it — otherwise a frame would shrink the
+// moment it locked and reflow every row on the board around it.
+function renderProgressTimeLineFrameNote(frame, progressTimeLineEventId, isLocked) {
+  const noteRow = frame.querySelector(".progress-timeline-frame-note");
+  const slot = frame.querySelector(".progress-timeline-frame-slot");
+  if (!noteRow) {
+    return;
+  }
+
+  noteRow.replaceChildren();
+  applyProgressTimeLineNoteTooltip(slot, "");
+
+  // Settled frame: the question the note existed to answer is gone, so the
+  // field and its cross go with it. The note text itself was already cleared
+  // when the frame locked (see validateProgressTimeLinePlacements).
+  if (isLocked) {
+    return;
+  }
+
+  const noteText = getProgressTimeLineEventNote(progressTimeLineEventId);
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.classList.add("progress-timeline-frame-note-input");
+  input.value = noteText;
+  input.placeholder = resolveLocalizedText("progressTimeLineNotePlaceholder", "Add a note…");
+  input.setAttribute(
+    "aria-label",
+    resolveLocalizedText("progressTimeLineNoteAriaLabel", "Your note for this frame")
+  );
+
+  const clearButton = document.createElement("button");
+  clearButton.type = "button";
+  clearButton.classList.add("progress-timeline-frame-note-clear");
+  clearButton.textContent = "×";
+  clearButton.setAttribute(
+    "aria-label",
+    resolveLocalizedText("progressTimeLineClearNoteAriaLabel", "Clear this note")
+  );
+
+  // The noticeboard pans from a pointerdown anywhere in the viewport, so
+  // without stopping it here a click into the field — or a drag to select the
+  // text already in it — would haul the whole board around instead.
+  [input, clearButton].forEach((element) => {
+    element.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    });
+  });
+
+  // Saved as it is typed rather than on blur, so a note is never lost to an
+  // autosave (or a drop that redraws the board) landing mid-edit.
+  input.addEventListener("input", () => {
+    setProgressTimeLineEventNote(progressTimeLineEventId, input.value);
+    applyProgressTimeLineNoteTooltip(slot, input.value);
+  });
+
+  clearButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    input.value = "";
+    setProgressTimeLineEventNote(progressTimeLineEventId, "");
+    applyProgressTimeLineNoteTooltip(slot, "");
+    input.focus();
+    audioManager.playSfx("clickSwitch");
+  });
+
+  noteRow.append(input, clearButton);
+  applyProgressTimeLineNoteTooltip(slot, noteText);
+}
+
 // What sits inside a frame: the placed photograph when there is one, otherwise
 // an empty slot. Correctness is expressed as a class rather than as text, so the
 // frame does not spell out the answer.
@@ -5985,6 +6082,11 @@ function renderProgressTimeLineFrameContent(frame, progressTimeLineEventId) {
   frame.removeAttribute("title");
 
   const placement = getProgressTimeLineFramePlacement(progressTimeLineEventId);
+
+  // Every frame gets a note row, filled or not: an empty frame is exactly where
+  // a player wants to jot down what they think belongs in it.
+  renderProgressTimeLineFrameNote(frame, progressTimeLineEventId, placement?.isLocked === true);
+
   if (!placement) {
     frame.dataset.placedProgressTimeLinePhotoId = "";
     frame.dataset.placementCorrect = "";
@@ -6046,6 +6148,11 @@ function createProgressTimeLineFrame(entry) {
   frame.classList.add("progress-timeline-frame");
   frame.dataset.progressTimeLineEventId = entry.progressTimeLineEventId;
 
+  // Filled in by renderProgressTimeLineFrameContent(), which is the only thing
+  // that knows whether this frame is locked and therefore past needing a note.
+  const note = document.createElement("div");
+  note.classList.add("progress-timeline-frame-note");
+
   const slot = document.createElement("div");
   slot.classList.add("progress-timeline-frame-slot");
 
@@ -6060,7 +6167,7 @@ function createProgressTimeLineFrame(entry) {
   // once (and only once) the frame locks in and the puzzle for it is over.
   frame.setAttribute("aria-label", date.textContent || entry.progressTimeLineEventId);
 
-  frame.append(slot, date);
+  frame.append(note, slot, date);
 
   // No drop listeners here: the drag is pointer-based, and the release is
   // resolved from frame geometry in resolveProgressTimeLineDropTarget().
@@ -6331,20 +6438,27 @@ function renderProgressTimeLineBoard() {
     row.classList.toggle("is-reversed", isReversedRow);
     row.dataset.rowIndex = String(rowIndex);
 
+    let lastFrame = null;
+
     rowEntries.forEach((entry, indexInRow) => {
       const frame = createProgressTimeLineFrame(entry);
       renderProgressTimeLineFrameContent(frame, entry.progressTimeLineEventId);
       row.appendChild(frame);
+      lastFrame = frame;
 
       if (indexInRow < rowEntries.length - 1) {
         row.appendChild(createProgressTimeLineArrow(isReversedRow ? "left" : "right"));
       }
     });
 
-    // The turn: an arrow at the outer edge of the row climbing to the row
-    // above. On a reversed row, appending last puts it at the visual left,
-    // which is exactly where that row ends.
-    row.appendChild(createProgressTimeLineArrow("up"));
+    // The turn: an arrow climbing from the frame the row ends on to the row
+    // above. It goes *inside* that frame rather than beside it, because the CSS
+    // then hangs it above the frame, centred on it, in the gap between the two
+    // rows — out of the row's flow, so it neither shifts the frames along nor
+    // widens the row.
+    if (lastFrame) {
+      lastFrame.appendChild(createProgressTimeLineArrow("up"));
+    }
 
     board.appendChild(row);
   }
@@ -6366,6 +6480,7 @@ window.progressTimeLineEventDeveloperTools = {
   getProgressTimeLineEventDescription: (id, language) => getProgressTimeLineEventDescription(id, language),
   resolveProgressTimeLineEventImagePath: (photoId) => resolveProgressTimeLineEventImagePath(photoId),
   formatProgressTimeLineEventDate: (year) => formatProgressTimeLineEventDate(year),
+  getProgressTimeLineEventNote: (frameId) => getProgressTimeLineEventNote(frameId),
   // The drop path, callable without a real drag, so the placement rules can be
   // tested independently of the pointer interaction.
   placePhotoOnProgressTimeLineFrame: (frameId, photoId) => {

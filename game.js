@@ -247,6 +247,31 @@ function focusWorldAtCenter() {
   clampPan();
 }
 
+// Opens the noticeboard looking at the BOTTOM of the scene rather than the
+// middle, horizontally centred.
+//
+// The corkboard is several screens tall and the timeline snakes upwards from
+// the bottom-left, so the bottom is both where the player starts reading it and
+// where the EVIDENCE envelope rests. Nothing used to recentre on entering the
+// scene at all - the pan was inherited from the desk, which is a much shorter
+// world - so the noticeboard opened at an effectively arbitrary offset and the
+// envelope was frequently off screen and unreachable.
+//
+// Paired with --progress-evidence-envelope-top in styles.css: that value is
+// only on screen because the view opens here.
+function focusNoticeboardAtBottom() {
+  const rect = getViewportRect();
+  const zoom = ZOOM_LEVELS[getCurrentZoomIndex()];
+  const scaledWidth = WORLD_WIDTH * zoom;
+  const scaledHeight = getActiveWorldHeight() * zoom;
+
+  setPanX((rect.width - scaledWidth) / 2);
+  // The most negative pan clampPan() allows: the world's bottom edge sits on
+  // the bottom of the viewport.
+  setPanY(rect.height - scaledHeight);
+  clampPan();
+}
+
 function handleWheelZoom(event) {
   audioManager.onUserGesture();
   event.preventDefault();
@@ -509,6 +534,21 @@ export function setGameState(newState) {
   updateZoomReadout();
 }
 
+// Switching scenes. The noticeboard always opens at the bottom of its board;
+// the desk keeps whatever pan it had. Shared by both routes below so the
+// faded and un-faded transitions cannot drift apart.
+function enterGameplayScene(targetState) {
+  setGameState(targetState);
+
+  // After setGameState, so getActiveWorldHeight() reports the scene being
+  // entered rather than the one being left.
+  if (targetState === getNoticeboardState()) {
+    focusNoticeboardAtBottom();
+  }
+
+  startGame(false);
+}
+
 export async function transitionGameplayScene(targetState) {
   if (!isGameplayState(targetState) || getSceneTransitionInProgress()) {
     return;
@@ -525,8 +565,7 @@ export async function transitionGameplayScene(targetState) {
 
     const fadeOverlay = getElements().sceneFadeOverlay;
     if (!(fadeOverlay instanceof HTMLElement)) {
-      setGameState(targetState);
-      startGame(false);
+      enterGameplayScene(targetState);
       return;
     }
 
@@ -538,8 +577,7 @@ export async function transitionGameplayScene(targetState) {
 
     await waitForMs(SCENE_FADE_DURATION_MS);
 
-    setGameState(targetState);
-    startGame(false);
+    enterGameplayScene(targetState);
 
     fadeOverlay.classList.remove("is-opaque");
     await waitForMs(SCENE_FADE_DURATION_MS);

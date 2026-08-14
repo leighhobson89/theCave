@@ -569,6 +569,11 @@ button.disabled {
        oversized final frame (which is a multiple of it). */
     --progress-timeline-frame-width: 220px;
 
+    /* Height of the note row above each photograph. Shared with the frame's
+       photo-remove cross, which is absolutely positioned and has to start
+       *below* this row rather than on top of the note's own clear button. */
+    --progress-timeline-frame-note-height: 34px;
+
     position: absolute;
     width: 2600px;
     /* Tall enough to hold the board above, which is centred inside it.
@@ -661,7 +666,10 @@ button.disabled {
     flex-direction: column-reverse;
     align-items: stretch;
     justify-content: flex-start;
-    gap: 34px;
+    /* Roomier than the frames strictly need: every frame carries a note field
+       above its photograph, and at the old 34px the field of one row sat almost
+       on the date caption of the row below. */
+    gap: 72px;
     padding: 12px;
     box-sizing: border-box;
     z-index: 2;
@@ -698,8 +706,19 @@ button.disabled {
     transform: rotate(180deg);
 }
 
+/* The turn arrow is a child of the frame the row ends on (which is already
+   position: relative), not a flex item of the row. Taken out of the flow it
+   cannot push the frames along or widen the row, so it costs no layout at all;
+   it simply hangs above its frame, horizontally centred on it, in the 72px gap
+   this board leaves between rows. The 22px lifts the ~34px glyph so it sits
+   centred in that gap. */
 .progress-timeline-arrow.is-up {
-    transform: rotate(-90deg);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 22px);
+    transform: translateX(-50%) rotate(-90deg);
+    pointer-events: none;
+    z-index: 3;
 }
 
 /* The oversized empty frame every arrow eventually leads to. Four times the
@@ -761,6 +780,75 @@ button.disabled {
     box-sizing: border-box;
 }
 
+/* The player's own note about this frame, above the photograph.
+
+   The row keeps its height whether or not it holds a field: a frame that locks
+   loses its input and cross (the puzzle for it is over) but must not shrink,
+   or every row on the board would reflow the moment a batch validated. That is
+   why the height lives here on the row and not on the input inside it. */
+.progress-timeline-frame-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    height: var(--progress-timeline-frame-note-height);
+    flex: 0 0 auto;
+}
+
+/* One line, but the player can write as much as they like - it scrolls
+   sideways rather than wrapping, and the whole note comes back as the
+   photograph's hover tooltip. */
+.progress-timeline-frame-note-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0 8px;
+    font-family: "Courier New", "Lucida Console", monospace;
+    font-size: 0.95rem;
+    color: #3b2a12;
+    background: rgba(255, 246, 224, 0.82);
+    border: 1px solid rgba(70, 46, 20, 0.5);
+    border-radius: 2px;
+    box-shadow: inset 0 1px 3px rgba(70, 46, 20, 0.28);
+    box-sizing: border-box;
+}
+
+.progress-timeline-frame-note-input::placeholder {
+    color: rgba(59, 42, 18, 0.45);
+}
+
+.progress-timeline-frame-note-input:focus {
+    outline: none;
+    border-color: #8a6a34;
+    box-shadow:
+        inset 0 1px 3px rgba(70, 46, 20, 0.28),
+        0 0 0 2px rgba(214, 178, 92, 0.45);
+}
+
+/* Empties the note. Sized to match the field's height so the row reads as one
+   control, and deliberately quieter than the frame's photo-remove cross. */
+.progress-timeline-frame-note-clear {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 100%;
+    padding: 0;
+    line-height: 1;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f6e6c8;
+    background: #7a3320;
+    border: 1px solid #4a1d10;
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-timeline-frame-note-clear:hover {
+    background: #99422a;
+}
+
 /* Where the dropped photograph sits. Fixed aspect so an empty frame and a
    filled one occupy exactly the same space and the board never reflows. */
 .progress-timeline-frame-slot {
@@ -774,10 +862,16 @@ button.disabled {
     background: rgba(58, 40, 20, 0.22);
 }
 
+/* Stretched to fill the slot rather than letterboxed inside it. `fill` distorts
+   artwork whose aspect ratio is not the slot's 3:4, which is accepted
+   deliberately: a frame full of photograph reads far better on the corkboard
+   than one with bars down the sides. Matched by the envelope card and the drag
+   ghost, so a photograph keeps its shape all the way from the envelope into
+   the frame. */
 .progress-timeline-frame-slot .progress-evidence-card-image {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: fill;
 }
 
 /* The placeholder shrinks hard to fit a frame - it is the same element the
@@ -849,8 +943,11 @@ button.disabled {
 .progress-timeline-frame-remove {
     position: absolute;
     /* Inside the frame, not overhanging it: the board scrolls, and an
-       overhanging button on the top row gets clipped by that overflow. */
-    top: 4px;
+       overhanging button on the top row gets clipped by that overflow.
+       Pushed below the note row (12px frame padding + the row + 10px frame
+       gap, then a 4px inset) so it lands on the photograph rather than on top
+       of the note's own clear button. */
+    top: calc(var(--progress-timeline-frame-note-height) + 26px);
     right: 4px;
     z-index: 3;
     width: 34px;
@@ -912,10 +1009,12 @@ button.disabled {
     opacity: 0.94;
 }
 
+/* `fill` to match the card it was lifted from and the frame it is heading for,
+   so the photograph does not visibly change shape the instant it is picked up. */
 .progress-timeline-photo-ghost .progress-evidence-card-image {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: fill;
 }
 
 .progress-timeline-photo-ghost .progress-evidence-placeholder {
@@ -951,8 +1050,8 @@ button.disabled {
    EVERY position and size lives in the custom properties below, and nowhere
    else - move the envelope by editing these values only:
 
-     --progress-evidence-envelope-inset-right   how far in from the corkboard's
-     --progress-evidence-envelope-inset-bottom  bottom-right corner it sits
+     --progress-evidence-envelope-left/-top     where it rests before the player
+                                                first moves it
      --progress-evidence-envelope-width/-height the envelope's size
      --progress-evidence-envelope-rotation      its tilt on the board
      --progress-evidence-envelope-photo-*       the photo sticking out of it,
@@ -960,13 +1059,23 @@ button.disabled {
                                                 envelope's own top-left corner
 --------------------------------------------------------------------------- */
 /* Scoped to the scene so it outranks `.desktop-hoverable { position: relative }`,
-   which is declared later in this file. With left/top that override was
+   which is declared later in this file. With left/top that override is
    invisible (the envelope's static position is the scene's origin, so relative
-   offsets landed in the same place); with right/bottom it would push the
-   envelope off the board entirely. */
+   offsets land in the same place), but the scoping is kept so the rule cannot
+   silently lose to it if the anchor ever changes again. */
 .noticeboard-scene .progress-evidence-envelope {
-    --progress-evidence-envelope-inset-right: 130px;
-    --progress-evidence-envelope-inset-bottom: 120px;
+    /* Scene coordinates - the same space a dragged position is stored in (see
+       handleProgressEvidenceEnvelopePointerMove in ui.js), so "where it starts"
+       and "where the player left it" mean the same thing and the drag code needs
+       no special case for the untouched state.
+
+       Low and to the right, on the bottom-right of the corkboard. The board is
+       several screens tall, so this only works because the noticeboard camera
+       opens at the BOTTOM of the scene (focusNoticeboardAtBottom in game.js) -
+       the two are a pair, and moving one without the other puts the envelope
+       off screen and out of reach, taking the photograph pool with it. */
+    --progress-evidence-envelope-left: 2112.25px;
+    --progress-evidence-envelope-top: 3414.28px;
     --progress-evidence-envelope-width: 430px;
     --progress-evidence-envelope-height: 300px;
     --progress-evidence-envelope-rotation: -5deg;
@@ -977,36 +1086,9 @@ button.disabled {
     --progress-evidence-envelope-photo-height: 150px;
     --progress-evidence-envelope-photo-rotation: 7deg;
 
-    /* Distance from the scene edge to the inside face of the board: half the
-       board's outer size subtracted from the scene's centre line, plus the
-       frame border and the corkboard's own inset. The frame is not
-       border-box, so its border counts on top of the declared size. */
-    --progress-evidence-envelope-corkboard-edge-right: calc(
-        50%
-        - (var(--noticeboard-board-width) + 2 * var(--noticeboard-board-border-width)) / 2
-        + var(--noticeboard-board-border-width)
-        + var(--noticeboard-corkboard-inset)
-    );
-    --progress-evidence-envelope-corkboard-edge-bottom: calc(
-        50%
-        - (var(--noticeboard-board-height) + 2 * var(--noticeboard-board-border-width)) / 2
-        + var(--noticeboard-board-border-width)
-        + var(--noticeboard-corkboard-inset)
-    );
-
     position: absolute;
-    right: calc(
-        var(--progress-evidence-envelope-corkboard-edge-right)
-        + var(--progress-evidence-envelope-inset-right)
-    );
-    /* Anchored to the middle of the board, NOT its bottom edge. The corkboard is
-       now several screens tall, and the view opens centred on it, so a
-       bottom-anchored envelope started life far below the viewport - unreachable,
-       and with it no way to open the photograph pool at all. Sitting near the
-       centre puts it on screen the moment the noticeboard opens; from there the
-       player drags it up or down the board to wherever they are working (see
-       initializeProgressEvidenceEnvelopeDrag in ui.js). */
-    top: calc(50% - var(--progress-evidence-envelope-height) / 2);
+    left: var(--progress-evidence-envelope-left);
+    top: var(--progress-evidence-envelope-top);
     width: var(--progress-evidence-envelope-width);
     height: var(--progress-evidence-envelope-height);
     transform: rotate(var(--progress-evidence-envelope-rotation));
@@ -6145,7 +6227,9 @@ button.disabled {
     aspect-ratio: 3 / 4;
     opacity: 1;
     transition: opacity var(--progress-evidence-slide-duration) ease-in-out;
-    padding: 0.7rem 0.7rem 1.6rem;
+    /* Even all round: nothing is printed under the photograph any more, so the
+       artwork gets the whole card rather than leaving a strip for a caption. */
+    padding: 0.7rem;
     border-radius: 10px;
     border: 1px solid rgba(198, 182, 150, 0.55);
     background:
@@ -6158,11 +6242,14 @@ button.disabled {
     overflow: hidden;
 }
 
+/* `fill`, not `contain`: the photograph uses the whole card even where that
+   stretches it. See the frame slot rule above - the two must agree, or a
+   photograph would change shape as it was dragged out of the envelope. */
 .progress-evidence-card-image {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: fill;
     border-radius: 4px;
     background: rgba(20, 26, 34, 0.18);
 }
@@ -6212,21 +6299,6 @@ button.disabled {
     letter-spacing: 0.06em;
     opacity: 0.6;
     word-break: break-all;
-}
-
-.progress-evidence-card-label {
-    position: absolute;
-    left: 0.6rem;
-    right: 0.6rem;
-    bottom: 0.35rem;
-    text-align: center;
-    color: #4a3618;
-    font-family: "Courier New", "Lucida Console", monospace;
-    font-size: 0.8rem;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .progress-evidence-empty {

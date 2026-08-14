@@ -229,7 +229,7 @@
       "service": "facsimile",
       "itemId": "fax-missing-person-report",
       "label": "Missing person report fax",
-      "progressEvidenceActivated": true,
+      "progressEvidenceActivated": false,
       "progressEvidenceDeveloperEnabled": true
     },
     {

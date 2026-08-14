@@ -4,6 +4,10 @@
 // foreign localStorage state.
 const { test, expect } = require("@playwright/test");
 const {
+  activateProgressEvidence,
+  captureSaveStringViaMenu,
+  loadSaveStringViaMenu,
+  readProgressEvidence,
   STICKY_SAVE_KEY,
   clickNewGame,
   startNewGame,
@@ -105,4 +109,74 @@ test("sticky save does not disturb unrelated localStorage entries", async ({ pag
   await expect(page.locator("#gameArea")).toBeVisible();
 
   expect(await page.evaluate(() => window.localStorage.getItem("unrelated:key"))).toBe("keep-me");
+});
+
+// ---------------------------------------------------------------------------
+// Manual load vs the sticky save.
+//
+// Loading a pasted save string has to become the game in play *and* the game a
+// refresh would resume — otherwise the player loads a save, refreshes, and
+// silently gets the session the load replaced. Confirms the whole chain:
+// the load overwrites localStorage, localStorage still exists afterwards,
+// Resume continues the loaded game rather than rehydrating the old one, and the
+// once-a-minute autosave keeps running across all of it.
+// ---------------------------------------------------------------------------
+
+// The activated progress-evidence ids inside whatever the sticky save currently
+// holds — a small, readable proxy for "which game is in localStorage".
+async function readStickyProgressEvidence(page) {
+  const stored = await readStickySave(page);
+  if (!stored) {
+    return null;
+  }
+
+  return page.evaluate(
+    (s) => JSON.parse(LZString.decompressFromEncodedURIComponent(s)).progressEvidence,
+    stored
+  );
+}
+
+test("a manual load overrides the sticky save, and Resume then continues the loaded game", async ({ page }) => {
+  await installStickyWriteCounter(page);
+  await page.clock.install();
+  await page.goto("/");
+  await clickNewGame(page);
+
+  // Game A — one milestone — captured as a pasteable save string.
+  await activateProgressEvidence(page, "00001");
+  const saveStringA = await captureSaveStringViaMenu(page);
+
+  // The session then moves on to game B, which is what localStorage holds once
+  // the next autosave tick lands.
+  await activateProgressEvidence(page, "30004");
+  await page.clock.runFor(60_000);
+  expect(await readStickyProgressEvidence(page)).toEqual(["00001", "30004"]);
+
+  // Now load A back over the top of it.
+  await loadSaveStringViaMenu(page, saveStringA);
+  expect(await readProgressEvidence(page)).toEqual(["00001"]);
+
+  // The load rewrote the sticky save immediately rather than waiting up to a
+  // minute, so localStorage now describes the loaded game...
+  expect(await readStickyProgressEvidence(page)).toEqual(["00001"]);
+  // ...and it is still there — overwritten, never cleared.
+  expect(await readStickySave(page)).toBeTruthy();
+
+  // Resume continues the loaded game in memory. It must NOT rehydrate what
+  // localStorage held before the load.
+  await page.keyboard.press("Escape");
+  await page.locator("#resumeFromMenu").click();
+  await expect(page.locator("#gameArea")).toBeVisible();
+  expect(await readProgressEvidence(page)).toEqual(["00001"]);
+
+  // And the minute-by-minute autosave is still running afterwards — one write
+  // per interval, so the load did not stop it or stack a second timer.
+  const writesBefore = await readStickyWriteCount(page);
+  await page.clock.runFor(60_000);
+  expect(await readStickyWriteCount(page) - writesBefore).toBe(1);
+  await page.clock.runFor(180_000);
+  expect(await readStickyWriteCount(page) - writesBefore).toBe(4);
+
+  // Still the loaded game being written, a few minutes on.
+  expect(await readStickyProgressEvidence(page)).toEqual(["00001"]);
 });

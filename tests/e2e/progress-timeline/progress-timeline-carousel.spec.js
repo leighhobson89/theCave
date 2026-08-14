@@ -10,10 +10,15 @@
 // Ported from the progress-evidence carousel suite when the envelope stopped
 // holding progressEvidence cards and started holding the draggable photographs.
 //
-// No timeline event is currently `availableFromStart` (see
-// progressTimeLineEventManager.js), so the pool starts genuinely empty and
-// every test here counts from 0. The four ids below are each unlocked by a
-// milestone of its own, chosen so their ids already sort in the order given.
+// Read the starter baseline from the registry rather than hardcoded, per this
+// project's own rule against restating an authoring decision that changes
+// freely (see tests/e2e/progress-evidence/README.md) — the pool is not
+// necessarily empty at the start of a new game. The three fixture ids below
+// are each unlocked by a milestone of their own, chosen so their ids already
+// sort after every starter (so the pool stays in the simple shape
+// [...starters, ...whatever's unlocked] rather than interleaving with them),
+// and together with the starter baseline reach the four-item threshold where
+// the carousel comes alive.
 const { test, expect } = require("@playwright/test");
 const {
   activateProgressEvidence,
@@ -24,11 +29,18 @@ const {
   startNewGame,
 } = require("../../support/game-helpers");
 
-// Four photographs, each unlocked by a milestone of its own. Deliberately not
+const progressTimeLineEventDefinitions = require("../../../assets/progressTimeLineEvent.json").definitions;
+
+const STARTER_PHOTO_IDS = progressTimeLineEventDefinitions
+  .filter((definition) => definition.availableFromStart === true)
+  .map((definition) => definition.progressTimeLineEventId)
+  .sort();
+
+// Three photographs, each unlocked by a milestone of its own. Deliberately not
 // the two-photographs-from-one-page cases (00002, 40002), because these tests
 // need to add exactly one photograph at a time.
-const PHOTO_IDS = ["0270", "0280", "0320", "0520"];
-const UNLOCK_TRIGGERS = ["20007", "30004", "10001", "10002"];
+const PHOTO_IDS = ["0270", "0280", "0320"];
+const UNLOCK_TRIGGERS = ["20007", "30004", "10001"];
 
 function cardIds(page) {
   return progressEvidenceCards(page).evaluateAll(
@@ -40,9 +52,10 @@ function track(page) {
   return progressEvidenceWindow(page).locator(".progress-evidence-track");
 }
 
-// The pool after unlocking the first `unlockedCount` of PHOTO_IDS.
+// The pool after unlocking the first `unlockedCount` of PHOTO_IDS, folding in
+// the starter baseline that is present from the very first moment.
 function poolWith(unlockedCount) {
-  return PHOTO_IDS.slice(0, unlockedCount);
+  return [...STARTER_PHOTO_IDS, ...PHOTO_IDS.slice(0, unlockedCount)];
 }
 
 // The three-wide visible window starting at `index`, wrapping.
@@ -63,7 +76,7 @@ async function openEnvelopeWithFourPhotos(page) {
 
 test("the carousel steps forward and back through the photographs, wrapping at each end", async ({ page }) => {
   await openEnvelopeWithFourPhotos(page);
-  const pool = poolWith(4);
+  const pool = poolWith(PHOTO_IDS.length);
   expect(pool).toHaveLength(4);
 
   const window = progressEvidenceWindow(page);
@@ -160,7 +173,7 @@ async function stepAndSampleTransition(page, navButtonClass) {
 
 test("stepping next moves the strip along by one card, not by all three", async ({ page }) => {
   await openEnvelopeWithFourPhotos(page);
-  const pool = poolWith(4);
+  const pool = poolWith(PHOTO_IDS.length);
 
   const transition = await stepAndSampleTransition(page, ".carousel-nav-next");
 
@@ -188,7 +201,7 @@ test("stepping next moves the strip along by one card, not by all three", async 
 
 test("stepping previous moves the strip the other way, again by one card", async ({ page }) => {
   await openEnvelopeWithFourPhotos(page);
-  const pool = poolWith(4);
+  const pool = poolWith(PHOTO_IDS.length);
   const wrappedIndex = pool.length - 1;
 
   const transition = await stepAndSampleTransition(page, ".carousel-nav-prev");
@@ -211,7 +224,7 @@ test("stepping previous moves the strip the other way, again by one card", async
 
 test("the two cards that stay on screen keep their places rather than being replaced", async ({ page }) => {
   await openEnvelopeWithFourPhotos(page);
-  const pool = poolWith(4);
+  const pool = poolWith(PHOTO_IDS.length);
   expect(await cardIds(page)).toEqual(windowAt(pool, 0));
 
   const slotsBefore = await progressEvidenceCards(page).evaluateAll(
@@ -231,7 +244,7 @@ test("the two cards that stay on screen keep their places rather than being repl
   expect(slotsAfter).toEqual(slotsBefore);
 });
 
-test("the carousel starts empty, and stays disabled until a fourth photograph unlocks", async ({ page }) => {
+test("the carousel starts holding just the starter baseline, and stays disabled until a fourth photograph unlocks", async ({ page }) => {
   await startNewGame(page);
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
@@ -240,28 +253,29 @@ test("the carousel starts empty, and stays disabled until a fourth photograph un
   const nextButton = progressEvidenceWindow(page).locator(".carousel-nav-next");
   const counter = progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter");
 
-  // Nothing has been unlocked yet, and no event is `availableFromStart` any
-  // more, so the pool is genuinely empty.
-  await expect(progressEvidenceCards(page)).toHaveCount(0);
-  expect(await cardIds(page)).toEqual([]);
+  // Nothing has been unlocked yet, so the pool is just whatever the starter
+  // baseline already contributes.
+  expect(await cardIds(page)).toEqual(poolWith(0));
 
-  // Unlocking the first three photographs exactly fills the visible strip —
-  // both nav buttons stay disabled at 0, 1, 2 and 3 items alike.
-  for (const progressEvidenceId of UNLOCK_TRIGGERS.slice(0, 3)) {
+  // Unlocking two of the three fixtures exactly fills the visible strip
+  // (starter baseline + 2) — both nav buttons stay disabled at 0, 1, 2 and 3
+  // items alike.
+  for (const progressEvidenceId of UNLOCK_TRIGGERS.slice(0, 2)) {
     await activateProgressEvidence(page, progressEvidenceId);
   }
-  await expect(progressEvidenceCards(page)).toHaveCount(3);
-  expect(await cardIds(page)).toEqual(poolWith(3));
-  await expect(counter).toHaveText("1/3");
+  await expect(progressEvidenceCards(page)).toHaveCount(poolWith(2).length);
+  expect(await cardIds(page)).toEqual(poolWith(2));
+  await expect(counter).toHaveText(`1/${poolWith(2).length}`);
   await expect(previousButton).toBeDisabled();
   await expect(nextButton).toBeDisabled();
 
-  // The fourth is the one that cannot fit, so the carousel comes alive.
-  await activateProgressEvidence(page, UNLOCK_TRIGGERS[3]);
+  // The one that crosses the pool into a fourth item is the one that cannot
+  // fit, so the carousel comes alive.
+  await activateProgressEvidence(page, UNLOCK_TRIGGERS[2]);
 
   await expect(progressEvidenceCards(page)).toHaveCount(3);
-  expect(await cardIds(page)).toEqual(poolWith(3));
-  await expect(counter).toHaveText("1/4");
+  expect(await cardIds(page)).toEqual(poolWith(2));
+  await expect(counter).toHaveText(`1/${poolWith(3).length}`);
   await expect(previousButton).toBeEnabled();
   await expect(nextButton).toBeEnabled();
 });
@@ -269,7 +283,7 @@ test("the carousel starts empty, and stays disabled until a fourth photograph un
 test("unlocked photographs fill the strip from the left, and a fourth does not disturb them", async ({ page }) => {
   await startNewGame(page);
 
-  for (const progressEvidenceId of UNLOCK_TRIGGERS.slice(0, 3)) {
+  for (const progressEvidenceId of UNLOCK_TRIGGERS.slice(0, 2)) {
     await activateProgressEvidence(page, progressEvidenceId);
   }
 
@@ -285,19 +299,20 @@ test("unlocked photographs fill the strip from the left, and a fourth does not d
 
   // Unlocking a fourth (off-screen until the player navigates) leaves the
   // three on-screen photographs exactly where they were.
-  await activateProgressEvidence(page, UNLOCK_TRIGGERS[3]);
-  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter")).toHaveText("1/4");
+  await activateProgressEvidence(page, UNLOCK_TRIGGERS[2]);
+  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter"))
+    .toHaveText(`1/${poolWith(3).length}`);
 
   const slotsAfter = await progressEvidenceCards(page).evaluateAll(
     (cards) => cards.map((card) => Math.round(card.getBoundingClientRect().left))
   );
   expect(slotsAfter).toEqual(slotsBefore);
-  expect(await cardIds(page)).toEqual(poolWith(3));
+  expect(await cardIds(page)).toEqual(poolWith(2));
 });
 
 test("placing a photograph in a frame removes it from the carousel", async ({ page }) => {
   await startNewGame(page);
-  // All four fixture photographs unlocked, crossing the enabled/disabled
+  // All three fixture photographs unlocked, crossing the enabled/disabled
   // boundary exercised in the test above.
   for (const progressEvidenceId of UNLOCK_TRIGGERS) {
     await activateProgressEvidence(page, progressEvidenceId);
@@ -305,7 +320,9 @@ test("placing a photograph in a frame removes it from the carousel", async ({ pa
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
 
-  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter")).toHaveText("1/4");
+  const fullPool = poolWith(PHOTO_IDS.length);
+  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter"))
+    .toHaveText(`1/${fullPool.length}`);
   await expect(progressEvidenceWindow(page).locator(".carousel-nav-next")).toBeEnabled();
 
   await page.evaluate(
@@ -314,7 +331,9 @@ test("placing a photograph in a frame removes it from the carousel", async ({ pa
   );
 
   // Back down to three, so the carousel goes quiet again.
-  await expect.poll(() => cardIds(page)).toEqual(PHOTO_IDS.slice(1, 4));
-  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter")).toHaveText("1/3");
+  const withoutFirst = fullPool.filter((id) => id !== PHOTO_IDS[0]);
+  await expect.poll(() => cardIds(page)).toEqual(withoutFirst);
+  await expect(progressEvidenceWindow(page).locator(".progress-evidence-carousel-counter"))
+    .toHaveText(`1/${withoutFirst.length}`);
   await expect(progressEvidenceWindow(page).locator(".carousel-nav-next")).toBeDisabled();
 });

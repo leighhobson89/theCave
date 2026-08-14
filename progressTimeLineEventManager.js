@@ -68,6 +68,12 @@ let progressTimeLineEventPlacements = {};
 // be emptied, replaced, or dragged out of.
 let lockedProgressTimeLineFrameIds = [];
 
+// The player's own working notes: frame id -> free text. Purely an aid for
+// working out which photograph belongs where, so a note exists only while that
+// question is still open — locking a frame clears its note (see
+// validateProgressTimeLinePlacements) and the board stops offering the field.
+let progressTimeLineEventNotes = {};
+
 function normalizeProgressTimeLineEventId(value) {
   return String(value ?? "").trim();
 }
@@ -287,6 +293,40 @@ export function isProgressTimeLineFrameLocked(progressTimeLineEventId) {
   return lockedProgressTimeLineFrameIds.includes(normalizeProgressTimeLineEventId(progressTimeLineEventId));
 }
 
+// --- The player's notes ----------------------------------------------------
+
+export function getProgressTimeLineEventNote(progressTimeLineEventId) {
+  return progressTimeLineEventNotes[normalizeProgressTimeLineEventId(progressTimeLineEventId)] || "";
+}
+
+// Records (or clears, with empty text) the note on a frame. A locked frame
+// refuses: its note was deleted when it locked, and writing a new one would
+// resurrect a field the board no longer draws. Returns whether it stored
+// anything, so a caller can tell a refusal from a no-op.
+export function setProgressTimeLineEventNote(progressTimeLineEventId, noteText) {
+  const normalizedId = normalizeProgressTimeLineEventId(progressTimeLineEventId);
+  if (!normalizedId || !progressTimeLineEventEntriesById.has(normalizedId)) {
+    return false;
+  }
+
+  if (isProgressTimeLineFrameLocked(normalizedId)) {
+    return false;
+  }
+
+  const normalizedNote = String(noteText ?? "");
+  if (!normalizedNote.trim()) {
+    delete progressTimeLineEventNotes[normalizedId];
+    return true;
+  }
+
+  progressTimeLineEventNotes[normalizedId] = normalizedNote;
+  return true;
+}
+
+export function getProgressTimeLineEventNotes() {
+  return { ...progressTimeLineEventNotes };
+}
+
 export function getLockedProgressTimeLineFrameIds() {
   return [...lockedProgressTimeLineFrameIds];
 }
@@ -324,6 +364,14 @@ function validateProgressTimeLinePlacements() {
   }
 
   lockedProgressTimeLineFrameIds = [...lockedProgressTimeLineFrameIds, ...unlockedCorrectFrameIds].sort();
+
+  // A note is scaffolding for an unsolved frame. Once the frame is settled the
+  // question it answered is gone, so the note goes with it rather than lingering
+  // in the save as text the player can no longer see or edit.
+  unlockedCorrectFrameIds.forEach((frameId) => {
+    delete progressTimeLineEventNotes[frameId];
+  });
+
   return unlockedCorrectFrameIds;
 }
 
@@ -434,6 +482,7 @@ export function getProgressTimeLineEventSnapshot() {
   return {
     placements: getProgressTimeLineEventPlacements(),
     lockedFrameIds: getLockedProgressTimeLineFrameIds(),
+    notes: getProgressTimeLineEventNotes(),
   };
 }
 
@@ -484,6 +533,24 @@ export function setProgressTimeLineEventSnapshot(snapshot) {
     .filter((frameId, index, all) => all.indexOf(frameId) === index)
     .sort();
 
+  // Notes, minus any belonging to a frame that ended up locked. Locking clears
+  // a note, so one surviving here is a save written before that rule (or edited
+  // by hand); dropping it keeps "locked frames have no note" true of every
+  // loaded game rather than only of the session that locked them.
+  const rawNotes = snapshot.notes;
+  progressTimeLineEventNotes = {};
+  if (rawNotes && typeof rawNotes === "object" && !Array.isArray(rawNotes)) {
+    Object.entries(rawNotes).forEach(([rawFrameId, rawNote]) => {
+      const normalizedFrameId = normalizeProgressTimeLineEventId(rawFrameId);
+      const normalizedNote = String(rawNote ?? "");
+      if (!normalizedFrameId || !normalizedNote.trim() || isProgressTimeLineFrameLocked(normalizedFrameId)) {
+        return;
+      }
+
+      progressTimeLineEventNotes[normalizedFrameId] = normalizedNote;
+    });
+  }
+
   return true;
 }
 
@@ -491,4 +558,5 @@ export function setProgressTimeLineEventSnapshot(snapshot) {
 export function resetProgressTimeLineEventPlacements() {
   progressTimeLineEventPlacements = {};
   lockedProgressTimeLineFrameIds = [];
+  progressTimeLineEventNotes = {};
 }

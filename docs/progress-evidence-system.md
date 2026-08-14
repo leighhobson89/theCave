@@ -220,7 +220,7 @@ until the developer enables it.
 | --- | --- | --- |
 | Opening a website record | `activateProgressEvidenceForWebRecord()`, on the `caveos-browser-record-opened` event | `detail.replay.siteId` + `detail.recordId` |
 | Visiting a standalone page | `activateProgressEvidenceForStandalonePage()`, in `navigateToStandalonePage()` | service `"standalone"` + the page's `id` |
-| Receiving a fax | `activateProgressEvidenceForFacsimileReport()`, in `queueFacsimileReport()` | service `"facsimile"` + the fax's `id` |
+| Opening and consuming a fax | `activateProgressEvidenceForFacsimileReport()`, in `commitReadFacsimileReportToEvidence()` | service `"facsimile"` + the fax's `id` |
 | Opening the background story | `activateProgressEvidenceForDesktopItem()`, in `openStoryWindow()` | service `"desktop"` + itemId `"theArnieTragedyStory"` |
 
 All four go through `activateProgressEvidenceForItem(service, itemId)`, which
@@ -230,8 +230,11 @@ unregistered record or an ad-hoc test fax passes through harmlessly.
 Note the semantics: for a website the milestone is **opening the record**, not
 merely searching for it (the same distinction `registerRecordOpenFaxTrigger()`
 makes — see [facsimile-event-trigger-guide.md](facsimile-event-trigger-guide.md)).
-For a fax it is **arrival**, not reading. For the background story it is
-**opening its window** — `openStoryWindow()` fires the call every time, but
+For a fax it is **being opened and consumed** — `commitReadFacsimileReportToEvidence()`
+fires on closing the facsimile window or stepping past the message to the next
+one, not on arrival, so a fax sitting unread in the machine has not yet
+activated its progress evidence. For the background story it is **opening its
+window** — `openStoryWindow()` fires the call every time, but
 `activateProgressEvidence()` is idempotent, so only the first open counts.
 
 ### Adding a new trigger
@@ -370,12 +373,17 @@ on it and a photograph sticking out from under its top flap. Markup is in
 `index.html` inside `#noticeboardScene` (`#progressEvidenceEnvelope`); it toggles
 its window like any desk object.
 
-**It is pinned to the bottom-right corner of the corkboard**, on every device
-and screen size. The `right` / `bottom` offsets are derived from the board's own
-geometry (`--noticeboard-board-*` on `.noticeboard-scene`, shared with
-`.noticeboard-board-frame`) rather than from fixed scene coordinates, so
-resizing the board keeps the envelope in that corner instead of stranding it
-mid-board.
+**It starts low on the right of the board**, at a fixed position in *scene*
+coordinates — the same coordinate space a dragged position is stored in, so
+"where it starts" and "where the player left it" mean the same thing and the
+drag code needs no special case for the untouched state.
+
+That position and the camera are a pair: entering the noticeboard parks the
+view at the bottom of the scene (`focusNoticeboardAtBottom()` in `game.js`), and
+the envelope is only on screen because of it. **Move one and you must check the
+other** — the board is several screens tall, and before the camera was pinned
+this way the envelope routinely opened out of reach, taking the whole
+photograph pool with it.
 
 **Where to change its position.** Everything is a CSS custom property on
 `.noticeboard-scene .progress-evidence-envelope`, in the block headed *"Progress
@@ -384,7 +392,7 @@ anywhere else:
 
 | Property | What it moves |
 | --- | --- |
-| `--progress-evidence-envelope-inset-right` / `-inset-bottom` | How far in from the corkboard's bottom-right corner it sits |
+| `--progress-evidence-envelope-left` / `-top` | Where it rests before the player first moves it, in scene coordinates |
 | `--progress-evidence-envelope-width` / `-height` | Its size |
 | `--progress-evidence-envelope-rotation` | Its tilt on the board |
 | `--progress-evidence-envelope-photo-left` / `-top` / `-width` / `-height` / `-rotation` | The photograph, relative to the envelope's own top-left corner |
@@ -546,7 +554,10 @@ in-page link).
 
 ### Received faxes (fax configs in `ui.js`)
 
-Activated by: the fax arriving (being queued), not by reading it.
+Activated by: opening the facsimile machine and consuming the message — closing
+the window with it on screen, or stepping past it to the next cached message —
+not by the fax merely arriving. A fax that has been received but not yet read
+has not activated its progress evidence.
 
 | Fax | Source | `progressEvidenceId` | Activated | Developer enabled |
 | --- | --- | --- | --- | --- |

@@ -16,6 +16,13 @@ const {
   startNewGame,
 } = require("../../support/game-helpers");
 
+// Read from the registry rather than hardcoded, per this project's own rule
+// against restating an authoring decision that changes freely — whichever
+// timeline events are currently `availableFromStart` are already in the
+// envelope before anything below activates 00001.
+const starterCount = require("../../../assets/progressTimeLineEvent.json").definitions
+  .filter((definition) => definition.availableFromStart === true).length;
+
 test("the Photos carousel still steps through both starting photos with progress evidence active", async ({ page }) => {
   await startNewGame(page);
   await activateProgressEvidence(page, "00001");
@@ -62,12 +69,11 @@ test("the progress evidence window and the evidence folders coexist", async ({ p
 
   await openNoticeboard(page);
   await openProgressEvidenceEnvelope(page);
-  // One card: 00001 unlocks the single photograph for frame 0130, and no
-  // timeline event is currently `availableFromStart` (see
-  // progressTimeLineEventManager.js). This test only cares that the envelope
-  // renders normally alongside the other folders, not about the exact pool
-  // size.
-  await expect(progressEvidenceCards(page)).toHaveCount(1);
+  // 00001 unlocks the single photograph for frame 0130, plus whatever the
+  // starter baseline already contributes (see progressTimeLineEventManager.js).
+  // This test only cares that the envelope renders normally alongside the
+  // other folders, not about the exact pool size.
+  await expect(progressEvidenceCards(page)).toHaveCount(Math.min(3, starterCount + 1));
   await closeProgressEvidenceWindow(page);
 
   // Back to the desk: the folders open normally afterwards, and the progress
