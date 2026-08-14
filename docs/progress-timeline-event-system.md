@@ -262,8 +262,13 @@ Three things are load-bearing and easy to break:
 
 The note tooltip sits on the **slot**, not the frame, for two reasons: it must
 not fire over the input the player is typing into, and leaving a locked frame's
-slot untitled lets the browser fall through to the frame's own `title`, which
+slot untitled lets the tooltip fall through to the frame's own `title`, which
 is how the description takes over cleanly at lock.
+
+The note is also the one tooltip in the game that is never localized: it is the
+player's own words, and the tooltip layer (`tooltipManager.js`, see
+[architecture.md](architecture.md)) renders a `title` verbatim, so it stays as
+typed in every language.
 
 ---
 

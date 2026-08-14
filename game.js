@@ -534,17 +534,32 @@ export function setGameState(newState) {
   updateZoomReadout();
 }
 
-// Switching scenes. The noticeboard always opens at the bottom of its board;
-// the desk keeps whatever pan it had. Shared by both routes below so the
-// faded and un-faded transitions cannot drift apart.
+// The camera state every gameplay scene "arrives" at: minimum zoom, and the
+// scene's own default anchor — the noticeboard opens at the bottom of its
+// board, the desk opens centred. Used on every entry into a gameplay scene
+// (the noticeboard toggle, Resume Game, and Load Game) so none of those routes
+// can leave the camera wherever an earlier session happened to abandon it.
+//
+// Reads getActiveGameplayState(), so it must run after setGameState() has
+// already recorded which scene is being entered.
+export function resetGameplayCameraToDefault() {
+  setCurrentZoomIndex(0);
+
+  if (getActiveGameplayState() === getNoticeboardState()) {
+    focusNoticeboardAtBottom();
+  } else {
+    focusWorldAtCenter();
+  }
+}
+
+// Switching scenes via the noticeboard toggle. Shared by both routes below so
+// the faded and un-faded transitions cannot drift apart.
 function enterGameplayScene(targetState) {
   setGameState(targetState);
 
-  // After setGameState, so getActiveWorldHeight() reports the scene being
-  // entered rather than the one being left.
-  if (targetState === getNoticeboardState()) {
-    focusNoticeboardAtBottom();
-  }
+  // After setGameState, so resetGameplayCameraToDefault() reads the scene
+  // being entered rather than the one being left.
+  resetGameplayCameraToDefault();
 
   startGame(false);
 }

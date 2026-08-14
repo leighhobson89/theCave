@@ -41,12 +41,29 @@ ui.js  (entry point, DOM wiring, all window construction)
 ├── desktopWindow.js            the draggable/resizable window component
 ├── saveLoadGame.js             save-string capture and restore
 ├── stickySave.js               localStorage autosave + resume-after-refresh
+├── tooltipManager.js           the hover tooltip layer that replaces the browser's
 ├── webContentManager.js        website registry, sessions, search, evidence awards
 └── webContentRegistry.js       the four site definitions and their page renderers
 ```
 
 Only `ui.js` touches the DOM directly for game chrome; `webContentRegistry.js`
 builds the in-browser website pages, and `desktopWindow.js` owns window frames.
+
+### Tooltips
+
+Tooltips are authored as ordinary `title` attributes and nothing in the app has
+to know otherwise, but the browser never draws them. `tooltipManager.js`
+installs one delegated hover layer at startup which, on hover, lifts the `title`
+off the element (the only way to suppress the native tooltip), draws the text
+into a single `.game-tooltip` panel of its own that follows the cursor and keeps
+itself inside the window, and puts the `title` straight back when the pointer
+leaves. The panel is at the app's ordinary body text size and wraps, neither of
+which is possible with the native tooltip.
+
+Because it renders whatever the `title` already says, a tooltip is localized
+exactly when its call site localized it — and the player's own note on a
+noticeboard frame, the one tooltip that must never be translated, is correct by
+doing nothing special.
 
 ### Startup sequence
 
@@ -87,6 +104,13 @@ game is in progress, and calls `updateSceneVisibility()`.
 behind `#sceneFadeOverlay`: fade to opaque over `SCENE_FADE_DURATION_MS`
 (750 ms), switch state, fade back. A `sceneTransitionInProgress` guard makes the
 transition non-reentrant.
+
+`resetGameplayCameraToDefault()` sets minimum zoom and the active scene's own
+anchor — the desk centred, the noticeboard at the bottom of its board — and
+runs on every route that *arrives* at a gameplay scene: the noticeboard
+toggle (both directions), Resume Game, and Load Game. None of those routes
+leave the camera wherever an earlier session happened to abandon it; pan and
+zoom are not part of the save payload for the same reason.
 
 ### Viewport: zoom, pan and parallax
 
@@ -799,7 +823,7 @@ and the dialog cannot drift apart.
 | Photos folder | `#photosFolder` | Toggles the photos carousel |
 | Notes folder | `#notesFolder` | Toggles the notes window |
 | Calendar | `#desktopCalendar` | Shows today's real month/day; clicking returns to the menu |
-| Ashtray | `#desktopAshtrayHotspot` | Toggles the lit cigarette; 620 ms extinguish/relight animations, state saved |
+| Ashtray | `#desktopAshtrayHotspot` | Toggles the lit cigarette; multi-stage crush/relight animations (720 ms / 760 ms — `--ashtray-stub-duration` / `--ashtray-relight-duration` in styles.css, must agree with `ASHTRAY_STUB_ANIMATION_MS` / `ASHTRAY_RELIGHT_ANIMATION_MS` in ui.js), state saved |
 | Facsimile | `#desktopFacsimileHotspot` | Toggles the FACSIMILE window |
 | Computer | `#desktopComputerHotspot` | Toggles the CaveOS window |
 | Evidence envelope | `#progressEvidenceEnvelope` | On the **noticeboard**, not the desk. Toggles the progress evidence carousel |

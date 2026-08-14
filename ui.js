@@ -134,10 +134,11 @@ import {
   returnProgressTimeLinePhotoToEnvelope,
   setProgressTimeLineEventNote,
 } from "./progressTimeLineEventManager.js";
-import { LANGUAGE_BUTTON_KEYS_BY_CODE, focusNoticeboardOnElement, setGameState, startGame, updateNoticeboardButtonLabel } from "./game.js";
+import { LANGUAGE_BUTTON_KEYS_BY_CODE, focusNoticeboardOnElement, resetGameplayCameraToDefault, setGameState, startGame, updateNoticeboardButtonLabel } from "./game.js";
 import { audioManager } from "./audioManager.js";
 import { initLocalization, localize } from "./localization.js";
 import { DesktopWindow } from "./desktopWindow.js";
+import { installGameTooltips } from "./tooltipManager.js";
 import {
   getProgressEvidenceEnvelopePosition,
   setProgressEvidenceEnvelopePosition,
@@ -343,11 +344,11 @@ function releaseNextNotificationFromQueue() {
     notificationElement.classList.add("is-actionable");
     notificationElement.setAttribute("role", "button");
     notificationElement.setAttribute("tabindex", "0");
-    notificationElement.setAttribute("title", NOTIFICATION_TARGETS[next.target].hint);
-    notificationElement.setAttribute(
-      "aria-label",
-      `${next.text}. ${NOTIFICATION_TARGETS[next.target].hint}`
-    );
+    // Resolved per notification rather than once at module load, so the hint is
+    // in whatever language is current when it appears.
+    const targetHint = resolveNotificationTargetHint(next.target);
+    notificationElement.setAttribute("title", targetHint);
+    notificationElement.setAttribute("aria-label", `${next.text}. ${targetHint}`);
 
     const activate = () => {
       // Dismiss first so the notification cannot be double-fired while the
@@ -465,6 +466,29 @@ function syncAshtrayVisualState() {
   ashtrayElement.classList.toggle("has-lit-cig", getAshtrayHasLitCigarette());
   ashtrayElement.classList.toggle("has-extra-butt", getAshtrayHasExtraButt());
   ashtrayElement.classList.remove("is-extinguishing", "is-relighting");
+}
+
+// The smoke-plume loop (styles.css) is infinite and keeps running while
+// hidden behind opacity: 0, so relighting after any length of time would
+// otherwise resume it mid-cycle instead of showing a first puff. Restarting
+// each plume's animation right as the cigarette relights is what makes a
+// wisp of smoke visibly kick off the moment it catches — setting
+// `animation: none` inline, forcing layout so the browser actually notices,
+// then clearing it lets the element's own CSS animation start over from 0%.
+function restartAshtraySmokePlumes(ashtrayElement) {
+  const plumes = ashtrayElement.querySelectorAll(".smoke-plume");
+  plumes.forEach((plume) => {
+    plume.style.animation = "none";
+  });
+
+  // Reading a layout property forces the browser to apply the "none" above
+  // before it is removed, without which the two writes would coalesce and
+  // the animation would never actually stop.
+  void ashtrayElement.offsetWidth;
+
+  plumes.forEach((plume) => {
+    plume.style.animation = "";
+  });
 }
 
 function getFacsimilePendingReports() {
@@ -1164,6 +1188,10 @@ function awardWebContentEvidence(evidenceDescriptor, context = {}) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   setElements();
+  // Before anything renders: the tooltip layer works off `title` attributes by
+  // delegation, so it covers whatever the app draws later without those call
+  // sites having to opt in.
+  installGameTooltips();
   // The progress evidence registry lives entirely in assets/progressEvidence.json
   // (which the web content builder also writes), so it has to be loaded before
   // anything can activate progress evidence.
@@ -1230,6 +1258,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (gameState === getMenuState()) {
       setGameState(getActiveGameplayState());
     }
+    // Resume is an arrival at the scene, exactly like the noticeboard toggle
+    // is, so the camera resets to that scene's default rather than reappearing
+    // wherever an earlier session left it.
+    resetGameplayCameraToDefault();
     startGame(false);
   });
 
@@ -1302,6 +1334,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         setGameInProgress(true);
         setStickySaveHighlight(false);
         setGameState(getActiveGameplayState());
+        // Loading is an arrival at the scene too: reset to that scene's
+        // default camera rather than whatever pan the save's own JSON, or an
+        // earlier session, happened to leave behind.
+        resetGameplayCameraToDefault();
         startGame(false);
         audioManager.startBackgroundMusicForGame();
         // A pasted save becomes the game in play, so it also becomes what a
@@ -1857,6 +1893,12 @@ function initializeStoryWindowControls() {
   }
 
   if (getElements().desktopAshtrayHotspot && getElements().desktopAshtray) {
+    // Must agree with --ashtray-stub-duration / --ashtray-relight-duration in
+    // styles.css: these timeouts are what clear is-extinguishing/is-relighting
+    // again once the CSS animations they trigger have actually finished.
+    const ASHTRAY_STUB_ANIMATION_MS = 720;
+    const ASHTRAY_RELIGHT_ANIMATION_MS = 760;
+
     const activateAshtray = () => {
       audioManager.onUserGesture();
       audioManager.playSfx("clickButton");
@@ -1890,7 +1932,7 @@ function initializeStoryWindowControls() {
           setAshtrayHasLitCigarette(false);
           setAshtrayHasExtraButt(true);
           setAshtrayAnimationTimeoutId(null);
-        }, 620));
+        }, ASHTRAY_STUB_ANIMATION_MS));
 
         return;
       }
@@ -1898,11 +1940,12 @@ function initializeStoryWindowControls() {
       ashtrayElement.classList.add("has-lit-cig");
       ashtrayElement.classList.add("is-relighting");
       setAshtrayHasLitCigarette(true);
+      restartAshtraySmokePlumes(ashtrayElement);
 
       setAshtrayAnimationTimeoutId(window.setTimeout(() => {
         ashtrayElement.classList.remove("is-relighting");
         setAshtrayAnimationTimeoutId(null);
-      }, 620));
+      }, ASHTRAY_RELIGHT_ANIMATION_MS));
     };
 
     getElements().desktopAshtrayHotspot.addEventListener("click", activateAshtray);
@@ -1994,19 +2037,35 @@ const NOTIFICATION_TARGETS = {
   facsimile: {
     kind: "facsimile",
     open: () => openFacsimileWindow(),
-    hint: "Open the facsimile machine",
+    hintKey: "notificationHintOpenFacsimile",
+    hintFallback: "Open the facsimile machine",
   },
   reports: {
     kind: "reports",
     open: () => openReportsWindow(),
-    hint: "Open the reports folder",
+    hintKey: "notificationHintOpenReports",
+    hintFallback: "Open the reports folder",
   },
   photos: {
     kind: "photos",
     open: () => openPhotosWindow(),
-    hint: "Open the photos folder",
+    hintKey: "notificationHintOpenPhotos",
+    hintFallback: "Open the photos folder",
   },
 };
+
+// The hover hint on an actionable notification, in the current language. The
+// English text stays here as the fallback for the same reason every other
+// resolveLocalizedText() call keeps one: a missing key should read as English
+// rather than surface a raw localization key to the player.
+function resolveNotificationTargetHint(target) {
+  const targetDefinition = NOTIFICATION_TARGETS[target];
+  if (!targetDefinition) {
+    return "";
+  }
+
+  return resolveLocalizedText(targetDefinition.hintKey, targetDefinition.hintFallback);
+}
 
 // Notification click: close the computer if it is open, then open (or surface)
 // the requested window. The computer is full-screen, so leaving it open would
@@ -5977,8 +6036,12 @@ function formatProgressTimeLineEventDate(year) {
 // The player's note is shown on hover of the photograph itself, which is what
 // they are trying to place. Put on the slot rather than the frame so it does
 // not also fire over the input they are typing into — and so that on a locked
-// frame, where the slot carries no title, the browser falls through to the
+// frame, where the slot carries no title, the hover falls through to the
 // frame's own title and shows the event description instead.
+//
+// This is the one tooltip in the game that is never localized: it is the
+// player's own words. Nothing has to enforce that — the tooltip layer draws a
+// title verbatim (see tooltipManager.js).
 function applyProgressTimeLineNoteTooltip(slot, noteText) {
   if (!slot) {
     return;
