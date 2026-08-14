@@ -43,12 +43,12 @@ npm run test:e2e:debug      # Playwright Inspector (not recorded to history)
 Any Playwright CLI argument is forwarded, so these work too:
 
 ```bash
-node scripts/run-tests.cjs tests/e2e/quick-login/browser-quick-login.spec.js
+node scripts/run-tests.cjs tests/e2e/quick-login/quick-login.spec.js
 node scripts/run-tests.cjs --grep "quick login"
 
 # one specific test, headed, slowed down enough to watch
 npm run test:e2e:slow -- --grep "police quick login is hidden until a manual login succeeds"
-node scripts/run-tests.cjs --headed --slow=600 tests/e2e/quick-login/browser-quick-login.spec.js:28
+node scripts/run-tests.cjs --headed --slow=600 tests/e2e/quick-login/quick-login.spec.js:28
 ```
 
 See [`tests/README.md`](../tests/README.md#categories) for how the

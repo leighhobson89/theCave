@@ -21,7 +21,7 @@
 // tool: none of them feed a table column, so authoring them for every record
 // wasn't judged worth the overhead. `webContentRegistry.js` still renders
 // them correctly if a record ever supplies one by hand -- proven with
-// synthetic data in browser-detail-synthetic-fields.spec.js -- but no real
+// synthetic data in detail-synthetic-fields.spec.js -- but no real
 // record does, on purpose.
 const { test, expect } = require("@playwright/test");
 const {
@@ -145,7 +145,7 @@ test.describe("Police Records", () => {
     // (the highest is 3, on goldenpendant) so this test is purely about
     // record content, not privilege gating -- that's already covered by
     // web-content-authentication/ and the goldenpendant case specifically by
-    // evidence-system/evidence-awards-full-catalog.spec.js.
+    // evidence-system/awards-full-catalog.spec.js.
     await policeLogin(page, "administrator", "atlas");
     await expect(policeStatus(page)).toHaveText("Logged in as: Administrator (Level 5)");
 
@@ -232,7 +232,7 @@ test.describe("Canada Newspaper Archive", () => {
     const query = page.locator("input[aria-label='Archive keyword search']");
 
     // Right keyword, but no province selected yet matches nothing either --
-    // exercised in browser-site-search.spec.js. This covers the distinct
+    // exercised in site-search.spec.js. This covers the distinct
     // case of a real, deliberate mismatch: right query, wrong province.
     await page.locator("select[aria-label='Province selector']").selectOption("Ontario");
     await query.fill("hannah fletcher");

@@ -7,12 +7,12 @@ else in the suite reaches.
 
 | Spec | Covers |
 | --- | --- |
-| `browser-address-history.spec.js` | History recording, de-duplication, replaying a stored search, surviving a computer close and a save round trip |
-| `browser-archives-login-layout.spec.js` | Subscriber login panel alignment against the Summary column, including at a narrow viewport |
-| `browser-site-search.spec.js` | ZoomSearch / Library / Archives query submission, result rows, detail views, per-site empty states |
-| `browser-record-catalog.spec.js` | Every authored record across ZoomSearch (8), Library (3), Police (9) and Archives (3) opens and renders correctly; every metadata field that feeds a search-results table column, section headings and image galleries; Library/Police/Archives empty states |
-| `browser-detail-synthetic-fields.spec.js` | Case Number, Officer, Classification, Declassification, Edition, Publisher/Province (Library) and the References/Attachments blocks, proven against synthetic data injected via `page.route` — for Officer/Classification/Declassification/Province/References/Edition, the *only* place they're tested, since no real record populates them, on purpose (see below) |
-| `browser-standalone-whitmore-page.spec.js` | The `whitmoresonsironmachineryco` standalone page — reached via the mine-cart article's in-page link and directly by URL; confirms it awards no evidence |
+| `netscape-chrome.spec.js` | History recording, de-duplication, replaying a stored search, surviving a computer close and a save round trip |
+| `archives-login-layout.spec.js` | Subscriber login panel alignment against the Summary column, including at a narrow viewport |
+| `site-search.spec.js` | ZoomSearch / Library / Archives query submission, result rows, detail views, per-site empty states |
+| `record-catalog.spec.js` | Every authored record across ZoomSearch (8), Library (3), Police (9) and Archives (3) opens and renders correctly; every metadata field that feeds a search-results table column, section headings and image galleries; Library/Police/Archives empty states |
+| `detail-synthetic-fields.spec.js` | Case Number, Officer, Classification, Declassification, Edition, Publisher/Province (Library) and the References/Attachments blocks, proven against synthetic data injected via `page.route` — for Officer/Classification/Declassification/Province/References/Edition, the *only* place they're tested, since no real record populates them, on purpose (see below) |
+| `standalone-whitmore-page.spec.js` | The `whitmoresonsironmachineryco` standalone page — reached via the mine-cart article's in-page link and directly by URL; confirms it awards no evidence |
 
 All 25 authored records (ZoomSearch 8, Library 3, Police 9, Archives 3, plus
 the 2 standalone pages covered under `tests/e2e/evidence-system/` because
@@ -29,7 +29,7 @@ production content. Same story for `references`/`attachments`:
 authored content that ever supplied it. This was found while trying to
 write real-data assertions for `docs/test-coverage-analysis.md`'s
 "detail-view field rendering" gap and turned out to need synthetic data
-instead (`browser-detail-synthetic-fields.spec.js`).
+instead (`detail-synthetic-fields.spec.js`).
 
 The first fix backfilled every one of those fields with a `"TODONOW"`
 placeholder on every record missing one, across all 5 languages, and added
@@ -60,7 +60,7 @@ guessed. A fourth pass filled in that last group by hand and, purely for
 readability, moved `caseNumber`/`date` to sit right after `title` on every
 Police record (ahead of `keywords`) across all 5 languages — no value
 changed. **Every `TODONOW` placeholder in the project is now resolved.**
-`browser-detail-synthetic-fields.spec.js`'s synthetic-data coverage isn't a
+`detail-synthetic-fields.spec.js`'s synthetic-data coverage isn't a
 residual gap left behind by that — Province/Officer/Classification/
 Declassification Status/References (Police/Library) and Edition (Archives)
 were deliberately excluded from authoring in the second pass because none of

@@ -7,7 +7,7 @@ one-click replay feature built on top of a manual login.
 
 | Spec | Covers |
 | --- | --- |
-| `browser-authentication.spec.js` | Guest defaults, privilege gating, case sensitivity, log out, session persistence, save/load round trip |
+| `authentication.spec.js` | Guest defaults, privilege gating, case sensitivity, log out, session persistence, save/load round trip |
 
 Not one of the originally scoped 10 categories — added because "Quick login"
 and general authentication are different behaviours and folding this into

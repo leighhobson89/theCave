@@ -6,7 +6,7 @@ a high-water mark and can never grant access above what was earned.
 
 | Spec | Covers |
 | --- | --- |
-| `browser-quick-login.spec.js` | Visibility rules, replay at the stored level, high-water-mark behaviour in both directions, both gated sites, save/load round trip, New Game clearing |
+| `quick-login.spec.js` | Visibility rules, replay at the stored level, high-water-mark behaviour in both directions, both gated sites, save/load round trip, New Game clearing |
 
 This is the coverage shape every other category should aim for: every
 visibility rule, every direction of state change, and both the persistence and

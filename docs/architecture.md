@@ -962,7 +962,7 @@ npm run test:e2e:category -- quick-login   # just that one category
 npm run test:e2e:headed     # watch it in a real browser (forces one worker)
 npm run test:e2e:slow       # ...with a 350ms pause between actions
 npm run test:e2e:ui         # interactive UI mode
-node scripts/run-tests.cjs tests/e2e/quick-login/browser-quick-login.spec.js
+node scripts/run-tests.cjs tests/e2e/quick-login/quick-login.spec.js
 ```
 
 ```

@@ -1,6 +1,6 @@
 // Proves detail-view rendering code that real content deliberately never
 // exercises. Case Number and Date are now real, authored content on every
-// Police record (see browser-record-catalog.spec.js), so this file's real
+// Police record (see record-catalog.spec.js), so this file's real
 // contribution for those two is a *richer*, more varied set of values than
 // any single record shows -- but Officer, Classification, Declassification
 // Status and Province (Police), Province and References (Library), and
@@ -19,7 +19,7 @@
 //
 // This intercepts each site's catalog fetch to add one deliberately
 // fully-populated synthetic record -- the same technique
-// evidence-missing-catalog-entry.spec.js uses to reach an otherwise
+// missing-catalog-entry.spec.js uses to reach an otherwise
 // unreachable error path.
 const { test, expect } = require("@playwright/test");
 const { startNewGame, openNetscape, openLibrary, openPolice, openArchives, policeQuery } = require("../../support/game-helpers");

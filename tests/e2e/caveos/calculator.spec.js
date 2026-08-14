@@ -6,15 +6,16 @@
 // read, so it is the only thing worth asserting against.
 const { test, expect } = require("@playwright/test");
 const localization = require("../../../localization.json");
-const { startNewGame, openComputer, clickNewGame } = require("../../support/game-helpers");
+const { startNewGame, openComputer } = require("../../support/game-helpers");
+const {
+  CAVEOS_LANGUAGES,
+  appsFolderWindow,
+  closeCaveOsWindow,
+  openAppsFolder,
+  startNewGameInLanguage,
+} = require("../../support/caveos-helpers");
 
-const LANGUAGES = [
-  { code: "en", buttonId: "btnEnglish" },
-  { code: "es", buttonId: "btnSpanish" },
-  { code: "de", buttonId: "btnGerman" },
-  { code: "it", buttonId: "btnItalian" },
-  { code: "fr", buttonId: "btnFrench" },
-];
+const LANGUAGES = CAVEOS_LANGUAGES;
 
 function calculatorWindow(page) {
   return page.locator(".caveos-calculator-window");
@@ -40,27 +41,18 @@ async function press(page, symbols) {
 // same journey a player makes.
 async function openCalculator(page, languageCode = "en") {
   await openComputer(page);
-  await page.locator(".computer-icon-folder-apps").dblclick();
-  const appsFolder = page.locator(".caveos-folder-apps-window");
-  await expect(appsFolder).toBeVisible();
-  await appsFolder.locator(".computer-icon-calculator").click();
+  await openAppsFolder(page);
+  await appsFolderWindow(page).locator(".computer-icon-calculator").click();
   await expect(calculatorWindow(page)).toBeVisible();
   await expect(display(page)).toHaveText("0");
   return localization[languageCode];
-}
-
-async function startNewGameInLanguage(page, buttonId) {
-  await page.goto("/");
-  await page.locator(`#${buttonId}`).click();
-  await clickNewGame(page);
 }
 
 // The window opens centred, over the icon that opened it, so it is closed from
 // its own title-bar button — the same reason closeProgressEvidenceWindow()
 // exists, and what a player covered by the window would actually do.
 async function closeCalculator(page) {
-  await calculatorWindow(page).locator(".story-window-close").click();
-  await expect(calculatorWindow(page)).toHaveCount(0);
+  await closeCaveOsWindow(page, "caveos-calculator-window");
 }
 
 test("the calculator icon sits after Paint inside the Apps folder", async ({ page }) => {
@@ -74,11 +66,9 @@ test("the calculator icon sits after Paint inside the Apps folder", async ({ pag
   await expect(page.locator(".computer-desktop > .computer-icons-grid .computer-icon-netscape"))
     .toHaveCount(1);
 
-  await page.locator(".computer-icon-folder-apps").dblclick();
-  const appsFolder = page.locator(".caveos-folder-apps-window");
-  await expect(appsFolder).toBeVisible();
+  await openAppsFolder(page);
 
-  const iconLabels = await appsFolder.locator(".computer-icon").evaluateAll(
+  const iconLabels = await appsFolderWindow(page).locator(".computer-icon").evaluateAll(
     (icons) => icons.map((icon) => icon.className)
   );
 
@@ -184,8 +174,7 @@ for (const language of LANGUAGES) {
     const strings = localization[language.code];
     await startNewGameInLanguage(page, language.buttonId);
     await openComputer(page);
-    await page.locator(".computer-icon-folder-apps").dblclick();
-    await expect(page.locator(".caveos-folder-apps-window")).toBeVisible();
+    await openAppsFolder(page);
 
     await expect(page.locator(".computer-icon-calculator .computer-icon-label"))
       .toHaveText(strings.computerCalculatorIconLabel);

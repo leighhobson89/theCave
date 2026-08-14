@@ -3,7 +3,7 @@
 // else is open (bringDesktopWindowToFront -> getNextDesktopWindowZIndex()).
 // This is app-level wiring, not part of DesktopWindow itself, so it is
 // exercised through real windows rather than the isolated instances in
-// desktop-window-mechanics.spec.js.
+// mechanics.spec.js.
 const { test, expect } = require("@playwright/test");
 const { startNewGame } = require("../../support/game-helpers");
 

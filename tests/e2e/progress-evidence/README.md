@@ -23,10 +23,10 @@ event's `unlockedByProgressEvidenceId` points at.
 
 | Spec | Covers |
 | --- | --- |
-| `progress-evidence-activation-and-persistence.spec.js` | Nothing activated on a new game; `activateProgressEvidence()` adds an id; duplicate activation is a no-op; save preserves and load restores the collection; a full save → reload → Resume cycle |
-| `progress-evidence-game-triggers.spec.js` | Activation from opening a website record, visiting a standalone page, and receiving a fax, and that both flags land correctly on the resulting entry |
-| `progress-evidence-generated-definitions.spec.js` | The registry file (`assets/progressEvidence.json`): definitions registered at startup, authored activation, duplicate ids refused, and the real file's service-coded ids |
-| `progress-evidence-existing-folders.spec.js` | The Reports and Photos carousels are unaffected by this system |
+| `activation-and-persistence.spec.js` | Nothing activated on a new game; `activateProgressEvidence()` adds an id; duplicate activation is a no-op; save preserves and load restores the collection; a full save → reload → Resume cycle |
+| `game-triggers.spec.js` | Activation from opening a website record, visiting a standalone page, and receiving a fax, and that both flags land correctly on the resulting entry |
+| `generated-definitions.spec.js` | The registry file (`assets/progressEvidence.json`): definitions registered at startup, authored activation, duplicate ids refused, and the real file's service-coded ids |
+| `existing-folders.spec.js` | The Reports and Photos carousels are unaffected by this system |
 
 The server half of the builder's Progress Evidence panel — id allocation and the
 definition upsert — is covered in
@@ -44,7 +44,7 @@ definition upsert — is covered in
   enabled set breaks the moment someone flips one. Either enable what the test
   needs itself (`setProgressEvidenceDeveloperEnabled`) or read the expectation
   from `assets/progressEvidence.json`, as
-  `progress-evidence-activation-and-persistence.spec.js` does. The shipped
+  `activation-and-persistence.spec.js` does. The shipped
   baseline is `00001` and `00002` (both ZoomSearch, the game's two earliest
   websites).
 - **Ids carry their service in the leading digit** — `0` ZoomSearch, `1` Library,
@@ -54,7 +54,7 @@ definition upsert — is covered in
 - **Stub `assets/progressEvidence.json`, never write it.** These specs run in
   parallel with everything else, so a real write would be visible to any other
   spec that happened to load the page mid-run. `page.route` before the first
-  navigation is the pattern — see `progress-evidence-generated-definitions.spec.js`.
+  navigation is the pattern — see `generated-definitions.spec.js`.
 - **If a spec needs to see something rendered — a card, a carousel step, an
   image or its placeholder — it belongs in `../progress-timeline/`, not here.**
   That system owns the envelope now; this one only owns milestone bookkeeping.

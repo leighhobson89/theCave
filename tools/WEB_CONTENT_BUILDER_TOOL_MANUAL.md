@@ -104,7 +104,7 @@ on Library; Edition on Archives) — none of them feed a table column, so
 they were tried in the 2026-08-13 test-coverage follow-up, found to not be
 worth the authoring overhead for content that never surfaces in search
 results, and removed again. Proven only by synthetic data in
-`tests/e2e/web-content-search-records/browser-detail-synthetic-fields.spec.js`.
+`tests/e2e/web-content-search-records/detail-synthetic-fields.spec.js`.
 Add a field back to the relevant panel if a real record ever needs one.
 
 ## Service-Specific Fields

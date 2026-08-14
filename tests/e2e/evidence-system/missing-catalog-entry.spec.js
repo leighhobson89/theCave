@@ -4,7 +4,7 @@
 // blank). Every real authored record is well-formed, so both paths are
 // exercised by deliberately injecting evidence directly into the live store
 // via evidenceManager.js -- the same kind of store-level bypass
-// `evidence-carousel-navigation.spec.js` uses for the empty-carousel case --
+// `carousel-navigation.spec.js` uses for the empty-carousel case --
 // and, for the missing-field case, by intercepting the catalog fetch to
 // serve one deliberately incomplete entry alongside the real ones. A
 // stale-path bug of exactly this shape was hit manually during development;

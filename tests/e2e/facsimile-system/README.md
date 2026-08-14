@@ -5,5 +5,5 @@ progress milestones rather than by the player opening it.
 
 | Spec | Covers |
 | --- | --- |
-| `desktop-facsimile-inbox.spec.js` | Alert light states, queueing, next-message stepping, award-exactly-once on close |
-| `desktop-facsimile-milestone-triggers.spec.js` | Evidence-acquisition and record-open triggers, following delivered credentials through to a working login |
+| `inbox.spec.js` | Alert light states, queueing, next-message stepping, award-exactly-once on close |
+| `milestone-triggers.spec.js` | Evidence-acquisition and record-open triggers, following delivered credentials through to a working login |

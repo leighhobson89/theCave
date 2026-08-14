@@ -13,7 +13,7 @@
 //   node scripts/run-tests.cjs --slow=600         # custom pause, in ms
 //
 // One specific test, headed and slowed down (the usual debugging pass):
-//   node scripts/run-tests.cjs --headed --slow tests/e2e/browser-quick-login.spec.js:28
+//   node scripts/run-tests.cjs --headed --slow tests/e2e/quick-login/quick-login.spec.js:28
 //   npm run test:e2e:slow -- --grep "police quick login is hidden until a manual login succeeds"
 //
 // Note --grep is a regex over the FULL title path ("e2e/foo.spec.js > test

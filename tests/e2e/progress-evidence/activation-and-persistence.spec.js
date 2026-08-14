@@ -12,7 +12,7 @@ const {
 } = require("../../support/game-helpers");
 
 // Read from the registry the game itself loads, rather than restating its
-// contents here — the same technique browser-record-catalog.spec.js uses
+// contents here — the same technique record-catalog.spec.js uses
 // against the site JSON. `progressEvidenceDeveloperEnabled` is an authoring
 // decision a developer is expected to change; asserting a hard-coded list of
 // enabled ids would turn every such change into a test failure.

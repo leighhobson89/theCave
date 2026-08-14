@@ -5,7 +5,7 @@
 // not translated, so this suite still navigates with the English quick-link
 // helpers regardless of language; only the generic chrome is asserted per
 // language. The "computer-netscape" window has no live-refresh hook (see
-// window-titles-relocalize-on-language-switch.spec.js), so language is
+// window-titles-on-language-switch.spec.js), so language is
 // switched before opening the browser each time, not while it is open.
 const { test, expect } = require("@playwright/test");
 const localization = require("../../../localization.json");

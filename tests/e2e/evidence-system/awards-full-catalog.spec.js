@@ -1,5 +1,5 @@
 // Walks every one of the 6 awarding web-content records that
-// `evidence-awards-from-web-content.spec.js` doesn't reach (that spec only
+// `awards-from-web-content.spec.js` doesn't reach (that spec only
 // covers the honeydewcavingclub standalone page). Together the two specs
 // cover all 9 evidence-awarding records in the game, including
 // `goldenpendant` -- the only Level 3 police record and the deepest gated

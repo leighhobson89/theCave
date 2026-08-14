@@ -1,7 +1,7 @@
 // The floating settings panel: expand/collapse, mute toggle, music
 // play/pause/next-track transport, and the two volume sliders. Drives the
 // real controls and cross-checks against the live `audioManager` singleton
-// (imported the same way persistence-save-load-round-trip.spec.js reaches
+// (imported the same way save-load-round-trip.spec.js reaches
 // into constantsAndGlobalVars.js) rather than just trusting DOM text.
 const { test, expect } = require("@playwright/test");
 const { startNewGame } = require("../../support/game-helpers");

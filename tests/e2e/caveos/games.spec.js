@@ -7,39 +7,25 @@
 // pass with the click wiring torn out.
 const { test, expect } = require("@playwright/test");
 const localization = require("../../../localization.json");
-const { startNewGame, openComputer, clickNewGame } = require("../../support/game-helpers");
+const { startNewGame, openComputer } = require("../../support/game-helpers");
+const {
+  CAVEOS_LANGUAGES,
+  closeCaveOsWindow,
+  gamesFolderWindow,
+  openCaveOsApp,
+  openGamesFolder,
+  selectCaveOsTheme,
+  startNewGameInLanguage,
+  switchLanguageMidGame,
+} = require("../../support/caveos-helpers");
 
-const LANGUAGES = [
-  { code: "en", buttonId: "btnEnglish" },
-  { code: "es", buttonId: "btnSpanish" },
-  { code: "de", buttonId: "btnGerman" },
-  { code: "it", buttonId: "btnItalian" },
-  { code: "fr", buttonId: "btnFrench" },
-];
-
-function gamesFolderWindow(page) {
-  return page.locator(".caveos-folder-games-window");
-}
-
-async function startNewGameInLanguage(page, buttonId) {
-  await page.goto("/");
-  await page.locator(`#${buttonId}`).click();
-  await clickNewGame(page);
-}
-
-async function openGamesFolder(page) {
-  await page.locator(".computer-icon-folder-games").dblclick();
-  await expect(gamesFolderWindow(page)).toBeVisible();
-}
+const LANGUAGES = CAVEOS_LANGUAGES;
 
 // Open one game the whole way through: new game, computer, Games folder, then a
 // single click on the icon — the same journey a player makes.
 async function openGame(page, iconClassName, windowClassName) {
   await startNewGame(page);
-  await openComputer(page);
-  await openGamesFolder(page);
-  await gamesFolderWindow(page).locator(`.${iconClassName}`).click();
-  await expect(page.locator(`.${windowClassName}`)).toBeVisible();
+  await openCaveOsApp(page, { folder: "games", iconClassName, windowClassName });
 }
 
 /* ---------------------------------------------------------------------------
@@ -474,7 +460,7 @@ test("the games follow the CaveOS theme", async ({ page }) => {
   // Terminal's ground is the dark green #041204.
   await expect.poll(readWellPixel).toBe("4,18,4");
 
-  await page.locator("#caveOsThemeSelect").selectOption("redmond");
+  await selectCaveOsTheme(page, "redmond");
   // The well repaints on the next frame it draws, which the running game
   // supplies; starting it guarantees one without waiting on gravity.
   await page.locator(".caveos-tetris-app").press("Enter");
@@ -507,7 +493,7 @@ for (const language of LANGUAGES) {
       .toHaveText(strings.minesweeperNewGameButton);
     await expect(page.locator(".caveos-minesweeper-flag-toggle"))
       .toHaveText(strings.minesweeperFlagModeButton);
-    await page.locator(".caveos-minesweeper-window .story-window-close").click();
+    await closeCaveOsWindow(page, "caveos-minesweeper-window");
 
     await folder.locator(".computer-icon-sudoku").click();
     await expect(page.locator(".caveos-sudoku-window .story-window-close"))
@@ -515,7 +501,7 @@ for (const language of LANGUAGES) {
     await expect(page.locator(".caveos-sudoku-state")).toHaveText(strings.sudokuHint);
     await expect(page.locator(".caveos-sudoku-new-game")).toHaveText(strings.sudokuNewGameButton);
     await expect(page.locator(".caveos-sudoku-clear")).toHaveText(strings.sudokuClearKey);
-    await page.locator(".caveos-sudoku-window .story-window-close").click();
+    await closeCaveOsWindow(page, "caveos-sudoku-window");
 
     await folder.locator(".computer-icon-tetris").click();
     await expect(page.locator(".caveos-tetris-window .story-window-close"))
@@ -535,10 +521,7 @@ test("a mid-session language switch re-titles the open games", async ({ page }) 
 
   // The language buttons live on the pause menu, so the switch is made the way
   // a player makes it: Escape, pick a flag, resume.
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#menu")).toBeVisible();
-  await page.locator("#btnFrench").click();
-  await page.locator("#resumeFromMenu").click();
+  await switchLanguageMidGame(page, "btnFrench");
 
   await expect(page.locator(".caveos-sudoku-window .desktop-window-title"))
     .toHaveText(localization.fr.computerSudokuWindowTitle);

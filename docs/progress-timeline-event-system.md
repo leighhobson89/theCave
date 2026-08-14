@@ -209,7 +209,7 @@ only the date already printed on its face.
 
 Naming the event on hover would hand the player the answer while the frame is
 still in play — working out which frame a photograph belongs to *is* the
-puzzle. `progress-timeline-envelope.spec.js` asserts this for unsettled cards
+puzzle. `envelope.spec.js` asserts this for unsettled cards
 and frames so it cannot regress.
 
 **Once a frame locks**, the puzzle for it is over, so
@@ -449,7 +449,7 @@ were *made*. Anything needing chronological order must use
 
 `tests/e2e/progress-timeline/` — 51 tests across three files:
 
-- **`progress-timeline-board.spec.js`** (33) — frame rendering and ordering,
+- **`board.spec.js`** (33) — frame rendering and ordering,
   date formatting, one-milestone-unlocks-several-photographs, locked-out
   photographs, correct/incorrect placement, displacement, the × button,
   frame→frame and frame→envelope drags, the ghost appearing and the envelope
@@ -460,11 +460,11 @@ were *made*. Anything needing chronological order must use
   the row shrinking), the missing-art fallback, real artwork, save/load,
   reload, New Game, plus the snaking layout, the arrows turning with it, and
   the oversized question-mark frame.
-- **`progress-timeline-carousel.spec.js`** (7) — stepping, wraparound, the
+- **`carousel.spec.js`** (7) — stepping, wraparound, the
   slide/fade animation, unlocked photographs filling the strip from the left,
   and the pool shrinking when a photograph is placed. Ported from the old
   progressEvidence carousel suite.
-- **`progress-timeline-envelope.spec.js`** (11) — which photographs reach the
+- **`envelope.spec.js`** (11) — which photographs reach the
   envelope and when, that an untriggered non-starter photograph never reaches
   it, that a card is the bare photograph with no id printed on it, and that
   nothing carries a spoiler tooltip. No test currently exercises
@@ -494,7 +494,7 @@ Both were verified by removing the guard and watching the first fail and the
 second pass.
 
 No event currently uses `availableFromStart`, so the pool genuinely starts
-empty and most assertions below say so directly. `progress-timeline-board.spec.js`
+empty and most assertions below say so directly. `board.spec.js`
 still folds a `STARTER_PHOTO_IDS` baseline (read from the registry, not
 hardcoded) into its pool assertions via `sortedWithStarters()`, so it keeps
 working unchanged if a future event is ever marked `availableFromStart` again.
@@ -518,7 +518,7 @@ scene appears.
   the left edge of the scene — so a press on either lands on the window and no
   drag starts. Every other frame focuses clear of it, and the player can always
   close or move the window, so this is a rough edge rather than a dead end.
-  `progress-timeline-board.spec.js` picks a frame clear of the window
+  `board.spec.js` picks a frame clear of the window
   (`FRAME_CLEAR_OF_ENVELOPE_WINDOW`) and says why.
 - **The envelope's right edge is clipped on narrow viewports.** The scene is
   wider than the corkboard and the view is centred horizontally, so at around

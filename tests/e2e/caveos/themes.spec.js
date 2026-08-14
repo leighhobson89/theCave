@@ -11,10 +11,15 @@ const {
   openComputer,
   closeComputer,
   openZoomSearch,
-  clickNewGame,
   captureSaveStringViaMenu,
   loadSaveStringViaMenu,
 } = require("../../support/game-helpers");
+const {
+  CAVEOS_LANGUAGES,
+  appsFolderWindow,
+  openAppsFolder,
+  startNewGameInLanguage,
+} = require("../../support/caveos-helpers");
 
 const THEME_IDS = ["terminal", "amber", "redmond", "platinum", "hotdog"];
 const THEME_LABEL_KEY_BY_ID = {
@@ -25,13 +30,7 @@ const THEME_LABEL_KEY_BY_ID = {
   hotdog: "caveOsThemeHotdog",
 };
 
-const LANGUAGES = [
-  { code: "en", buttonId: "btnEnglish" },
-  { code: "es", buttonId: "btnSpanish" },
-  { code: "de", buttonId: "btnGerman" },
-  { code: "it", buttonId: "btnItalian" },
-  { code: "fr", buttonId: "btnFrench" },
-];
+const LANGUAGES = CAVEOS_LANGUAGES;
 
 function computerWindow(page) {
   return page.locator(".computer-window");
@@ -57,12 +56,6 @@ function readThemeTokens(page) {
 async function selectTheme(page, themeId) {
   await themeSelect(page).selectOption(themeId);
   await expect(computerWindow(page)).toHaveClass(new RegExp(`caveos-theme-${themeId}`));
-}
-
-async function startNewGameInLanguage(page, buttonId) {
-  await page.goto("/");
-  await page.locator(`#${buttonId}`).click();
-  await clickNewGame(page);
 }
 
 test("the theme picker sits in the computer window's title bar, after the title", async ({ page }) => {
@@ -122,9 +115,8 @@ test("a theme reaches the app windows inside the OS, not just the desktop", asyn
   await openComputer(page);
   // The calculator lives in the Apps folder, so it is reached through a real
   // double click on the folder first.
-  await page.locator(".computer-icon-folder-apps").dblclick();
-  await expect(page.locator(".caveos-folder-apps-window")).toBeVisible();
-  await page.locator(".computer-icon-calculator").click();
+  await openAppsFolder(page);
+  await appsFolderWindow(page).locator(".computer-icon-calculator").click();
   await expect(page.locator(".caveos-calculator-window")).toBeVisible();
 
   const readCalculatorChrome = () => page.evaluate(() => {
@@ -192,9 +184,8 @@ test("switching theme does not move or resize an open window", async ({ page }) 
   await openComputer(page);
   // The calculator lives in the Apps folder, so it is reached through a real
   // double click on the folder first.
-  await page.locator(".computer-icon-folder-apps").dblclick();
-  await expect(page.locator(".caveos-folder-apps-window")).toBeVisible();
-  await page.locator(".computer-icon-calculator").click();
+  await openAppsFolder(page);
+  await appsFolderWindow(page).locator(".computer-icon-calculator").click();
   const calculator = page.locator(".caveos-calculator-window");
   await expect(calculator).toBeVisible();
 
