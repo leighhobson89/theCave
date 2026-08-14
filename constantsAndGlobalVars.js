@@ -29,6 +29,16 @@ const BROWSER_ADDRESS_HISTORY_LIMIT = 10;
 export const NOTES_PAGE_COUNT = 10;
 export const PAINT_PAGE_COUNT = 10;
 
+// The CaveOS reskins, in the order they appear in the theme dropdown. Each id
+// becomes a `caveos-theme-<id>` class on the computer window, which is what the
+// themed CSS custom properties in styles.css hang off; each has a matching
+// `caveOsTheme<Name>` localization key for its dropdown label.
+//
+// "terminal" is the original green-phosphor look and stays the default, so a
+// save written before themes existed opens exactly as it always did.
+export const CAVEOS_THEME_IDS = ["terminal", "amber", "redmond", "platinum", "hotdog"];
+export const DEFAULT_CAVEOS_THEME_ID = "terminal";
+
 // Desktop viewport / scene navigation (game.js)
 export const ZOOM_LEVELS = [0.60, 0.65, 0.85, 1];
 export const WORLD_WIDTH = 2600;
@@ -142,6 +152,10 @@ let facsimileState = {
   consumedReportIds: [],
 };
 let browserAddressHistory = [];
+// Which CaveOS reskin is in play. A player preference rather than progress, but
+// it lives in the save payload all the same so it survives a save/load cycle
+// exactly as the audio preferences do.
+let caveOsTheme = DEFAULT_CAVEOS_THEME_ID;
 // Where the player has pinned the manila EVIDENCE envelope on the corkboard, in
 // noticeboard-world coordinates. null means "wherever the CSS anchors it",
 // which is the bottom-right of the board. The board is far taller than the
@@ -358,6 +372,7 @@ export function captureGameStatusForSaving() {
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
   gameState.facsimileState = getFacsimileState();
   gameState.browserAddressHistory = getBrowserAddressHistory();
+  gameState.caveOsTheme = getCaveOsTheme();
   gameState.webContentSessions = webContentSessionsProvider
     ? webContentSessionsProvider.getSnapshot()
     : {};
@@ -404,6 +419,9 @@ export function restoreGameStatus(gameState) {
       setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
       setFacsimileState(gameState.facsimileState);
       setBrowserAddressHistory(gameState.browserAddressHistory);
+      // Absent in a save written before themes existed, which setCaveOsTheme()
+      // reads as "use the default" — the original terminal look.
+      setCaveOsTheme(gameState.caveOsTheme);
       if (webContentSessionsProvider) {
         webContentSessionsProvider.restoreSnapshot(gameState.webContentSessions || {});
       }
@@ -688,6 +706,24 @@ export function setAshtrayHasExtraButt(value) {
 export function resetAshtrayState() {
   ashtrayHasLitCigarette = true;
   ashtrayHasExtraButt = false;
+}
+
+export function getCaveOsTheme() {
+  return caveOsTheme;
+}
+
+// Anything unrecognised falls back to the default rather than being stored, so
+// an old save (no field at all), a save from a build with different themes, or
+// a hand-edited one can only ever leave the OS on a theme that exists.
+export function setCaveOsTheme(value) {
+  const requestedTheme = String(value || "").trim();
+  caveOsTheme = CAVEOS_THEME_IDS.includes(requestedTheme)
+    ? requestedTheme
+    : DEFAULT_CAVEOS_THEME_ID;
+}
+
+export function resetCaveOsTheme() {
+  caveOsTheme = DEFAULT_CAVEOS_THEME_ID;
 }
 
 // Accepts either the current `pendingReports` array or the legacy single

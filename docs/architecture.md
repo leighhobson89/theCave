@@ -132,6 +132,7 @@ its own DOM:
 .desktop-window
 ├── .desktop-window-header   (drag handle)
 │   ├── .desktop-window-title
+│   ├── .desktop-window-header-accessory   (when headerAccessoryElement)
 │   └── .story-window-close
 ├── .desktop-window-body
 │   └── .desktop-window-carousel-layout   (when showCarouselNavigation)
@@ -149,6 +150,7 @@ Key behaviour:
 - **Opening** — `open({ resizable, showScrollbar })` centres the window once (`dataset.positioned` guards repeats) at `initialWidthRatio` × `initialHeightRatio` of the parent, then clamps it into view.
 - **Closing** — `close()` cancels interactions, fires `onClose`, and destroys the DOM (windows always own their DOM in this codebase).
 - **Stacking** — `ui.js` assigns z-indexes from `DESKTOP_WINDOW_BASE_Z_INDEX` (45) upward. Any pointerdown on a window raises it via `getNextDesktopWindowZIndex()`.
+- **Header accessory** — an optional `headerAccessoryElement` placed between the title and the close button, for controls that act on the window itself rather than its content (currently only the CaveOS theme picker). It is pushed right by `margin-left: auto`, and the drag exclusion above already keeps its controls usable.
 
 ### Window registry in `ui.js`
 
@@ -396,13 +398,110 @@ an abandoned New Game can't inject a fax into a just-loaded save).
 ## 8. The computer (CaveOS 1996)
 
 Clicking the laptop opens a full-viewport `computer` window whose content is the
-CaveOS desktop: a header, three icons, and an analogue clock panel.
+CaveOS desktop: a header, four icons, and an analogue clock panel.
 
-- **Icons** — Notes, Paint, Netscape. Each toggles its app window *inside* the CaveOS desktop (`parentElement` is the CaveOS container, not the game area), so app windows are clipped to the screen.
+- **Icons** — the **Apps** and **Games** folders, then Notes and Netscape, in that order. Each app icon toggles its window *inside* the CaveOS desktop (`parentElement` is the CaveOS container, not the game area), so app windows are clipped to the screen. The desktop grid is `repeat(auto-fit, minmax(110px, 1fr))` in a 560px-wide box, so all four sit on one row wherever there is space and wrap only on a screen too narrow for four columns.
+- **Folders** — Apps holds Paint and Calculator; Games holds Snake, Minesweeper, Sudoku and Tetris. A folder opens on a **double click** (`dblclick`, so the platform's own timing applies) or Enter/Space, since a keyboard cannot produce a double click. A folder window reuses `.computer-icons-grid`, so an icon looks and behaves identically inside a folder or on the desktop — the icons inside open on a single click like any other app. Folder contents are rebuilt each time the folder opens, so there is nothing to re-localize.
+  - A folder overrides the grid's columns to a **fixed 118px** rather than inheriting the desktop's `1fr`. The desktop stretches a known four icons across a known width and they come out square; a folder holding one or two icons would stretch those same `1fr` tracks into bars spanning the window.
 - **Clock** — a live analogue clock updated every second by `setInterval`; the interval is cleared when the computer window closes. The date line uses a module-level `Intl.DateTimeFormat`.
 - **MENU panel** — clicking the clock panel (or Enter/Space on it) returns to the main menu.
-- **App windows** — opened through `openComputerAppWindow()`, which builds a `DesktopWindow`, centres it with `positionWindowWithinParent()` and tracks it in `contentRefs.appWindows`. Notes/Paint open at 60% × 58%; Netscape opens full-size.
+- **App windows** — opened through `openComputerAppWindow()`, which builds a `DesktopWindow`, centres it with `positionWindowWithinParent()` and tracks it in `contentRefs.appWindows`. Notes/Paint open at 60% × 58%; Calculator at 34% × 62%; Snake at 62% × 72%; Minesweeper at 40% × 66%; Sudoku at 44% × 78%; Tetris at 36% × 86%; folders at 46% × 50%; Netscape full-size. Optional `onAfterOpen` / `onBeforeClose` hooks let an app take focus once its window is placed, or tear down a timer while its content is still reachable (Snake and Tetris use both).
+- **Theme picker** — a `<select>` in the computer window's own title bar, passed to `DesktopWindow` as `headerAccessoryElement` (see §3). Changing it re-skins the OS; see "Themes" below.
 - **Closing** — closing the computer window closes its tracked app windows and clears the clock interval.
+
+### Calculator
+
+`createComputerCalculatorWindowContentElements()` builds a four-function
+calculator: one display and an 18-key pad. The arithmetic is deliberately
+**immediate-execution**, as period desk calculators were — each operator key
+resolves whatever is already pending before starting the next, so `2 + 3 × 4`
+is 20, not 14. Two pieces of state carry it (`accumulator` and
+`pendingOperator`). Results that cannot fit the 12-character display fall back
+to exponent notation; a non-finite result (divide by zero) shows a localized
+`ERROR` until Clear. Nothing is persisted — the calculator is a tool, not
+progress, so a reopened window starts at zero.
+
+### Snake
+
+`createComputerSnakeWindowContentElements()` draws a 24 × 18 board to a canvas
+— the board redraws every tick, and restyling 432 elements eight times a second
+is far more layout work than one `fillRect` loop. The canvas is a fixed pixel
+size scaled by CSS, so the game plays identically at any window size. Turns are
+**queued** rather than applied immediately, so two keys inside one tick cannot
+double the snake back through its own neck, and a direct reversal is ignored
+rather than being an instant loss. The tail cell is excluded from
+self-collision because it moves out of the way on the same tick. Nothing is
+persisted, and `onBeforeClose` clears the interval — a tick outliving its
+window would run forever against a detached canvas.
+
+### Minesweeper, Sudoku and Tetris
+
+Three more games in the Games folder, all following Snake's shape: a factory
+returning `{ container, relocalize }` plus whatever the window needs. None of
+them persists anything — like the calculator they are diversions, not progress,
+so a reopened window starts fresh. All three read the theme's tokens at paint
+time (canvas games via the shared `readCaveOsPaletteTokens()`, DOM games
+straight from CSS), so a reskin carries them with it.
+
+**Minesweeper** is the original Beginner board — 9 × 9 with 10 mines — built
+from DOM buttons rather than a canvas, because it redraws only on a click and
+the cells want to be real focusable controls. Mines are laid **after the first
+click**, with that cell and its eight neighbours excluded, which is what makes
+the opening move always safe and usually open a whole region. Flood-filling an
+empty region is iterative rather than recursive: a region can be most of the
+board. Flagging is a right click (`contextmenu`, with the browser menu
+suppressed) *and* a latching Flag button, since a right click is not available
+to every pointer or to the keyboard. The classic colour-per-number cannot
+survive five palettes, so counts of three and above are simply picked out in
+the accent instead.
+
+**Sudoku** ships **one** verified puzzle. Every game the player sees is that
+grid run through a random sequence of validity-preserving transformations —
+digit relabelling, row and column shuffles within their bands, band and stack
+shuffles, an optional transpose. Each is a bijection on sudoku grids, so the
+result is an isomorphic puzzle: still solvable, and still uniquely so. That is
+far safer than hand-writing more grids and hoping they are sound. No solution
+grid is stored: a completed board with no row, column or box repeat *is* the
+solution, given the puzzle has only one. Conflicts are recomputed and shown
+live, and the app carries a keypad as well as taking digits from the keyboard.
+
+**Tetris** draws a 10 × 20 well to a canvas for the same reason Snake does.
+Pieces are square matrices so a rotation is a plain matrix turn with no
+per-piece special cases, and a rotation blocked by a wall is **nudged back in**
+(offsets ±1, ±2) rather than refused — without that, turning a bar in the last
+column would be impossible. Gravity is a 560 ms interval; `ArrowDown` steps,
+space hard-drops. The falling piece is painted in the accent and the settled
+pile in the foreground ink, so the two read apart. As with Snake,
+`onBeforeClose` clears the interval.
+
+### Paint and the theme
+
+Paint's canvas colour and default pen come from `--caveos-paint-canvas` /
+`--caveos-paint-ink`, read once per window by `resolveCaveOsPaintPalette()`.
+They are resolved at open rather than watched live because a page is stored as
+a flat image: its pixels cannot follow a later theme change.
+
+The **eraser paints back to the page's own ground**, tracked in
+`pageBackgroundColor`. For a new or cleared page that is the current theme's
+canvas colour; for a restored page it is recovered by sampling the snapshot's
+top-left pixel, so art drawn under one theme is not erased with another
+theme's colour. (A player who paints over that exact corner pixel would defeat
+the sampling — accepted as a small risk for the benefit of correct cross-theme
+erasing.)
+
+### Themes
+
+Five reskins of the OS: **Terminal** (the original green phosphor, and the
+default), **Amber**, **Redmond '95**, **Platinum** and **Hot Dog Stand**. The
+chosen one is a `caveos-theme-*` class on the computer window's root element;
+every themed rule in `styles.css` reads CSS custom properties which each theme
+class redefines. App windows are DOM children of the computer window, so they
+inherit the switch for free.
+
+- **Scope** — the OS and its app chrome only, *including* Netscape's toolbar and address bar but deliberately **not** the fictional websites rendered inside it. Those are 1996 web pages the player reads as evidence and each should look like a different place on the web, not like the machine showing it.
+- **Geometry is never themed.** Window sizes and positions are computed in script; a theme may only re-colour and re-decorate, and a test asserts an open window does not move or resize across a theme change.
+- **Specificity** — the CaveOS window rules are scoped under `.computer-window` because the generic `.desktop-window` block is defined later in `styles.css`; at equal specificity it would win and every theme would show the default navy frame.
+- **Persistence** — `caveOsTheme` is in the save payload (a preference, like the audio settings), so it survives a save/load cycle and a refresh-resume. New Game resets it to Terminal. `setCaveOsTheme()` rejects anything unrecognised, so an old save with no field, or a hand-edited one, can only ever land on a theme that exists.
 
 ### Netscape Navigator 3.0
 
@@ -731,6 +830,7 @@ The payload:
 | `ashtrayHasLitCigarette`, `ashtrayHasExtraButt` | Ashtray state |
 | `facsimileState` | Pending and consumed faxes |
 | `browserAddressHistory` | Up to 10 address entries with replay data, de-duplicated by URL |
+| `caveOsTheme` | Which CaveOS reskin is in play (see §8, "Themes"); unrecognised values fall back to `terminal` |
 | `webContentSessions` | Police Records and Canada Archives logins, by website id |
 | `quickLoginState` | Banked quick-login credentials per website id (see §9, "Quick login") |
 | `activeGameplayState` / `currentScene` | Which scene to restore |

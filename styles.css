@@ -3405,13 +3405,205 @@ button.disabled {
             rgba(125, 119, 109, 0.74) 8px);
 }
 
+/* ---------------------------------------------------------------------------
+   CaveOS themes
+
+   Every themed rule below reads these custom properties; a `caveos-theme-*`
+   class on the computer window redefines them and the whole OS follows,
+   including its app windows, which are DOM children of that window. The
+   defaults here ARE the Terminal theme, so the OS renders correctly even if no
+   theme class is present at all.
+
+   Deliberately absent: anything that affects geometry. Window sizes and
+   positions are computed in script (positionWindowWithinParent in ui.js), and
+   a theme must never move or resize a window — only re-colour and re-decorate
+   it. Padding is themed only where a bevel needs the room.
+
+   See the "CaveOS themes" section in ui.js.
+   --------------------------------------------------------------------------- */
+
 .computer-window {
+    /* Typeface. CRT themes keep the monospace terminal face; the GUI themes of
+       the era used a proportional UI face instead. */
+    --caveos-font: "Courier New", "Lucida Console", monospace;
+
+    /* The desktop behind the icons, and the scanline overlay drawn over it.
+       GUI themes set --caveos-desktop-scanlines to `none`. */
+    --caveos-desktop-bg: linear-gradient(180deg, #020702 0%, #000000 100%);
+    --caveos-desktop-scanlines:
+        repeating-linear-gradient(0deg,
+            rgba(86, 255, 80, 0.08) 0,
+            rgba(86, 255, 80, 0.08) 1px,
+            transparent 1px,
+            transparent 3px);
+
+    /* Text. --caveos-fg is the OS's primary ink; --caveos-fg-dim is for
+       secondary text (hints, captions, disabled controls). */
+    --caveos-fg: #70ff5c;
+    --caveos-fg-dim: rgba(112, 255, 92, 0.7);
+
+    /* Surfaces: the flat panel colour, a raised one for icons and buttons, and
+       a sunken one for text fields and canvases. */
+    --caveos-surface: rgba(1, 8, 1, 0.95);
+    --caveos-surface-raised: rgba(6, 28, 6, 0.76);
+    --caveos-surface-hover: rgba(15, 44, 14, 0.82);
+    --caveos-surface-sunken: rgba(2, 12, 2, 0.9);
+
+    --caveos-border: rgba(97, 255, 88, 0.5);
+    --caveos-border-strong: rgba(108, 255, 92, 0.7);
+
+    /* Title bars. Separate from the surface because the GUI themes give them a
+       strong accent colour that nothing else uses. */
+    --caveos-titlebar-bg: linear-gradient(180deg, rgba(13, 46, 13, 0.95), rgba(6, 24, 6, 0.95));
+    --caveos-titlebar-fg: #7cff64;
+    /* A solid plate painted behind title-bar text. Only needed by themes whose
+       title bar is a pattern rather than a flat colour (Platinum's pinstripes),
+       where text would otherwise sit unreadably on top of the stripes. */
+    --caveos-titlebar-plate: transparent;
+
+    --caveos-accent: #7cff64;
+    --caveos-accent-fg: #021002;
+
+    /* Phosphor glow, and the 3D bevel highlights the GUI themes use instead.
+       Each theme sets one family and neutralises the other, which is what lets
+       the same rules serve a CRT look and a chiselled-grey look. */
+    --caveos-glow: 0 0 24px rgba(88, 255, 80, 0.14);
+    --caveos-text-glow: 0 0 10px rgba(110, 255, 106, 0.45);
+    --caveos-bevel-light: transparent;
+    --caveos-bevel-dark: transparent;
+    --caveos-bevel-width: 0px;
+
+    --caveos-radius: 0;
+
+    /* Paint's canvas. Separate tokens rather than reusing the surface/ink pair
+       because a drawing surface wants a flat opaque colour and a pen colour
+       that reads on it, which is not always the same choice the OS chrome
+       makes. ui.js reads these when a Paint window opens; see
+       resolveCaveOsPaintPalette(). */
+    --caveos-paint-canvas: #041204;
+    --caveos-paint-ink: #76ff62;
+
     border-radius: 0;
+}
+
+/* Amber: the other phosphor a 1996 monitor might have. Same CRT furniture as
+   Terminal, different tube. */
+.computer-window.caveos-theme-amber {
+    --caveos-paint-canvas: #140900;
+    --caveos-paint-ink: #ffb43a;
+    --caveos-desktop-bg: linear-gradient(180deg, #0b0600 0%, #000000 100%);
+    --caveos-desktop-scanlines:
+        repeating-linear-gradient(0deg,
+            rgba(255, 176, 48, 0.08) 0,
+            rgba(255, 176, 48, 0.08) 1px,
+            transparent 1px,
+            transparent 3px);
+    --caveos-fg: #ffb43a;
+    --caveos-fg-dim: rgba(255, 180, 58, 0.7);
+    --caveos-surface: rgba(10, 5, 0, 0.95);
+    --caveos-surface-raised: rgba(38, 20, 2, 0.78);
+    --caveos-surface-hover: rgba(60, 32, 4, 0.84);
+    --caveos-surface-sunken: rgba(16, 8, 0, 0.9);
+    --caveos-border: rgba(255, 176, 48, 0.5);
+    --caveos-border-strong: rgba(255, 186, 66, 0.72);
+    --caveos-titlebar-bg: linear-gradient(180deg, rgba(60, 32, 2, 0.95), rgba(30, 15, 0, 0.95));
+    --caveos-titlebar-fg: #ffc25c;
+    --caveos-accent: #ffb43a;
+    --caveos-accent-fg: #170a00;
+    --caveos-glow: 0 0 24px rgba(255, 168, 40, 0.16);
+    --caveos-text-glow: 0 0 10px rgba(255, 176, 48, 0.45);
+}
+
+/* Redmond '95: silver 3D bevels, a navy gradient title bar and the teal
+   desktop everyone remembers. No glow, no scanlines — this is a GUI. */
+.computer-window.caveos-theme-redmond {
+    --caveos-paint-canvas: #ffffff;
+    --caveos-paint-ink: #000080;
+    --caveos-font: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+    --caveos-desktop-bg: linear-gradient(180deg, #3a8a80 0%, #2d6f68 100%);
+    --caveos-desktop-scanlines: none;
+    --caveos-fg: #000000;
+    --caveos-fg-dim: #4a4a4a;
+    --caveos-surface: #c0c0c0;
+    --caveos-surface-raised: #d4d0c8;
+    --caveos-surface-hover: #dfdcd4;
+    --caveos-surface-sunken: #ffffff;
+    --caveos-border: #808080;
+    --caveos-border-strong: #000000;
+    --caveos-titlebar-bg: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+    --caveos-titlebar-fg: #ffffff;
+    --caveos-accent: #000080;
+    --caveos-accent-fg: #ffffff;
+    --caveos-glow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+    --caveos-text-glow: none;
+    --caveos-bevel-light: #ffffff;
+    --caveos-bevel-dark: #808080;
+    --caveos-bevel-width: 2px;
+}
+
+/* Platinum: Macintosh System 7 — near-white greys, hairline black borders and
+   a pinstriped title bar. Flatter and lighter than Redmond. */
+.computer-window.caveos-theme-platinum {
+    --caveos-paint-canvas: #ffffff;
+    --caveos-paint-ink: #000000;
+    --caveos-font: "Trebuchet MS", "Segoe UI", Geneva, sans-serif;
+    --caveos-desktop-bg: linear-gradient(180deg, #9a9a9a 0%, #8a8a8a 100%);
+    --caveos-desktop-scanlines: none;
+    --caveos-fg: #000000;
+    --caveos-fg-dim: #555555;
+    --caveos-surface: #dddddd;
+    --caveos-surface-raised: #eeeeee;
+    --caveos-surface-hover: #ffffff;
+    --caveos-surface-sunken: #ffffff;
+    --caveos-border: #000000;
+    --caveos-border-strong: #000000;
+    /* The System 7 title bar's horizontal pinstripes. */
+    --caveos-titlebar-bg:
+        repeating-linear-gradient(0deg,
+            #000000 0 1px,
+            #dddddd 1px 3px);
+    --caveos-titlebar-fg: #000000;
+    /* System 7 broke its pinstripes with a solid patch behind the title. */
+    --caveos-titlebar-plate: #dddddd;
+    --caveos-accent: #000080;
+    --caveos-accent-fg: #ffffff;
+    --caveos-glow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+    --caveos-text-glow: none;
+    --caveos-bevel-light: #ffffff;
+    --caveos-bevel-dark: #888888;
+    --caveos-bevel-width: 1px;
+}
+
+/* Hot Dog Stand: the Windows 3.1 high-contrast scheme, reproduced without
+   mercy. Red and yellow, black text, and nothing subtle anywhere. */
+.computer-window.caveos-theme-hotdog {
+    --caveos-paint-canvas: #ffffff;
+    --caveos-paint-ink: #c00000;
+    --caveos-font: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+    --caveos-desktop-bg: linear-gradient(180deg, #c00000 0%, #a00000 100%);
+    --caveos-desktop-scanlines: none;
+    --caveos-fg: #000000;
+    --caveos-fg-dim: #3a1a00;
+    --caveos-surface: #ffff00;
+    --caveos-surface-raised: #ffff00;
+    --caveos-surface-hover: #ffffff;
+    --caveos-surface-sunken: #ffffff;
+    --caveos-border: #000000;
+    --caveos-border-strong: #000000;
+    --caveos-titlebar-bg: linear-gradient(180deg, #ff0000 0%, #d00000 100%);
+    --caveos-titlebar-fg: #ffff00;
+    --caveos-accent: #ff0000;
+    --caveos-accent-fg: #ffff00;
+    --caveos-glow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+    --caveos-text-glow: none;
+    --caveos-bevel-light: #ffffff;
+    --caveos-bevel-dark: #808000;
+    --caveos-bevel-width: 2px;
 }
 
 .computer-window,
 .computer-window * {
-    font-family: "Courier New", "Lucida Console", monospace;
+    font-family: var(--caveos-font);
 }
 
 .computer-window button,
@@ -3435,14 +3627,10 @@ button.disabled {
     width: 100%;
     height: 100%;
     background:
-        repeating-linear-gradient(0deg,
-            rgba(86, 255, 80, 0.08) 0,
-            rgba(86, 255, 80, 0.08) 1px,
-            transparent 1px,
-            transparent 3px),
-        linear-gradient(180deg, #020702 0%, #000000 100%);
-    color: #70ff5c;
-    font-family: "Courier New", "Lucida Console", monospace;
+        var(--caveos-desktop-scanlines),
+        var(--caveos-desktop-bg);
+    color: var(--caveos-fg);
+    font-family: var(--caveos-font);
     overflow: hidden;
 }
 
@@ -3454,7 +3642,7 @@ button.disabled {
     font-weight: 700;
     letter-spacing: 0.09em;
     text-transform: uppercase;
-    text-shadow: 0 0 10px rgba(110, 255, 106, 0.45);
+    text-shadow: var(--caveos-text-glow);
 }
 
 .computer-desktop-subheader {
@@ -3471,16 +3659,20 @@ button.disabled {
     left: 24px;
     top: 102px;
     display: grid;
-    grid-template-columns: repeat(3, minmax(100px, 1fr));
+    /* auto-fit rather than a fixed column count: all four icons sit on one row
+       whenever the width allows it, and the row only breaks when a column can
+       no longer hold its 110px minimum — i.e. on a genuinely narrow screen.
+       The width below is sized to fit four columns plus their gaps. */
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 1rem;
-    width: min(520px, calc(100% - 240px));
+    width: min(560px, calc(100% - 240px));
 }
 
 .computer-icon {
-    border: 1px solid rgba(97, 255, 88, 0.5);
+    border: 1px solid var(--caveos-border);
     border-radius: 2px;
-    background: rgba(6, 28, 6, 0.76);
-    color: #78ff63;
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -3490,17 +3682,17 @@ button.disabled {
     padding: 0.55rem 0.4rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    /* The bevel is drawn with inset shadows rather than border-style: outset,
+       so a CRT theme can switch it off entirely by making both bevel colours
+       transparent and the width 0 — leaving the flat 1px border above. */
     box-shadow:
-        inset 0 0 0 1px rgba(22, 65, 20, 0.82),
-        0 0 10px rgba(107, 255, 96, 0.15);
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
 }
 
 .computer-icon:hover,
 .computer-icon:focus-visible {
-    background: rgba(15, 44, 14, 0.82);
-    box-shadow:
-        inset 0 0 0 1px rgba(88, 255, 84, 0.75),
-        0 0 14px rgba(124, 255, 114, 0.3);
+    background: var(--caveos-surface-hover);
 }
 
 .computer-icon-pixel {
@@ -3514,54 +3706,261 @@ button.disabled {
     font-size: 0.76rem;
 }
 
+/* The icon artwork is drawn in the theme's ink over the theme's raised
+   surface, so a reskin repaints the icons along with everything else rather
+   than leaving green glyphs on a grey desktop. */
 .computer-icon-notes-pixel {
     background:
         repeating-linear-gradient(0deg,
-            #72ff62 0 2px,
-            #72ff62 2px 3px,
+            var(--caveos-fg) 0 2px,
+            var(--caveos-fg) 2px 3px,
             transparent 3px 6px);
-    border: 2px solid #72ff62;
+    border: 2px solid var(--caveos-fg);
 }
 
 .computer-icon-calendar-pixel {
     background:
-        linear-gradient(180deg, #72ff62 0 8px, transparent 8px 100%),
+        linear-gradient(180deg, var(--caveos-fg) 0 8px, transparent 8px 100%),
         repeating-linear-gradient(90deg,
-            rgba(114, 255, 98, 0.95) 0 2px,
+            var(--caveos-fg) 0 2px,
             transparent 2px 7px),
         repeating-linear-gradient(0deg,
-            rgba(114, 255, 98, 0.95) 0 2px,
+            var(--caveos-fg) 0 2px,
             transparent 2px 7px);
-    border: 2px solid #72ff62;
+    border: 2px solid var(--caveos-fg);
 }
 
 .computer-icon-paint-pixel {
-    border: 2px solid #72ff62;
+    border: 2px solid var(--caveos-fg);
     background:
-        radial-gradient(circle at 70% 76%, rgba(2, 10, 2, 1) 0 18%, transparent 20%),
-        radial-gradient(circle at 24% 28%, rgba(114, 255, 98, 0.95) 0 20%, transparent 22%),
-        radial-gradient(circle at 56% 16%, rgba(114, 255, 98, 0.95) 0 16%, transparent 18%),
-        radial-gradient(circle at 28% 56%, rgba(114, 255, 98, 0.95) 0 14%, transparent 16%),
-        radial-gradient(circle at 58% 52%, rgba(114, 255, 98, 0.95) 0 15%, transparent 17%),
-        radial-gradient(circle at 45% 40%, rgba(17, 39, 17, 0.95) 0 90%);
+        radial-gradient(circle at 70% 76%, var(--caveos-surface) 0 18%, transparent 20%),
+        radial-gradient(circle at 24% 28%, var(--caveos-fg) 0 20%, transparent 22%),
+        radial-gradient(circle at 56% 16%, var(--caveos-fg) 0 16%, transparent 18%),
+        radial-gradient(circle at 28% 56%, var(--caveos-fg) 0 14%, transparent 16%),
+        radial-gradient(circle at 58% 52%, var(--caveos-fg) 0 15%, transparent 17%),
+        radial-gradient(circle at 45% 40%, var(--caveos-surface) 0 90%);
     border-radius: 6px 12px 12px 12px;
+}
+
+/* A pocket calculator seen head-on: a display band across the top and a 3x2
+   grid of keys under it, built from repeating gradients so it stays crisp at
+   any theme's colours. */
+.computer-icon-calculator-pixel {
+    position: relative;
+    border: 2px solid var(--caveos-fg);
+    border-radius: 3px;
+    background: var(--caveos-surface);
+}
+
+.computer-icon-calculator-pixel::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 3px;
+    height: 7px;
+    background: var(--caveos-fg);
+}
+
+.computer-icon-calculator-pixel::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 14px;
+    bottom: 3px;
+    background:
+        repeating-linear-gradient(90deg,
+            var(--caveos-fg) 0 5px,
+            transparent 5px 9px),
+        repeating-linear-gradient(0deg,
+            var(--caveos-fg) 0 4px,
+            transparent 4px 7px);
+    background-blend-mode: multiply;
+}
+
+/* A manila folder seen face-on: a tab along the top left, then the body. */
+.computer-icon-folder-pixel {
+    position: relative;
+    border: 2px solid var(--caveos-fg);
+    border-radius: 0 3px 3px 3px;
+    background: var(--caveos-surface);
+    margin-top: 5px;
+}
+
+.computer-icon-folder-pixel::before {
+    content: "";
+    position: absolute;
+    left: -2px;
+    top: -7px;
+    width: 16px;
+    height: 7px;
+    border: 2px solid var(--caveos-fg);
+    border-bottom: 0;
+    border-radius: 3px 3px 0 0;
+    background: var(--caveos-surface);
+}
+
+.computer-icon-folder-pixel::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 6px;
+    height: 2px;
+    background: var(--caveos-fg);
+    box-shadow: 0 6px 0 var(--caveos-fg);
+}
+
+/* A coiled snake: three segments stepping down to a head. */
+.computer-icon-snake-pixel {
+    position: relative;
+    border: 2px solid var(--caveos-fg);
+    border-radius: 3px;
+    background: var(--caveos-surface);
+}
+
+.computer-icon-snake-pixel::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    width: 7px;
+    height: 6px;
+    background: var(--caveos-fg);
+    box-shadow:
+        9px 0 0 var(--caveos-fg),
+        9px 8px 0 var(--caveos-fg),
+        18px 8px 0 var(--caveos-fg);
+}
+
+/* The food pellet the snake is heading for. */
+.computer-icon-snake-pixel::after {
+    content: "";
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--caveos-accent);
+}
+
+/* A swept grid with a single mine sitting in the middle of it. */
+.computer-icon-minesweeper-pixel {
+    position: relative;
+    border: 2px solid var(--caveos-fg);
+    background: var(--caveos-surface);
+}
+
+.computer-icon-minesweeper-pixel::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    background:
+        repeating-linear-gradient(90deg,
+            var(--caveos-fg) 0 1px,
+            transparent 1px 9px),
+        repeating-linear-gradient(0deg,
+            var(--caveos-fg) 0 1px,
+            transparent 1px 8px);
+}
+
+.computer-icon-minesweeper-pixel::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: var(--caveos-accent);
+    /* A ring of the surface colour so the mine reads clear of the grid lines
+       running under it. */
+    box-shadow: 0 0 0 2px var(--caveos-surface);
+}
+
+/* A nine-box grid drawn with its heavy thirds, and two digits already placed. */
+.computer-icon-sudoku-pixel {
+    position: relative;
+    border: 2px solid var(--caveos-fg);
+    background: var(--caveos-surface);
+}
+
+.computer-icon-sudoku-pixel::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    background:
+        linear-gradient(90deg,
+            transparent 0 11px,
+            var(--caveos-fg) 11px 13px,
+            transparent 13px 23px,
+            var(--caveos-fg) 23px 25px,
+            transparent 25px 100%),
+        linear-gradient(0deg,
+            transparent 0 8px,
+            var(--caveos-fg) 8px 10px,
+            transparent 10px 18px,
+            var(--caveos-fg) 18px 20px,
+            transparent 20px 100%);
+}
+
+.computer-icon-sudoku-pixel::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    width: 4px;
+    height: 4px;
+    background: var(--caveos-accent);
+    box-shadow: 22px 14px 0 var(--caveos-accent);
+}
+
+/* Two tetrominoes in a well: a J on the left, a lone block dropping beside it. */
+.computer-icon-tetris-pixel {
+    position: relative;
+    border: 2px solid var(--caveos-fg);
+    background: var(--caveos-surface);
+}
+
+.computer-icon-tetris-pixel::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    width: 7px;
+    height: 7px;
+    background: var(--caveos-fg);
+    box-shadow:
+        0 8px 0 var(--caveos-fg),
+        8px 8px 0 var(--caveos-fg),
+        16px 8px 0 var(--caveos-fg);
+}
+
+.computer-icon-tetris-pixel::after {
+    content: "";
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    width: 7px;
+    height: 7px;
+    background: var(--caveos-accent);
 }
 
 .computer-icon-netscape-pixel {
     position: relative;
     border-radius: 6px 12px 12px 12px;
-    border: 2px solid #72ff62;
-    background:
-        radial-gradient(circle at 70% 76%, rgba(2, 10, 2, 1) 0 18%, transparent 20%),
-        linear-gradient(180deg, #021002 0%, #000000 100%);
-    box-shadow: inset 0 0 0 1px rgba(114, 255, 98, 0.18);
+    border: 2px solid var(--caveos-fg);
+    background: var(--caveos-surface);
 }
 
 .computer-icon-netscape-pixel::before {
     content: "";
     position: absolute;
     inset: 4px;
-    border: 2px solid #72ff62;
+    border: 2px solid var(--caveos-fg);
     border-radius: 4px;
 }
 
@@ -3571,7 +3970,7 @@ button.disabled {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -54%);
-    color: #72ff62;
+    color: var(--caveos-fg);
     font-size: 1.05rem;
     font-family: "Times New Roman", serif;
     font-weight: 700;
@@ -3583,10 +3982,10 @@ button.disabled {
     right: 22px;
     top: 20px;
     width: 360px;
-    border: 1px solid rgba(98, 255, 89, 0.6);
+    border: 1px solid var(--caveos-border);
     border-radius: 2px;
-    background: rgba(8, 33, 8, 0.82);
-    color: #76ff62;
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
     padding: 0.55rem 0.5rem 0.35rem;
     display: flex;
     flex-direction: column;
@@ -3595,28 +3994,25 @@ button.disabled {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     box-shadow:
-        inset 0 0 0 1px rgba(30, 90, 28, 0.7),
-        0 0 10px rgba(110, 255, 105, 0.18);
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
 }
 
 .computer-clock-panel:hover,
 .computer-clock-panel:focus-visible {
-    background: rgba(12, 43, 12, 0.86);
-    box-shadow:
-        inset 0 0 0 1px rgba(98, 255, 89, 0.85),
-        0 0 16px rgba(110, 255, 105, 0.28);
+    background: var(--caveos-surface-hover);
 }
 
 .computer-analog-clock {
     position: relative;
     width: 252px;
     height: 252px;
-    border: 2px solid #72ff62;
+    border: 2px solid var(--caveos-fg);
     border-radius: 50%;
     background:
-        radial-gradient(circle at center, rgba(91, 255, 87, 0.08) 0%, rgba(0, 0, 0, 0.9) 68%),
-        linear-gradient(90deg, transparent 49%, rgba(114, 255, 98, 0.32) 49% 51%, transparent 51%),
-        linear-gradient(0deg, transparent 49%, rgba(114, 255, 98, 0.32) 49% 51%, transparent 51%);
+        linear-gradient(90deg, transparent 49%, var(--caveos-fg) 49% 51%, transparent 51%),
+        linear-gradient(0deg, transparent 49%, var(--caveos-fg) 49% 51%, transparent 51%),
+        var(--caveos-surface-sunken);
 }
 
 .computer-clock-hand {
@@ -3625,8 +4021,7 @@ button.disabled {
     bottom: 50%;
     transform-origin: 50% 100%;
     border-radius: 3px;
-    background: #8dff7a;
-    box-shadow: 0 0 5px rgba(124, 255, 114, 0.55);
+    background: var(--caveos-fg);
 }
 
 .computer-clock-hour {
@@ -3645,7 +4040,7 @@ button.disabled {
     width: 2px;
     height: 100px;
     margin-left: -1px;
-    background: #beffb4;
+    background: var(--caveos-accent);
 }
 
 .computer-clock-center {
@@ -3657,7 +4052,7 @@ button.disabled {
     margin-left: -7px;
     margin-top: -7px;
     border-radius: 50%;
-    background: #72ff62;
+    background: var(--caveos-fg);
 }
 
 .computer-clock-date {
@@ -3669,48 +4064,573 @@ button.disabled {
     opacity: 0.88;
 }
 
-.caveos-app-window {
-    border-radius: 0;
-    border: 1px solid rgba(108, 255, 92, 0.7);
-    background: rgba(1, 8, 1, 0.95);
+/* These are scoped under .computer-window rather than written as bare
+   .caveos-app-window rules because the generic .desktop-window block is
+   defined LATER in this file: at equal specificity it would win, and every
+   theme would end up showing the default window's navy frame and rounded
+   corners. The descendant selector outranks it, which is what actually lets a
+   theme reach the window frame. Every app window is a child of the computer
+   window, so the scope costs nothing. */
+.computer-window .caveos-app-window {
+    border-radius: var(--caveos-radius);
+    border: 1px solid var(--caveos-border-strong);
+    background: var(--caveos-surface);
     box-shadow:
-        0 0 0 1px rgba(30, 79, 27, 0.95),
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark),
         0 16px 32px rgba(0, 0, 0, 0.55),
-        0 0 24px rgba(88, 255, 80, 0.14);
+        var(--caveos-glow);
     backdrop-filter: none;
 }
 
-.caveos-app-window .desktop-window-header {
-    border-bottom: 1px solid rgba(97, 255, 88, 0.5);
-    background:
-        linear-gradient(180deg, rgba(13, 46, 13, 0.95), rgba(6, 24, 6, 0.95));
+/* The OS window's own frame and title bar. Themed for the same reason and by
+   the same tokens as the app windows inside it. */
+.computer-window.computer-window {
+    border: 1px solid var(--caveos-border-strong);
+    background: var(--caveos-surface);
+    backdrop-filter: none;
+}
+
+.computer-window > .desktop-window-header {
+    border-bottom: 1px solid var(--caveos-border);
+    background: var(--caveos-titlebar-bg);
+}
+
+.computer-window > .desktop-window-header > .desktop-window-title {
+    color: var(--caveos-titlebar-fg);
+    background: var(--caveos-titlebar-plate);
+    padding: 0 0.45rem;
+}
+
+.computer-window > .desktop-window-header > .story-window-close {
+    border-radius: 0;
+    border-color: var(--caveos-border);
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
+    box-shadow:
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
+}
+
+.computer-window > .desktop-window-header > .story-window-close:hover {
+    background: var(--caveos-surface-hover);
+}
+
+.computer-window .caveos-app-window .desktop-window-header {
+    border-bottom: 1px solid var(--caveos-border);
+    background: var(--caveos-titlebar-bg);
     padding: 0.45rem 0.65rem;
 }
 
-.caveos-app-window .desktop-window-title {
-    color: #7cff64;
-    font-family: "Courier New", "Lucida Console", monospace;
+.computer-window .caveos-app-window .desktop-window-title {
+    color: var(--caveos-titlebar-fg);
+    background: var(--caveos-titlebar-plate);
+    padding: 0 0.45rem;
+    font-family: var(--caveos-font);
     font-size: 0.9rem;
     font-weight: 700;
     letter-spacing: 0.08em;
 }
 
-.caveos-app-window .story-window-close {
+.computer-window .caveos-app-window .story-window-close {
     width: 30px;
     min-width: 30px;
     height: 30px;
     border-radius: 0;
-    border-color: rgba(98, 255, 89, 0.6);
-    background: rgba(7, 31, 7, 0.9);
-    color: #88ff72;
+    border-color: var(--caveos-border);
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
+    box-shadow:
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
 }
 
-.caveos-app-window .story-window-close:hover {
-    background: rgba(14, 56, 14, 0.92);
+.computer-window .caveos-app-window .story-window-close:hover {
+    background: var(--caveos-surface-hover);
 }
 
-.caveos-app-window .desktop-window-body {
+.computer-window .caveos-app-window .desktop-window-body {
     padding: 0.35rem;
+}
+
+/* ---------------------------------------------------------------------------
+   The theme picker in the computer window's title bar
+   --------------------------------------------------------------------------- */
+
+/* margin-left: auto pushes this and the close button after it to the right of
+   the header, leaving the title on the left. */
+.desktop-window-header-accessory {
+    margin-left: auto;
+}
+
+.caveos-theme-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-right: 0.6rem;
+}
+
+.caveos-theme-picker-label {
+    color: var(--caveos-titlebar-fg);
+    background: var(--caveos-titlebar-plate);
+    padding: 0 0.3rem;
+    font-family: var(--caveos-font);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    /* The label is a hit target for the select it names, so it must not start a
+       window drag when clicked. */
+    cursor: pointer;
+}
+
+.caveos-theme-select {
+    border: 1px solid var(--caveos-border-strong);
+    border-radius: 0;
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
+    font-family: var(--caveos-font);
+    font-size: 0.78rem;
+    padding: 0.16rem 0.3rem;
+    cursor: pointer;
+    box-shadow:
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
+}
+
+/* The dropdown list itself is painted by the OS from these two colours, so they
+   are set explicitly rather than inherited — a themed control with an unstyled
+   list is worse than either on its own. */
+.caveos-theme-select option {
+    background: var(--caveos-surface);
+    color: var(--caveos-fg);
+}
+
+/* ---------------------------------------------------------------------------
+   Folder windows
+
+   A folder is the desktop's own icon grid in a window of its own. It reuses
+   .computer-icons-grid so an icon looks and behaves identically wherever it
+   lives; only the grid's positioning is overridden, since the desktop anchors
+   its grid absolutely and a folder's fills the window.
+   --------------------------------------------------------------------------- */
+
+.caveos-folder-app {
+    width: 100%;
+    height: 100%;
+    padding: 0.3rem;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+.caveos-folder-icons-grid {
+    position: static;
+    left: auto;
+    top: auto;
+    width: 100%;
+    /* Fixed-width columns rather than the desktop's 1fr. The desktop stretches
+       a known four icons across a known width and they come out square; a
+       folder holding one or two icons would stretch those same 1fr tracks into
+       bars spanning the whole window. Pinning the track to the desktop's own
+       icon width keeps the square shape wherever an icon lives, and the icons
+       simply wrap onto another row when the folder is narrow. */
+    grid-template-columns: repeat(auto-fill, 118px);
+    justify-content: start;
+    align-content: start;
+}
+
+/* ---------------------------------------------------------------------------
+   Snake
+   --------------------------------------------------------------------------- */
+
+.caveos-snake-app {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.4rem;
+    padding: 0.2rem;
+    box-sizing: border-box;
+    font-family: var(--caveos-font);
+    color: var(--caveos-fg);
+    /* Focusable for keyboard play, but the focus ring would frame the whole
+       app; the board's own border already shows where the game is. */
+    outline: none;
+}
+
+.caveos-snake-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-raised);
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.caveos-snake-hint {
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    opacity: 0.9;
+}
+
+.caveos-snake-board-wrap {
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The canvas is a fixed pixel grid scaled to fit, so the game plays the same
+   at any window size; object-fit keeps the cells square while it does. */
+.caveos-snake-board {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border: 1px solid var(--caveos-border);
+    image-rendering: pixelated;
+}
+
+/* ---------------------------------------------------------------------------
+   Minesweeper, Sudoku and Tetris
+
+   The three share Snake's frame: a status strip over a board that fills what is
+   left. Everything is painted in the theme's tokens, so a reskin carries the
+   games with it rather than leaving green boards inside a grey OS.
+   --------------------------------------------------------------------------- */
+
+.caveos-minesweeper-app,
+.caveos-sudoku-app,
+.caveos-tetris-app {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.2rem;
+    box-sizing: border-box;
+    font-family: var(--caveos-font);
+    color: var(--caveos-fg);
+}
+
+.caveos-minesweeper-app,
+.caveos-tetris-app {
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+/* Sudoku carries a keypad under its grid, so it is a three-row layout. */
+.caveos-sudoku-app {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.caveos-tetris-app {
+    /* Focusable for keyboard play; the well's own border already shows where
+       the game is, so the focus ring around the whole app is suppressed. */
+    outline: none;
+}
+
+.caveos-minesweeper-status,
+.caveos-sudoku-status,
+.caveos-tetris-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-raised);
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.caveos-minesweeper-state,
+.caveos-sudoku-state,
+.caveos-tetris-hint {
+    flex: 1;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    opacity: 0.9;
+}
+
+.caveos-minesweeper-status button,
+.caveos-sudoku-status button,
+.caveos-sudoku-key {
+    font-family: var(--caveos-font);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--caveos-fg);
+    background: var(--caveos-surface);
+    border: 1px solid var(--caveos-border);
+    padding: 0.2rem 0.55rem;
+    cursor: pointer;
+    box-shadow:
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
+}
+
+.caveos-minesweeper-status button:hover,
+.caveos-sudoku-status button:hover,
+.caveos-sudoku-key:hover {
+    background: var(--caveos-surface-hover);
+}
+
+/* Flag mode is a latch, not a press, so it stays lit while it is on. */
+.caveos-minesweeper-flag-toggle.is-active {
+    background: var(--caveos-accent);
+    color: var(--caveos-surface);
+}
+
+.caveos-minesweeper-board,
+.caveos-sudoku-board {
+    display: grid;
+    grid-auto-rows: 1fr;
+    /* Square whatever the window is, and never larger than the space left for
+       it, so a resize scales the board instead of clipping it. */
+    aspect-ratio: 1;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.caveos-minesweeper-board {
+    grid-template-columns: repeat(var(--minesweeper-columns), 1fr);
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface);
+}
+
+.caveos-minesweeper-cell {
+    font-family: var(--caveos-font);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+    min-width: 0;
+    color: var(--caveos-fg);
+    background: var(--caveos-surface-raised);
+    border: 1px solid var(--caveos-border);
+    cursor: pointer;
+    box-shadow:
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
+}
+
+.caveos-minesweeper-cell:hover {
+    background: var(--caveos-surface-hover);
+}
+
+/* A revealed square lies flat: the bevel is what says "still covered". */
+.caveos-minesweeper-cell.is-revealed {
+    background: var(--caveos-surface);
+    box-shadow: none;
+    cursor: default;
+}
+
+.caveos-minesweeper-cell.is-flagged {
+    color: var(--caveos-accent);
+}
+
+.caveos-minesweeper-cell.is-mine {
+    background: var(--caveos-accent);
+    color: var(--caveos-surface);
+}
+
+/* The original's colour-per-number cannot survive five palettes, so the busy
+   squares are simply picked out in the accent instead. */
+.caveos-minesweeper-cell[data-count="3"],
+.caveos-minesweeper-cell[data-count="4"],
+.caveos-minesweeper-cell[data-count="5"],
+.caveos-minesweeper-cell[data-count="6"],
+.caveos-minesweeper-cell[data-count="7"],
+.caveos-minesweeper-cell[data-count="8"] {
+    color: var(--caveos-accent);
+}
+
+.caveos-sudoku-board {
+    grid-template-columns: repeat(9, 1fr);
+    border: 2px solid var(--caveos-fg);
+    background: var(--caveos-surface);
+}
+
+.caveos-sudoku-cell {
+    font-family: var(--caveos-font);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    min-width: 0;
+    color: var(--caveos-fg);
+    background: transparent;
+    border: 1px solid var(--caveos-border);
+    cursor: pointer;
+}
+
+/* The heavy 3x3 rules are borders on the cells that begin a box, so the grid
+   needs no extra elements to draw them. */
+.caveos-sudoku-cell.has-box-left {
+    border-left: 2px solid var(--caveos-fg);
+}
+
+.caveos-sudoku-cell.has-box-top {
+    border-top: 2px solid var(--caveos-fg);
+}
+
+.caveos-sudoku-cell.is-given {
+    font-weight: 700;
+    background: var(--caveos-surface-raised);
+    cursor: default;
+}
+
+.caveos-sudoku-cell.is-selected {
+    background: var(--caveos-accent);
+    color: var(--caveos-surface);
+}
+
+.caveos-sudoku-cell.is-conflict {
+    color: var(--caveos-accent);
+    text-decoration: underline;
+}
+
+/* On the selected cell the accent is already the background, so the conflict
+   has to be shown the other way round. */
+.caveos-sudoku-cell.is-selected.is-conflict {
+    color: var(--caveos-surface);
+    text-decoration: underline;
+}
+
+.caveos-sudoku-keypad {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 3px;
+}
+
+.caveos-sudoku-key {
+    padding: 0.3rem 0;
+    text-align: center;
+}
+
+.caveos-sudoku-app.is-solved .caveos-sudoku-state {
+    font-weight: 700;
+    opacity: 1;
+    color: var(--caveos-accent);
+}
+
+.caveos-tetris-board-wrap {
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Like Snake's board: a fixed pixel grid scaled to fit, so the game plays the
+   same at any window size and the cells stay square while it does. */
+.caveos-tetris-board {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border: 1px solid var(--caveos-border);
+    image-rendering: pixelated;
+}
+
+/* ---------------------------------------------------------------------------
+   Calculator
+   --------------------------------------------------------------------------- */
+
+.caveos-calculator-app {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 0.2rem;
+    box-sizing: border-box;
+    font-family: var(--caveos-font);
+}
+
+/* Right-aligned and oversized, the way a calculator's LCD is. Sunken rather
+   than raised so it reads as a readout, not a key. */
+.caveos-calculator-display {
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-sunken);
+    color: var(--caveos-fg);
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: right;
+    padding: 0.5rem 0.7rem;
+    min-height: 2.6rem;
+    /* A long result must never widen the window: it scrolls sideways instead,
+       held against the right edge where the digits that matter are. */
+    overflow-x: auto;
+    white-space: nowrap;
+    box-shadow:
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-light),
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-dark);
+}
+
+.caveos-calculator-keypad {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: minmax(2.4rem, 1fr);
+    gap: 0.35rem;
+    min-height: 0;
+}
+
+.caveos-calculator-key {
+    border: 1px solid var(--caveos-border);
+    border-radius: 0;
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
+    font-family: var(--caveos-font);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow:
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
+}
+
+.caveos-calculator-key:hover,
+.caveos-calculator-key:focus-visible {
+    background: var(--caveos-surface-hover);
+}
+
+/* Pressed keys invert their bevel, so a click looks like the key going in. */
+.caveos-calculator-key:active {
+    box-shadow:
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-light),
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-dark);
+}
+
+/* Operators and the two command keys carry the theme's accent so the pad reads
+   at a glance, the way the coloured keys on a real calculator do. */
+.caveos-calculator-key.is-operator,
+.caveos-calculator-key.is-equals,
+.caveos-calculator-key.is-clear {
+    background: var(--caveos-accent);
+    color: var(--caveos-accent-fg);
+}
+
+.caveos-calculator-key.is-operator:hover,
+.caveos-calculator-key.is-equals:hover,
+.caveos-calculator-key.is-clear:hover,
+.caveos-calculator-key.is-operator:focus-visible,
+.caveos-calculator-key.is-equals:focus-visible,
+.caveos-calculator-key.is-clear:focus-visible {
+    filter: brightness(1.25);
+}
+
+/* The bottom row is C and =, split across the pad's four columns. */
+.caveos-calculator-key.is-clear,
+.caveos-calculator-key.is-equals {
+    grid-column: span 2;
 }
 
 .caveos-browser-window .desktop-window-body {
@@ -3724,19 +4644,19 @@ button.disabled {
 
 .caveos-notes-window .notes-editor-textarea {
     border-radius: 0;
-    border-color: rgba(88, 200, 78, 0.55);
+    border-color: var(--caveos-border);
     background:
         linear-gradient(to right,
             transparent 0,
             transparent 84px,
-            rgba(62, 163, 58, 0.5) 84px,
-            rgba(62, 163, 58, 0.5) 86px,
+            var(--caveos-border) 84px,
+            var(--caveos-border) 86px,
             transparent 86px 100%),
         linear-gradient(to bottom,
             transparent 27px,
-            rgba(58, 120, 58, 0.36) 27px,
-            rgba(58, 120, 58, 0.36) 28px),
-        linear-gradient(180deg, #031103 0%, #020902 100%);
+            var(--caveos-border) 27px,
+            var(--caveos-border) 28px),
+        var(--caveos-surface-sunken);
     background-size:
         auto,
         100% 28px,
@@ -3749,21 +4669,21 @@ button.disabled {
         0 0,
         0 16px,
         0 0;
-    color: #7fff68;
-    font-family: "Courier New", "Lucida Console", monospace;
+    color: var(--caveos-fg);
+    font-family: var(--caveos-font);
     line-height: 28px;
     padding: 16px 1rem 1.2rem 6.8rem;
 }
 
 .caveos-notes-window .notes-tabs-column {
     border-radius: 0;
-    border-color: rgba(88, 200, 78, 0.4);
-    background: rgba(4, 15, 4, 0.82);
+    border-color: var(--caveos-border);
+    background: var(--caveos-surface-raised);
 }
 
 .caveos-notes-window .notes-page-tab-row {
     border-radius: 0;
-    border-color: rgba(80, 149, 74, 0.6);
+    border-color: var(--caveos-border);
     box-shadow: none;
 }
 
@@ -3780,7 +4700,7 @@ button.disabled {
     grid-template-columns: minmax(0, 7fr) minmax(240px, 3fr);
     grid-template-rows: auto minmax(0, 1fr);
     gap: 0.35rem 0.5rem;
-    font-family: "Courier New", "Lucida Console", monospace;
+    font-family: var(--caveos-font);
 }
 
 .caveos-paint-toolbar {
@@ -3789,23 +4709,26 @@ button.disabled {
     align-items: center;
     flex-wrap: wrap;
     gap: 0.35rem;
-    border: 1px solid rgba(89, 209, 79, 0.5);
-    background: rgba(4, 18, 4, 0.86);
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-raised);
     padding: 0.3rem;
 }
 
 .caveos-paint-tool {
-    border: 1px solid rgba(92, 228, 82, 0.58);
-    background: rgba(8, 34, 8, 0.9);
-    color: #84ff6f;
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
     border-radius: 0;
     font-size: 0.74rem;
     padding: 0.26rem 0.45rem;
+    box-shadow:
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
 }
 
 .caveos-paint-tool.is-active,
 .caveos-paint-tool:hover {
-    background: rgba(20, 64, 20, 0.9);
+    background: var(--caveos-surface-hover);
 }
 
 .caveos-paint-size {
@@ -3818,7 +4741,7 @@ button.disabled {
 
 .caveos-paint-size::-webkit-slider-runnable-track {
     height: 6px;
-    background: rgba(92, 228, 82, 0.58);
+    background: var(--caveos-border);
     border-radius: 3px;
 }
 
@@ -3829,15 +4752,15 @@ button.disabled {
     height: 18px;
     margin-top: -6px;
     border-radius: 50%;
-    background: rgba(92, 228, 82, 0.58);
-    border: 2px solid rgba(89, 209, 79, 0.5);
+    background: var(--caveos-fg);
+    border: 2px solid var(--caveos-border);
     cursor: pointer;
 }
 
 .caveos-paint-color {
     width: 34px;
     height: 28px;
-    border: 1px solid rgba(92, 228, 82, 0.58);
+    border: 1px solid var(--caveos-border);
     background: transparent;
     padding: 0;
 }
@@ -3850,8 +4773,11 @@ button.disabled {
 .caveos-paint-canvas-wrap {
     min-height: 0;
     height: 100%;
-    border: 1px solid rgba(89, 209, 79, 0.5);
-    background: #000;
+    border: 1px solid var(--caveos-border);
+    /* Matches the colour the canvas itself is filled with (see
+       resolveCaveOsPaintPalette in ui.js), so the frame around a drawing does
+       not sit on a different ground to the drawing. */
+    background: var(--caveos-paint-canvas);
     overflow: hidden;
 }
 
@@ -3892,23 +4818,28 @@ button.disabled {
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
     gap: 0.35rem;
-    font-family: "Courier New", "Lucida Console", monospace;
-    color: #7fff68;
+    font-family: var(--caveos-font);
+    color: var(--caveos-fg);
 }
 
+/* Netscape's own chrome follows the theme. Its .caveos-browser-page host does
+   too, but only as the backdrop behind a site: the fictional website styling
+   (.browser-page-shell-*, further down) is deliberately NOT themed — each of
+   those is a different place on the 1996 web that the player reads as
+   evidence, and they should not all change colour with the machine. */
 .caveos-browser-toolbar,
 .caveos-browser-address-row,
 .caveos-browser-body,
 .caveos-browser-page {
-    border: 1px solid rgba(89, 209, 79, 0.5);
-    background: rgba(4, 18, 4, 0.86);
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-raised);
 }
 
 .caveos-browser-page-host,
 .caveos-browser-page {
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: #72ff62 #000;
+    scrollbar-color: var(--caveos-fg) var(--caveos-surface);
 }
 
 .caveos-browser-page-host::-webkit-scrollbar,
@@ -3919,18 +4850,18 @@ button.disabled {
 
 .caveos-browser-page-host::-webkit-scrollbar-track,
 .caveos-browser-page::-webkit-scrollbar-track {
-    background: #000;
+    background: var(--caveos-surface);
 }
 
 .caveos-browser-page-host::-webkit-scrollbar-thumb,
 .caveos-browser-page::-webkit-scrollbar-thumb {
-    background: #72ff62;
-    border: 2px solid #000;
+    background: var(--caveos-fg);
+    border: 2px solid var(--caveos-surface);
 }
 
 .caveos-browser-page-host::-webkit-scrollbar-corner,
 .caveos-browser-page::-webkit-scrollbar-corner {
-    background: #000;
+    background: var(--caveos-surface);
 }
 
 .caveos-browser-toolbar {
@@ -4030,11 +4961,11 @@ button.disabled {
 .caveos-browser-address {
     width: 100%;
     min-width: 0;
-    border: 1px solid rgba(89, 209, 79, 0.45);
+    border: 1px solid var(--caveos-border);
     border-radius: 0;
     padding: 0.2rem 2.2rem 0.2rem 0.35rem;
-    background: rgba(2, 11, 2, 0.92);
-    color: #80ff6e;
+    background: var(--caveos-surface-sunken);
+    color: var(--caveos-fg);
 }
 
 .caveos-browser-address-shell {
@@ -4050,8 +4981,8 @@ button.disabled {
     top: calc(100% + 2px);
     display: grid;
     grid-auto-rows: minmax(1.6rem, auto);
-    background: #000;
-    border: 1px solid rgba(89, 209, 79, 0.65);
+    background: var(--caveos-surface-sunken);
+    border: 1px solid var(--caveos-border-strong);
     border-radius: 0;
     box-sizing: border-box;
     z-index: 15;
@@ -4062,10 +4993,10 @@ button.disabled {
 .caveos-browser-address-history-item {
     width: 100%;
     border: 0;
-    border-bottom: 1px solid rgba(89, 209, 79, 0.35);
+    border-bottom: 1px solid var(--caveos-border);
     border-radius: 0;
-    background: #000;
-    color: #80ff6e;
+    background: var(--caveos-surface-sunken);
+    color: var(--caveos-fg);
     text-align: left;
     font: inherit;
     line-height: 1.2;
@@ -4079,8 +5010,8 @@ button.disabled {
 
 .caveos-browser-address-history-item:hover,
 .caveos-browser-address-history-item:focus-visible {
-    background: rgba(18, 38, 18, 0.95);
-    color: #94ff86;
+    background: var(--caveos-accent);
+    color: var(--caveos-accent-fg);
 }
 
 .caveos-browser-address-submit {
@@ -4090,10 +5021,10 @@ button.disabled {
     transform: translateY(-50%);
     width: 1.45rem;
     height: 1.45rem;
-    border: 1px solid rgba(153, 221, 136, 0.52);
+    border: 1px solid var(--caveos-border);
     border-radius: 50%;
     padding: 0;
-    background: rgba(6, 22, 6, 0.95);
+    background: var(--caveos-surface-raised);
     cursor: pointer;
 }
 
@@ -4104,7 +5035,7 @@ button.disabled {
     top: 0.33rem;
     width: 0.48rem;
     height: 0.48rem;
-    border: 2px solid #8bff76;
+    border: 2px solid var(--caveos-fg);
     border-radius: 50%;
 }
 
@@ -4115,35 +5046,35 @@ button.disabled {
     bottom: 0.28rem;
     width: 0.36rem;
     height: 2px;
-    background: #8bff76;
+    background: var(--caveos-fg);
     transform: rotate(42deg);
     transform-origin: center;
 }
 
 .caveos-browser-address-submit:hover,
 .caveos-browser-address-submit:focus-visible {
-    background: rgba(12, 34, 12, 0.98);
+    background: var(--caveos-surface-hover);
 }
 
 .caveos-browser-nav-button {
     min-width: 24px;
-    border: 1px solid rgba(194, 212, 242, 0.34);
-    border-radius: 8px;
-    background: rgba(26, 39, 58, 0.82);
-    color: rgba(245, 248, 255, 0.96);
+    border: 1px solid var(--caveos-border);
+    border-radius: 0;
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
     font-size: 0.76rem;
     font-weight: 600;
     line-height: 1;
     padding: 0.20rem 0.2rem;
     text-align: center;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.18),
-        inset 0 -1px 0 rgba(8, 14, 22, 0.58);
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light),
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark);
 }
 
 .caveos-browser-nav-button:hover,
 .caveos-browser-nav-button:focus-visible {
-    background: rgba(39, 59, 88, 0.9);
+    background: var(--caveos-surface-hover);
 }
 
 .caveos-browser-nav-button:disabled {

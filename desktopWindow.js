@@ -15,6 +15,7 @@ export class DesktopWindow {
     onNavigateNext = null,
     onClose = null,
     closeButtonAriaLabel = "Close window",
+    headerAccessoryElement = null,
   } = {}) {
     this.ownsDom = !rootElement;
     this.parentElement = parentElement || document.body;
@@ -29,6 +30,8 @@ export class DesktopWindow {
     this.onNavigatePrevious = onNavigatePrevious;
     this.onNavigateNext = onNavigateNext;
     this.onClose = onClose;
+
+    this.headerAccessoryElement = headerAccessoryElement;
 
     this.rootElement = rootElement;
     this.headerElement = headerElement;
@@ -93,7 +96,24 @@ export class DesktopWindow {
     this.closeButtonElement.setAttribute("aria-label", closeButtonAriaLabel);
     this.closeButtonElement.textContent = "x";
 
-    this.headerElement.append(this.titleElement, this.closeButtonElement);
+    // An optional caller-supplied control (the CaveOS theme picker is the only
+    // one so far) sitting in the title bar, between the title and the close
+    // button. It is placed here rather than in the window body because it acts
+    // on the window itself rather than on whatever the window is showing.
+    //
+    // The header's pointerdown handler already declines to start a window drag
+    // when the gesture lands on a control (see initialize()), so an accessory
+    // built from buttons, selects or inputs stays usable without any extra work.
+    if (this.headerAccessoryElement instanceof Node) {
+      this.headerAccessoryElement.classList?.add("desktop-window-header-accessory");
+      this.headerElement.append(
+        this.titleElement,
+        this.headerAccessoryElement,
+        this.closeButtonElement
+      );
+    } else {
+      this.headerElement.append(this.titleElement, this.closeButtonElement);
+    }
 
     this.bodyElement = document.createElement("div");
     this.bodyElement.classList.add("desktop-window-body");
@@ -280,6 +300,7 @@ export class DesktopWindow {
 
     this.rootElement = null;
     this.headerElement = null;
+    this.headerAccessoryElement = null;
     this.resizeHandleElement = null;
     this.scrollContainerElement = null;
     this.bodyElement = null;

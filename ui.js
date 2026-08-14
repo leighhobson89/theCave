@@ -140,6 +140,12 @@ import { initLocalization, localize } from "./localization.js";
 import { DesktopWindow } from "./desktopWindow.js";
 import { installGameTooltips } from "./tooltipManager.js";
 import {
+  CAVEOS_THEME_IDS,
+  getCaveOsTheme,
+  setCaveOsTheme,
+  resetCaveOsTheme,
+} from "./constantsAndGlobalVars.js";
+import {
   getProgressEvidenceEnvelopePosition,
   setProgressEvidenceEnvelopePosition,
 } from "./constantsAndGlobalVars.js";
@@ -169,6 +175,11 @@ const photosWindowContentRefs = new WeakMap();
 const reportsWindowContentRefs = new WeakMap();
 const notesWindowContentRefs = new WeakMap();
 const computerWindowContentRefs = new WeakMap();
+const calculatorWindowContentRefs = new WeakMap();
+const snakeWindowContentRefs = new WeakMap();
+const minesweeperWindowContentRefs = new WeakMap();
+const sudokuWindowContentRefs = new WeakMap();
+const tetrisWindowContentRefs = new WeakMap();
 const facsimileWindowContentRefs = new WeakMap();
 const progressEvidenceWindowContentRefs = new WeakMap();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
@@ -1327,6 +1338,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         setElements();
         syncAshtrayVisualState();
         syncFacsimileVisualState({ animateFeed: false });
+        // The computer can be open at the moment a save is pasted in, so the
+        // loaded theme is pushed onto any window already on screen rather than
+        // only being picked up the next time one opens.
+        refreshCaveOsTheme();
         audioManager.syncFromSavedPreferences();
         refreshAudioControlsDisplay();
         getElements().saveLoadPopup.classList.add("d-none");
@@ -1364,6 +1379,9 @@ function beginNewGame() {
   resetNotesPagesState(localize("notesPageDefaultTitlePrefix", getLanguage()));
   resetPaintPagesState(localize("paintPageDefaultTitlePrefix", getLanguage()));
   resetAshtrayState();
+  // A new game is a fresh machine: the OS goes back to its factory look.
+  resetCaveOsTheme();
+  refreshCaveOsTheme();
   resetFacsimileState();
   resetProgressEvidence();
   // Empties every frame on the corkboard. The frames themselves are content and
@@ -1469,6 +1487,7 @@ async function restoreStickySaveIntoGame() {
   renderProgressTimeLineBoard();
   initializeProgressEvidenceEnvelopeDrag();
   applyProgressEvidenceEnvelopePosition();
+  refreshCaveOsTheme();
   audioManager.syncFromSavedPreferences();
   refreshAudioControlsDisplay();
   setGameInProgress(true);
@@ -2128,6 +2147,41 @@ const DESKTOP_WINDOW_LOCALIZATION_BY_KIND = {
   notes: { titleKey: "notes", closeButtonAriaLabelKey: "closeNotesWindowAriaLabel" },
   "computer-notes": { titleKey: "notes", closeButtonAriaLabelKey: "closeNotesWindowAriaLabel" },
   "computer-paint": { titleKey: "computerPaintIconLabel", closeButtonAriaLabelKey: "closePaintWindowAriaLabel" },
+  "computer-calculator": {
+    titleKey: "computerCalculatorWindowTitle",
+    closeButtonAriaLabelKey: "closeCalculatorWindowAriaLabel",
+    refresh: refreshCalculatorWindowContent,
+  },
+  "computer-snake": {
+    titleKey: "computerSnakeWindowTitle",
+    closeButtonAriaLabelKey: "closeSnakeWindowAriaLabel",
+    refresh: refreshSnakeWindowContent,
+  },
+  "computer-minesweeper": {
+    titleKey: "computerMinesweeperWindowTitle",
+    closeButtonAriaLabelKey: "closeMinesweeperWindowAriaLabel",
+    refresh: refreshMinesweeperWindowContent,
+  },
+  "computer-sudoku": {
+    titleKey: "computerSudokuWindowTitle",
+    closeButtonAriaLabelKey: "closeSudokuWindowAriaLabel",
+    refresh: refreshSudokuWindowContent,
+  },
+  "computer-tetris": {
+    titleKey: "computerTetrisWindowTitle",
+    closeButtonAriaLabelKey: "closeTetrisWindowAriaLabel",
+    refresh: refreshTetrisWindowContent,
+  },
+  // The folder windows re-title, but their contents are icons rebuilt from
+  // scratch every time the folder opens, so there is nothing to refresh.
+  "computer-folder-apps": {
+    titleKey: "computerAppsFolderLabel",
+    closeButtonAriaLabelKey: "closeAppsFolderWindowAriaLabel",
+  },
+  "computer-folder-games": {
+    titleKey: "computerGamesFolderLabel",
+    closeButtonAriaLabelKey: "closeGamesFolderWindowAriaLabel",
+  },
   "computer-netscape": { title: "Netscape Navigator 3.0", closeButtonAriaLabelKey: "closeNetscapeWindowAriaLabel" },
   facsimile: { titleKey: "facsimileWindowTitle", closeButtonAriaLabelKey: "closeFacsimileWindowAriaLabel", refresh: updateFacsimileWindowContent },
   "progress-evidence": {
@@ -2136,8 +2190,60 @@ const DESKTOP_WINDOW_LOCALIZATION_BY_KIND = {
     carousel: true,
     refresh: updateProgressEvidenceWindowContent,
   },
-  computer: { titleKey: "computerWindowTitle", closeButtonAriaLabelKey: "closeComputerWindowAriaLabel" },
+  computer: {
+    titleKey: "computerWindowTitle",
+    closeButtonAriaLabelKey: "closeComputerWindowAriaLabel",
+    refresh: refreshComputerWindowThemePicker,
+  },
 };
+
+// The theme picker in the computer window's title bar: its "Theme" label and
+// every option name were resolved in the language that was current when the
+// window opened, so a mid-session switch has to rewrite them.
+function refreshComputerWindowThemePicker(windowController) {
+  const refs = computerWindowContentRefs.get(windowController);
+  if (!refs?.themeSelect) {
+    return;
+  }
+
+  const languageCode = getLanguage();
+
+  if (refs.themePickerLabel) {
+    refs.themePickerLabel.textContent = localize("caveOsThemeSelectLabel", languageCode);
+  }
+
+  Array.from(refs.themeSelect.options).forEach((option) => {
+    const labelKey = CAVEOS_THEME_LABEL_KEY_BY_ID[option.value];
+    if (labelKey) {
+      option.textContent = localize(labelKey, languageCode);
+    }
+  });
+
+  refs.themeSelect.value = getCaveOsTheme();
+}
+
+// A mid-session language change reaches inside an open calculator: its ERROR
+// text and key aria-labels were resolved when the window was built.
+function refreshCalculatorWindowContent(windowController) {
+  calculatorWindowContentRefs.get(windowController)?.relocalize?.();
+}
+
+// Snake's score line, hints and board aria-label are all localized.
+function refreshSnakeWindowContent(windowController) {
+  snakeWindowContentRefs.get(windowController)?.relocalize?.();
+}
+
+function refreshMinesweeperWindowContent(windowController) {
+  minesweeperWindowContentRefs.get(windowController)?.relocalize?.();
+}
+
+function refreshSudokuWindowContent(windowController) {
+  sudokuWindowContentRefs.get(windowController)?.relocalize?.();
+}
+
+function refreshTetrisWindowContent(windowController) {
+  tetrisWindowContentRefs.get(windowController)?.relocalize?.();
+}
 
 function refreshOpenWindowLocalization() {
   const languageCode = getLanguage();
@@ -2221,6 +2327,115 @@ function updateComputerDesktopClock(refs) {
   refs.dateText.textContent = getComputerClockDateFormatter(getLanguage()).format(now);
 }
 
+// ---------------------------------------------------------------------------
+// CaveOS themes
+//
+// A theme is a reskin of the operating system only: the CaveOS desktop, its
+// icons, and the chrome of every app window inside it (Notes, Paint,
+// Calculator, and Netscape's toolbar and address bar). It deliberately stops
+// at the fictional websites rendered *inside* Netscape — those are 1996 web
+// pages the player reads as evidence, and each is meant to look like a
+// different place on the web rather than like the machine it is viewed on.
+//
+// Mechanically it is one class on the computer window's root element. Every
+// themed rule in styles.css reads CSS custom properties, and each
+// `caveos-theme-*` class just redefines those properties; because the app
+// windows are DOM children of the computer window, they inherit the switch for
+// free. Nothing about window geometry is themed — sizes and positions are set
+// in script (see positionWindowWithinParent) and must not move when the look
+// changes.
+// ---------------------------------------------------------------------------
+
+const CAVEOS_THEME_LABEL_KEY_BY_ID = {
+  terminal: "caveOsThemeTerminal",
+  amber: "caveOsThemeAmber",
+  redmond: "caveOsThemeRedmond",
+  platinum: "caveOsThemePlatinum",
+  hotdog: "caveOsThemeHotdog",
+};
+
+function caveOsThemeClassName(themeId) {
+  return `caveos-theme-${themeId}`;
+}
+
+// Puts the current theme's class on an already-open computer window, removing
+// whichever one it had. Safe to call with a window that has none yet.
+function applyCaveOsThemeToWindow(windowController) {
+  const rootElement = windowController?.rootElement;
+  if (!rootElement) {
+    return;
+  }
+
+  CAVEOS_THEME_IDS.forEach((themeId) => {
+    rootElement.classList.remove(caveOsThemeClassName(themeId));
+  });
+
+  rootElement.classList.add(caveOsThemeClassName(getCaveOsTheme()));
+}
+
+// Re-skins every open computer window. Called both when the player picks a
+// theme and after a load, where the window may already be on screen.
+function refreshCaveOsTheme() {
+  activeDesktopWindows.forEach((windowController) => {
+    if (desktopWindowKinds.get(windowController) !== "computer") {
+      return;
+    }
+
+    applyCaveOsThemeToWindow(windowController);
+    syncCaveOsThemeSelect(windowController);
+  });
+}
+
+function syncCaveOsThemeSelect(windowController) {
+  const themeSelect = computerWindowContentRefs.get(windowController)?.themeSelect;
+  if (themeSelect) {
+    themeSelect.value = getCaveOsTheme();
+  }
+}
+
+// The theme picker that lives in the computer window's title bar. Built as a
+// plain <select>: the era styling comes entirely from CSS, and a native control
+// keeps it keyboard-operable and correctly sized in every language without
+// re-implementing a listbox.
+function createCaveOsThemeSelect() {
+  const languageCode = getLanguage();
+
+  const wrapper = document.createElement("div");
+  wrapper.classList.add("caveos-theme-picker");
+
+  const label = document.createElement("label");
+  label.classList.add("caveos-theme-picker-label");
+  label.textContent = localize("caveOsThemeSelectLabel", languageCode);
+
+  const select = document.createElement("select");
+  select.classList.add("caveos-theme-select");
+  select.id = "caveOsThemeSelect";
+  label.setAttribute("for", select.id);
+
+  CAVEOS_THEME_IDS.forEach((themeId) => {
+    const option = document.createElement("option");
+    option.value = themeId;
+    option.textContent = localize(CAVEOS_THEME_LABEL_KEY_BY_ID[themeId], languageCode);
+    select.appendChild(option);
+  });
+
+  select.value = getCaveOsTheme();
+
+  select.addEventListener("change", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickSwitch");
+    setCaveOsTheme(select.value);
+    // Read back rather than trusting the option: setCaveOsTheme() rejects
+    // anything it does not recognise, and the control must show what actually
+    // took effect.
+    select.value = getCaveOsTheme();
+    refreshCaveOsTheme();
+  });
+
+  wrapper.append(label, select);
+  return { wrapper, select, label };
+}
+
 function createComputerWindowContentElements() {
   const container = document.createElement("div");
   container.classList.add("computer-desktop", "scrollbars-hidden");
@@ -2255,8 +2470,25 @@ function createComputerWindowContentElements() {
 
   const languageCode = getLanguage();
   const notesIcon = createIconButton(localize("computerNotesIconLabel", languageCode), "computer-icon-notes");
-  const paintIcon = createIconButton(localize("computerPaintIconLabel", languageCode), "computer-icon-paint");
   const netscapeIcon = createIconButton("Netscape", "computer-icon-netscape");
+
+  // Folders, not apps: these open on a double click (see the handlers in
+  // openComputerWindow) rather than the single click every app icon uses. The
+  // hint is carried as a title so the tooltip layer explains the difference on
+  // hover rather than leaving the player to discover it.
+  const appsFolderIcon = createIconButton(
+    localize("computerAppsFolderLabel", languageCode),
+    "computer-icon-folder"
+  );
+  appsFolderIcon.classList.add("computer-icon-folder-apps");
+  appsFolderIcon.title = localize("computerFolderOpenHint", languageCode);
+
+  const gamesFolderIcon = createIconButton(
+    localize("computerGamesFolderLabel", languageCode),
+    "computer-icon-folder"
+  );
+  gamesFolderIcon.classList.add("computer-icon-folder-games");
+  gamesFolderIcon.title = localize("computerFolderOpenHint", languageCode);
 
   const clockPanel = document.createElement("button");
   clockPanel.type = "button";
@@ -2290,14 +2522,18 @@ function createComputerWindowContentElements() {
 
   clockPanel.append(analogClock, dateText, clockHint);
 
-  iconsGrid.append(notesIcon, paintIcon, netscapeIcon);
+  // Folders first, then the two loose apps. All four sit on one row wherever
+  // there is room for them; the grid only wraps on a screen too narrow to hold
+  // four columns (see .computer-icons-grid in styles.css).
+  iconsGrid.append(appsFolderIcon, gamesFolderIcon, notesIcon, netscapeIcon);
   container.append(header, subHeader, iconsGrid, clockPanel);
 
   const refs = {
     container,
     notesIcon,
-    paintIcon,
     netscapeIcon,
+    appsFolderIcon,
+    gamesFolderIcon,
     clockPanel,
     dateText,
     hourHand,
@@ -2315,9 +2551,36 @@ function createComputerWindowContentElements() {
   return refs;
 }
 
+// Paint's canvas colours for the theme currently in play, read off the live
+// computer window so the two never drift from what the CSS says.
+//
+// Resolved once per Paint window rather than watched: a page is stored as a
+// flat image, so the pixels of anything already drawn cannot follow a later
+// theme change. Fixing the pair at open time is what keeps the eraser painting
+// the same colour as the canvas it is erasing on — the alternative, re-reading
+// live, would have the eraser cutting theme-coloured holes in artwork drawn
+// under a different one.
+function resolveCaveOsPaintPalette() {
+  const fallback = { canvas: "#041204", ink: "#76ff62" };
+  const computerWindowElement = document.querySelector(".computer-window");
+  if (!computerWindowElement) {
+    return fallback;
+  }
+
+  const computedStyle = getComputedStyle(computerWindowElement);
+  const canvasColor = computedStyle.getPropertyValue("--caveos-paint-canvas").trim();
+  const inkColor = computedStyle.getPropertyValue("--caveos-paint-ink").trim();
+
+  return {
+    canvas: canvasColor || fallback.canvas,
+    ink: inkColor || fallback.ink,
+  };
+}
+
 function createComputerPaintWindowContentElements() {
-  const PAINT_BACKGROUND_COLOR = "#041204";
-  const PAINT_DEFAULT_COLOR = "#76ff62";
+  const paintPalette = resolveCaveOsPaintPalette();
+  const PAINT_BACKGROUND_COLOR = paintPalette.canvas;
+  const PAINT_DEFAULT_COLOR = paintPalette.ink;
   const SNAPSHOT_TYPE = "image/webp";
   const SNAPSHOT_QUALITY = 0.82;
 
@@ -2363,7 +2626,7 @@ function createComputerPaintWindowContentElements() {
 
   const colorInput = document.createElement("input");
   colorInput.type = "color";
-  colorInput.value = "#76ff62";
+  colorInput.value = PAINT_DEFAULT_COLOR;
   colorInput.classList.add("caveos-paint-color");
   colorInput.setAttribute("aria-label", localize("paintColorAriaLabel", languageCode));
 
@@ -2518,13 +2781,41 @@ function createComputerPaintWindowContentElements() {
     context.putImageData(imageData, 0, 0);
   };
 
-  const fillCanvasBackground = () => {
+  // The ground the page currently on screen was painted on, which is what the
+  // eraser has to restore and what Clear repaints. It starts as the theme's
+  // canvas colour, but a page drawn under a different theme keeps ITS ground:
+  // the snapshot is a flat image, so erasing to the current theme's colour
+  // would cut differently-coloured holes in older artwork.
+  let pageBackgroundColor = PAINT_BACKGROUND_COLOR;
+
+  // Recovers the ground of a restored page by sampling its top-left pixel.
+  // Every page begins as a full-bleed fill of one colour, so that pixel is the
+  // page's ground unless the player has painted over that exact corner — a
+  // small enough risk to accept for the benefit of erasing correctly on art
+  // drawn under another theme.
+  const readCanvasGroundColor = () => {
+    if (!context) {
+      return PAINT_BACKGROUND_COLOR;
+    }
+
+    try {
+      const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+      const toHex = (channel) => channel.toString(16).padStart(2, "0");
+      return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
+    } catch (error) {
+      // A tainted canvas cannot be sampled; the theme colour is the best guess.
+      return PAINT_BACKGROUND_COLOR;
+    }
+  };
+
+  const fillCanvasBackground = (backgroundColor = PAINT_BACKGROUND_COLOR) => {
     if (!context) {
       return;
     }
 
+    pageBackgroundColor = backgroundColor;
     context.globalCompositeOperation = "source-over";
-    context.fillStyle = PAINT_BACKGROUND_COLOR;
+    context.fillStyle = backgroundColor;
     context.fillRect(0, 0, canvas.width, canvas.height);
   };
 
@@ -2562,6 +2853,9 @@ function createComputerPaintWindowContentElements() {
 
       fillCanvasBackground();
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      // After the artwork is on the canvas, not before: this page keeps the
+      // ground it was drawn on, whatever theme was in play at the time.
+      pageBackgroundColor = readCanvasGroundColor();
       applyToolStyles();
       resolve();
     };
@@ -2592,9 +2886,11 @@ function createComputerPaintWindowContentElements() {
 
     const size = Math.max(1, Number.parseInt(sizeInput.value, 10) || 3);
     if (currentTool === "eraser") {
+      // Paints back to this page's own ground — never a hardcoded white, and
+      // never the current theme's colour when the page was drawn under another.
       context.globalCompositeOperation = "source-over";
-      context.strokeStyle = PAINT_BACKGROUND_COLOR;
-      context.fillStyle = PAINT_BACKGROUND_COLOR;
+      context.strokeStyle = pageBackgroundColor;
+      context.fillStyle = pageBackgroundColor;
       context.lineWidth = size * 2;
     } else {
       context.globalCompositeOperation = "source-over";
@@ -2766,6 +3062,1642 @@ function createComputerPaintWindowContentElements() {
   renderPaintWindowContent();
 
   return refs;
+}
+
+// A plain four-function calculator, in the shape every desk calculator of the
+// period had: one display, a digit pad, an operator column.
+//
+// The arithmetic is deliberately the simple immediate-execution kind those
+// machines used, NOT precedence-aware evaluation: pressing 2 + 3 × 4 gives 20,
+// because each operator key resolves whatever is already pending before
+// starting the next one. That is what a 1996 desk calculator did, and it keeps
+// the whole thing to two pieces of state.
+//
+// Nothing here is persisted. The calculator is a tool the player uses while
+// working something out, not progress, so a fresh window starts at zero — the
+// same way closing and reopening a real one does.
+function createComputerCalculatorWindowContentElements() {
+  const DISPLAY_MAX_LENGTH = 12;
+
+  const languageCode = getLanguage();
+
+  const container = document.createElement("div");
+  container.classList.add("caveos-calculator-app");
+
+  const display = document.createElement("div");
+  display.classList.add("caveos-calculator-display");
+  // A live region: the display is the only feedback a keypress gives, so a
+  // screen reader has to hear it change without the focus moving there.
+  display.setAttribute("role", "status");
+  display.setAttribute("aria-live", "polite");
+  display.setAttribute("aria-label", localize("calculatorDisplayAriaLabel", languageCode));
+
+  const keypad = document.createElement("div");
+  keypad.classList.add("caveos-calculator-keypad");
+
+  // accumulator holds the running total, pendingOperator the key that is
+  // waiting on it. isEnteringNewNumber marks the moment after an operator or
+  // equals, where the next digit starts a fresh number rather than appending.
+  let displayValue = "0";
+  let accumulator = null;
+  let pendingOperator = null;
+  let isEnteringNewNumber = true;
+  let isShowingError = false;
+
+  function renderDisplay() {
+    display.textContent = isShowingError
+      ? localize("calculatorErrorText", getLanguage())
+      : displayValue;
+  }
+
+  function resetAll() {
+    displayValue = "0";
+    accumulator = null;
+    pendingOperator = null;
+    isEnteringNewNumber = true;
+    isShowingError = false;
+    renderDisplay();
+  }
+
+  // Keeps the display inside its width without ever showing a number that is
+  // not the real answer: exponent notation for magnitudes that cannot fit, and
+  // trailing zeroes trimmed off a rounded decimal.
+  function formatResult(value) {
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+
+    if (Number.isInteger(value) && Math.abs(value) < 1e12) {
+      return String(value);
+    }
+
+    const magnitude = Math.abs(value);
+    if (magnitude !== 0 && (magnitude >= 1e12 || magnitude < 1e-6)) {
+      return value.toExponential(5);
+    }
+
+    return String(Number(value.toPrecision(DISPLAY_MAX_LENGTH - 1)));
+  }
+
+  function applyPendingOperator(rightOperand) {
+    if (pendingOperator === null || accumulator === null) {
+      return rightOperand;
+    }
+
+    switch (pendingOperator) {
+      case "add":
+        return accumulator + rightOperand;
+      case "subtract":
+        return accumulator - rightOperand;
+      case "multiply":
+        return accumulator * rightOperand;
+      case "divide":
+        // Not guarded here: division by zero produces Infinity, which
+        // formatResult() rejects and the caller turns into the ERROR state.
+        return accumulator / rightOperand;
+      default:
+        return rightOperand;
+    }
+  }
+
+  function pressDigit(digit) {
+    if (isShowingError) {
+      resetAll();
+    }
+
+    if (isEnteringNewNumber) {
+      displayValue = digit;
+      isEnteringNewNumber = false;
+    } else if (displayValue.replace(/[-.]/g, "").length < DISPLAY_MAX_LENGTH) {
+      displayValue = displayValue === "0" ? digit : displayValue + digit;
+    }
+
+    renderDisplay();
+  }
+
+  function pressDecimal() {
+    if (isShowingError) {
+      resetAll();
+    }
+
+    if (isEnteringNewNumber) {
+      displayValue = "0.";
+      isEnteringNewNumber = false;
+    } else if (!displayValue.includes(".")) {
+      displayValue += ".";
+    }
+
+    renderDisplay();
+  }
+
+  function pressNegate() {
+    if (isShowingError || displayValue === "0") {
+      return;
+    }
+
+    displayValue = displayValue.startsWith("-")
+      ? displayValue.slice(1)
+      : `-${displayValue}`;
+    renderDisplay();
+  }
+
+  function pressOperator(operator) {
+    if (isShowingError) {
+      return;
+    }
+
+    const currentValue = Number(displayValue);
+
+    // Two operators in a row just change which one is pending, rather than
+    // folding the displayed number in a second time.
+    if (!isEnteringNewNumber) {
+      const result = applyPendingOperator(currentValue);
+      const formatted = formatResult(result);
+      if (formatted === null) {
+        isShowingError = true;
+        accumulator = null;
+        pendingOperator = null;
+        isEnteringNewNumber = true;
+        renderDisplay();
+        return;
+      }
+
+      displayValue = formatted;
+      accumulator = Number(formatted);
+    } else if (accumulator === null) {
+      accumulator = currentValue;
+    }
+
+    pendingOperator = operator;
+    isEnteringNewNumber = true;
+    renderDisplay();
+  }
+
+  function pressEquals() {
+    if (isShowingError) {
+      return;
+    }
+
+    const result = applyPendingOperator(Number(displayValue));
+    const formatted = formatResult(result);
+
+    if (formatted === null) {
+      isShowingError = true;
+      accumulator = null;
+      pendingOperator = null;
+      isEnteringNewNumber = true;
+      renderDisplay();
+      return;
+    }
+
+    displayValue = formatted;
+    accumulator = null;
+    pendingOperator = null;
+    isEnteringNewNumber = true;
+    renderDisplay();
+  }
+
+  // Every key: the symbol drawn on it, an optional localized accessible name
+  // (digits and the decimal point read fine on their own), and what it does.
+  // Operator glyphs are the typographic ones a calculator uses, not the ASCII
+  // stand-ins: a 1996 machine had × and ÷ printed on the keys.
+  const KEY_DEFINITIONS = [
+    { symbol: "7", action: () => pressDigit("7"), className: "is-digit" },
+    { symbol: "8", action: () => pressDigit("8"), className: "is-digit" },
+    { symbol: "9", action: () => pressDigit("9"), className: "is-digit" },
+    { symbol: "÷", labelKey: "calculatorDivideAriaLabel", action: () => pressOperator("divide"), className: "is-operator" },
+    { symbol: "4", action: () => pressDigit("4"), className: "is-digit" },
+    { symbol: "5", action: () => pressDigit("5"), className: "is-digit" },
+    { symbol: "6", action: () => pressDigit("6"), className: "is-digit" },
+    { symbol: "×", labelKey: "calculatorMultiplyAriaLabel", action: () => pressOperator("multiply"), className: "is-operator" },
+    { symbol: "1", action: () => pressDigit("1"), className: "is-digit" },
+    { symbol: "2", action: () => pressDigit("2"), className: "is-digit" },
+    { symbol: "3", action: () => pressDigit("3"), className: "is-digit" },
+    { symbol: "−", labelKey: "calculatorSubtractAriaLabel", action: () => pressOperator("subtract"), className: "is-operator" },
+    { symbol: "0", action: () => pressDigit("0"), className: "is-digit" },
+    { symbol: ".", labelKey: "calculatorDecimalAriaLabel", action: () => pressDecimal(), className: "is-digit" },
+    { symbol: "±", labelKey: "calculatorNegateAriaLabel", action: () => pressNegate(), className: "is-digit" },
+    { symbol: "+", labelKey: "calculatorAddAriaLabel", action: () => pressOperator("add"), className: "is-operator" },
+    { symbol: "C", labelKey: "calculatorClearAriaLabel", action: () => resetAll(), className: "is-clear" },
+    { symbol: "=", labelKey: "calculatorEqualsAriaLabel", action: () => pressEquals(), className: "is-equals" },
+  ];
+
+  const keyButtons = [];
+
+  KEY_DEFINITIONS.forEach((definition) => {
+    const key = document.createElement("button");
+    key.type = "button";
+    key.classList.add("caveos-calculator-key", definition.className);
+    key.textContent = definition.symbol;
+    key.dataset.calculatorKey = definition.symbol;
+
+    if (definition.labelKey) {
+      key.setAttribute("aria-label", localize(definition.labelKey, languageCode));
+      key.dataset.calculatorLabelKey = definition.labelKey;
+    }
+
+    key.addEventListener("click", () => {
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickButton");
+      definition.action();
+    });
+
+    keypad.appendChild(key);
+    keyButtons.push(key);
+  });
+
+  container.append(display, keypad);
+  renderDisplay();
+
+  return {
+    container,
+    display,
+    keyButtons,
+    // Re-reads every string the window built from the old language. Only the
+    // ERROR text and the key aria-labels are localized; the digits and
+    // operator glyphs are language-independent by nature.
+    relocalize: () => {
+      const nextLanguageCode = getLanguage();
+      display.setAttribute("aria-label", localize("calculatorDisplayAriaLabel", nextLanguageCode));
+      keyButtons.forEach((key) => {
+        const labelKey = key.dataset.calculatorLabelKey;
+        if (labelKey) {
+          key.setAttribute("aria-label", localize(labelKey, nextLanguageCode));
+        }
+      });
+      renderDisplay();
+    },
+  };
+}
+
+// Snake, on a fixed 24x18 cell board.
+//
+// Drawn to a canvas rather than built from elements: the board redraws every
+// tick, and 432 divs being restyled eight times a second is a great deal of
+// layout work for something a single fillRect loop does for nothing. The
+// canvas is a fixed pixel size and scaled by CSS, so the game is identical at
+// every window size.
+//
+// Nothing is persisted, for the same reason the calculator is not: it is a
+// diversion on the desk machine, not progress. Closing the window ends the
+// game, and the interval with it.
+function createComputerSnakeWindowContentElements() {
+  const COLUMNS = 24;
+  const ROWS = 18;
+  const CELL_SIZE = 20;
+  // Eight steps a second — quick enough to demand attention, slow enough that a
+  // player can react at the far end of the board.
+  const TICK_MS = 125;
+
+  const languageCode = getLanguage();
+
+  const container = document.createElement("div");
+  container.classList.add("caveos-snake-app");
+  // Focusable so the board can take arrow keys the moment it opens, without
+  // stealing them from the rest of the OS while it is closed.
+  container.tabIndex = 0;
+  container.setAttribute("role", "application");
+  container.setAttribute("aria-label", localize("snakeBoardAriaLabel", languageCode));
+
+  const statusBar = document.createElement("div");
+  statusBar.classList.add("caveos-snake-status");
+
+  const scoreText = document.createElement("span");
+  scoreText.classList.add("caveos-snake-score");
+
+  const hintText = document.createElement("span");
+  hintText.classList.add("caveos-snake-hint");
+
+  statusBar.append(scoreText, hintText);
+
+  const boardWrap = document.createElement("div");
+  boardWrap.classList.add("caveos-snake-board-wrap");
+
+  const canvas = document.createElement("canvas");
+  canvas.classList.add("caveos-snake-board");
+  canvas.width = COLUMNS * CELL_SIZE;
+  canvas.height = ROWS * CELL_SIZE;
+  boardWrap.appendChild(canvas);
+
+  container.append(statusBar, boardWrap);
+
+  const context = canvas.getContext("2d");
+
+  let snake = [];
+  let direction = { x: 1, y: 0 };
+  // Where the next tick will actually go. Queued rather than applied straight
+  // away so two keys pressed inside one tick cannot double back through the
+  // snake's own neck.
+  let queuedDirection = { x: 1, y: 0 };
+  let food = { x: 0, y: 0 };
+  let score = 0;
+  let isRunning = false;
+  let isGameOver = false;
+  let tickIntervalId = null;
+
+  // Read fresh each redraw so the board follows a theme change mid-game.
+  const readPalette = () => readCaveOsPaletteTokens({
+    board: ["--caveos-paint-canvas", "#041204"],
+    snake: ["--caveos-fg", "#70ff5c"],
+    food: ["--caveos-accent", "#7cff64"],
+    grid: ["--caveos-border", "rgba(97, 255, 88, 0.5)"],
+  });
+
+  function placeFood() {
+    const freeCells = [];
+    for (let y = 0; y < ROWS; y += 1) {
+      for (let x = 0; x < COLUMNS; x += 1) {
+        if (!snake.some((segment) => segment.x === x && segment.y === y)) {
+          freeCells.push({ x, y });
+        }
+      }
+    }
+
+    // A full board means the player has won; leave the last food where it is
+    // rather than looping forever looking for a cell that does not exist.
+    if (!freeCells.length) {
+      return;
+    }
+
+    food = freeCells[Math.floor(Math.random() * freeCells.length)];
+  }
+
+  function renderStatus() {
+    const currentLanguage = getLanguage();
+    scoreText.textContent = `${localize("snakeScoreLabel", currentLanguage)}: ${score}`;
+
+    if (isGameOver) {
+      hintText.textContent = `${localize("snakeGameOverText", currentLanguage)} — ${localize("snakeRestartHint", currentLanguage)}`;
+      return;
+    }
+
+    hintText.textContent = isRunning ? "" : localize("snakeStartHint", currentLanguage);
+  }
+
+  function draw() {
+    if (!context) {
+      return;
+    }
+
+    const palette = readPalette();
+
+    context.fillStyle = palette.board;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.strokeStyle = palette.grid;
+    context.lineWidth = 1;
+    for (let x = 1; x < COLUMNS; x += 1) {
+      context.beginPath();
+      context.moveTo(x * CELL_SIZE + 0.5, 0);
+      context.lineTo(x * CELL_SIZE + 0.5, canvas.height);
+      context.stroke();
+    }
+    for (let y = 1; y < ROWS; y += 1) {
+      context.beginPath();
+      context.moveTo(0, y * CELL_SIZE + 0.5);
+      context.lineTo(canvas.width, y * CELL_SIZE + 0.5);
+      context.stroke();
+    }
+
+    context.fillStyle = palette.food;
+    context.fillRect(
+      food.x * CELL_SIZE + 3,
+      food.y * CELL_SIZE + 3,
+      CELL_SIZE - 6,
+      CELL_SIZE - 6
+    );
+
+    context.fillStyle = palette.snake;
+    snake.forEach((segment, index) => {
+      // The head is drawn full-size and the body inset, so the direction of
+      // travel is readable at a glance.
+      const inset = index === 0 ? 1 : 2;
+      context.fillRect(
+        segment.x * CELL_SIZE + inset,
+        segment.y * CELL_SIZE + inset,
+        CELL_SIZE - inset * 2,
+        CELL_SIZE - inset * 2
+      );
+    });
+
+    if (isGameOver) {
+      context.fillStyle = "rgba(0, 0, 0, 0.55)";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function stopTicking() {
+    if (tickIntervalId) {
+      clearInterval(tickIntervalId);
+      tickIntervalId = null;
+    }
+  }
+
+  function endGame() {
+    stopTicking();
+    isRunning = false;
+    isGameOver = true;
+    audioManager.playSfx("clickSwitch");
+    renderStatus();
+    draw();
+  }
+
+  function tick() {
+    direction = queuedDirection;
+
+    const head = snake[0];
+    const nextHead = { x: head.x + direction.x, y: head.y + direction.y };
+
+    const hitWall = nextHead.x < 0
+      || nextHead.y < 0
+      || nextHead.x >= COLUMNS
+      || nextHead.y >= ROWS;
+
+    // The tail cell is excluded: it moves out of the way this same tick, so
+    // running into where it *was* is not a collision.
+    const hitSelf = snake
+      .slice(0, snake.length - 1)
+      .some((segment) => segment.x === nextHead.x && segment.y === nextHead.y);
+
+    if (hitWall || hitSelf) {
+      endGame();
+      return;
+    }
+
+    snake.unshift(nextHead);
+
+    if (nextHead.x === food.x && nextHead.y === food.y) {
+      score += 1;
+      audioManager.playSfx("clickButton");
+      placeFood();
+      renderStatus();
+    } else {
+      snake.pop();
+    }
+
+    draw();
+  }
+
+  function resetGame() {
+    const startY = Math.floor(ROWS / 2);
+    snake = [
+      { x: 4, y: startY },
+      { x: 3, y: startY },
+      { x: 2, y: startY },
+    ];
+    direction = { x: 1, y: 0 };
+    queuedDirection = { x: 1, y: 0 };
+    score = 0;
+    isGameOver = false;
+    isRunning = false;
+    placeFood();
+    renderStatus();
+    draw();
+  }
+
+  function startGame() {
+    resetGame();
+    isRunning = true;
+    renderStatus();
+    stopTicking();
+    tickIntervalId = window.setInterval(tick, TICK_MS);
+  }
+
+  const DIRECTION_BY_KEY = {
+    ArrowUp: { x: 0, y: -1 },
+    ArrowDown: { x: 0, y: 1 },
+    ArrowLeft: { x: -1, y: 0 },
+    ArrowRight: { x: 1, y: 0 },
+    w: { x: 0, y: -1 },
+    s: { x: 0, y: 1 },
+    a: { x: -1, y: 0 },
+    d: { x: 1, y: 0 },
+  };
+
+  container.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      audioManager.onUserGesture();
+      if (!isRunning) {
+        startGame();
+      }
+      return;
+    }
+
+    const nextDirection = DIRECTION_BY_KEY[event.key] || DIRECTION_BY_KEY[event.key?.toLowerCase?.()];
+    if (!nextDirection) {
+      return;
+    }
+
+    // Swallowed even when the game is not running, so the arrow keys never
+    // scroll the window behind the board.
+    event.preventDefault();
+
+    if (!isRunning) {
+      return;
+    }
+
+    // A reversal onto the neck would be an instant self-collision, so it is
+    // ignored rather than allowed to kill the player for a mis-key.
+    if (nextDirection.x === -direction.x && nextDirection.y === -direction.y) {
+      return;
+    }
+
+    queuedDirection = nextDirection;
+  });
+
+  // Clicking the board hands it the keyboard back after the player has been
+  // somewhere else in the OS.
+  container.addEventListener("pointerdown", () => {
+    container.focus();
+  });
+
+  resetGame();
+
+  return {
+    container,
+    canvas,
+    focus: () => container.focus(),
+    // Called by the window's onClose: an interval outliving its window would
+    // keep ticking against a detached canvas forever.
+    destroy: stopTicking,
+    relocalize: () => {
+      container.setAttribute("aria-label", localize("snakeBoardAriaLabel", getLanguage()));
+      renderStatus();
+    },
+  };
+}
+
+// The games below share Snake's shape: a factory returning { container,
+// relocalize } plus whatever the window needs to drive them (focus, destroy).
+// Each reads the CaveOS theme tokens at paint time rather than caching them, so
+// a theme change mid-game repaints the board along with the rest of the OS.
+function readCaveOsPaletteTokens(tokensByName) {
+  const computerWindowElement = document.querySelector(".computer-window");
+  const computedStyle = computerWindowElement
+    ? getComputedStyle(computerWindowElement)
+    : null;
+
+  const palette = {};
+  Object.entries(tokensByName).forEach(([name, [token, fallback]]) => {
+    const value = computedStyle?.getPropertyValue(token).trim();
+    palette[name] = value || fallback;
+  });
+
+  return palette;
+}
+
+function createComputerMinesweeperWindowContentElements() {
+  // The 1996 "Beginner" board, unchanged: nine by nine with ten mines.
+  const COLUMNS = 9;
+  const ROWS = 9;
+  const MINE_COUNT = 10;
+  const CELL_COUNT = COLUMNS * ROWS;
+
+  const languageCode = getLanguage();
+
+  const container = document.createElement("div");
+  container.classList.add("caveos-minesweeper-app");
+
+  const statusBar = document.createElement("div");
+  statusBar.classList.add("caveos-minesweeper-status");
+
+  const minesText = document.createElement("span");
+  minesText.classList.add("caveos-minesweeper-mines");
+
+  const stateText = document.createElement("span");
+  stateText.classList.add("caveos-minesweeper-state");
+
+  // Right-clicking is the era-correct way to plant a flag, but it is not
+  // available to every pointer or to the keyboard, so the same action is also a
+  // mode this button toggles.
+  const flagModeButton = document.createElement("button");
+  flagModeButton.type = "button";
+  flagModeButton.classList.add("caveos-minesweeper-flag-toggle");
+  flagModeButton.setAttribute("aria-pressed", "false");
+
+  const newGameButton = document.createElement("button");
+  newGameButton.type = "button";
+  newGameButton.classList.add("caveos-minesweeper-new-game");
+
+  statusBar.append(minesText, stateText, flagModeButton, newGameButton);
+
+  const board = document.createElement("div");
+  board.classList.add("caveos-minesweeper-board");
+  board.setAttribute("role", "grid");
+  board.setAttribute("aria-label", localize("minesweeperBoardAriaLabel", languageCode));
+  board.style.setProperty("--minesweeper-columns", String(COLUMNS));
+
+  container.append(statusBar, board);
+
+  let cells = [];
+  let isFlagMode = false;
+  let minesArePlaced = false;
+  let isGameOver = false;
+  let hasWon = false;
+
+  const indexOf = (column, row) => row * COLUMNS + column;
+
+  const forEachNeighbour = (index, visit) => {
+    const column = index % COLUMNS;
+    const row = Math.floor(index / COLUMNS);
+
+    for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+      for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+        if (rowOffset === 0 && columnOffset === 0) {
+          continue;
+        }
+
+        const neighbourColumn = column + columnOffset;
+        const neighbourRow = row + rowOffset;
+        if (
+          neighbourColumn < 0
+          || neighbourRow < 0
+          || neighbourColumn >= COLUMNS
+          || neighbourRow >= ROWS
+        ) {
+          continue;
+        }
+
+        visit(indexOf(neighbourColumn, neighbourRow));
+      }
+    }
+  };
+
+  // Mines are laid *after* the first click, with that cell and its neighbours
+  // excluded. That is what makes the opening move always safe and usually open
+  // a whole region, the way the original did.
+  function placeMines(safeIndex) {
+    const forbidden = new Set([safeIndex]);
+    forEachNeighbour(safeIndex, (neighbourIndex) => forbidden.add(neighbourIndex));
+
+    const candidates = [];
+    for (let index = 0; index < CELL_COUNT; index += 1) {
+      if (!forbidden.has(index)) {
+        candidates.push(index);
+      }
+    }
+
+    for (let laid = 0; laid < MINE_COUNT && candidates.length; laid += 1) {
+      const pick = Math.floor(Math.random() * candidates.length);
+      cells[candidates[pick]].hasMine = true;
+      candidates.splice(pick, 1);
+    }
+
+    cells.forEach((cell, index) => {
+      let count = 0;
+      forEachNeighbour(index, (neighbourIndex) => {
+        if (cells[neighbourIndex].hasMine) {
+          count += 1;
+        }
+      });
+      cell.neighbourMines = count;
+    });
+
+    minesArePlaced = true;
+  }
+
+  function flagCount() {
+    return cells.filter((cell) => cell.isFlagged).length;
+  }
+
+  function renderCell(cell) {
+    const { button } = cell;
+    button.classList.toggle("is-revealed", cell.isRevealed);
+    button.classList.toggle("is-flagged", cell.isFlagged && !cell.isRevealed);
+    button.classList.toggle("is-mine", cell.isRevealed && cell.hasMine);
+
+    if (cell.isRevealed) {
+      if (cell.hasMine) {
+        button.textContent = "*";
+        button.removeAttribute("data-count");
+        return;
+      }
+
+      button.textContent = cell.neighbourMines ? String(cell.neighbourMines) : "";
+      button.setAttribute("data-count", String(cell.neighbourMines));
+      return;
+    }
+
+    button.removeAttribute("data-count");
+    button.textContent = cell.isFlagged ? "⚑" : "";
+  }
+
+  function renderStatus() {
+    const currentLanguage = getLanguage();
+
+    minesText.textContent = `${localize("minesweeperMinesLabel", currentLanguage)}: ${Math.max(MINE_COUNT - flagCount(), 0)}`;
+    flagModeButton.textContent = localize("minesweeperFlagModeButton", currentLanguage);
+    newGameButton.textContent = localize("minesweeperNewGameButton", currentLanguage);
+    newGameButton.setAttribute("aria-label", localize("minesweeperNewGameButton", currentLanguage));
+
+    if (hasWon) {
+      stateText.textContent = localize("minesweeperWonText", currentLanguage);
+      return;
+    }
+
+    if (isGameOver) {
+      stateText.textContent = localize("minesweeperLostText", currentLanguage);
+      return;
+    }
+
+    stateText.textContent = minesArePlaced ? "" : localize("minesweeperStartHint", currentLanguage);
+  }
+
+  function revealAllMines() {
+    cells.forEach((cell) => {
+      if (cell.hasMine) {
+        cell.isRevealed = true;
+        cell.isFlagged = false;
+        renderCell(cell);
+      }
+    });
+  }
+
+  function checkForWin() {
+    const revealedSafeCells = cells.filter((cell) => cell.isRevealed && !cell.hasMine).length;
+    if (revealedSafeCells !== CELL_COUNT - MINE_COUNT) {
+      return;
+    }
+
+    hasWon = true;
+    isGameOver = true;
+    audioManager.playSfx("clickButton");
+
+    // Every remaining hidden cell is a mine, so flag them for the player rather
+    // than leaving the board looking unfinished.
+    cells.forEach((cell) => {
+      if (!cell.isRevealed) {
+        cell.isFlagged = true;
+        renderCell(cell);
+      }
+    });
+  }
+
+  // Iterative rather than recursive: an empty region on a full board can be
+  // most of it, and a stack is cheaper than ninety frames.
+  function revealFrom(startIndex) {
+    const pending = [startIndex];
+
+    while (pending.length) {
+      const index = pending.pop();
+      const cell = cells[index];
+      if (cell.isRevealed || cell.isFlagged) {
+        continue;
+      }
+
+      cell.isRevealed = true;
+      renderCell(cell);
+
+      if (cell.neighbourMines === 0 && !cell.hasMine) {
+        forEachNeighbour(index, (neighbourIndex) => {
+          if (!cells[neighbourIndex].isRevealed) {
+            pending.push(neighbourIndex);
+          }
+        });
+      }
+    }
+  }
+
+  function toggleFlag(index) {
+    const cell = cells[index];
+    if (isGameOver || cell.isRevealed) {
+      return;
+    }
+
+    cell.isFlagged = !cell.isFlagged;
+    audioManager.playSfx("clickSwitch");
+    renderCell(cell);
+    renderStatus();
+  }
+
+  function revealCell(index) {
+    const cell = cells[index];
+    if (isGameOver || cell.isRevealed || cell.isFlagged) {
+      return;
+    }
+
+    if (!minesArePlaced) {
+      placeMines(index);
+    }
+
+    if (cell.hasMine) {
+      cell.isRevealed = true;
+      isGameOver = true;
+      audioManager.playSfx("clickSwitch");
+      revealAllMines();
+      renderStatus();
+      return;
+    }
+
+    audioManager.playSfx("clickButton");
+    revealFrom(index);
+    checkForWin();
+    renderStatus();
+  }
+
+  function buildBoard() {
+    board.replaceChildren();
+    cells = [];
+
+    for (let index = 0; index < CELL_COUNT; index += 1) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.classList.add("caveos-minesweeper-cell");
+      button.dataset.index = String(index);
+      button.setAttribute(
+        "aria-label",
+        `${localize("minesweeperCellAriaLabel", getLanguage())} ${Math.floor(index / COLUMNS) + 1}, ${(index % COLUMNS) + 1}`
+      );
+
+      const cell = {
+        button,
+        hasMine: false,
+        neighbourMines: 0,
+        isRevealed: false,
+        isFlagged: false,
+      };
+
+      button.addEventListener("click", () => {
+        audioManager.onUserGesture();
+        if (isFlagMode) {
+          toggleFlag(index);
+          return;
+        }
+        revealCell(index);
+      });
+
+      button.addEventListener("contextmenu", (event) => {
+        // The browser menu would cover the board, and a right click here means
+        // "flag" — the same as it did in 1996.
+        event.preventDefault();
+        audioManager.onUserGesture();
+        toggleFlag(index);
+      });
+
+      cells.push(cell);
+      board.appendChild(button);
+      renderCell(cell);
+    }
+  }
+
+  function resetGame() {
+    minesArePlaced = false;
+    isGameOver = false;
+    hasWon = false;
+    buildBoard();
+    renderStatus();
+  }
+
+  flagModeButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickSwitch");
+    isFlagMode = !isFlagMode;
+    flagModeButton.setAttribute("aria-pressed", String(isFlagMode));
+    flagModeButton.classList.toggle("is-active", isFlagMode);
+  });
+
+  newGameButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+    resetGame();
+  });
+
+  resetGame();
+
+  return {
+    container,
+    board,
+    relocalize: () => {
+      const currentLanguage = getLanguage();
+      board.setAttribute("aria-label", localize("minesweeperBoardAriaLabel", currentLanguage));
+      cells.forEach((cell, index) => {
+        cell.button.setAttribute(
+          "aria-label",
+          `${localize("minesweeperCellAriaLabel", currentLanguage)} ${Math.floor(index / COLUMNS) + 1}, ${(index % COLUMNS) + 1}`
+        );
+      });
+      renderStatus();
+    },
+  };
+}
+
+function createComputerSudokuWindowContentElements() {
+  const SIZE = 9;
+  const CELL_COUNT = SIZE * SIZE;
+
+  // One known-good puzzle. Every game the player sees is this grid run through
+  // a random sequence of validity-preserving transformations — digit
+  // relabelling, row and column shuffles within their bands, band and stack
+  // shuffles, an optional transpose. Each of those is a bijection on sudoku
+  // grids, so the result is an isomorphic puzzle: still solvable, and still
+  // uniquely so. That is far safer than hand-writing more grids and hoping they
+  // are sound.
+  const BASE_PUZZLE = [
+    "53..7....",
+    "6..195...",
+    ".98....6.",
+    "8...6...3",
+    "4..8.3..1",
+    "7...2...6",
+    ".6....28.",
+    "...419..5",
+    "....8..79",
+  ].join("");
+
+  const shuffled = (values) => {
+    const copy = values.slice();
+    for (let index = copy.length - 1; index > 0; index -= 1) {
+      const pick = Math.floor(Math.random() * (index + 1));
+      [copy[index], copy[pick]] = [copy[pick], copy[index]];
+    }
+    return copy;
+  };
+
+  // A full row order: the three bands in a random order, and the three rows
+  // inside each band shuffled among themselves. Applied to columns too.
+  const buildLineOrder = () => shuffled([0, 1, 2])
+    .flatMap((band) => shuffled([0, 1, 2]).map((line) => band * 3 + line));
+
+  function generatePuzzle() {
+    const digitMap = new Map();
+    shuffled(["1", "2", "3", "4", "5", "6", "7", "8", "9"])
+      .forEach((digit, index) => digitMap.set(String(index + 1), digit));
+
+    const rowOrder = buildLineOrder();
+    const columnOrder = buildLineOrder();
+    const shouldTranspose = Math.random() < 0.5;
+
+    const transform = (grid) => {
+      const result = new Array(CELL_COUNT);
+      for (let row = 0; row < SIZE; row += 1) {
+        for (let column = 0; column < SIZE; column += 1) {
+          const source = grid[rowOrder[row] * SIZE + columnOrder[column]];
+          const value = source === "." ? "." : digitMap.get(source);
+          const target = shouldTranspose ? column * SIZE + row : row * SIZE + column;
+          result[target] = value;
+        }
+      }
+      return result;
+    };
+
+    return transform(BASE_PUZZLE);
+  }
+
+  const languageCode = getLanguage();
+
+  const container = document.createElement("div");
+  container.classList.add("caveos-sudoku-app");
+
+  const statusBar = document.createElement("div");
+  statusBar.classList.add("caveos-sudoku-status");
+
+  const stateText = document.createElement("span");
+  stateText.classList.add("caveos-sudoku-state");
+
+  const newGameButton = document.createElement("button");
+  newGameButton.type = "button";
+  newGameButton.classList.add("caveos-sudoku-new-game");
+
+  statusBar.append(stateText, newGameButton);
+
+  const board = document.createElement("div");
+  board.classList.add("caveos-sudoku-board");
+  board.setAttribute("role", "grid");
+  board.setAttribute("aria-label", localize("sudokuBoardAriaLabel", languageCode));
+
+  // A keypad as well as the keyboard: the window is played with a mouse as
+  // often as not, and a 1996 puzzle app would have offered both.
+  const keypad = document.createElement("div");
+  keypad.classList.add("caveos-sudoku-keypad");
+
+  container.append(statusBar, board, keypad);
+
+  let puzzle = [];
+  let entries = [];
+  let cellButtons = [];
+  let selectedIndex = 0;
+  let isSolved = false;
+
+  const isGiven = (index) => puzzle[index] !== ".";
+  const valueAt = (index) => (isGiven(index) ? puzzle[index] : entries[index]);
+
+  // A value conflicts when the same digit already sits in its row, its column
+  // or its box. Givens are checked too, so a wrong entry lights up next to the
+  // clue it contradicts rather than on its own.
+  function conflictingIndices() {
+    const conflicts = new Set();
+
+    const scanGroup = (indices) => {
+      const seenByValue = new Map();
+      indices.forEach((index) => {
+        const value = valueAt(index);
+        if (!value || value === ".") {
+          return;
+        }
+
+        if (!seenByValue.has(value)) {
+          seenByValue.set(value, []);
+        }
+        seenByValue.get(value).push(index);
+      });
+
+      seenByValue.forEach((group) => {
+        if (group.length > 1) {
+          group.forEach((index) => conflicts.add(index));
+        }
+      });
+    };
+
+    for (let line = 0; line < SIZE; line += 1) {
+      const rowIndices = [];
+      const columnIndices = [];
+      const boxIndices = [];
+      const boxRow = Math.floor(line / 3) * 3;
+      const boxColumn = (line % 3) * 3;
+
+      for (let step = 0; step < SIZE; step += 1) {
+        rowIndices.push(line * SIZE + step);
+        columnIndices.push(step * SIZE + line);
+        boxIndices.push((boxRow + Math.floor(step / 3)) * SIZE + boxColumn + (step % 3));
+      }
+
+      scanGroup(rowIndices);
+      scanGroup(columnIndices);
+      scanGroup(boxIndices);
+    }
+
+    return conflicts;
+  }
+
+  function renderStatus() {
+    const currentLanguage = getLanguage();
+    newGameButton.textContent = localize("sudokuNewGameButton", currentLanguage);
+    stateText.textContent = isSolved
+      ? localize("sudokuSolvedText", currentLanguage)
+      : localize("sudokuHint", currentLanguage);
+  }
+
+  function renderBoard() {
+    const conflicts = conflictingIndices();
+
+    cellButtons.forEach((button, index) => {
+      const value = valueAt(index);
+      button.textContent = value === "." ? "" : value;
+      button.classList.toggle("is-given", isGiven(index));
+      button.classList.toggle("is-selected", index === selectedIndex);
+      button.classList.toggle("is-conflict", conflicts.has(index));
+    });
+
+    container.classList.toggle("is-solved", isSolved);
+  }
+
+  function checkForSolved() {
+    const complete = entries.every((entry, index) => isGiven(index) || entry);
+    isSolved = complete && conflictingIndices().size === 0;
+
+    if (isSolved) {
+      audioManager.playSfx("clickButton");
+    }
+  }
+
+  function setSelected(index) {
+    selectedIndex = index;
+    renderBoard();
+  }
+
+  function enterValue(value) {
+    if (isSolved || isGiven(selectedIndex)) {
+      return;
+    }
+
+    entries[selectedIndex] = value;
+    audioManager.playSfx(value ? "clickButton" : "clickSwitch");
+    checkForSolved();
+    renderBoard();
+    renderStatus();
+  }
+
+  function buildBoard() {
+    board.replaceChildren();
+    cellButtons = [];
+
+    for (let index = 0; index < CELL_COUNT; index += 1) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.classList.add("caveos-sudoku-cell");
+      button.dataset.index = String(index);
+
+      const row = Math.floor(index / SIZE);
+      const column = index % SIZE;
+      // The heavy 3x3 rules are borders on the cells that start a box, so the
+      // grid needs no extra elements to draw them.
+      if (column % 3 === 0 && column !== 0) {
+        button.classList.add("has-box-left");
+      }
+      if (row % 3 === 0 && row !== 0) {
+        button.classList.add("has-box-top");
+      }
+
+      button.setAttribute(
+        "aria-label",
+        `${localize("sudokuCellAriaLabel", getLanguage())} ${row + 1}, ${column + 1}`
+      );
+
+      button.addEventListener("click", () => {
+        audioManager.onUserGesture();
+        audioManager.playSfx("clickSwitch");
+        setSelected(index);
+      });
+
+      cellButtons.push(button);
+      board.appendChild(button);
+    }
+  }
+
+  function buildKeypad() {
+    keypad.replaceChildren();
+
+    for (let digit = 1; digit <= SIZE; digit += 1) {
+      const key = document.createElement("button");
+      key.type = "button";
+      key.classList.add("caveos-sudoku-key");
+      key.textContent = String(digit);
+      key.setAttribute("aria-label", String(digit));
+      key.addEventListener("click", () => {
+        audioManager.onUserGesture();
+        enterValue(String(digit));
+      });
+      keypad.appendChild(key);
+    }
+
+    const clearKey = document.createElement("button");
+    clearKey.type = "button";
+    clearKey.classList.add("caveos-sudoku-key", "caveos-sudoku-clear");
+    clearKey.addEventListener("click", () => {
+      audioManager.onUserGesture();
+      enterValue("");
+    });
+    keypad.appendChild(clearKey);
+    return clearKey;
+  }
+
+  function resetGame() {
+    puzzle = generatePuzzle();
+    entries = new Array(CELL_COUNT).fill("");
+    isSolved = false;
+    // Start on the first cell the player may actually type into.
+    selectedIndex = puzzle.findIndex((value) => value === ".");
+    if (selectedIndex < 0) {
+      selectedIndex = 0;
+    }
+    renderBoard();
+    renderStatus();
+  }
+
+  buildBoard();
+  const clearKey = buildKeypad();
+
+  container.addEventListener("keydown", (event) => {
+    if (event.key >= "1" && event.key <= "9") {
+      event.preventDefault();
+      audioManager.onUserGesture();
+      enterValue(event.key);
+      return;
+    }
+
+    if (event.key === "Backspace" || event.key === "Delete" || event.key === "0") {
+      event.preventDefault();
+      audioManager.onUserGesture();
+      enterValue("");
+      return;
+    }
+
+    const MOVE_BY_KEY = {
+      ArrowUp: -SIZE,
+      ArrowDown: SIZE,
+      ArrowLeft: -1,
+      ArrowRight: 1,
+    };
+    const move = MOVE_BY_KEY[event.key];
+    if (move === undefined) {
+      return;
+    }
+
+    // Swallowed so the arrows move the selection rather than scrolling the
+    // board out from under it.
+    event.preventDefault();
+    const next = selectedIndex + move;
+    if (next < 0 || next >= CELL_COUNT) {
+      return;
+    }
+    // Left and right must not step across a row edge.
+    if (Math.abs(move) === 1 && Math.floor(next / SIZE) !== Math.floor(selectedIndex / SIZE)) {
+      return;
+    }
+    setSelected(next);
+    // The selection is the app's own idea of "where I am", but DOM focus has to
+    // follow it or the ring stays behind on the cell the player left.
+    cellButtons[next]?.focus();
+  });
+
+  newGameButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+    resetGame();
+  });
+
+  const relocalize = () => {
+    const currentLanguage = getLanguage();
+    board.setAttribute("aria-label", localize("sudokuBoardAriaLabel", currentLanguage));
+    clearKey.textContent = localize("sudokuClearKey", currentLanguage);
+    clearKey.setAttribute("aria-label", localize("sudokuClearKey", currentLanguage));
+    cellButtons.forEach((button, index) => {
+      button.setAttribute(
+        "aria-label",
+        `${localize("sudokuCellAriaLabel", currentLanguage)} ${Math.floor(index / SIZE) + 1}, ${(index % SIZE) + 1}`
+      );
+    });
+    renderStatus();
+  };
+
+  resetGame();
+  relocalize();
+
+  return {
+    container,
+    board,
+    // Focus the selected cell, not the container: the keydown handler is
+    // delegated, so a focused cell is what makes the keyboard work at all.
+    focus: () => cellButtons[selectedIndex]?.focus(),
+    relocalize,
+  };
+}
+
+function createComputerTetrisWindowContentElements() {
+  const COLUMNS = 10;
+  const ROWS = 20;
+  const CELL_SIZE = 22;
+  // Just under two drops a second: enough time to place a piece at the far side
+  // of the well without the game feeling becalmed.
+  const DROP_MS = 560;
+  const SCORE_BY_LINES = [0, 100, 300, 500, 800];
+
+  // Every piece in its spawn rotation, on a square grid so a rotation is a
+  // plain matrix turn with no per-piece special cases.
+  const PIECES = [
+    [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
+    [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
+    [[0, 0, 1], [1, 1, 1], [0, 0, 0]],
+    [[1, 1], [1, 1]],
+    [[0, 1, 1], [1, 1, 0], [0, 0, 0]],
+    [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
+    [[1, 1, 0], [0, 1, 1], [0, 0, 0]],
+  ];
+
+  const languageCode = getLanguage();
+
+  const container = document.createElement("div");
+  container.classList.add("caveos-tetris-app");
+  container.tabIndex = 0;
+  container.setAttribute("role", "application");
+  container.setAttribute("aria-label", localize("tetrisBoardAriaLabel", languageCode));
+
+  const statusBar = document.createElement("div");
+  statusBar.classList.add("caveos-tetris-status");
+
+  const scoreText = document.createElement("span");
+  scoreText.classList.add("caveos-tetris-score");
+
+  const linesText = document.createElement("span");
+  linesText.classList.add("caveos-tetris-lines");
+
+  const hintText = document.createElement("span");
+  hintText.classList.add("caveos-tetris-hint");
+
+  statusBar.append(scoreText, linesText, hintText);
+
+  const boardWrap = document.createElement("div");
+  boardWrap.classList.add("caveos-tetris-board-wrap");
+
+  const canvas = document.createElement("canvas");
+  canvas.classList.add("caveos-tetris-board");
+  canvas.width = COLUMNS * CELL_SIZE;
+  canvas.height = ROWS * CELL_SIZE;
+  boardWrap.appendChild(canvas);
+
+  container.append(statusBar, boardWrap);
+
+  const context = canvas.getContext("2d");
+
+  let well = [];
+  let piece = null;
+  let score = 0;
+  let clearedLines = 0;
+  let isRunning = false;
+  let isGameOver = false;
+  let dropIntervalId = null;
+
+  const readPalette = () => readCaveOsPaletteTokens({
+    well: ["--caveos-paint-canvas", "#041204"],
+    settled: ["--caveos-fg", "#70ff5c"],
+    active: ["--caveos-accent", "#7cff64"],
+    grid: ["--caveos-border", "rgba(97, 255, 88, 0.5)"],
+  });
+
+  const rotated = (shape) => shape[0]
+    .map((_, column) => shape.map((row) => row[column]).reverse());
+
+  function collides(shape, originColumn, originRow) {
+    for (let row = 0; row < shape.length; row += 1) {
+      for (let column = 0; column < shape[row].length; column += 1) {
+        if (!shape[row][column]) {
+          continue;
+        }
+
+        const wellColumn = originColumn + column;
+        const wellRow = originRow + row;
+
+        if (wellColumn < 0 || wellColumn >= COLUMNS || wellRow >= ROWS) {
+          return true;
+        }
+        // Above the ceiling is legal while a piece is still entering the well.
+        if (wellRow >= 0 && well[wellRow][wellColumn]) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function spawnPiece() {
+    const shape = PIECES[Math.floor(Math.random() * PIECES.length)];
+    const column = Math.floor((COLUMNS - shape[0].length) / 2);
+
+    // No room for the new piece at the top means the well is full.
+    if (collides(shape, column, 0)) {
+      piece = null;
+      endGame();
+      return;
+    }
+
+    piece = { shape, column, row: 0 };
+  }
+
+  function settlePiece() {
+    piece.shape.forEach((row, rowOffset) => {
+      row.forEach((filled, columnOffset) => {
+        if (!filled) {
+          return;
+        }
+        const wellRow = piece.row + rowOffset;
+        const wellColumn = piece.column + columnOffset;
+        if (wellRow >= 0) {
+          well[wellRow][wellColumn] = 1;
+        }
+      });
+    });
+
+    const survivingRows = well.filter((row) => row.some((cell) => !cell));
+    const linesJustCleared = ROWS - survivingRows.length;
+
+    if (linesJustCleared) {
+      const replacements = Array.from(
+        { length: linesJustCleared },
+        () => new Array(COLUMNS).fill(0)
+      );
+      well = [...replacements, ...survivingRows];
+      clearedLines += linesJustCleared;
+      score += SCORE_BY_LINES[linesJustCleared] ?? 0;
+      audioManager.playSfx("clickButton");
+    }
+
+    spawnPiece();
+    renderStatus();
+  }
+
+  function renderStatus() {
+    const currentLanguage = getLanguage();
+    scoreText.textContent = `${localize("tetrisScoreLabel", currentLanguage)}: ${score}`;
+    linesText.textContent = `${localize("tetrisLinesLabel", currentLanguage)}: ${clearedLines}`;
+
+    if (isGameOver) {
+      hintText.textContent = `${localize("tetrisGameOverText", currentLanguage)} — ${localize("tetrisRestartHint", currentLanguage)}`;
+      return;
+    }
+
+    hintText.textContent = isRunning ? "" : localize("tetrisStartHint", currentLanguage);
+  }
+
+  function draw() {
+    if (!context) {
+      return;
+    }
+
+    const palette = readPalette();
+
+    context.fillStyle = palette.well;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.strokeStyle = palette.grid;
+    context.lineWidth = 1;
+    for (let column = 1; column < COLUMNS; column += 1) {
+      context.beginPath();
+      context.moveTo(column * CELL_SIZE + 0.5, 0);
+      context.lineTo(column * CELL_SIZE + 0.5, canvas.height);
+      context.stroke();
+    }
+    for (let row = 1; row < ROWS; row += 1) {
+      context.beginPath();
+      context.moveTo(0, row * CELL_SIZE + 0.5);
+      context.lineTo(canvas.width, row * CELL_SIZE + 0.5);
+      context.stroke();
+    }
+
+    const paintBlock = (column, row, fillStyle) => {
+      if (row < 0) {
+        return;
+      }
+      context.fillStyle = fillStyle;
+      context.fillRect(
+        column * CELL_SIZE + 2,
+        row * CELL_SIZE + 2,
+        CELL_SIZE - 4,
+        CELL_SIZE - 4
+      );
+    };
+
+    well.forEach((row, rowIndex) => {
+      row.forEach((filled, columnIndex) => {
+        if (filled) {
+          paintBlock(columnIndex, rowIndex, palette.settled);
+        }
+      });
+    });
+
+    // The falling piece is drawn in the accent so it reads apart from the pile
+    // it is about to join.
+    if (piece) {
+      piece.shape.forEach((row, rowOffset) => {
+        row.forEach((filled, columnOffset) => {
+          if (filled) {
+            paintBlock(piece.column + columnOffset, piece.row + rowOffset, palette.active);
+          }
+        });
+      });
+    }
+
+    if (isGameOver) {
+      context.fillStyle = "rgba(0, 0, 0, 0.55)";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function stopDropping() {
+    if (dropIntervalId) {
+      clearInterval(dropIntervalId);
+      dropIntervalId = null;
+    }
+  }
+
+  function endGame() {
+    stopDropping();
+    isRunning = false;
+    isGameOver = true;
+    audioManager.playSfx("clickSwitch");
+    renderStatus();
+    draw();
+  }
+
+  function stepDown() {
+    if (!piece || isGameOver) {
+      return;
+    }
+
+    if (collides(piece.shape, piece.column, piece.row + 1)) {
+      settlePiece();
+    } else {
+      piece.row += 1;
+    }
+
+    draw();
+  }
+
+  function moveSideways(offset) {
+    if (!piece || collides(piece.shape, piece.column + offset, piece.row)) {
+      return;
+    }
+    piece.column += offset;
+    draw();
+  }
+
+  function rotatePiece() {
+    if (!piece) {
+      return;
+    }
+
+    const next = rotated(piece.shape);
+    // A rotation against a wall is nudged back in rather than refused, which is
+    // what makes turning a bar in the last column possible at all.
+    const KICKS = [0, -1, 1, -2, 2];
+    const kick = KICKS.find((offset) => !collides(next, piece.column + offset, piece.row));
+    if (kick === undefined) {
+      return;
+    }
+
+    piece.shape = next;
+    piece.column += kick;
+    draw();
+  }
+
+  function hardDrop() {
+    if (!piece) {
+      return;
+    }
+
+    while (!collides(piece.shape, piece.column, piece.row + 1)) {
+      piece.row += 1;
+    }
+    settlePiece();
+    draw();
+  }
+
+  function resetGame() {
+    well = Array.from({ length: ROWS }, () => new Array(COLUMNS).fill(0));
+    piece = null;
+    score = 0;
+    clearedLines = 0;
+    isRunning = false;
+    isGameOver = false;
+    renderStatus();
+    draw();
+  }
+
+  function startGame() {
+    resetGame();
+    isRunning = true;
+    spawnPiece();
+    renderStatus();
+    stopDropping();
+    dropIntervalId = window.setInterval(stepDown, DROP_MS);
+    draw();
+  }
+
+  container.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      audioManager.onUserGesture();
+      if (!isRunning) {
+        startGame();
+      }
+      return;
+    }
+
+    const HANDLED_KEYS = ["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " "];
+    if (!HANDLED_KEYS.includes(event.key)) {
+      return;
+    }
+
+    // Swallowed even when the game is not running, so the arrows and the space
+    // bar never scroll the window behind the well.
+    event.preventDefault();
+
+    if (!isRunning) {
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      moveSideways(-1);
+    } else if (event.key === "ArrowRight") {
+      moveSideways(1);
+    } else if (event.key === "ArrowDown") {
+      stepDown();
+    } else if (event.key === "ArrowUp") {
+      rotatePiece();
+    } else {
+      hardDrop();
+    }
+  });
+
+  container.addEventListener("pointerdown", () => {
+    container.focus();
+  });
+
+  resetGame();
+
+  return {
+    container,
+    canvas,
+    focus: () => container.focus(),
+    // Called by the window's onClose: a drop interval outliving its window
+    // would keep running against a detached canvas.
+    destroy: stopDropping,
+    relocalize: () => {
+      container.setAttribute("aria-label", localize("tetrisBoardAriaLabel", getLanguage()));
+      renderStatus();
+    },
+  };
 }
 
 function createComputerNetscapeWindowContentElements() {
@@ -3634,6 +5566,13 @@ function positionWindowWithinParent(
 const COMPUTER_APP_CLOSE_ARIA_LABEL_KEY_BY_KIND = {
   "computer-notes": "closeNotesWindowAriaLabel",
   "computer-paint": "closePaintWindowAriaLabel",
+  "computer-calculator": "closeCalculatorWindowAriaLabel",
+  "computer-snake": "closeSnakeWindowAriaLabel",
+  "computer-minesweeper": "closeMinesweeperWindowAriaLabel",
+  "computer-sudoku": "closeSudokuWindowAriaLabel",
+  "computer-tetris": "closeTetrisWindowAriaLabel",
+  "computer-folder-apps": "closeAppsFolderWindowAriaLabel",
+  "computer-folder-games": "closeGamesFolderWindowAriaLabel",
   "computer-netscape": "closeNetscapeWindowAriaLabel",
 };
 
@@ -3650,6 +5589,8 @@ function openComputerAppWindow({
   widthScale = 1,
   widthRatio = 0.6,
   heightRatio = 0.58,
+  onAfterOpen = null,
+  onBeforeClose = null,
 }) {
   if (!parentElement || !(contentNode instanceof Node)) {
     return null;
@@ -3667,6 +5608,9 @@ function openComputerAppWindow({
       ? localize(closeAriaLabelKey, getLanguage())
       : `Close ${title} window`,
     onClose: () => {
+      // Before the bookkeeping: an app with a running timer (Snake) has to be
+      // told to stop it while its content is still reachable.
+      onBeforeClose?.();
       unregisterDesktopWindow(appWindowController);
       if (appWindowSet) {
         appWindowSet.delete(appWindowController);
@@ -3693,6 +5637,10 @@ function openComputerAppWindow({
   if (appWindowSet) {
     appWindowSet.add(appWindowController);
   }
+
+  // Last, so anything taking focus here does so on a window that is already
+  // sized, positioned and raised.
+  onAfterOpen?.();
 
   return appWindowController;
 }
@@ -6843,10 +8791,10 @@ function openComputerWindow() {
     }
   });
 
-  contentRefs.paintIcon.addEventListener("click", () => {
-    audioManager.onUserGesture();
-    audioManager.playSfx("clickButton");
-
+  // The apps that now live inside folders. Each is still opened by a single
+  // click on its icon and still toggles, exactly as it did when the icon sat on
+  // the desktop — only where the icon lives has changed.
+  const openPaintApp = () => {
     if (toggleExistingWindowsByKind("computer-paint")) {
       return;
     }
@@ -6861,6 +8809,258 @@ function openComputerWindow() {
       appWindowSet: contentRefs.appWindows,
       resizable: true,
       showScrollbar: false,
+    });
+  };
+
+  const openCalculatorApp = () => {
+    if (toggleExistingWindowsByKind("computer-calculator")) {
+      return;
+    }
+
+    const calculatorRefs = createComputerCalculatorWindowContentElements();
+    const calculatorWindow = openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-calculator",
+      title: localize("computerCalculatorWindowTitle", getLanguage()),
+      classNames: ["caveos-calculator-window"],
+      contentNode: calculatorRefs.container,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+      // Narrower and shorter than Notes or Paint: a calculator is a small
+      // utility, and DesktopWindow's own minimum size keeps it usable however
+      // small the ratios would otherwise make it.
+      widthRatio: 0.34,
+      heightRatio: 0.62,
+    });
+
+    if (calculatorWindow) {
+      calculatorWindowContentRefs.set(calculatorWindow, calculatorRefs);
+    }
+  };
+
+  const openSnakeApp = () => {
+    if (toggleExistingWindowsByKind("computer-snake")) {
+      return;
+    }
+
+    const snakeRefs = createComputerSnakeWindowContentElements();
+    const snakeWindow = openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-snake",
+      title: localize("computerSnakeWindowTitle", getLanguage()),
+      classNames: ["caveos-snake-window"],
+      contentNode: snakeRefs.container,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+      widthRatio: 0.62,
+      heightRatio: 0.72,
+      // The board is keyboard-driven, so it takes focus on open — otherwise the
+      // player's first arrow key goes nowhere.
+      onAfterOpen: () => snakeRefs.focus(),
+      // Stops the tick interval; without it a closed game keeps running against
+      // a canvas that is no longer in the document.
+      onBeforeClose: () => snakeRefs.destroy(),
+    });
+
+    if (snakeWindow) {
+      snakeWindowContentRefs.set(snakeWindow, snakeRefs);
+    }
+  };
+
+  const openMinesweeperApp = () => {
+    if (toggleExistingWindowsByKind("computer-minesweeper")) {
+      return;
+    }
+
+    const minesweeperRefs = createComputerMinesweeperWindowContentElements();
+    const minesweeperWindow = openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-minesweeper",
+      title: localize("computerMinesweeperWindowTitle", getLanguage()),
+      classNames: ["caveos-minesweeper-window"],
+      contentNode: minesweeperRefs.container,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+      // The board is a fixed nine by nine, so the window only needs to be big
+      // enough to hold it and its status bar.
+      widthRatio: 0.4,
+      heightRatio: 0.66,
+    });
+
+    if (minesweeperWindow) {
+      minesweeperWindowContentRefs.set(minesweeperWindow, minesweeperRefs);
+    }
+  };
+
+  const openSudokuApp = () => {
+    if (toggleExistingWindowsByKind("computer-sudoku")) {
+      return;
+    }
+
+    const sudokuRefs = createComputerSudokuWindowContentElements();
+    const sudokuWindow = openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-sudoku",
+      title: localize("computerSudokuWindowTitle", getLanguage()),
+      classNames: ["caveos-sudoku-window"],
+      contentNode: sudokuRefs.container,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+      widthRatio: 0.44,
+      heightRatio: 0.78,
+      // Typing digits is the fast way to play, and that needs a focused cell.
+      onAfterOpen: () => sudokuRefs.focus(),
+    });
+
+    if (sudokuWindow) {
+      sudokuWindowContentRefs.set(sudokuWindow, sudokuRefs);
+    }
+  };
+
+  const openTetrisApp = () => {
+    if (toggleExistingWindowsByKind("computer-tetris")) {
+      return;
+    }
+
+    const tetrisRefs = createComputerTetrisWindowContentElements();
+    const tetrisWindow = openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-tetris",
+      title: localize("computerTetrisWindowTitle", getLanguage()),
+      classNames: ["caveos-tetris-window"],
+      contentNode: tetrisRefs.container,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+      // Tall and narrow, because the well is.
+      widthRatio: 0.36,
+      heightRatio: 0.86,
+      onAfterOpen: () => tetrisRefs.focus(),
+      // Same reason as Snake: a drop interval must not outlive its window.
+      onBeforeClose: () => tetrisRefs.destroy(),
+    });
+
+    if (tetrisWindow) {
+      tetrisWindowContentRefs.set(tetrisWindow, tetrisRefs);
+    }
+  };
+
+  // What each folder contains. Order here is the order the icons appear in.
+  const FOLDER_DEFINITIONS = {
+    apps: {
+      kind: "computer-folder-apps",
+      titleKey: "computerAppsFolderLabel",
+      className: "caveos-folder-apps-window",
+      contents: [
+        { labelKey: "computerPaintIconLabel", iconClassName: "computer-icon-paint", open: openPaintApp },
+        { labelKey: "computerCalculatorIconLabel", iconClassName: "computer-icon-calculator", open: openCalculatorApp },
+      ],
+    },
+    games: {
+      kind: "computer-folder-games",
+      titleKey: "computerGamesFolderLabel",
+      className: "caveos-folder-games-window",
+      contents: [
+        { labelKey: "computerSnakeIconLabel", iconClassName: "computer-icon-snake", open: openSnakeApp },
+        { labelKey: "computerMinesweeperIconLabel", iconClassName: "computer-icon-minesweeper", open: openMinesweeperApp },
+        { labelKey: "computerSudokuIconLabel", iconClassName: "computer-icon-sudoku", open: openSudokuApp },
+        { labelKey: "computerTetrisIconLabel", iconClassName: "computer-icon-tetris", open: openTetrisApp },
+      ],
+    },
+  };
+
+  // A folder window: the same icon grid the desktop uses, in a window of its
+  // own. The icons inside are ordinary single-click app icons — only the
+  // folder itself needs the double click.
+  const openFolderWindow = (folderId) => {
+    const definition = FOLDER_DEFINITIONS[folderId];
+    if (!definition || toggleExistingWindowsByKind(definition.kind)) {
+      return;
+    }
+
+    const languageCode = getLanguage();
+
+    const folderBody = document.createElement("div");
+    folderBody.classList.add("caveos-folder-app");
+
+    const folderGrid = document.createElement("div");
+    folderGrid.classList.add("computer-icons-grid", "caveos-folder-icons-grid");
+
+    definition.contents.forEach((entry) => {
+      const label = localize(entry.labelKey, languageCode);
+
+      const iconButton = document.createElement("button");
+      iconButton.type = "button";
+      iconButton.classList.add("computer-icon", entry.iconClassName);
+      iconButton.setAttribute("aria-label", label);
+
+      const pixelArt = document.createElement("span");
+      pixelArt.classList.add("computer-icon-pixel", `${entry.iconClassName}-pixel`);
+
+      const labelElement = document.createElement("span");
+      labelElement.classList.add("computer-icon-label");
+      labelElement.textContent = label;
+
+      iconButton.append(pixelArt, labelElement);
+      iconButton.addEventListener("click", () => {
+        audioManager.onUserGesture();
+        audioManager.playSfx("clickButton");
+        entry.open();
+      });
+
+      folderGrid.appendChild(iconButton);
+    });
+
+    folderBody.appendChild(folderGrid);
+
+    openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: definition.kind,
+      title: localize(definition.titleKey, languageCode),
+      classNames: ["caveos-folder-window", definition.className],
+      contentNode: folderBody,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+      widthRatio: 0.46,
+      heightRatio: 0.5,
+    });
+  };
+
+  // Folders open on a double click, the way folders on a 1996 desktop did.
+  // `dblclick` is used rather than counting clicks by hand so the browser's own
+  // (and the platform's) double-click timing applies.
+  contentRefs.appsFolderIcon.addEventListener("dblclick", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+    openFolderWindow("apps");
+  });
+
+  contentRefs.gamesFolderIcon.addEventListener("dblclick", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+    openFolderWindow("games");
+  });
+
+  // A folder icon is still a button, so Enter and Space have to open it too —
+  // a double click is not something a keyboard can produce.
+  [
+    { icon: contentRefs.appsFolderIcon, folderId: "apps" },
+    { icon: contentRefs.gamesFolderIcon, folderId: "games" },
+  ].forEach(({ icon, folderId }) => {
+    icon.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickButton");
+      openFolderWindow(folderId);
     });
   });
 
@@ -6887,6 +9087,10 @@ function openComputerWindow() {
     });
   });
 
+  const themePicker = createCaveOsThemeSelect();
+  contentRefs.themeSelect = themePicker.select;
+  contentRefs.themePickerLabel = themePicker.label;
+
   let nextController = null;
   nextController = new DesktopWindow({
     parentElement: getElements().gameArea,
@@ -6894,6 +9098,7 @@ function openComputerWindow() {
     title: localize("computerWindowTitle", getLanguage()),
     showCarouselNavigation: false,
     closeButtonAriaLabel: localize("closeComputerWindowAriaLabel", getLanguage()),
+    headerAccessoryElement: themePicker.wrapper,
     onClose: () => {
       const refs = computerWindowContentRefs.get(nextController);
       if (refs?.appWindows?.size) {
@@ -6915,6 +9120,9 @@ function openComputerWindow() {
   nextController.scrollContainerElement = contentRefs.container;
   computerWindowContentRefs.set(nextController, contentRefs);
   registerDesktopWindow(nextController, "computer");
+  // Before open(), so the window is never painted in the default theme for a
+  // frame on its way to the saved one.
+  applyCaveOsThemeToWindow(nextController);
   nextController.open({ resizable: false, showScrollbar: false });
 
   if (nextController.rootElement) {

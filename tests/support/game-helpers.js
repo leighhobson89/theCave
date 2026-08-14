@@ -43,9 +43,12 @@ async function openNetscape(page) {
   await page.getByRole("button", { name: "Netscape" }).click();
 }
 
+// Paint lives in the Apps folder, which opens on a real double click — the
+// gesture is the feature, so the helper makes it rather than calling an opener.
 async function openPaint(page) {
   await openComputer(page);
-  await page.getByRole("button", { name: "Paint" }).click();
+  await page.locator(".computer-icon-folder-apps").dblclick();
+  await page.locator(".caveos-folder-apps-window .computer-icon-paint").click();
 }
 
 // The computer window covers the viewport, so it must be closed from its own

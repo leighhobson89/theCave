@@ -17,9 +17,12 @@ const LANGUAGES = [
 
 // game-helpers.js's openPaint() finds the computer's Paint icon by its
 // (localized) accessible name "Paint", so it only works in English. Drive it
-// here by the language-independent ".computer-icon-paint" class instead.
+// here by the language-independent ".computer-icon-paint" class instead. Paint
+// lives in the Apps folder, which opens on a double click.
 async function openPaintInAnyLanguage(page) {
   await page.locator("#desktopComputerHotspot").click();
+  await page.locator(".computer-icon-folder-apps").dblclick();
+  await expect(page.locator(".caveos-folder-apps-window")).toBeVisible();
   await page.locator(".computer-icon-paint").click();
 }
 
