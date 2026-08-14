@@ -1,9 +1,13 @@
 # Test coverage analysis — theCave
 
 **Date:** 2026-08-14 (full re-audit; supersedes the 2026-08-12/13 edition)
-**Suite:** 357 Playwright tests across 54 spec files — **355 passing, 2 skipped,
+**Suite:** 352 Playwright tests across 53 spec files — **350 passing, 2 skipped,
 0 failing** (3m 20s, 4 workers). Up from 156 tests across 38 files at the
-2026-08-12 audit. Both skips are conditional and correct: they stand down when
+2026-08-12 audit. `snake.spec.js` was folded into `games.spec.js` in this pass
+(see [§2](#2-organisation-and-naming)), merging its own per-language
+localization loop into the one the other three games already shared and
+dropping 5 redundant test invocations with no loss of coverage. Both skips are
+conditional and correct: they stand down when
 the current content registry has no event without artwork, and none whose
 unlock trigger is permanently unreachable — they will run again the moment
 either case exists.
@@ -26,7 +30,7 @@ One line per `tests/e2e/` folder, plus the API-only content authoring tool under
 | 🟢 | `quick-login` | **100%** | Complete. Still the model the rest of the suite looks like. |
 | 🟢 | `desktop-window-chrome` | **100%** | Drag/resize/clamp/focus-stacking/carousel API, all driven directly. |
 | 🟢 | `web-content-search-records` | **100%** | All 25 authored records opened; detail fields, galleries, empty states. |
-| 🟢 | `caveos` | **95%** | New this pass — the whole computer in one folder, 9 specs. |
+| 🟢 | `caveos` | **95%** | New this pass — the whole computer in one folder, 8 specs. |
 | 🟢 | `progress-timeline` | **93%** | New since the last audit. The corkboard, the envelope, real drag-and-drop. |
 | 🟢 | `persistence` | **93%** | Save/load/sticky/resume, autosave, corrupt-save recovery. |
 | 🟢 | `localization` | **93%** | 262 keys × 5 languages, zero missing, zero hardcoded strings found. |
@@ -191,8 +195,7 @@ tests/e2e/caveos/
   paint.spec.js             the ten-sketch paint document, tools, theme, eraser
   calculator.spec.js        the four-function calculator
   themes.spec.js            the five reskins
-  snake.spec.js             Snake
-  games.spec.js             Minesweeper, Sudoku, Tetris
+  games.spec.js             Minesweeper, Sudoku, Tetris, Snake
   netscape-chrome.spec.js   the browser's address bar and history dropdown
 ```
 
@@ -254,7 +257,7 @@ control that bypassed `localize()` entirely; nothing of that shape remains.
 
 ### 4.1 CaveOS — 95% (41 behaviours, 39 covered) 🟢 *(new folder this pass)*
 
-Nine specs. The OS shell (header, live clock, MENU panel, window clipping and
+Eight specs. The OS shell (header, live clock, MENU panel, window clipping and
 stacking, closing the computer taking its app windows with it); the four-icon
 desktop row and its wrap-only-when-narrow rule; the folder system's double-click
 open, single-click contents and keyboard fallback; Notes and Paint's ten-page
