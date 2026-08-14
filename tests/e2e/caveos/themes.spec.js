@@ -16,8 +16,8 @@ const {
 } = require("../../support/game-helpers");
 const {
   CAVEOS_LANGUAGES,
-  appsFolderWindow,
-  openAppsFolder,
+  utilitiesFolderWindow,
+  openUtilitiesFolder,
   startNewGameInLanguage,
 } = require("../../support/caveos-helpers");
 
@@ -113,10 +113,10 @@ test("each theme actually changes the OS palette, and only one theme class is ev
 test("a theme reaches the app windows inside the OS, not just the desktop", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
-  // The calculator lives in the Apps folder, so it is reached through a real
+  // The calculator lives in the Utilities folder, so it is reached through a real
   // double click on the folder first.
-  await openAppsFolder(page);
-  await appsFolderWindow(page).locator(".computer-icon-calculator").click();
+  await openUtilitiesFolder(page);
+  await utilitiesFolderWindow(page).locator(".computer-icon-calculator").click();
   await expect(page.locator(".caveos-calculator-window")).toBeVisible();
 
   const readCalculatorChrome = () => page.evaluate(() => {
@@ -182,10 +182,10 @@ test("a theme reskins Netscape's own chrome but not the websites inside it", asy
 test("switching theme does not move or resize an open window", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
-  // The calculator lives in the Apps folder, so it is reached through a real
+  // The calculator lives in the Utilities folder, so it is reached through a real
   // double click on the folder first.
-  await openAppsFolder(page);
-  await appsFolderWindow(page).locator(".computer-icon-calculator").click();
+  await openUtilitiesFolder(page);
+  await utilitiesFolderWindow(page).locator(".computer-icon-calculator").click();
   const calculator = page.locator(".caveos-calculator-window");
   await expect(calculator).toBeVisible();
 

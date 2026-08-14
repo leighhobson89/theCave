@@ -1,4 +1,9 @@
 import {
+  ECHOTRAIL_BASE_FILE_NAMES,
+  isEchotrailPlayableFile,
+  normalizeEchotrailFileName,
+} from "./echotrailManager.js";
+import {
   getEvidenceStoreSnapshot,
   initializeEvidenceStoreForNewGame,
   setEvidenceStoreSnapshot,
@@ -152,6 +157,11 @@ let facsimileState = {
   consumedReportIds: [],
 };
 let browserAddressHistory = [];
+// Media files a story trigger has added to the ECHOTRAIL library, by filename.
+// Progress rather than preference: the six authored tracks are always present
+// and are never stored here, so this holds only what the player's own
+// playthrough has uncovered.
+let echotrailAddedFileNames = [];
 // Which CaveOS reskin is in play. A player preference rather than progress, but
 // it lives in the save payload all the same so it survives a save/load cycle
 // exactly as the audio preferences do.
@@ -372,6 +382,9 @@ export function captureGameStatusForSaving() {
   gameState.ashtrayHasExtraButt = getAshtrayHasExtraButt();
   gameState.facsimileState = getFacsimileState();
   gameState.browserAddressHistory = getBrowserAddressHistory();
+  // Only the files a trigger added. The authored six are code, not progress,
+  // and are never written into the save.
+  gameState.echotrailAddedFileNames = getEchotrailAddedFileNames();
   gameState.caveOsTheme = getCaveOsTheme();
   gameState.webContentSessions = webContentSessionsProvider
     ? webContentSessionsProvider.getSnapshot()
@@ -419,6 +432,10 @@ export function restoreGameStatus(gameState) {
       setAshtrayHasExtraButt(gameState.ashtrayHasExtraButt);
       setFacsimileState(gameState.facsimileState);
       setBrowserAddressHistory(gameState.browserAddressHistory);
+      // Absent in a save written before ECHOTRAIL existed, which
+      // setEchotrailAddedFileNames() reads as "nothing added yet" — leaving the
+      // player the authored six, exactly as a fresh game would.
+      setEchotrailAddedFileNames(gameState.echotrailAddedFileNames);
       // Absent in a save written before themes existed, which setCaveOsTheme()
       // reads as "use the default" — the original terminal look.
       setCaveOsTheme(gameState.caveOsTheme);
@@ -537,6 +554,58 @@ export function getBrowserAddressHistory() {
   }
 
   return browserAddressHistory.map(cloneBrowserAddressEntry).filter(Boolean);
+}
+
+// Filenames only. What each one is *called*, who it is credited to and whether
+// the in-game rotation may play it are all derived from the filename by
+// echotrailManager.js, so re-titling a track later cannot leave a stale name
+// baked into an old save.
+export function setEchotrailAddedFileNames(value) {
+  const seen = new Set();
+
+  echotrailAddedFileNames = (Array.isArray(value) ? value : [])
+    .map((entry) => normalizeEchotrailFileName(entry))
+    // A file the library cannot describe is dropped rather than stored: a
+    // hand-edited save naming `notes.txt` must not produce an unplayable row.
+    .filter((fileName) => fileName && isEchotrailPlayableFile(fileName))
+    .filter((fileName) => {
+      if (seen.has(fileName)) {
+        return false;
+      }
+
+      seen.add(fileName);
+      return true;
+    });
+}
+
+export function getEchotrailAddedFileNames() {
+  return Array.isArray(echotrailAddedFileNames) ? [...echotrailAddedFileNames] : [];
+}
+
+// Returns whether the file was newly added, so a caller can stay quiet rather
+// than announcing a track the player already has.
+export function addEchotrailFileName(value) {
+  const fileName = normalizeEchotrailFileName(value);
+  if (!fileName || !isEchotrailPlayableFile(fileName)) {
+    return false;
+  }
+
+  // The authored six are always in the library, so recording one here would
+  // only risk it being listed twice.
+  if (ECHOTRAIL_BASE_FILE_NAMES.includes(fileName)) {
+    return false;
+  }
+
+  if (echotrailAddedFileNames.includes(fileName)) {
+    return false;
+  }
+
+  echotrailAddedFileNames.push(fileName);
+  return true;
+}
+
+export function resetEchotrailAddedFileNames() {
+  echotrailAddedFileNames = [];
 }
 
 export function getMenuState() {

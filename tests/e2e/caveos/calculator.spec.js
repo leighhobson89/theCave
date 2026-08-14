@@ -9,9 +9,9 @@ const localization = require("../../../localization.json");
 const { startNewGame, openComputer } = require("../../support/game-helpers");
 const {
   CAVEOS_LANGUAGES,
-  appsFolderWindow,
+  utilitiesFolderWindow,
   closeCaveOsWindow,
-  openAppsFolder,
+  openUtilitiesFolder,
   startNewGameInLanguage,
 } = require("../../support/caveos-helpers");
 
@@ -36,13 +36,13 @@ async function press(page, symbols) {
   }
 }
 
-// The calculator lives in the Apps folder, so reaching it means a real double
+// The calculator lives in the Utilities folder, so reaching it means a real double
 // click on the folder and then a real single click on the icon inside it — the
 // same journey a player makes.
 async function openCalculator(page, languageCode = "en") {
   await openComputer(page);
-  await openAppsFolder(page);
-  await appsFolderWindow(page).locator(".computer-icon-calculator").click();
+  await openUtilitiesFolder(page);
+  await utilitiesFolderWindow(page).locator(".computer-icon-calculator").click();
   await expect(calculatorWindow(page)).toBeVisible();
   await expect(display(page)).toHaveText("0");
   return localization[languageCode];
@@ -55,7 +55,7 @@ async function closeCalculator(page) {
   await closeCaveOsWindow(page, "caveos-calculator-window");
 }
 
-test("the calculator icon sits after Paint inside the Apps folder", async ({ page }) => {
+test("the calculator icon sits after Paint inside the Utilities folder", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
 
@@ -66,9 +66,9 @@ test("the calculator icon sits after Paint inside the Apps folder", async ({ pag
   await expect(page.locator(".computer-desktop > .computer-icons-grid .computer-icon-netscape"))
     .toHaveCount(1);
 
-  await openAppsFolder(page);
+  await openUtilitiesFolder(page);
 
-  const iconLabels = await appsFolderWindow(page).locator(".computer-icon").evaluateAll(
+  const iconLabels = await utilitiesFolderWindow(page).locator(".computer-icon").evaluateAll(
     (icons) => icons.map((icon) => icon.className)
   );
 
@@ -174,7 +174,7 @@ for (const language of LANGUAGES) {
     const strings = localization[language.code];
     await startNewGameInLanguage(page, language.buttonId);
     await openComputer(page);
-    await openAppsFolder(page);
+    await openUtilitiesFolder(page);
 
     await expect(page.locator(".computer-icon-calculator .computer-icon-label"))
       .toHaveText(strings.computerCalculatorIconLabel);

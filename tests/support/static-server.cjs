@@ -57,19 +57,66 @@ const server = http.createServer((request, response) => {
       ? path.join(resolvedPath, "index.html")
       : resolvedPath;
 
-    fs.readFile(filePath, (readError, data) => {
-      if (readError) {
+    fs.stat(filePath, (fileStatError, fileStats) => {
+      if (fileStatError) {
         response.writeHead(404);
         response.end("Not Found");
         return;
       }
 
       const extension = path.extname(filePath).toLowerCase();
+      const contentType = mimeTypes[extension] || "application/octet-stream";
+      const totalSize = fileStats.size;
+
+      // Byte-range support. Without it Chromium treats every media file as
+      // non-seekable — it silently ignores a `currentTime` assignment and keeps
+      // playing from where it was — which makes it impossible to test anything
+      // that depends on reaching a point in a track. Real static hosts serve
+      // ranges, so this makes the test server behave like the thing it stands
+      // in for rather than adding a convenience the app would not otherwise
+      // have.
+      const rangeHeader = request.headers.range;
+      const rangeMatch = /^bytes=(\d*)-(\d*)$/.exec(String(rangeHeader || "").trim());
+
+      if (rangeMatch) {
+        const [, rawStart, rawEnd] = rangeMatch;
+
+        // "bytes=-500" means the last 500 bytes; "bytes=500-" means from 500 on.
+        let start = rawStart === "" ? totalSize - Number(rawEnd) : Number(rawStart);
+        let end = rawStart === "" || rawEnd === "" ? totalSize - 1 : Number(rawEnd);
+
+        start = Math.max(0, start);
+        end = Math.min(totalSize - 1, end);
+
+        if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) {
+          response.writeHead(416, {
+            "Content-Range": `bytes */${totalSize}`,
+            "Cache-Control": "no-store",
+          });
+          response.end();
+          return;
+        }
+
+        response.writeHead(206, {
+          "Content-Type": contentType,
+          "Content-Range": `bytes ${start}-${end}/${totalSize}`,
+          "Content-Length": end - start + 1,
+          "Accept-Ranges": "bytes",
+          "Cache-Control": "no-store",
+        });
+        fs.createReadStream(filePath, { start, end }).pipe(response);
+        return;
+      }
+
       response.writeHead(200, {
-        "Content-Type": mimeTypes[extension] || "application/octet-stream",
+        "Content-Type": contentType,
+        "Content-Length": totalSize,
+        // Advertised on every response, which is how the browser knows it may
+        // ask for a range at all.
+        "Accept-Ranges": "bytes",
         "Cache-Control": "no-store",
       });
-      response.end(data);
+      fs.createReadStream(filePath).pipe(response);
     });
   });
 });

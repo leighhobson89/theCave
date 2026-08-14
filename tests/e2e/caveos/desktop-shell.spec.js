@@ -8,7 +8,7 @@ const localization = require("../../../localization.json");
 const { startNewGame, openComputer, closeComputer } = require("../../support/game-helpers");
 const {
   CAVEOS_LANGUAGES,
-  openAppsFolder,
+  openUtilitiesFolder,
   openGamesFolder,
   startNewGameInLanguage,
 } = require("../../support/caveos-helpers");
@@ -52,8 +52,8 @@ test("closing the computer closes the app windows open inside it", async ({ page
 
   // Two windows from two different folders, so this proves the sweep covers
   // everything the OS is tracking rather than just the last one opened.
-  await openAppsFolder(page);
-  await page.locator(".caveos-folder-apps-window .computer-icon-calculator").click();
+  await openUtilitiesFolder(page);
+  await page.locator(".caveos-folder-utilities-window .computer-icon-calculator").click();
   await expect(page.locator(".caveos-calculator-window")).toBeVisible();
 
   await openGamesFolder(page);
@@ -63,18 +63,18 @@ test("closing the computer closes the app windows open inside it", async ({ page
 
   await expect(page.locator(".computer-window")).toHaveCount(0);
   await expect(page.locator(".caveos-calculator-window")).toHaveCount(0);
-  await expect(page.locator(".caveos-folder-apps-window")).toHaveCount(0);
+  await expect(page.locator(".caveos-folder-utilities-window")).toHaveCount(0);
   await expect(page.locator(".caveos-folder-games-window")).toHaveCount(0);
 });
 
 test("app windows are clipped to the OS screen rather than escaping onto the desk", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
-  await openAppsFolder(page);
+  await openUtilitiesFolder(page);
 
   // App windows are children of the CaveOS container, not the game area, so a
   // window can never be dragged out over the detective's desk.
-  const isInsideDesktop = await page.locator(".caveos-folder-apps-window").evaluate(
+  const isInsideDesktop = await page.locator(".caveos-folder-utilities-window").evaluate(
     (windowElement) => Boolean(windowElement.closest(".computer-desktop"))
   );
   expect(isInsideDesktop).toBe(true);
@@ -83,7 +83,7 @@ test("app windows are clipped to the OS screen rather than escaping onto the des
 test("a second app window opens above the first", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
-  await openAppsFolder(page);
+  await openUtilitiesFolder(page);
   await openGamesFolder(page);
 
   const zIndexOf = (selector) => page.locator(selector).evaluate(
@@ -92,7 +92,7 @@ test("a second app window opens above the first", async ({ page }) => {
 
   // Games was opened second, so it sits on top of Apps.
   expect(await zIndexOf(".caveos-folder-games-window")).toBeGreaterThan(
-    await zIndexOf(".caveos-folder-apps-window")
+    await zIndexOf(".caveos-folder-utilities-window")
   );
 
   // Click-to-focus promotion of a *buried* window is not retested here: both
@@ -119,7 +119,7 @@ for (const language of CAVEOS_LANGUAGES) {
 
     // The folder icons carry their "double click to open" hint as a title, so
     // the tooltip layer can explain the gesture — that hint is localized too.
-    await expect(page.locator(".computer-icon-folder-apps"))
+    await expect(page.locator(".computer-icon-folder-utilities"))
       .toHaveAttribute("title", strings.computerFolderOpenHint);
 
     // Netscape is a product name and stays in English on purpose, in every

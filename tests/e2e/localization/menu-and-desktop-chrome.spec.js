@@ -71,10 +71,10 @@ for (const { code, buttonId } of LANGUAGES) {
     await page.locator("#desktopComputerHotspot").click();
     await expect(page.locator(".computer-window .desktop-window-title")).toHaveText(strings.computerWindowTitle);
     await expect(page.locator(".computer-icon-notes")).toHaveAttribute("aria-label", strings.computerNotesIconLabel);
-    // Paint moved into the Apps folder, so its icon is only on screen once the
+    // Paint moved into the Utilities folder, so its icon is only on screen once the
     // folder is open.
-    await page.locator(".computer-icon-folder-apps").dblclick();
-    await expect(page.locator(".caveos-folder-apps-window")).toBeVisible();
+    await page.locator(".computer-icon-folder-utilities").dblclick();
+    await expect(page.locator(".caveos-folder-utilities-window")).toBeVisible();
     await expect(page.locator(".computer-icon-paint")).toHaveAttribute("aria-label", strings.computerPaintIconLabel);
     await expect(page.locator(".computer-clock-panel")).toHaveAttribute("aria-label", strings.openMainMenuAriaLabel);
     await expect(page.locator(".computer-clock-hint")).toHaveText(strings.computerMenuHint);

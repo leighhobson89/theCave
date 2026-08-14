@@ -56,10 +56,10 @@ test("every open window kind re-titles and re-labels its close button on a mid-s
   await clickDirectly("#desktopFacsimileHotspot");
   await clickDirectly("#desktopComputerHotspot");
   await clickDirectly(".computer-icon-notes");
-  // Paint is inside the Apps folder now, and a folder needs a genuine double
+  // Paint is inside the Utilities folder now, and a folder needs a genuine double
   // click — element.click() would not open it.
-  await page.locator(".computer-icon-folder-apps").dblclick();
-  await expect(page.locator(".caveos-folder-apps-window")).toBeVisible();
+  await page.locator(".computer-icon-folder-utilities").dblclick();
+  await expect(page.locator(".caveos-folder-utilities-window")).toBeVisible();
   await clickDirectly(".computer-icon-paint");
   await clickDirectly(".computer-icon-netscape");
 

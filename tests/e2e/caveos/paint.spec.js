@@ -202,7 +202,7 @@ test("Paint's canvas and default pen follow the current theme", async ({ page })
   // picks up the new palette.
   await page.locator(".caveos-paint-window .story-window-close").click();
   await selectCaveOsTheme(page, "redmond");
-  await page.locator(".caveos-folder-apps-window .computer-icon-paint").click();
+  await page.locator(".caveos-folder-utilities-window .computer-icon-paint").click();
   await expect(page.locator(".caveos-paint-window")).toBeVisible();
 
   const redmondSetup = await readPaintSetup();

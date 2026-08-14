@@ -158,6 +158,15 @@ import {
 } from "./saveLoadGame.js";
 import { createWebContentManager } from "./webContentManager.js";
 import {
+  addEchotrailFileName,
+  getEchotrailAddedFileNames,
+  resetEchotrailAddedFileNames,
+} from "./constantsAndGlobalVars.js";
+import {
+  buildEchotrailLibrary,
+  normalizeEchotrailFileName,
+} from "./echotrailManager.js";
+import {
   appendDelimitedLinkText,
   createContentDivider,
   createImageGallery,
@@ -180,8 +189,14 @@ const snakeWindowContentRefs = new WeakMap();
 const minesweeperWindowContentRefs = new WeakMap();
 const sudokuWindowContentRefs = new WeakMap();
 const tetrisWindowContentRefs = new WeakMap();
+const echotrailWindowContentRefs = new WeakMap();
 const facsimileWindowContentRefs = new WeakMap();
 const progressEvidenceWindowContentRefs = new WeakMap();
+// Track lengths, keyed by source path, read once from each file's metadata and
+// kept for the rest of the session. Module-level rather than per-window so
+// closing and reopening the library does not re-read six files; the duration of
+// an mp3 cannot change while the game runs.
+const echotrailDurationsBySource = new Map();
 const EVIDENCE_STORAGE_KEYS = getEvidenceStorageKeys();
 let debugWindowController = null;
 const recordOpenFaxTriggers = new Map();
@@ -1379,9 +1394,14 @@ function beginNewGame() {
   resetNotesPagesState(localize("notesPageDefaultTitlePrefix", getLanguage()));
   resetPaintPagesState(localize("paintPageDefaultTitlePrefix", getLanguage()));
   resetAshtrayState();
-  // A new game is a fresh machine: the OS goes back to its factory look.
+  // A new game is a fresh machine: the OS goes back to its factory look, and
+  // the media library back to the six tracks that ship on it.
   resetCaveOsTheme();
   refreshCaveOsTheme();
+  resetEchotrailAddedFileNames();
+  audioManager.refreshGameMusicTracks(getEchotrailAddedFileNames());
+  audioManager.stopEchotrailPlayback();
+  refreshOpenEchotrailWindows();
   resetFacsimileState();
   resetProgressEvidence();
   // Empties every frame on the corkboard. The frames themselves are content and
@@ -1488,6 +1508,10 @@ async function restoreStickySaveIntoGame() {
   initializeProgressEvidenceEnvelopeDrag();
   applyProgressEvidenceEnvelopePosition();
   refreshCaveOsTheme();
+  // The loaded save may name files the rotation has never seen, so the eligible
+  // track list is re-derived before the background music is started below.
+  audioManager.refreshGameMusicTracks(getEchotrailAddedFileNames());
+  refreshOpenEchotrailWindows();
   audioManager.syncFromSavedPreferences();
   refreshAudioControlsDisplay();
   setGameInProgress(true);
@@ -2172,11 +2196,18 @@ const DESKTOP_WINDOW_LOCALIZATION_BY_KIND = {
     closeButtonAriaLabelKey: "closeTetrisWindowAriaLabel",
     refresh: refreshTetrisWindowContent,
   },
+  // Titled with a literal rather than a key: ECHOTRAIL is the machine's own
+  // branding, in the same category as Netscape below.
+  "computer-echotrail": {
+    title: "ECHOTRAIL",
+    closeButtonAriaLabelKey: "closeEchotrailWindowAriaLabel",
+    refresh: refreshEchotrailWindowContent,
+  },
   // The folder windows re-title, but their contents are icons rebuilt from
   // scratch every time the folder opens, so there is nothing to refresh.
-  "computer-folder-apps": {
-    titleKey: "computerAppsFolderLabel",
-    closeButtonAriaLabelKey: "closeAppsFolderWindowAriaLabel",
+  "computer-folder-utilities": {
+    titleKey: "computerUtilitiesFolderLabel",
+    closeButtonAriaLabelKey: "closeUtilitiesFolderWindowAriaLabel",
   },
   "computer-folder-games": {
     titleKey: "computerGamesFolderLabel",
@@ -2243,6 +2274,12 @@ function refreshSudokuWindowContent(windowController) {
 
 function refreshTetrisWindowContent(windowController) {
   tetrisWindowContentRefs.get(windowController)?.relocalize?.();
+}
+
+// ECHOTRAIL's column headings, file-type descriptions and transport labels are
+// localized — and two of those are sort keys, so this can reorder the list.
+function refreshEchotrailWindowContent(windowController) {
+  echotrailWindowContentRefs.get(windowController)?.relocalize?.();
 }
 
 function refreshOpenWindowLocalization() {
@@ -2470,18 +2507,22 @@ function createComputerWindowContentElements() {
 
   const languageCode = getLanguage();
   const notesIcon = createIconButton(localize("computerNotesIconLabel", languageCode), "computer-icon-notes");
+  // ECHOTRAIL is the machine's own media library, so — like CAVE OS itself and
+  // like Netscape — its name is branding and stays in English in every
+  // language. Only the window's furniture around it is localized.
+  const echotrailIcon = createIconButton("ECHOTRAIL", "computer-icon-echotrail");
   const netscapeIcon = createIconButton("Netscape", "computer-icon-netscape");
 
   // Folders, not apps: these open on a double click (see the handlers in
   // openComputerWindow) rather than the single click every app icon uses. The
   // hint is carried as a title so the tooltip layer explains the difference on
   // hover rather than leaving the player to discover it.
-  const appsFolderIcon = createIconButton(
-    localize("computerAppsFolderLabel", languageCode),
+  const utilitiesFolderIcon = createIconButton(
+    localize("computerUtilitiesFolderLabel", languageCode),
     "computer-icon-folder"
   );
-  appsFolderIcon.classList.add("computer-icon-folder-apps");
-  appsFolderIcon.title = localize("computerFolderOpenHint", languageCode);
+  utilitiesFolderIcon.classList.add("computer-icon-folder-utilities");
+  utilitiesFolderIcon.title = localize("computerFolderOpenHint", languageCode);
 
   const gamesFolderIcon = createIconButton(
     localize("computerGamesFolderLabel", languageCode),
@@ -2522,17 +2563,18 @@ function createComputerWindowContentElements() {
 
   clockPanel.append(analogClock, dateText, clockHint);
 
-  // Folders first, then the two loose apps. All four sit on one row wherever
+  // Folders first, then the three loose apps. All five sit on one row wherever
   // there is room for them; the grid only wraps on a screen too narrow to hold
-  // four columns (see .computer-icons-grid in styles.css).
-  iconsGrid.append(appsFolderIcon, gamesFolderIcon, notesIcon, netscapeIcon);
+  // five columns (see .computer-icons-grid in styles.css).
+  iconsGrid.append(utilitiesFolderIcon, gamesFolderIcon, notesIcon, echotrailIcon, netscapeIcon);
   container.append(header, subHeader, iconsGrid, clockPanel);
 
   const refs = {
     container,
     notesIcon,
+    echotrailIcon,
     netscapeIcon,
-    appsFolderIcon,
+    utilitiesFolderIcon,
     gamesFolderIcon,
     clockPanel,
     dateText,
@@ -3326,6 +3368,539 @@ function createComputerCalculatorWindowContentElements() {
         }
       });
       renderDisplay();
+    },
+  };
+}
+
+// ECHOTRAIL — the machine's media library, in the "Details" view a 1996 file
+// explorer would have used: a small icon per row and everything else given over
+// to the columns.
+//
+// Two things here are worth knowing before reading the code.
+//
+// The rows are *derived*, never stored. What a file is called, who it is
+// credited to and whether the game's own music may play it are all decided by
+// echotrailManager.js from the filename alone, so a track added by a story
+// trigger ten hours in goes through exactly the same rules as the six that ship
+// with the machine.
+//
+// Playback is owned by audioManager, not by this window. That is deliberate: a
+// track the player chose keeps playing when they close the library and get on
+// with the game, which is the whole point of having one. Reopening the window
+// re-attaches to whatever is already playing rather than starting again.
+function createComputerEchotrailWindowContentElements() {
+  const languageCode = getLanguage();
+
+  // Durations are read from the files themselves, and cached across window
+  // openings — the metadata for a track cannot change while the game runs, and
+  // re-reading six files every time the library opens is wasted work.
+  const container = document.createElement("div");
+  container.classList.add("caveos-echotrail-app");
+
+  /* --- transport ------------------------------------------------------- */
+
+  const transport = document.createElement("div");
+  transport.classList.add("caveos-echotrail-transport");
+
+  const createTransportButton = (className, glyph, ariaLabelKey) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("caveos-echotrail-button", className);
+    button.setAttribute("aria-label", localize(ariaLabelKey, languageCode));
+    button.dataset.ariaLabelKey = ariaLabelKey;
+
+    const glyphElement = document.createElement("span");
+    glyphElement.classList.add("caveos-echotrail-button-glyph");
+    glyphElement.setAttribute("aria-hidden", "true");
+    glyphElement.textContent = glyph;
+
+    button.appendChild(glyphElement);
+    return button;
+  };
+
+  const previousButton = createTransportButton(
+    "caveos-echotrail-previous",
+    "◀◀",
+    "echotrailPreviousAriaLabel"
+  );
+  const playButton = createTransportButton(
+    "caveos-echotrail-play",
+    "▶",
+    "echotrailPlayAriaLabel"
+  );
+  const nextButton = createTransportButton(
+    "caveos-echotrail-next",
+    "▶▶",
+    "echotrailNextAriaLabel"
+  );
+
+  const nowPlaying = document.createElement("div");
+  nowPlaying.classList.add("caveos-echotrail-now-playing");
+
+  transport.append(previousButton, playButton, nextButton, nowPlaying);
+
+  /* --- the details list ------------------------------------------------ */
+
+  const listShell = document.createElement("div");
+  listShell.classList.add("caveos-echotrail-list-shell");
+
+  const table = document.createElement("table");
+  table.classList.add("caveos-echotrail-list");
+  table.setAttribute("aria-label", localize("echotrailLibraryAriaLabel", languageCode));
+
+  // Every column sorts. `sortValue` is what the comparison actually runs on,
+  // which is not always what the cell shows: Length sorts on seconds so 9:59
+  // comes before 10:00, and Author sorts on the rendered text so the localized
+  // "unknown" groups with itself in whatever language is in play.
+  const COLUMNS = [
+    { id: "name", labelKey: "echotrailColumnName" },
+    { id: "length", labelKey: "echotrailColumnLength", numeric: true },
+    { id: "author", labelKey: "echotrailColumnAuthor" },
+    { id: "type", labelKey: "echotrailColumnFileType" },
+  ];
+
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  const headerCellsById = new Map();
+
+  COLUMNS.forEach((column) => {
+    const headerCell = document.createElement("th");
+    headerCell.scope = "col";
+    headerCell.classList.add("caveos-echotrail-column", `caveos-echotrail-column-${column.id}`);
+
+    // A real button inside the header, so the column is reachable and operable
+    // from the keyboard rather than being a click-only affordance.
+    const headerButton = document.createElement("button");
+    headerButton.type = "button";
+    headerButton.classList.add("caveos-echotrail-column-button");
+    headerButton.dataset.column = column.id;
+
+    const headerLabel = document.createElement("span");
+    headerLabel.classList.add("caveos-echotrail-column-label");
+    headerLabel.textContent = localize(column.labelKey, languageCode);
+
+    // The sort arrow. Hidden from assistive tech, which reads aria-sort on the
+    // header cell instead and would otherwise announce the glyph as well.
+    const headerArrow = document.createElement("span");
+    headerArrow.classList.add("caveos-echotrail-column-arrow");
+    headerArrow.setAttribute("aria-hidden", "true");
+
+    headerButton.append(headerLabel, headerArrow);
+    headerCell.appendChild(headerButton);
+    headerRow.appendChild(headerCell);
+    headerCellsById.set(column.id, { headerCell, headerLabel, headerArrow, labelKey: column.labelKey });
+  });
+
+  thead.appendChild(headerRow);
+
+  const tbody = document.createElement("tbody");
+  tbody.classList.add("caveos-echotrail-rows");
+
+  table.append(thead, tbody);
+  listShell.appendChild(table);
+
+  container.append(transport, listShell);
+
+  /* --- state ------------------------------------------------------------ */
+
+  let sortColumnId = "name";
+  let sortAscending = true;
+  // The filename the player last clicked. Distinct from what is playing: the
+  // player can line up a row and press Play, exactly as in a file explorer.
+  let selectedFileName = "";
+  let rowsByFileName = new Map();
+  let unsubscribeFromAudio = null;
+
+  const currentLanguage = () => getLanguage();
+
+  const localizeFileType = (entry) => localize(
+    entry.kind === "video" ? "echotrailFileTypeVideo" : "echotrailFileTypeAudio",
+    currentLanguage()
+  );
+
+  const localizeAuthor = (entry) => entry.author
+    || localize("echotrailUnknownAuthor", currentLanguage());
+
+  // mm:ss, or the placeholder while the file's metadata is still loading. A
+  // track over an hour long would read 61:30 rather than 1:01:30, which is what
+  // the era's players did and is unambiguous for anything in this library.
+  const formatLength = (seconds) => {
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      return localize("echotrailLengthUnknown", currentLanguage());
+    }
+
+    const wholeSeconds = Math.round(seconds);
+    const minutes = Math.floor(wholeSeconds / 60);
+    return `${minutes}:${String(wholeSeconds % 60).padStart(2, "0")}`;
+  };
+
+  const readLibrary = () => buildEchotrailLibrary(getEchotrailAddedFileNames());
+
+  const sortValueFor = (entry, columnId) => {
+    if (columnId === "length") {
+      const duration = echotrailDurationsBySource.get(entry.sourcePath);
+      // Unknown lengths sort to the end in both directions rather than
+      // pretending to be zero, which would park them at the top of an
+      // ascending sort as though they were the shortest tracks.
+      return Number.isFinite(duration) ? duration : Number.POSITIVE_INFINITY;
+    }
+
+    if (columnId === "author") {
+      return localizeAuthor(entry).toLocaleLowerCase(currentLanguage());
+    }
+
+    if (columnId === "type") {
+      return localizeFileType(entry).toLocaleLowerCase(currentLanguage());
+    }
+
+    return entry.displayName.toLocaleLowerCase(currentLanguage());
+  };
+
+  const sortedLibrary = () => {
+    const entries = readLibrary();
+    const column = COLUMNS.find(({ id }) => id === sortColumnId) || COLUMNS[0];
+
+    return entries.sort((first, second) => {
+      const firstValue = sortValueFor(first, column.id);
+      const secondValue = sortValueFor(second, column.id);
+
+      let comparison;
+      if (column.numeric) {
+        comparison = firstValue === secondValue ? 0 : (firstValue < secondValue ? -1 : 1);
+      } else {
+        comparison = String(firstValue).localeCompare(String(secondValue), currentLanguage());
+      }
+
+      // Ties fall back to the display name, so a re-sort on a column full of
+      // equal values (Author, with one house artist) is stable and does not
+      // shuffle the rows about under the player.
+      if (comparison === 0) {
+        return first.displayName.localeCompare(second.displayName, currentLanguage());
+      }
+
+      return sortAscending ? comparison : -comparison;
+    });
+  };
+
+  /* --- rendering -------------------------------------------------------- */
+
+  // Kicks off a metadata-only load for any track whose length is still unknown,
+  // and repaints the affected cell when it arrives. Metadata-only means the
+  // browser fetches the header rather than the whole file.
+  const ensureDurationsLoaded = (entries) => {
+    entries.forEach((entry) => {
+      if (echotrailDurationsBySource.has(entry.sourcePath)) {
+        return;
+      }
+
+      // Marked before the load starts so a second render while the first is
+      // still in flight does not queue the same file again.
+      echotrailDurationsBySource.set(entry.sourcePath, null);
+
+      const probe = new Audio();
+      probe.preload = "metadata";
+      probe.addEventListener("loadedmetadata", () => {
+        echotrailDurationsBySource.set(entry.sourcePath, probe.duration);
+        const row = rowsByFileName.get(entry.fileName);
+        if (row) {
+          row.lengthCell.textContent = formatLength(probe.duration);
+        }
+        // A length arriving while the list is sorted by Length has to take its
+        // place, or the row would sit in the wrong position until the next
+        // sort.
+        if (sortColumnId === "length") {
+          renderRows();
+        }
+      });
+      probe.addEventListener("error", () => {
+        // Leaves the placeholder in place. A file whose metadata will not load
+        // is still listed and still playable — the player finds out when they
+        // press play, exactly as they would in a real file explorer.
+        echotrailDurationsBySource.set(entry.sourcePath, Number.NaN);
+      });
+      probe.src = entry.sourcePath;
+    });
+  };
+
+  const renderHeaders = () => {
+    headerCellsById.forEach(({ headerCell, headerLabel, headerArrow, labelKey }, columnId) => {
+      headerLabel.textContent = localize(labelKey, currentLanguage());
+
+      const isSorted = columnId === sortColumnId;
+      headerCell.classList.toggle("is-sorted", isSorted);
+      // aria-sort is how the sort state is actually announced; the arrow glyph
+      // below is the sighted equivalent and is hidden from assistive tech.
+      if (isSorted) {
+        headerCell.setAttribute("aria-sort", sortAscending ? "ascending" : "descending");
+        headerArrow.textContent = sortAscending ? "▲" : "▼";
+      } else {
+        headerCell.setAttribute("aria-sort", "none");
+        headerArrow.textContent = "";
+      }
+    });
+  };
+
+  const renderTransport = () => {
+    const language = currentLanguage();
+    const { source, isPlaying, isLoaded } = audioManager.getEchotrailState();
+
+    playButton.classList.toggle("is-playing", isPlaying);
+    // One button with two jobs, so its accessible name has to say which job it
+    // is currently offering rather than staying "Play" while it means "Pause".
+    const playLabelKey = isPlaying ? "echotrailPauseAriaLabel" : "echotrailPlayAriaLabel";
+    playButton.dataset.ariaLabelKey = playLabelKey;
+    playButton.setAttribute("aria-label", localize(playLabelKey, language));
+    playButton.querySelector(".caveos-echotrail-button-glyph").textContent = isPlaying ? "❚❚" : "▶";
+
+    const playingEntry = isLoaded
+      ? readLibrary().find((entry) => entry.sourcePath === source)
+      : null;
+
+    nowPlaying.textContent = playingEntry
+      ? `${localize("echotrailNowPlayingLabel", language)}: ${playingEntry.displayName}`
+      : localize("echotrailNothingPlaying", language);
+
+    rowsByFileName.forEach((row, fileName) => {
+      row.rowElement.classList.toggle(
+        "is-playing",
+        Boolean(playingEntry) && playingEntry.fileName === fileName
+      );
+    });
+  };
+
+  const renderRows = () => {
+    const entries = sortedLibrary();
+    ensureDurationsLoaded(entries);
+
+    tbody.replaceChildren();
+    rowsByFileName = new Map();
+
+    entries.forEach((entry) => {
+      const rowElement = document.createElement("tr");
+      rowElement.classList.add("caveos-echotrail-row");
+      rowElement.dataset.fileName = entry.fileName;
+      // Focusable so the list can be walked and played from the keyboard; the
+      // row is the thing being selected, so the row is what takes focus.
+      rowElement.tabIndex = 0;
+
+      const nameCell = document.createElement("td");
+      nameCell.classList.add("caveos-echotrail-cell", "caveos-echotrail-cell-name");
+
+      // The "small icon" half of Details view: everything else on the row is
+      // text, so this is the only thing carrying the file's kind visually.
+      const icon = document.createElement("span");
+      icon.classList.add("caveos-echotrail-row-icon", `is-${entry.kind}`);
+      icon.setAttribute("aria-hidden", "true");
+
+      const nameText = document.createElement("span");
+      nameText.classList.add("caveos-echotrail-row-name");
+      nameText.textContent = entry.displayName;
+
+      nameCell.append(icon, nameText);
+
+      const lengthCell = document.createElement("td");
+      lengthCell.classList.add("caveos-echotrail-cell", "caveos-echotrail-cell-length");
+      const knownDuration = echotrailDurationsBySource.get(entry.sourcePath);
+      lengthCell.textContent = formatLength(knownDuration);
+
+      const authorCell = document.createElement("td");
+      authorCell.classList.add("caveos-echotrail-cell", "caveos-echotrail-cell-author");
+      authorCell.textContent = localizeAuthor(entry);
+
+      const typeCell = document.createElement("td");
+      typeCell.classList.add("caveos-echotrail-cell", "caveos-echotrail-cell-type");
+      typeCell.textContent = localizeFileType(entry);
+
+      rowElement.append(nameCell, lengthCell, authorCell, typeCell);
+      tbody.appendChild(rowElement);
+
+      rowsByFileName.set(entry.fileName, { rowElement, lengthCell, authorCell, typeCell, nameText });
+    });
+
+    renderSelection();
+    renderTransport();
+  };
+
+  const renderSelection = () => {
+    rowsByFileName.forEach((row, fileName) => {
+      const isSelected = fileName === selectedFileName;
+      row.rowElement.classList.toggle("is-selected", isSelected);
+      row.rowElement.setAttribute("aria-selected", isSelected ? "true" : "false");
+    });
+  };
+
+  /* --- playback --------------------------------------------------------- */
+
+  const playEntry = (entry) => {
+    if (!entry) {
+      return;
+    }
+
+    selectedFileName = entry.fileName;
+    audioManager.onUserGesture();
+    audioManager.playEchotrailTrack(entry.sourcePath);
+    renderSelection();
+  };
+
+  // Which row the transport treats as "here": what is playing if anything is,
+  // otherwise what the player has selected. Falls back to the top of the list
+  // so the very first press of Play or Next does something sensible.
+  const currentIndex = (entries) => {
+    const { source, isLoaded } = audioManager.getEchotrailState();
+    if (isLoaded) {
+      const playingIndex = entries.findIndex((entry) => entry.sourcePath === source);
+      if (playingIndex !== -1) {
+        return playingIndex;
+      }
+    }
+
+    return entries.findIndex((entry) => entry.fileName === selectedFileName);
+  };
+
+  // Steps through the list *as currently sorted*, which is what the player is
+  // looking at — sorting by Author and pressing Next has to follow that order,
+  // not the underlying file order.
+  const step = (offset) => {
+    const entries = sortedLibrary();
+    if (!entries.length) {
+      return;
+    }
+
+    const index = currentIndex(entries);
+    const nextIndex = index === -1
+      ? (offset > 0 ? 0 : entries.length - 1)
+      : (index + offset + entries.length) % entries.length;
+
+    playEntry(entries[nextIndex]);
+  };
+
+  /* --- wiring ----------------------------------------------------------- */
+
+  headerCellsById.forEach(({ headerCell }, columnId) => {
+    headerCell.querySelector(".caveos-echotrail-column-button").addEventListener("click", () => {
+      audioManager.onUserGesture();
+      audioManager.playSfx("clickButton");
+
+      // Clicking the sorted column reverses it; clicking any other column sorts
+      // by it ascending. Exactly what an explorer of the era did.
+      if (sortColumnId === columnId) {
+        sortAscending = !sortAscending;
+      } else {
+        sortColumnId = columnId;
+        sortAscending = true;
+      }
+
+      renderHeaders();
+      renderRows();
+    });
+  });
+
+  // One listener on the body rather than one per row: the rows are rebuilt on
+  // every sort, and per-row listeners would have to be rebuilt with them.
+  tbody.addEventListener("click", (event) => {
+    const rowElement = event.target instanceof HTMLElement
+      ? event.target.closest(".caveos-echotrail-row")
+      : null;
+    if (!rowElement) {
+      return;
+    }
+
+    selectedFileName = rowElement.dataset.fileName || "";
+    renderSelection();
+  });
+
+  tbody.addEventListener("dblclick", (event) => {
+    const rowElement = event.target instanceof HTMLElement
+      ? event.target.closest(".caveos-echotrail-row")
+      : null;
+    if (!rowElement) {
+      return;
+    }
+
+    const entry = sortedLibrary().find(
+      ({ fileName }) => fileName === rowElement.dataset.fileName
+    );
+    playEntry(entry);
+  });
+
+  // Enter plays the focused row, matching the double click. Without it the list
+  // is reachable from the keyboard but not usable from it.
+  tbody.addEventListener("keydown", (event) => {
+    const rowElement = event.target instanceof HTMLElement
+      ? event.target.closest(".caveos-echotrail-row")
+      : null;
+    if (!rowElement || (event.key !== "Enter" && event.key !== " ")) {
+      return;
+    }
+
+    event.preventDefault();
+    selectedFileName = rowElement.dataset.fileName || "";
+
+    if (event.key === "Enter") {
+      const entry = sortedLibrary().find(
+        ({ fileName }) => fileName === rowElement.dataset.fileName
+      );
+      playEntry(entry);
+      return;
+    }
+
+    renderSelection();
+  });
+
+  playButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+
+    // Nothing loaded yet, so Play means "start what is selected" rather than
+    // "resume" — and with nothing selected either, it starts at the top.
+    if (!audioManager.getEchotrailState().isLoaded) {
+      const entries = sortedLibrary();
+      const index = currentIndex(entries);
+      playEntry(entries[index === -1 ? 0 : index]);
+      return;
+    }
+
+    audioManager.toggleEchotrailPlayback();
+  });
+
+  previousButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    step(-1);
+  });
+
+  nextButton.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    step(1);
+  });
+
+  // Playback the window did not initiate still has to show here: a track
+  // reaching its end and handing the music back to the game, or the library
+  // being reopened while something is already playing.
+  unsubscribeFromAudio = audioManager.addEchotrailListener(() => {
+    renderTransport();
+  });
+
+  renderHeaders();
+  renderRows();
+
+  return {
+    container,
+    // Called by the window's onClose. Only the subscription is torn down —
+    // the track itself deliberately keeps playing, because closing the library
+    // is not the same as stopping the music.
+    destroy: () => {
+      unsubscribeFromAudio?.();
+      unsubscribeFromAudio = null;
+    },
+    relocalize: () => {
+      table.setAttribute("aria-label", localize("echotrailLibraryAriaLabel", currentLanguage()));
+      [previousButton, playButton, nextButton].forEach((button) => {
+        button.setAttribute("aria-label", localize(button.dataset.ariaLabelKey, currentLanguage()));
+      });
+      renderHeaders();
+      // Re-rendered rather than patched: File Type and the unknown author are
+      // localized *and* are sort keys, so a language switch can legitimately
+      // change the row order.
+      renderRows();
     },
   };
 }
@@ -5434,14 +6009,14 @@ function createComputerNetscapeWindowContentElements() {
       viewKey: "police",
     },
     {
-      iconClass: "icon-cosmic-forge",
-      label: "Cosmic Forge",
-      viewKey: "cosmic",
-    },
-    {
       iconClass: "icon-canada-archives",
       label: "Canada Archives",
       viewKey: "archives",
+    },
+    {
+      iconClass: "icon-cosmic-forge",
+      label: "Cosmic Forge",
+      viewKey: "cosmic",
     },
   ];
 
@@ -5571,7 +6146,8 @@ const COMPUTER_APP_CLOSE_ARIA_LABEL_KEY_BY_KIND = {
   "computer-minesweeper": "closeMinesweeperWindowAriaLabel",
   "computer-sudoku": "closeSudokuWindowAriaLabel",
   "computer-tetris": "closeTetrisWindowAriaLabel",
-  "computer-folder-apps": "closeAppsFolderWindowAriaLabel",
+  "computer-echotrail": "closeEchotrailWindowAriaLabel",
+  "computer-folder-utilities": "closeUtilitiesFolderWindowAriaLabel",
   "computer-folder-games": "closeGamesFolderWindowAriaLabel",
   "computer-netscape": "closeNetscapeWindowAriaLabel",
 };
@@ -7714,6 +8290,42 @@ window.activateProgressEvidence = function activateProgressEvidenceFromGame(prog
   return activated;
 };
 
+// Adds a media file to the ECHOTRAIL library — the documented way for a story
+// trigger to put a new track on the machine.
+//
+// Takes a filename ("nightMail.mp3") or a path ending in one; a bare filename is
+// resolved against audio/music/. Returns whether the library actually changed,
+// so a trigger that fires twice, or names one of the six files already on the
+// machine, is a no-op rather than a duplicated row.
+//
+// What the new file is *called* is not this function's business: a file named
+// backgroundMusic_<number>.mp3 joins the authored library under its invented
+// title and becomes eligible for the in-game music rotation, and anything else
+// is listed under its own filename and stays out of the rotation for good. Both
+// halves of that rule live in echotrailManager.js.
+window.addAudioToEchotrail = function addAudioToEchotrail(fileName) {
+  const added = addEchotrailFileName(fileName);
+  if (!added) {
+    return false;
+  }
+
+  // The rotation is rebuilt rather than appended to, so it always agrees with
+  // the library the player can see.
+  audioManager.refreshGameMusicTracks(getEchotrailAddedFileNames());
+  refreshOpenEchotrailWindows();
+  return true;
+};
+
+// Any open library window rebuilds its rows. Kept separate from the trigger
+// above so a save being loaded can reuse it.
+function refreshOpenEchotrailWindows() {
+  activeDesktopWindows.forEach((windowController) => {
+    if (desktopWindowKinds.get(windowController) === "computer-echotrail") {
+      echotrailWindowContentRefs.get(windowController)?.relocalize?.();
+    }
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Progress timeline events — the dated frames pinned to the corkboard
 //
@@ -8951,10 +9563,10 @@ function openComputerWindow() {
 
   // What each folder contains. Order here is the order the icons appear in.
   const FOLDER_DEFINITIONS = {
-    apps: {
-      kind: "computer-folder-apps",
-      titleKey: "computerAppsFolderLabel",
-      className: "caveos-folder-apps-window",
+    utilities: {
+      kind: "computer-folder-utilities",
+      titleKey: "computerUtilitiesFolderLabel",
+      className: "caveos-folder-utilities-window",
       contents: [
         { labelKey: "computerPaintIconLabel", iconClassName: "computer-icon-paint", open: openPaintApp },
         { labelKey: "computerCalculatorIconLabel", iconClassName: "computer-icon-calculator", open: openCalculatorApp },
@@ -9034,10 +9646,10 @@ function openComputerWindow() {
   // Folders open on a double click, the way folders on a 1996 desktop did.
   // `dblclick` is used rather than counting clicks by hand so the browser's own
   // (and the platform's) double-click timing applies.
-  contentRefs.appsFolderIcon.addEventListener("dblclick", () => {
+  contentRefs.utilitiesFolderIcon.addEventListener("dblclick", () => {
     audioManager.onUserGesture();
     audioManager.playSfx("clickButton");
-    openFolderWindow("apps");
+    openFolderWindow("utilities");
   });
 
   contentRefs.gamesFolderIcon.addEventListener("dblclick", () => {
@@ -9049,7 +9661,7 @@ function openComputerWindow() {
   // A folder icon is still a button, so Enter and Space have to open it too —
   // a double click is not something a keyboard can produce.
   [
-    { icon: contentRefs.appsFolderIcon, folderId: "apps" },
+    { icon: contentRefs.utilitiesFolderIcon, folderId: "utilities" },
     { icon: contentRefs.gamesFolderIcon, folderId: "games" },
   ].forEach(({ icon, folderId }) => {
     icon.addEventListener("keydown", (event) => {
@@ -9062,6 +9674,38 @@ function openComputerWindow() {
       audioManager.playSfx("clickButton");
       openFolderWindow(folderId);
     });
+  });
+
+  contentRefs.echotrailIcon.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickButton");
+
+    if (toggleExistingWindowsByKind("computer-echotrail")) {
+      return;
+    }
+
+    const echotrailRefs = createComputerEchotrailWindowContentElements();
+    const echotrailWindow = openComputerAppWindow({
+      parentElement: contentRefs.container,
+      kind: "computer-echotrail",
+      title: "ECHOTRAIL",
+      classNames: ["caveos-echotrail-window"],
+      contentNode: echotrailRefs.container,
+      appWindowSet: contentRefs.appWindows,
+      resizable: true,
+      showScrollbar: false,
+      // Wide and shallow: four columns of file details want horizontal room far
+      // more than they want height.
+      widthRatio: 0.78,
+      heightRatio: 0.66,
+      // Drops the audio subscription. The track itself keeps playing on
+      // purpose — closing the library is not the same as stopping the music.
+      onBeforeClose: () => echotrailRefs.destroy(),
+    });
+
+    if (echotrailWindow) {
+      echotrailWindowContentRefs.set(echotrailWindow, echotrailRefs);
+    }
   });
 
   contentRefs.netscapeIcon.addEventListener("click", () => {

@@ -44,7 +44,7 @@ a one-cell shift in `minX` is evidence a real key was handled. The rotation
 check hunts across several pieces because the square tetromino looks identical
 rotated.
 
-The icon-shape test opens the **two-icon Apps folder** as well as Games. The
+The icon-shape test opens the **two-icon Utilities folder** as well as Games. The
 `1fr` tracks that caused the original bug stretch icons only when a folder holds
 too few to fill the row, so a test that opened only the four-icon Games folder
 would pass with the fix reverted — that was checked, not assumed.

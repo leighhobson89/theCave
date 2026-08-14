@@ -1,4 +1,4 @@
-// The CaveOS desktop's icon row and its Apps/Games folder system.
+// The CaveOS desktop's icon row and its Utilities/Games folder system.
 //
 // Folders open on a real double click and the icons inside open on a real
 // single click, because that difference in gesture IS the feature — a test that
@@ -9,15 +9,15 @@ const localization = require("../../../localization.json");
 const { startNewGame, openComputer } = require("../../support/game-helpers");
 const {
   CAVEOS_LANGUAGES,
-  appsFolderWindow,
+  utilitiesFolderWindow,
   desktopIcons,
   gamesFolderWindow,
-  openAppsFolder,
+  openUtilitiesFolder,
   openGamesFolder,
   startNewGameInLanguage,
 } = require("../../support/caveos-helpers");
 
-test("the desktop holds the two folders then Notes and Netscape, and nothing else", async ({ page }) => {
+test("the desktop holds the two folders then Notes, ECHOTRAIL and Netscape, and nothing else", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
 
@@ -25,11 +25,12 @@ test("the desktop holds the two folders then Notes and Netscape, and nothing els
     (icons) => icons.map((icon) => icon.className)
   );
 
-  expect(iconClasses).toHaveLength(4);
-  expect(iconClasses[0]).toContain("computer-icon-folder-apps");
+  expect(iconClasses).toHaveLength(5);
+  expect(iconClasses[0]).toContain("computer-icon-folder-utilities");
   expect(iconClasses[1]).toContain("computer-icon-folder-games");
   expect(iconClasses[2]).toContain("computer-icon-notes");
-  expect(iconClasses[3]).toContain("computer-icon-netscape");
+  expect(iconClasses[3]).toContain("computer-icon-echotrail");
+  expect(iconClasses[4]).toContain("computer-icon-netscape");
 
   // Paint, Calculator and the games have all moved off the desktop.
   await expect(page.locator(".computer-desktop > .computer-icons-grid .computer-icon-paint")).toHaveCount(0);
@@ -37,7 +38,7 @@ test("the desktop holds the two folders then Notes and Netscape, and nothing els
   await expect(page.locator(".computer-desktop > .computer-icons-grid .computer-icon-snake")).toHaveCount(0);
 });
 
-test("all four desktop icons sit on one row, and only wrap when the screen is too narrow", async ({ page }) => {
+test("all five desktop icons sit on one row, and only wrap when the screen is too narrow", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
 
@@ -49,7 +50,7 @@ test("all four desktop icons sit on one row, and only wrap when the screen is to
   const tops = await iconRowTops();
   expect(new Set(tops).size).toBe(1);
 
-  // Narrow enough that four 110px columns no longer fit: the grid is expected
+  // Narrow enough that five 110px columns no longer fit: the grid is expected
   // to wrap rather than crush the icons.
   await page.setViewportSize({ width: 700, height: 800 });
   await expect.poll(async () => new Set(await iconRowTops()).size).toBeGreaterThan(1);
@@ -63,15 +64,15 @@ test("icons inside a folder keep the square shape they have on the desktop", asy
   // must match it rather than stretching into a bar across the window.
   const desktopIconBox = await page.locator(".computer-icon-notes").boundingBox();
 
-  // Both folders are checked, but Apps is the one that matters: it holds two
+  // Both folders are checked, but Utilities is the one that matters: it holds two
   // icons, and it was a sparsely filled folder that exposed the bug. Stretchy
   // 1fr tracks look fine once a folder happens to hold enough icons to fill the
   // row, so a test that only opened the four-icon Games folder would pass with
   // the fix reverted.
-  for (const openFolder of [openAppsFolder, openGamesFolder]) {
+  for (const openFolder of [openUtilitiesFolder, openGamesFolder]) {
     await openFolder(page);
-    const folderWindow = openFolder === openAppsFolder
-      ? appsFolderWindow(page)
+    const folderWindow = openFolder === openUtilitiesFolder
+      ? utilitiesFolderWindow(page)
       : gamesFolderWindow(page);
 
     const folderIconBoxes = await folderWindow
@@ -95,30 +96,30 @@ test("a single click on a folder does not open it; a double click does", async (
   await startNewGame(page);
   await openComputer(page);
 
-  await page.locator(".computer-icon-folder-apps").click();
+  await page.locator(".computer-icon-folder-utilities").click();
   // Given time to open if the wiring were wrong.
   await page.waitForTimeout(400);
-  await expect(appsFolderWindow(page)).toHaveCount(0);
+  await expect(utilitiesFolderWindow(page)).toHaveCount(0);
 
-  await openAppsFolder(page);
+  await openUtilitiesFolder(page);
 });
 
-test("the Apps folder holds Paint and Calculator, each opening on a single click", async ({ page }) => {
+test("the Utilities folder holds Paint and Calculator, each opening on a single click", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
-  await openAppsFolder(page);
+  await openUtilitiesFolder(page);
 
-  await expect(appsFolderWindow(page).locator(".desktop-window-title"))
-    .toHaveText(localization.en.computerAppsFolderLabel);
+  await expect(utilitiesFolderWindow(page).locator(".desktop-window-title"))
+    .toHaveText(localization.en.computerUtilitiesFolderLabel);
 
-  const folderIcons = appsFolderWindow(page).locator(".computer-icon");
+  const folderIcons = utilitiesFolderWindow(page).locator(".computer-icon");
   await expect(folderIcons).toHaveCount(2);
 
-  await appsFolderWindow(page).locator(".computer-icon-paint").click();
+  await utilitiesFolderWindow(page).locator(".computer-icon-paint").click();
   await expect(page.locator(".caveos-paint-window")).toBeVisible();
   await page.locator(".caveos-paint-window .story-window-close").click();
 
-  await appsFolderWindow(page).locator(".computer-icon-calculator").click();
+  await utilitiesFolderWindow(page).locator(".computer-icon-calculator").click();
   await expect(page.locator(".caveos-calculator-window")).toBeVisible();
 });
 
@@ -151,13 +152,13 @@ test("a folder icon opens from the keyboard too, since a double click cannot be 
 test("reopening a folder toggles it closed rather than stacking a second copy", async ({ page }) => {
   await startNewGame(page);
   await openComputer(page);
-  await openAppsFolder(page);
+  await openUtilitiesFolder(page);
 
-  await page.locator(".computer-icon-folder-apps").dblclick();
-  await expect(appsFolderWindow(page)).toHaveCount(0);
+  await page.locator(".computer-icon-folder-utilities").dblclick();
+  await expect(utilitiesFolderWindow(page)).toHaveCount(0);
 
-  await openAppsFolder(page);
-  await expect(appsFolderWindow(page)).toHaveCount(1);
+  await openUtilitiesFolder(page);
+  await expect(utilitiesFolderWindow(page)).toHaveCount(1);
 });
 
 for (const language of CAVEOS_LANGUAGES) {
@@ -166,16 +167,16 @@ for (const language of CAVEOS_LANGUAGES) {
     await startNewGameInLanguage(page, language.buttonId);
     await openComputer(page);
 
-    await expect(page.locator(".computer-icon-folder-apps .computer-icon-label"))
-      .toHaveText(strings.computerAppsFolderLabel);
+    await expect(page.locator(".computer-icon-folder-utilities .computer-icon-label"))
+      .toHaveText(strings.computerUtilitiesFolderLabel);
     await expect(page.locator(".computer-icon-folder-games .computer-icon-label"))
       .toHaveText(strings.computerGamesFolderLabel);
 
-    await openAppsFolder(page);
-    await expect(appsFolderWindow(page).locator(".desktop-window-title"))
-      .toHaveText(strings.computerAppsFolderLabel);
-    await expect(appsFolderWindow(page).locator(".story-window-close"))
-      .toHaveAttribute("aria-label", strings.closeAppsFolderWindowAriaLabel);
+    await openUtilitiesFolder(page);
+    await expect(utilitiesFolderWindow(page).locator(".desktop-window-title"))
+      .toHaveText(strings.computerUtilitiesFolderLabel);
+    await expect(utilitiesFolderWindow(page).locator(".story-window-close"))
+      .toHaveAttribute("aria-label", strings.closeUtilitiesFolderWindowAriaLabel);
 
     await openGamesFolder(page);
     await expect(gamesFolderWindow(page).locator(".desktop-window-title"))

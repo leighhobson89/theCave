@@ -3659,13 +3659,14 @@ button.disabled {
     left: 24px;
     top: 102px;
     display: grid;
-    /* auto-fit rather than a fixed column count: all four icons sit on one row
+    /* auto-fit rather than a fixed column count: all five icons sit on one row
        whenever the width allows it, and the row only breaks when a column can
        no longer hold its 110px minimum — i.e. on a genuinely narrow screen.
-       The width below is sized to fit four columns plus their gaps. */
+       The width below is sized to fit five columns plus their gaps
+       (5 × 110px + 4 × 16px = 614px), with headroom above that figure. */
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 1rem;
-    width: min(560px, calc(100% - 240px));
+    width: min(700px, calc(100% - 240px));
 }
 
 .computer-icon {
@@ -3947,6 +3948,38 @@ button.disabled {
     width: 7px;
     height: 7px;
     background: var(--caveos-accent);
+}
+
+/* ECHOTRAIL: a beamed pair of quavers. The two stems and the beam joining them
+   are one element with its bottom border removed — an open-bottomed rectangle is
+   exactly that shape — and the two note heads are a single ellipse repeated by
+   a box-shadow, which follows the border-radius and so comes out as a second
+   ellipse rather than a rectangle. */
+.computer-icon-echotrail-pixel {
+    position: relative;
+}
+
+.computer-icon-echotrail-pixel::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 4px;
+    width: 19px;
+    height: 15px;
+    border: 3px solid var(--caveos-fg);
+    border-bottom: 0;
+}
+
+.computer-icon-echotrail-pixel::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 16px;
+    width: 11px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--caveos-fg);
+    box-shadow: 19px 0 0 var(--caveos-fg);
 }
 
 .computer-icon-netscape-pixel {
@@ -4536,6 +4569,240 @@ button.disabled {
     object-fit: contain;
     border: 1px solid var(--caveos-border);
     image-rendering: pixelated;
+}
+
+/* ---------------------------------------------------------------------------
+   ECHOTRAIL — the media library, in a file explorer's "Details" view
+   ---------------------------------------------------------------------------
+   Built on a real <table>, which is what a details list actually is: four
+   columns of file metadata whose widths have to agree row to row. The layout is
+   the point of the view — a 16px icon and everything else given to the
+   columns — so Name takes all the slack and the other three are sized to their
+   content.
+
+   Everything is drawn from --caveos-* tokens, so the library reskins with the
+   rest of the OS rather than staying a green list on a grey desktop. */
+
+.caveos-echotrail-app {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.4rem;
+    padding: 0.3rem;
+    box-sizing: border-box;
+    font-family: var(--caveos-font);
+    color: var(--caveos-fg);
+}
+
+.caveos-echotrail-transport {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem;
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-raised);
+}
+
+.caveos-echotrail-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.6rem;
+    min-height: 1.9rem;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid var(--caveos-border-strong);
+    border-radius: var(--caveos-radius);
+    background: var(--caveos-surface-raised);
+    color: var(--caveos-fg);
+    font-family: var(--caveos-font);
+    font-size: 0.82rem;
+    cursor: pointer;
+    box-shadow:
+        inset calc(var(--caveos-bevel-width) * -1) calc(var(--caveos-bevel-width) * -1) 0 var(--caveos-bevel-dark),
+        inset var(--caveos-bevel-width) var(--caveos-bevel-width) 0 var(--caveos-bevel-light);
+}
+
+.caveos-echotrail-button:hover,
+.caveos-echotrail-button:focus-visible {
+    background: var(--caveos-surface-hover);
+}
+
+/* While a track is running the play button is showing "pause", so it is held in
+   the accent colour to read as the active control. */
+.caveos-echotrail-play.is-playing {
+    background: var(--caveos-accent);
+    color: var(--caveos-accent-fg);
+}
+
+.caveos-echotrail-now-playing {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-left: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--caveos-fg-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The list scrolls inside its own frame rather than growing the window. */
+.caveos-echotrail-list-shell {
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid var(--caveos-border);
+    background: var(--caveos-surface-sunken);
+}
+
+.caveos-echotrail-list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+/* Name takes the slack; the other three are as narrow as their content allows,
+   which is how a details view apportions its width. */
+.caveos-echotrail-column-name { width: auto; }
+.caveos-echotrail-column-length { width: 5.5rem; }
+.caveos-echotrail-column-author { width: 12rem; }
+.caveos-echotrail-column-type { width: 9rem; }
+
+/* Sticky so the columns stay readable, and named as headers so they stay put
+   while the rows scroll under them. */
+.caveos-echotrail-column {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 0;
+    text-align: left;
+    background: var(--caveos-surface-raised);
+    border-bottom: 1px solid var(--caveos-border-strong);
+    border-right: 1px solid var(--caveos-border);
+}
+
+.caveos-echotrail-column-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 0.32rem 0.45rem;
+    border: 0;
+    background: transparent;
+    color: var(--caveos-fg);
+    font-family: var(--caveos-font);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: left;
+    cursor: pointer;
+}
+
+.caveos-echotrail-column-button:hover,
+.caveos-echotrail-column-button:focus-visible {
+    background: var(--caveos-surface-hover);
+}
+
+.caveos-echotrail-column.is-sorted .caveos-echotrail-column-button {
+    color: var(--caveos-accent);
+}
+
+.caveos-echotrail-column-arrow {
+    flex: 0 0 auto;
+    font-size: 0.62rem;
+    opacity: 0.9;
+}
+
+.caveos-echotrail-row {
+    cursor: default;
+}
+
+.caveos-echotrail-row:hover {
+    background: var(--caveos-surface-hover);
+}
+
+/* Selection and playback are separate states and can both be true at once, so
+   selection paints the row and playback marks it with the accent in the Name
+   column rather than fighting over the same background. */
+.caveos-echotrail-row.is-selected {
+    background: var(--caveos-accent);
+    color: var(--caveos-accent-fg);
+}
+
+.caveos-echotrail-row.is-playing .caveos-echotrail-row-name {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.caveos-echotrail-cell {
+    padding: 0.26rem 0.45rem;
+    border-bottom: 1px solid var(--caveos-border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.caveos-echotrail-cell-name {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.caveos-echotrail-cell-length {
+    /* Right-aligned and tabular so the colons line up down the column. */
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The small icon: 14px, which is all a details row gives it. Audio is a single
+   quaver; video is a filmstrip frame. Both are drawn in the current ink so a
+   selected row's icon flips with its text. */
+.caveos-echotrail-row-icon {
+    position: relative;
+    flex: 0 0 14px;
+    width: 14px;
+    height: 14px;
+}
+
+.caveos-echotrail-row-icon.is-audio::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 1px;
+    width: 6px;
+    height: 8px;
+    border-left: 2px solid currentColor;
+    border-top: 2px solid currentColor;
+}
+
+.caveos-echotrail-row-icon.is-audio::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 8px;
+    width: 6px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.caveos-echotrail-row-icon.is-video::before {
+    content: "";
+    position: absolute;
+    inset: 1px 0;
+    border: 2px solid currentColor;
+}
+
+.caveos-echotrail-row-icon.is-video::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid currentColor;
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
 }
 
 /* ---------------------------------------------------------------------------

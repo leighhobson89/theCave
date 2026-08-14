@@ -40,17 +40,17 @@ function desktopIcons(page) {
   return page.locator(".computer-desktop > .computer-icons-grid > .computer-icon");
 }
 
-function appsFolderWindow(page) {
-  return page.locator(".caveos-folder-apps-window");
+function utilitiesFolderWindow(page) {
+  return page.locator(".caveos-folder-utilities-window");
 }
 
 function gamesFolderWindow(page) {
   return page.locator(".caveos-folder-games-window");
 }
 
-async function openAppsFolder(page) {
-  await page.locator(".computer-icon-folder-apps").dblclick();
-  await expect(appsFolderWindow(page)).toBeVisible();
+async function openUtilitiesFolder(page) {
+  await page.locator(".computer-icon-folder-utilities").dblclick();
+  await expect(utilitiesFolderWindow(page)).toBeVisible();
 }
 
 async function openGamesFolder(page) {
@@ -59,13 +59,14 @@ async function openGamesFolder(page) {
 }
 
 // The whole journey to an app that lives in a folder: open the computer, double
-// click the folder, single click the icon. `folder` is "apps" or "games".
+// click the folder, single click the icon. `folder` is "utilities" or "games".
 async function openCaveOsApp(page, { folder, iconClassName, windowClassName }) {
   await openComputer(page);
 
-  const folderWindow = folder === "apps" ? appsFolderWindow(page) : gamesFolderWindow(page);
-  if (folder === "apps") {
-    await openAppsFolder(page);
+  const isUtilities = folder === "utilities";
+  const folderWindow = isUtilities ? utilitiesFolderWindow(page) : gamesFolderWindow(page);
+  if (isUtilities) {
+    await openUtilitiesFolder(page);
   } else {
     await openGamesFolder(page);
   }
@@ -88,11 +89,11 @@ async function selectCaveOsTheme(page, themeId) {
 
 module.exports = {
   CAVEOS_LANGUAGES,
-  appsFolderWindow,
+  utilitiesFolderWindow,
   closeCaveOsWindow,
   desktopIcons,
   gamesFolderWindow,
-  openAppsFolder,
+  openUtilitiesFolder,
   openCaveOsApp,
   openGamesFolder,
   selectCaveOsTheme,
