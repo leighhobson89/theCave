@@ -70,7 +70,7 @@
       "itemId": "mysteryoldnw",
       "label": "Mysteries of the Old North West",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "10002",
@@ -142,7 +142,7 @@
       "itemId": "goldenpendant",
       "label": "GOLD PENDANT",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "20008",
@@ -158,7 +158,7 @@
       "itemId": "fairchildinsurancerecordworthingpendant",
       "label": "Fairchild insurance record 09-24-49-02-07",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "30001",
@@ -174,7 +174,7 @@
       "itemId": "henrywhitmore",
       "label": "Local Author publishes book with interesting topic",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "30003",
@@ -190,7 +190,7 @@
       "itemId": "tonyarrestedandreleased",
       "label": "Local Man Arrested in connection with Spencer disappearance",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "40001",
@@ -198,7 +198,7 @@
       "itemId": "whitmoresonsironmachineryco",
       "label": "Buy your Mining Machinery from Whitmore & Sons",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "40002",
@@ -206,7 +206,7 @@
       "itemId": "honeydewcavingclub",
       "label": "An Important and Historic Club",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "40003",
@@ -229,8 +229,8 @@
       "service": "facsimile",
       "itemId": "fax-missing-person-report",
       "label": "Missing person report fax",
-      "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceActivated": true,
+      "progressEvidenceDeveloperEnabled": true
     },
     {
       "progressEvidenceId": "50003",
@@ -254,7 +254,7 @@
       "itemId": "theArnieTragedyStory",
       "label": "Background story opened: The Arnie Tragedy",
       "progressEvidenceActivated": false,
-      "progressEvidenceDeveloperEnabled": false
+      "progressEvidenceDeveloperEnabled": true
     }
   ]
 }
