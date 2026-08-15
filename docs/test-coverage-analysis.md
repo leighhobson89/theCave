@@ -1,15 +1,17 @@
 # Test coverage analysis — theCave
 
 **Date:** 2026-08-14 (full re-audit; supersedes the 2026-08-12/13 edition)
-**Suite:** 409 Playwright tests across 54 spec files — **407 passing, 2 skipped,
-0 failing** (3m 42s, 4 workers). Up from 156 tests across 38 files at the
+**Suite:** 410 Playwright tests across 54 spec files — **408 passing, 2 skipped,
+0 failing** (3m 44s, 4 workers). Up from 156 tests across 38 files at the
 2026-08-12 audit. Two changes in this pass: `snake.spec.js` was folded into
 `games.spec.js` (see [§2](#2-organisation-and-naming)), merging its own
 per-language localization loop into the one the other three games already
 shared and dropping 5 redundant invocations with no loss of coverage; and
 `caveos/echotrail.spec.js` arrived with the new media library, adding 52; and
 `localization/facsimile-content.spec.js` gained 2 tests closing the gap found in
-§3.3. Both skips are conditional and correct: they stand down when
+§3.3; and `facsimile-system/milestone-triggers.spec.js` gained 1, for a third
+record-open fax trigger whose payload unlocks an ECHOTRAIL track rather than
+awarding evidence or credentials. Both skips are conditional and correct: they stand down when
 the current content registry has no event without artwork, and none whose
 unlock trigger is permanently unreachable — they will run again the moment
 either case exists.
@@ -96,13 +98,13 @@ Four things are worth flagging above the detail:
 | Progress evidence (milestones) | 12 | 11 | **92%** | High |
 | Web content: authentication | 11 | 10 | **91%** | High |
 | Tooltips | 10 | 9 | **90%** | Low–Medium |
-| Facsimile system | 10 | 9 | **90%** | High |
+| Facsimile system | 11 | 10 | **91%** | High |
 | Content authoring tool (API) | 13 | 12 | **92%** | Medium |
 | Notifications | 9 | 8 | **89%** | Medium |
 | Evidence system | 18 | 16 | **89%** | High |
 | Desktop ashtray | 6 | 5 | **83%** | Low |
 | Audio & settings | 10 | 8 | **80%** | Low–Medium |
-| **Overall** | **264** | **245** | **≈93%** | |
+| **Overall** | **265** | **246** | **≈93%** | |
 
 *(The previous edition counted 155 behaviours. The 89 added here are almost all
 genuinely new surface — the corkboard timeline alone accounts for 28 — rather
@@ -507,11 +509,14 @@ content.
 Login/logout on both gated sites, privilege-level gating including the Level 3
 police record, and session persistence across save/load.
 
-### 4.12 Facsimile — 90% (10 behaviours, 9 covered) 🟢
+### 4.12 Facsimile — 91% (11 behaviours, 10 covered) 🟢
 
 Alert-light states, queueing, multi-message stepping, award-exactly-once, and
-both milestone triggers including following delivered credentials through to a
-working login.
+all three milestone triggers — two following delivered credentials through to
+a working login, and a third (new this pass) whose payload is an ECHOTRAIL
+unlock rather than evidence: confirmed it does not get filed as a Reports
+entry despite arriving through the same fax machine, and confirmed the
+unlocked track never joins the in-game background rotation.
 
 **Gap, carried over unclosed:** the two scripted new-game intro faxes
 (`NEW_GAME_WELCOME_FAX_CONFIG` at 10s, `MISSING_REPORT_FAX_CONFIG` at 40s) are

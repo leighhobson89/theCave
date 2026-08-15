@@ -574,6 +574,12 @@ function sanitizeFacsimileReport(report) {
     // becoming Reports evidence by setting `awardsEvidence: false`. Defaults
     // to true so every existing caller keeps its current behaviour.
     awardsEvidence: report.awardsEvidence !== false,
+    // A filename here means reading this fax unlocks that track in ECHOTRAIL
+    // (see commitReadFacsimileReportToEvidence). Independent of
+    // awardsEvidence: a fax can deliver a track without also filing it as
+    // case evidence, which is exactly what an anonymous, off-the-record
+    // transmission should do.
+    echotrailUnlock: trimmedOr(report.echotrailUnlock, ""),
     createdAt: new Date().toISOString(),
   };
 }
@@ -731,6 +737,9 @@ function buildFacsimileReportFromConfig(config = {}) {
     storageKey: trimmedOr(config.storageKey, EVIDENCE_STORAGE_KEYS.REPORTS),
     titleKey: trimmedOr(config.titleKey, "reports"),
     awardsEvidence: config.awardsEvidence !== false,
+    // See sanitizeFacsimileReport: a filename here is unlocked in ECHOTRAIL
+    // when this fax is read, independent of whether it also awards evidence.
+    echotrailUnlock: trimmedOr(config.echotrailUnlock, ""),
     messageType: trimmedOr(config.messageType, "intel").toLowerCase(),
     notification: config?.notification && typeof config.notification === "object"
       ? {
@@ -937,6 +946,28 @@ const WHITMORE_LEVEL3_MILESTONE_FAX_CONFIG = {
   },
 };
 
+// Sent once the player has opened the archives article naming Anthony
+// Worthing as arrested-and-released — the moment the case file itself puts a
+// name next to the pendant. Not case evidence in its own right
+// (`awardsEvidence: false`): it exists purely to deliver `echotrailUnlock`,
+// putting "The Boy Who Went for Silver" into the player's library from an
+// anonymous, off-the-record sender rather than filing it as a document.
+const ECHOTRAIL_UNKNOWN_SENDER_FAX_CONFIG = {
+  id: "fax-echotrail-unknown-sender",
+  source: {
+    kind: "report-localized-catalog-entry",
+    languageAware: true,
+    catalogPathTemplate: "./assets/{lang}/reports_evidences.json",
+    entryId: "fax-echotrail-unknown-sender",
+  },
+  storageKey: EVIDENCE_STORAGE_KEYS.REPORTS,
+  titleKey: "reports",
+  evidenceName: "facsimile-echotrail-unknown-sender",
+  messageType: "system",
+  awardsEvidence: false,
+  echotrailUnlock: "boyWentForSilver.mp3",
+};
+
 // Fires a configured fax when the player opens a specific web record — e.g.
 // clicking through to a police record's detail view, as opposed to merely
 // searching for it. Complements `registerEvidenceMilestoneFaxTrigger`, which
@@ -1001,6 +1032,14 @@ function initializeWebRecordFaxTriggers() {
     websiteId: "police",
     recordId: "arthurwhitmore",
     faxConfig: WHITMORE_LEVEL3_MILESTONE_FAX_CONFIG,
+    once: true,
+    animateFeed: true,
+  });
+
+  registerRecordOpenFaxTrigger({
+    websiteId: "archives",
+    recordId: "tonyarrestedandreleased",
+    faxConfig: ECHOTRAIL_UNKNOWN_SENDER_FAX_CONFIG,
     once: true,
     animateFeed: true,
   });
@@ -1073,6 +1112,14 @@ function commitReadFacsimileReportToEvidence(report) {
   // The milestone for a fax is the machine being opened and the message
   // consumed (closing the window or stepping past it), not merely arriving.
   activateProgressEvidenceForFacsimileReport(normalizedReport.id);
+
+  // Same principle applied to ECHOTRAIL: a track a fax delivers is unlocked
+  // on read, not on arrival, exactly like everything else this function does.
+  if (normalizedReport.echotrailUnlock) {
+    if (unlockEchotrailFileName(normalizedReport.echotrailUnlock)) {
+      refreshOpenEchotrailWindows();
+    }
+  }
 
   syncFacsimileVisualState({ animateFeed: false });
   refreshOpenFacsimileWindows();
