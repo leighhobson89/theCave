@@ -8,6 +8,26 @@ const { test, expect } = require("@playwright/test");
 const localization = require("../../../localization.json");
 const { startNewGame, openFacsimile, facsimileWindow } = require("../../support/game-helpers");
 
+// The catalog behind the scripted story faxes and the two Fairchild insurance
+// standalone pages -- one JSON file per language, each entry keyed by id.
+// Unlike a fixture handed to receiveFacsimileReport() (see the tests below,
+// where the title is the caller's own literal text and must NOT move), a
+// title read from here is authored per-language content, exactly like the
+// reportText and descriptionText fields beside it, and must actually differ
+// language to language.
+const REPORTS_CATALOG_BY_LANGUAGE = {
+  en: require("../../../assets/en/reports_evidences.json"),
+  es: require("../../../assets/es/reports_evidences.json"),
+  de: require("../../../assets/de/reports_evidences.json"),
+  it: require("../../../assets/it/reports_evidences.json"),
+  fr: require("../../../assets/fr/reports_evidences.json"),
+};
+
+function catalogTitle(languageCode, entryId) {
+  const entry = REPORTS_CATALOG_BY_LANGUAGE[languageCode].entries.find(({ id }) => id === entryId);
+  return entry?.defaultTitleString;
+}
+
 const LANGUAGES = [
   { code: "en", buttonId: "btnEnglish" },
   { code: "es", buttonId: "btnSpanish" },
@@ -93,4 +113,48 @@ test("facsimile's single-pending, then empty, states localize correctly in Frenc
   await expect(facsimile.locator(".facsimile-summary")).toHaveText(strings.facsimileTransmissionMonitorOnline);
   await expect(facsimile.locator(".facsimile-report-title")).toHaveText(strings.facsimileNoNewMessages);
   await expect(nextButton).toBeDisabled();
+});
+
+// Regression coverage for a real bug: every title in reports_evidences.json
+// had been shipped as a straight copy of the English file into es/de/it/fr,
+// while the reportText and descriptionText beside each one had genuinely been
+// translated. The mismatch was invisible to the localize()-call-site audit
+// (see docs/test-coverage-analysis.md, section 3.3) because these titles are
+// authored content, not a localize() key -- a check confined to keys and
+// key-shaped literals cannot see a plain English string sitting inside a
+// per-language content file.
+//
+// This does not open the facsimile UI: the two scripted intro faxes fire only
+// off real timers the suite does not let run (see persistence's README), and
+// the credential faxes fire only off real milestones (a specific photo, a
+// specific police record) that facsimile-system/milestone-triggers.spec.js
+// already exercises, in English. Reading the catalog directly is what is
+// actually practical here, and it is enough to catch the failure that
+// happened: a title identical to English.
+test("every scripted fax's title is translated in all four non-English languages", async () => {
+  const entryIds = REPORTS_CATALOG_BY_LANGUAGE.en.entries.map(({ id }) => id);
+  expect(entryIds.length).toBeGreaterThan(0);
+
+  for (const entryId of entryIds) {
+    const englishTitle = catalogTitle("en", entryId);
+    expect(englishTitle, `${entryId} has an English title to compare against`).toBeTruthy();
+
+    for (const languageCode of ["es", "de", "it", "fr"]) {
+      const translatedTitle = catalogTitle(languageCode, entryId);
+      expect(translatedTitle, `${entryId} exists in ${languageCode}`).toBeTruthy();
+      expect(translatedTitle, `${entryId}'s ${languageCode} title must not just be the English one`)
+        .not.toBe(englishTitle);
+    }
+  }
+});
+
+// The two Whitmore faxes intentionally reuse one title in every language they
+// arrive with credentials in, which the loop above would treat as passing for
+// the wrong reason if the two ever quietly drifted apart. Pinned by exact
+// string so a future edit to either has to touch both consciously.
+test("both Whitmore credential faxes share the same title in every language", () => {
+  for (const languageCode of ["en", "es", "de", "it", "fr"]) {
+    expect(catalogTitle(languageCode, "fax-whitmore-police-credentials"))
+      .toBe(catalogTitle(languageCode, "fax-whitmore-level3-credentials"));
+  }
 });

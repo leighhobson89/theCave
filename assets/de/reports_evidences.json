@@ -2,42 +2,42 @@
   "entries": [
     {
       "id": "missingReport",
-      "defaultTitleString": "Missing Report",
+      "defaultTitleString": "Vermisstenbericht",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**NORDWEST-REITERPOLIZEI**\r\n**Dienststelle Black Pine – Distrikt Saskatchewan, Nordwest-Territorien**\r\n\r\n# ERMITTLUNG ZU EINER VERMISSTEN PERSON – FORTSCHRITTSBERICHT – DREI MONATE\r\n\r\n**Aktenzeichen:** 01-2710-00\r\n**Datum:** 27. Oktober 1901\r\n\r\n**Ort:** Ehemalige Silbermine Black Pine (Schacht B)\r\n\r\n---\r\n\r\n### Beteiligte Personen\r\n\r\n**Andrew John Spencer Geburtsdatum: 12. AUG. 1888 (12 Jahre)**\r\nLebend aufgefunden. An den erlittenen Verletzungen verstorben.\r\n\r\n**Arnold Askew Spencer Geburtsdatum: 06. NOV. 1891 (9 Jahre), genannt „Arnie“**\r\nVermisst. Vermutlich VERSTORBEN.\r\n\r\n---\r\n\r\n### Zusammenfassung\r\n\r\nBeide Jungen betraten am Nachmittag des 27. Juli 1901 den verlassenen Schacht B der ehemaligen Silbermine Black Pine.\r\n\r\nAndrew John Spencer kehrte später laut Zeugenaussagen schwer verletzt zur Spencer Farm in Black Pine zurück. Er verstarb später in seinem Wohnhaus infolge vermuteten Blutverlusts und Schocks, bestätigt durch den örtlichen Gerichtsmediziner am 28. Juli.\r\n\r\nDie Suche nach Arnold Askew Spencer dauert weiterhin an.\r\n\r\n---\r\n\r\n### Sichergestellte Beweismittel\r\n\r\n• Weißes Baumwolltaschentuch\r\n• Lackierte Brotdose aus Holz\r\n• 40 Fuß Hanfseil\r\n• Ungenzündete Strohfackel, mit Heizöl getränkt\r\n\r\n---\r\n\r\n**Fallstatus:** OFFEN – VERMISSTE PERSON, VERMUTLICH VERSTORBEN\r\n\r\n**Anmerkungen**\r\n\r\nFür die Umstände der Verletzungen von Andrew John Spencer konnte bislang keine Erklärung festgestellt werden.",
       "descriptionText": "---\r\n\r\nGerade ist ein Fax eingegangen, das eine Kopie eines Vermisstenberichts zu einem ungelösten Fall aus dem Jahr 1901 enthält!\r\n\r\nDie Lektüre fesselt Sie, und Sie beschließen, der Sache nachzugehen. Es gelingt Ihnen, online ein Foto der Höhle aus der Zeit der in diesem Bericht beschriebenen Tragödie zu finden.\r\n\r\n---\r\n"
     },
     {
       "id": "fax-welcome-arnie-tragedy",
-      "defaultTitleString": "WELCOME TO THE INVESTIGATION",
+      "defaultTitleString": "WILLKOMMEN BEI DER ERMITTLUNG",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**AKTENÜBERMITTLUNG**\r\n\r\n# WILLKOMMEN BEI DER ERMITTLUNG\r\n\r\n---\r\n\r\nSie ermitteln nun im Fall der Arnie-Spencer-Tragödie.\r\n\r\nBevor Sie irgendetwas anderes tun, lesen Sie die Hintergrundgeschichte, die vor Ihnen auf dem Schreibtisch liegt - sie fasst alles zusammen, was bisher über den Fall bekannt ist.\r\n\r\nWenn Sie sie gelesen haben, nehmen Sie sich einen Moment Zeit, um sich mit den verschiedenen Gegenständen und Werkzeugen auf dem Schreibtisch vertraut zu machen. Jedes davon wird Ihnen helfen, im Laufe der Ermittlung tiefer zu graben.\r\n\r\nViel Erfolg.\r\n\r\n---\r\n",
       "descriptionText": "Fax erhalten, das Sie bei der Ermittlung willkommen heißt."
     },
     {
       "id": "fax-whitmore-police-credentials",
-      "defaultTitleString": "MESSAGE FROM BRIAN WHITMORE",
+      "defaultTitleString": "NACHRICHT VON BRIAN WHITMORE",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# NACHRICHT VON BRIAN WHITMORE\r\n\r\n---\r\n\r\nIch wusste, dass Sie im Fall der Arnie-Spencer-Tragödie ermitteln, und dachte, Sie könnten unsere Zugangsdaten zur Polizeidatenbank gebrauchen, um Informationen über unseren Großvater zu finden.\r\n\r\nb.whitmore\r\nironVeins15\r\n\r\nZögern Sie nicht, sich bei uns zu bedanken, indem Sie unsere Website besuchen:\r\nhttp://www.whitmore-sons-iron-machinery-co.com/mining\r\n\r\n---\r\n",
       "descriptionText": "Fax von Brian Whitmore mit Zugangsdaten zur Polizeidatenbank erhalten."
     },
     {
       "id": "fax-whitmore-level3-credentials",
-      "defaultTitleString": "MESSAGE FROM BRIAN WHITMORE",
+      "defaultTitleString": "NACHRICHT VON BRIAN WHITMORE",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# NACHRICHT VON BRIAN WHITMORE\r\n\r\n---\r\n\r\nIch sollte das wahrscheinlich nicht noch einmal tun - wenn das jemand herausfindet, könnte ich echten Ärger bekommen.\r\n\r\nAber ich habe Ihre Arbeit im Auge behalten, und es ist klar, dass Sie wissen, was Sie tun. Ich möchte helfen.\r\n\r\nHier sind einige Zugangsdaten der Stufe 3, die Ihnen noch ein paar weitere Türen öffnen sollten, aber fragen Sie mich nicht, woher ich sie habe, ich könnte in Schwierigkeiten geraten, genau wie Sie:\r\n\r\nt.fairchild\r\nmapleLaw91\r\n\r\nNutzen Sie sie mit Bedacht, und noch einmal: Sie dürfen auf keinen Fall erwähnen, woher Sie sie haben!\r\n\r\n---\r\n",
       "descriptionText": "Fax von Brian Whitmore mit Zugangsdaten der Stufe 3 zur Polizeidatenbank erhalten."
     },
     {
       "id": "Insurance Record Template",
-      "defaultTitleString": "Insurance Record Template",
+      "defaultTitleString": "Versicherungsvorlage",
       "paperStyle": "report-parchment",
       "reportText": "Sie können sich schon jetzt ein Beispiel dieser Vorlage in der offenen Polizeidatenbank ansehen, um zu zeigen, wie ernst wir es mit Ihren Wertgegenständen meinen - probieren Sie dies, um unsere Vorlage zu sehen:\n\n05-33-22-02-03",
       "descriptionText": "---\nJ & T Fairchild Insurance\n\nSie können sich schon jetzt ein Beispiel dieser Vorlage in der offenen Polizeidatenbank ansehen, um zu zeigen, wie ernst wir es mit Ihren Wertgegenständen meinen:\n\n05-33-22-02-03\n\n---"
     },
     {
       "id": "Insurance Decode Book",
-      "defaultTitleString": "Insurance Decode Book",
+      "defaultTitleString": "Versicherungs-Decodierbuch",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**J & T FAIRCHILD GUTACHTER & VERSICHERUNGSMAKLER**\r\n\r\n# DECODIERBUCH FÜR VERSICHERUNGSUNTERLAGEN\r\n\r\n---\r\n\r\nJeder von uns ausgestellte Aktencode besteht aus fünf Zahlen und liest sich stets in derselben Reihenfolge: Farbe, Objekt, Name, Dokument, Route. Schlagen Sie jede Zahl unten nach, um einen Code vollständig zu entschlüsseln.\r\n\r\n### FARBINDEX\r\nNr.  Farbe\r\n1  Bernstein\r\n2  Beige\r\n3  Schwarz\r\n4  Blau\r\n5  Bronze\r\n6  Braun\r\n7  Burgunderrot\r\n8  Karmesinrot\r\n9  Gold\r\n10  Grün\r\n11  Grau\r\n12  Elfenbein\r\n13  Kastanienbraun\r\n14  Marineblau\r\n15  Orange\r\n16  Rosa\r\n17  Violett\r\n18  Rot\r\n19  Silber\r\n20  Weiß\r\n\r\n### OBJEKTINDEX\r\nNr.  Objekt\r\n1  Amulett\r\n2  Fußkettchen\r\n3  Aschenbecher\r\n4  Abzeichen\r\n5  Glocke\r\n6  Armband\r\n7  Brosche\r\n8  Büste\r\n9  Kerzenhalter\r\n10  Kandelaber\r\n11  Kelch\r\n12  Uhr\r\n13  Kamm\r\n14  Karaffe\r\n15  Figur\r\n16  Pokal\r\n17  Pokalständer\r\n18  Haarnadel\r\n19  Medaillon\r\n20  Medaille\r\n21  Spiegel\r\n22  Halskette\r\n23  Ziergegenstand\r\n24  Anhänger\r\n25  Plakette\r\n26  Taschenuhr\r\n27  Porträt\r\n28  Ring\r\n29  Zepter\r\n30  Siegel\r\n31  Signetring\r\n32  Schnupftabakdose\r\n33  Statue\r\n34  Statuette\r\n35  Krug\r\n36  Diadem\r\n37  Tablett\r\n38  Trophäe\r\n39  Vase\r\n40  Fläschchen\r\n41  Armbanduhr\r\n42  Spazierstock\r\n43  Wanduhr\r\n44  Wasserkrug\r\n45  Weinglas\r\n46  Schreibtisch\r\n47  Schreibgarnitur\r\n48  Schlüssel\r\n49  Messer\r\n50  Kiste\r\n\r\n### NAMENSINDEX\r\nIch habe diese, wie gewünscht, alphabetisch geordnet gelassen.\r\nNr.  Name\r\n1  Abbott\r\n2  Ashcroft\r\n3  Beaumont\r\n4  Blackwood\r\n5  Bradford\r\n6  Calloway\r\n7  Fairchild\r\n8  Fanning\r\n9  Farrow\r\n10  Fenwick\r\n11  Ferris\r\n12  Finch\r\n13  Fitzgerald\r\n14  Fletcher\r\n15  Forsyth\r\n16  Grant\r\n17  Greenfield\r\n18  Hamilton\r\n19  Harrington\r\n20  Hartwell\r\n21  Hawthorne\r\n22  Hollingworth\r\n23  Kensington\r\n24  Langley\r\n25  Livingston\r\n26  Marchbank\r\n27  Montgomery\r\n28  Nicholson\r\n29  Northcott\r\n30  Pembroke\r\n31  Prescott\r\n32  Radcliffe\r\n33  Redmond\r\n34  Rutherford\r\n35  Sinclair\r\n36  Somerville\r\n37  Sterling\r\n38  Thornton\r\n39  Townsend\r\n40  Underwood\r\n41  Vandermeer\r\n42  Waverley\r\n43  Wellington\r\n44  Westbrook\r\n45  Wetherby\r\n46  Whitmore\r\n47  Wilkins\r\n48  Williams\r\n49  Worthing\r\n50  Wyndham\r\n\r\n### DOKUMENTENINDEX\r\nNr.  Dokument\r\n1  Urkunde\r\n2  Versicherungspolice\r\n3  Rechnung\r\n4  Testament\r\n5  Treuhandvertrag\r\n\r\n### ROUTENINDEX\r\nNr.  Route / Durch\r\n1  Ashcroft\r\n2  Beaumont\r\n3  Blackwood\r\n4  Calloway\r\n5  Cartwright\r\n6  Chambers\r\n7  Fairchilds\r\n8  Fletcher\r\n9  Grant\r\n10  Hamilton\r\n11  Marchbank\r\n12  Pembroke\r\n13  Radcliffe\r\n14  Sinclair\r\n15  Thornton\r\n\r\n---\r\n",
       "descriptionText": "Ein gedrucktes Decodierbuch von J. & T. Fairchild Gutachter & Versicherungsmakler, das jeden nummerierten Index auflistet, der in ihren Versicherungsaktencodes verwendet wird."

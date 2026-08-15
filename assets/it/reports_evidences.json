@@ -2,42 +2,42 @@
   "entries": [
     {
       "id": "missingReport",
-      "defaultTitleString": "Missing Report",
+      "defaultTitleString": "Rapporto di Persona Scomparsa",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**POLIZIA A CAVALLO DEL NORD-OVEST**\r\n**Distaccamento di Black Pine – Distretto del Saskatchewan, Territori del Nord-Ovest**\r\n\r\n# INDAGINE SU PERSONA SCOMPARSA – RAPPORTO SULLO STATO DELL'INDAGINE – TRE MESI\r\n\r\n**Caso n.:** 01-2710-00\r\n**Data:** 27 ottobre 1901\r\n\r\n**Luogo:** Ex Miniera d'Argento Black Pine (Pozzo B)\r\n\r\n---\r\n\r\n### Persone coinvolte\r\n\r\n**Andrew John Spencer Data di nascita: 12 AGO 1888 (12 anni)**\r\nRitrovato vivo. Deceduto a causa delle ferite riportate.\r\n\r\n**Arnold Askew Spencer Data di nascita: 06 NOV 1891 (9 anni), noto come \"Arnie\"**\r\nScomparso. Presunto DECEDUTO.\r\n\r\n---\r\n\r\n### Riassunto\r\n\r\nEntrambi i ragazzi entrarono nel Pozzo B abbandonato dell'Ex Miniera d'Argento Black Pine nel pomeriggio del 27 luglio 1901.\r\n\r\nAndrew John Spencer fece successivamente ritorno alla Fattoria Spencer, a Black Pine, riportando gravi ferite secondo le testimonianze dei presenti. Morì successivamente presso la residenza per sospetta perdita di sangue e shock, come confermato dal Coroner locale il 28 luglio.\r\n\r\nLe ricerche di Arnold Askew Spencer proseguono.\r\n\r\n---\r\n\r\n### Prove recuperate\r\n\r\n• Fazzoletto bianco di cotone\r\n• Portavivande in legno verniciato\r\n• Corda di canapa di 40 piedi\r\n• Torcia di paglia non accesa impregnata di olio combustibile\r\n\r\n---\r\n\r\n**Stato del caso:** APERTO – PERSONA SCOMPARSA PRESUNTA DECEDUTA\r\n\r\n**Osservazioni**\r\n\r\nNon è stata stabilita alcuna spiegazione riguardo alle circostanze delle ferite riportate da Andrew John Spencer.",
       "descriptionText": "---\r\n\r\nÈ appena arrivato un fax con una copia di un rapporto su una persona scomparsa relativo a un caso irrisolto del 1901!\r\n\r\nLa lettura la incuriosisce e decide di indagare. Riesce a trovare online una foto della grotta scattata più o meno nel periodo della tragedia descritta in questo rapporto.\r\n\r\n---\r\n"
     },
     {
       "id": "fax-welcome-arnie-tragedy",
-      "defaultTitleString": "WELCOME TO THE INVESTIGATION",
+      "defaultTitleString": "BENVENUTO NELL'INDAGINE",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**TRASMISSIONE DEL FASCICOLO**\r\n\r\n# BENVENUTO NELL'INDAGINE\r\n\r\n---\r\n\r\nOra sta indagando sulla tragedia di Arnie Spencer.\r\n\r\nPrima di fare qualsiasi altra cosa, legga la storia di sfondo posata sulla scrivania di fronte a lei - espone tutto ciò che è noto finora sul caso.\r\n\r\nUna volta letta, si prenda un momento per familiarizzare con i vari oggetti e strumenti disposti sulla scrivania. Ognuno di essi la aiuterà ad approfondire l'indagine man mano che procede.\r\n\r\nBuona fortuna.\r\n\r\n---\r\n",
       "descriptionText": "Fax ricevuto che le dà il benvenuto nell'indagine."
     },
     {
       "id": "fax-whitmore-police-credentials",
-      "defaultTitleString": "MESSAGE FROM BRIAN WHITMORE",
+      "defaultTitleString": "MESSAGGIO DA BRIAN WHITMORE",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# MESSAGGIO DA BRIAN WHITMORE\r\n\r\n---\r\n\r\nSapevo che stava indagando sulla tragedia di Arnie Spencer e ho pensato che potesse volere usare le nostre credenziali del database della polizia per informazioni sul nostro nonno.\r\n\r\nb.whitmore\r\nironVeins15\r\n\r\nNon esiti a ringraziarci visitando il nostro sito web:\r\nhttp://www.whitmore-sons-iron-machinery-co.com/mining\r\n\r\n---\r\n",
       "descriptionText": "Fax ricevuto da Brian Whitmore con credenziali del database della polizia."
     },
     {
       "id": "fax-whitmore-level3-credentials",
-      "defaultTitleString": "MESSAGE FROM BRIAN WHITMORE",
+      "defaultTitleString": "MESSAGGIO DA BRIAN WHITMORE",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**WHITMORE & SONS IRON MACHINERY CO.**\r\n\r\n# MESSAGGIO DA BRIAN WHITMORE\r\n\r\n---\r\n\r\nProbabilmente non dovrei rifarlo - se qualcuno lo scoprisse potrei avere seri guai.\r\n\r\nMa ho tenuto d'occhio il suo lavoro, ed è chiaro che sa quello che fa. Voglio aiutarla.\r\n\r\nEcco alcune credenziali di Livello 3 che dovrebbero aprirle qualche altra porta, ma non mi chieda come le conosco, potrei finire nei guai, e lei pure:\r\n\r\nt.fairchild\r\nmapleLaw91\r\n\r\nLe usi con saggezza e, di nuovo, non deve assolutamente dire da dove le ha ottenute!\r\n\r\n---\r\n",
       "descriptionText": "Fax ricevuto da Brian Whitmore con credenziali di Livello 3 del database della polizia."
     },
     {
       "id": "Insurance Record Template",
-      "defaultTitleString": "Insurance Record Template",
+      "defaultTitleString": "Modello di Registro Assicurativo",
       "paperStyle": "report-parchment",
       "reportText": "Può vedere subito un esempio del nostro modello sul Database Aperto della Polizia, per dimostrare quanto teniamo sul serio ai suoi beni di valore; provi questo per vedere il nostro modello:\n\n05-33-22-02-03",
       "descriptionText": "---\nJ & T Fairchild Insurance\n\nPuò vedere subito un esempio del nostro modello sul Database Aperto della Polizia, per dimostrare quanto teniamo sul serio ai suoi beni di valore:\n\n05-33-22-02-03\n\n---"
     },
     {
       "id": "Insurance Decode Book",
-      "defaultTitleString": "Insurance Decode Book",
+      "defaultTitleString": "Libro di Decodifica Assicurativo",
       "paperStyle": "report-parchment",
       "reportText": "\r\n---\r\n\r\n**J & T FAIRCHILD, PERITI VALUTATORI E MEDIATORI ASSICURATIVI**\r\n\r\n# LIBRO DI DECODIFICA PER I REGISTRI ASSICURATIVI\r\n\r\n---\r\n\r\nOgni codice di registro che emettiamo è composto da cinque numeri e si legge sempre nello stesso ordine: Colore, Oggetto, Nome, Documento, Percorso. Cerchi ogni numero qui sotto per leggere un codice per intero.\r\n\r\n### INDICE DEI COLORI\r\nN.  Colore\r\n1  Ambra\r\n2  Beige\r\n3  Nero\r\n4  Blu\r\n5  Bronzo\r\n6  Marrone\r\n7  Bordeaux\r\n8  Cremisi\r\n9  Oro\r\n10  Verde\r\n11  Grigio\r\n12  Avorio\r\n13  Marrone scuro\r\n14  Blu navy\r\n15  Arancione\r\n16  Rosa\r\n17  Viola\r\n18  Rosso\r\n19  Argento\r\n20  Bianco\r\n\r\n### INDICE DEGLI OGGETTI\r\nN.  Oggetto\r\n1  Amuleto\r\n2  Cavigliera\r\n3  Posacenere\r\n4  Distintivo\r\n5  Campana\r\n6  Braccialetto\r\n7  Spilla\r\n8  Busto\r\n9  Portacandele\r\n10  Candelabro\r\n11  Calice\r\n12  Orologio\r\n13  Pettine\r\n14  Caraffa\r\n15  Statuina\r\n16  Coppa\r\n17  Portacoppa\r\n18  Forcina\r\n19  Medaglione\r\n20  Medaglia\r\n21  Specchio\r\n22  Collana\r\n23  Ornamento\r\n24  Ciondolo\r\n25  Targa\r\n26  Orologio da taschino\r\n27  Ritratto\r\n28  Anello\r\n29  Scettro\r\n30  Sigillo\r\n31  Anello con sigillo\r\n32  Tabacchiera\r\n33  Statua\r\n34  Statuetta\r\n35  Boccale\r\n36  Diadema\r\n37  Vassoio\r\n38  Trofeo\r\n39  Vaso\r\n40  Fiala\r\n41  Orologio da polso\r\n42  Bastone da passeggio\r\n43  Orologio da parete\r\n44  Brocca d'acqua\r\n45  Bicchiere da vino\r\n46  Scrivania\r\n47  Set da scrittura\r\n48  Chiave\r\n49  Coltello\r\n50  Scatola\r\n\r\n### INDICE DEI NOMI\r\nLi ho mantenuti in ordine alfabetico, come richiesto.\r\nN.  Nome\r\n1  Abbott\r\n2  Ashcroft\r\n3  Beaumont\r\n4  Blackwood\r\n5  Bradford\r\n6  Calloway\r\n7  Fairchild\r\n8  Fanning\r\n9  Farrow\r\n10  Fenwick\r\n11  Ferris\r\n12  Finch\r\n13  Fitzgerald\r\n14  Fletcher\r\n15  Forsyth\r\n16  Grant\r\n17  Greenfield\r\n18  Hamilton\r\n19  Harrington\r\n20  Hartwell\r\n21  Hawthorne\r\n22  Hollingworth\r\n23  Kensington\r\n24  Langley\r\n25  Livingston\r\n26  Marchbank\r\n27  Montgomery\r\n28  Nicholson\r\n29  Northcott\r\n30  Pembroke\r\n31  Prescott\r\n32  Radcliffe\r\n33  Redmond\r\n34  Rutherford\r\n35  Sinclair\r\n36  Somerville\r\n37  Sterling\r\n38  Thornton\r\n39  Townsend\r\n40  Underwood\r\n41  Vandermeer\r\n42  Waverley\r\n43  Wellington\r\n44  Westbrook\r\n45  Wetherby\r\n46  Whitmore\r\n47  Wilkins\r\n48  Williams\r\n49  Worthing\r\n50  Wyndham\r\n\r\n### INDICE DEI DOCUMENTI\r\nN.  Documento\r\n1  Atto\r\n2  Polizza assicurativa\r\n3  Fattura\r\n4  Testamento\r\n5  Contratto fiduciario\r\n\r\n### INDICE DEI PERCORSI\r\nN.  Percorso / Tramite\r\n1  Ashcroft\r\n2  Beaumont\r\n3  Blackwood\r\n4  Calloway\r\n5  Cartwright\r\n6  Chambers\r\n7  Fairchilds\r\n8  Fletcher\r\n9  Grant\r\n10  Hamilton\r\n11  Marchbank\r\n12  Pembroke\r\n13  Radcliffe\r\n14  Sinclair\r\n15  Thornton\r\n\r\n---\r\n",
       "descriptionText": "Un libro di decodifica stampato di J. & T. Fairchild, Periti Valutatori e Mediatori Assicurativi, che elenca ogni indice numerato utilizzato nei codici dei loro registri assicurativi."

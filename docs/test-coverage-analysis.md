@@ -1,13 +1,15 @@
 # Test coverage analysis — theCave
 
 **Date:** 2026-08-14 (full re-audit; supersedes the 2026-08-12/13 edition)
-**Suite:** 352 Playwright tests across 53 spec files — **350 passing, 2 skipped,
-0 failing** (3m 20s, 4 workers). Up from 156 tests across 38 files at the
-2026-08-12 audit. `snake.spec.js` was folded into `games.spec.js` in this pass
-(see [§2](#2-organisation-and-naming)), merging its own per-language
-localization loop into the one the other three games already shared and
-dropping 5 redundant test invocations with no loss of coverage. Both skips are
-conditional and correct: they stand down when
+**Suite:** 409 Playwright tests across 54 spec files — **407 passing, 2 skipped,
+0 failing** (3m 42s, 4 workers). Up from 156 tests across 38 files at the
+2026-08-12 audit. Two changes in this pass: `snake.spec.js` was folded into
+`games.spec.js` (see [§2](#2-organisation-and-naming)), merging its own
+per-language localization loop into the one the other three games already
+shared and dropping 5 redundant invocations with no loss of coverage; and
+`caveos/echotrail.spec.js` arrived with the new media library, adding 52; and
+`localization/facsimile-content.spec.js` gained 2 tests closing the gap found in
+§3.3. Both skips are conditional and correct: they stand down when
 the current content registry has no event without artwork, and none whose
 unlock trigger is permanently unreachable — they will run again the moment
 either case exists.
@@ -30,10 +32,10 @@ One line per `tests/e2e/` folder, plus the API-only content authoring tool under
 | 🟢 | `quick-login` | **100%** | Complete. Still the model the rest of the suite looks like. |
 | 🟢 | `desktop-window-chrome` | **100%** | Drag/resize/clamp/focus-stacking/carousel API, all driven directly. |
 | 🟢 | `web-content-search-records` | **100%** | All 25 authored records opened; detail fields, galleries, empty states. |
-| 🟢 | `caveos` | **95%** | New this pass — the whole computer in one folder, 8 specs. |
+| 🟢 | `caveos` | **95%** | The whole computer in one folder, 9 specs — now including ECHOTRAIL. |
 | 🟢 | `progress-timeline` | **93%** | New since the last audit. The corkboard, the envelope, real drag-and-drop. |
 | 🟢 | `persistence` | **93%** | Save/load/sticky/resume, autosave, corrupt-save recovery. |
-| 🟢 | `localization` | **93%** | 262 keys × 5 languages, zero missing, zero hardcoded strings found. |
+| 🟢 | `localization` | **93%** | 282 keys × 5 languages, zero missing keys. One hardcoded English string found and fixed. |
 | 🟢 | `viewport-scene-navigation` | **92%** | Zoom, pan, clamping, the noticeboard scene, and camera reset on entry. |
 | 🟢 | `progress-evidence` | **92%** | New since the last audit. Activation, triggers, generated definitions. |
 | 🟢 | `web-content-authentication` | **91%** | Login/logout, privilege gating, session persistence. |
@@ -55,14 +57,14 @@ The suite is now **broad as well as deep**. The 2026-08-12 audit found roughly
 half the application surface untested; the 2026-08-13 passes closed those
 clusters; this pass audits a codebase that has grown substantially since — the
 noticeboard corkboard timeline, the progress evidence milestone system, the
-tooltip layer, the CaveOS folder system, the theme picker, and five apps inside
-the OS (Calculator plus four games) all post-date the previous report. Every one
-of them arrived with tests, so the headline number moved very little while the
+tooltip layer, the CaveOS folder system, the theme picker, and six apps inside
+the OS (Calculator, ECHOTRAIL and four games) all post-date the previous
+report. Every one of them arrived with tests, so the headline number moved very little while the
 surface underneath it grew by more than half.
 
-Three things are worth flagging above the detail:
+Four things are worth flagging above the detail:
 
-1. **`ui.js` has grown from 5,520 to 9,139 lines** — now 60% of the application
+1. **`ui.js` has grown from 5,520 to 9,784 lines** — now 61% of the application
    in one file. It was called out as the single largest blind spot last time and
    it has got larger, not smaller. Nothing here is *evidence* of a problem; the
    point is that no one can tell, because there is still no line coverage.
@@ -71,9 +73,14 @@ Three things are worth flagging above the detail:
    they are now one `tests/e2e/caveos/` folder with subject-only spec names, and
    the same naming rule was applied to every other folder (see
    [§2](#2-organisation-and-naming)).
-3. **Five specs were found stale** during the reorganisation — they still
+3. **The `Apps` folder is now `Utilities`**, renamed through the label, the five
+   translations, the window kind, the CSS classes and the test helpers rather
+   than only on screen — the codebase's naming discipline is the reason the
+   rename was worth doing properly rather than leaving `computer-folder-apps`
+   behind a label that says something else.
+4. **Five specs were found stale** during the reorganisation — they still
    reached for Paint and Calculator icons on the CaveOS desktop after those
-   icons moved into the Apps folder. They were failing, not skipping. Fixed in
+   icons moved into the Utilities folder (named Apps at the time). They were failing, not skipping. Fixed in
    this pass; see [§3](#3-what-this-audit-found).
 
 | Area | Behaviours | Covered | Coverage | Risk if broken |
@@ -81,7 +88,7 @@ Three things are worth flagging above the detail:
 | Quick login | 8 | 8 | **100%** | High |
 | Desktop window chrome | 13 | 13 | **100%** | Medium |
 | Web content: search & records | 14 | 14 | **100%** | High |
-| CaveOS (shell, folders, 6 apps, themes) | 41 | 39 | **95%** | Medium |
+| CaveOS (shell, folders, 7 apps, themes) | 60 | 57 | **95%** | Medium |
 | Progress timeline (corkboard) | 28 | 26 | **93%** | High — core mechanic |
 | Persistence | 14 | 13 | **93%** | Critical — silent data loss |
 | Localization | 14 | 13 | **93%** | Medium |
@@ -95,7 +102,7 @@ Three things are worth flagging above the detail:
 | Evidence system | 18 | 16 | **89%** | High |
 | Desktop ashtray | 6 | 5 | **83%** | Low |
 | Audio & settings | 10 | 8 | **80%** | Low–Medium |
-| **Overall** | **244** | **226** | **≈93%** | |
+| **Overall** | **264** | **245** | **≈93%** | |
 
 *(The previous edition counted 155 behaviours. The 89 added here are almost all
 genuinely new surface — the corkboard timeline alone accounts for 28 — rather
@@ -111,7 +118,7 @@ There is still no code-coverage instrumentation. Every number in this report is
 a manual behavioural audit, which is honest about *features* but blind to dead
 code, unreachable branches and error paths no test drives.
 
-`ui.js` is now **9,139 lines — 60% of the application**, up from 5,520 (55%) at
+`ui.js` is now **9,784 lines — 61% of the application**, up from 5,520 (55%) at
 the last audit. That growth is mostly legitimate new features, but it means the
 proportion of the app whose branch execution nobody can see has increased.
 
@@ -124,17 +131,22 @@ measurement.
 
 ## 1. Localization audit
 
-🟢 **Clean.** This pass ran a full cross-check of `localization.json` against
-every `localize()` call site and every key-shaped string literal in the app
-source.
+🟡 **Nearly clean on keys; a real gap in content.** This pass ran a full
+cross-check of `localization.json` against every `localize()` call site and
+every key-shaped string literal in the app source. That method is blind to two
+things it separately turned up — one hardcoded literal and, far bigger, an
+untranslated content file — both in
+[§3.3](#33--a-hardcoded-english-string-in-the-facsimile-notification--and-every-fax-title-fixed).
 
 | Check | Result |
 | --- | --- |
 | Languages | 5 (en, es, de, it, fr) |
-| Keys per language | 262 — **identical in all five**, no missing, no extra |
+| Keys per language | 282 — **identical in all five**, no missing, no extra |
 | Empty values | 0 |
 | Keys referenced by `localize()` but absent from the file | **0** |
-| Hardcoded user-facing English strings in the app | **0 found** |
+| Hardcoded user-facing English strings in the app | **1 found and fixed** — see §3.3. |
+| Fax/report titles in `reports_evidences.json` translated | **6 found untranslated, all 6 fixed** — see §3.3. |
+| Other web content (`archives`/`library`/`police`/`standalone-pages`/`zoomsearch`) translated | 🔴 **No — left out of scope, see §3.3.** Nearly all prose in these five files is still English in `es`/`de`/`it`/`fr`. |
 
 ### CaveOS specifically
 
@@ -196,6 +208,7 @@ tests/e2e/caveos/
   calculator.spec.js        the four-function calculator
   themes.spec.js            the five reskins
   games.spec.js             Minesweeper, Sudoku, Tetris, Snake
+  echotrail.spec.js         the media library and its player
   netscape-chrome.spec.js   the browser's address bar and history dropdown
 ```
 
@@ -219,7 +232,7 @@ README**, the only folder in the suite missing one. Written in this pass.
 
 ### 3.1 🔴 Five stale specs, failing rather than skipping
 
-When Paint and Calculator moved off the CaveOS desktop and into the Apps folder,
+When Paint and Calculator moved off the CaveOS desktop and into the Utilities folder (named Apps at the time),
 five specs were not updated with them. They reached for `.computer-icon-paint` /
 `.computer-icon-calculator` on the desktop, where those icons no longer exist,
 and timed out:
@@ -242,41 +255,125 @@ if the helper is fixed rather than worked around.
 The icon-shape regression test (folder icons stretching into bars) was written
 against the four-icon Games folder and **passed against the broken CSS**, because
 `auto-fit` with four items happens to produce the right width. It only fails
-against the two-icon Apps folder. Caught by deliberately reverting the fix and
+against the two-icon Utilities folder. Caught by deliberately reverting the fix and
 re-running — which is now the standing check for any regression test in this
 project, and is written into the folder's README.
 
-### 3.3 🟢 Localization is genuinely complete
+### 3.3 🟢 A hardcoded English string in the facsimile notification — and every fax title, fixed
 
-See §1. Worth stating plainly because the last audit's headline finding was a
-control that bypassed `localize()` entirely; nothing of that shape remains.
+`"Incoming facsimile"` was a literal in `ui.js`, so the notification announcing
+an arriving fax read in English in all five languages. Localized, with the
+fax's own authored title still shown exactly as written — the label is the app's
+chrome and translates, the title is content and does not.
+
+Worth noting against §1's headline that no hardcoded user-facing strings were
+found: that audit walked `localize()` call sites and key-shaped literals, and a
+bare English string interpolated into a template literal is exactly the shape it
+could not see. The claim should be read as "no *keys* are missing", not "no
+English is hardcoded".
+
+**Following that thread up turned up a second, larger instance of the same
+shape of bug.** Every `defaultTitleString` in `assets/*/reports_evidences.json`
+— the title of every scripted fax, both Whitmore credential messages, and both
+Fairchild insurance standalone pages — had been shipped as a byte-for-byte copy
+of the English file into `es`/`de`/`it`/`fr`, while the `reportText` and
+`descriptionText` sitting right beside each one had genuinely been translated.
+The title fields were the one part of that file nobody had touched. This is
+content, not code, so it was invisible to *any* mechanical audit of
+`localize()` call sites — there is no key here at all, just a per-language JSON
+file where one field was silently left in English.
+
+Fixed: all six titles translated in all four languages, reusing the phrasing
+each fax's own already-translated body uses for the same heading where one
+exists. Regression coverage added in
+`localization/facsimile-content.spec.js` — a title identical to English now
+fails the suite, the same way an ECHOTRAIL track title identical to its
+filename would.
+
+**This was found by a targeted spot-check, not by this audit's method, and
+the method has a real blind spot as a result.** The full scope was not
+pursued here: a sweep of the other five content files (`archives.json`,
+`library.json`, `police.json`, `standalone-pages.json`, `zoomsearch.json`)
+found that nearly all of their prose — newspaper articles, library records,
+police records, the standalone Whitmore pages, every ZoomSearch result — is
+likewise untranslated in `es`/`de`/`it`/`fr`, unlike `reports_evidences.json`
+and `photos_evidences.json` where translation work clearly happened. That is
+hundreds of strings, is a content-authoring task rather than a code fix, and
+was **explicitly left out of scope for this pass** rather than fixed — logged
+here so it is not lost.
+
+### 3.4 🔴 The test server had been silently disabling media seeking
+
+Found while testing ECHOTRAIL's "a track that ends hands the music back to the
+game". `tests/support/static-server.cjs` answered every request with a `200` and
+the whole file — no `Accept-Ranges`, no `206`. Chromium therefore treated every
+media file as non-seekable and **silently ignored** `audio.currentTime = …`:
+the assignment appeared to succeed, no error was raised, and playback simply
+carried on from where it was. A test written against it would have looked like a
+product bug in the audio layer.
+
+Fixed by teaching the server byte ranges, which is how real static hosts behave
+anyway. Worth recording because it was invisible by construction — nothing fails
+loudly, the seek just does not happen — and it had been making any
+media-seeking test impossible for as long as the server has existed.
+
+### 3.5 🟢 Key parity is genuinely complete
+
+See §1. Every key referenced in source exists in all five languages and no
+control bypasses `localize()`, which was the last audit's headline finding.
+"Complete" is now stated more narrowly than it was: §3.3 is a reminder that key
+parity and "nothing is hardcoded" are different claims, and only the first is
+mechanically checked.
 
 ---
 
 ## 4. Detailed findings by area
 
-### 4.1 CaveOS — 95% (41 behaviours, 39 covered) 🟢 *(new folder this pass)*
+### 4.1 CaveOS — 95% (60 behaviours, 57 covered) 🟢
 
-Eight specs. The OS shell (header, live clock, MENU panel, window clipping and
+Nine specs. The OS shell (header, live clock, MENU panel, window clipping and
 stacking, closing the computer taking its app windows with it); the four-icon
 desktop row and its wrap-only-when-narrow rule; the folder system's double-click
 open, single-click contents and keyboard fallback; Notes and Paint's ten-page
 document model; Paint's whole tool palette, brush size, colour well, theme-aware
 canvas and the eraser painting back to the page's own ground; the calculator's
-immediate-execution arithmetic; all five themes; and the four games.
+immediate-execution arithmetic; ECHOTRAIL's sortable media library and its
+player; all five themes; and the four games.
 
 Everything is driven through real input, including a real `dblclick` for folders
 and real mouse drags for Paint. The one deliberate exception is Paint's native
 colour well, which no automation can open; it is set through the `input` event
 the picker itself fires, and that exception is documented in the README.
 
+**ECHOTRAIL** is new this pass and arrived with 52 tests of its own: the six
+authored tracks under their invented titles, lengths read from the files
+themselves, all four columns sorting and reversing and tie-breaking stably,
+selection kept distinct from playback, double click and Enter to play, the
+transport stepping the list *as currently sorted*, and both halves of the
+filename rule — a file named `backgroundMusic_<n>.mp3` joins the in-game music
+rotation, anything else is playable in the library but permanently barred from
+it. The behaviour with the most teeth is the music slot: a chosen track stops
+the game's rotation, holds it off against every path that would restart it
+(`force: true` included), and hands it back when the track ends.
+
+Playback is asserted against the live `audioManager` singleton rather than a
+stub. That proves the gesture reached the audio layer; it does not prove
+anything was audible, which no browser automation can. Reaching a track's end
+required `tests/support/static-server.cjs` to learn HTTP byte ranges — without
+them Chromium treats media as non-seekable and silently ignores a `currentTime`
+assignment, so the seek *appeared* to work and playback simply carried on. That
+was found by probing rather than assumed, and it had been quietly making any
+media-seeking test impossible.
+
 **Still not covered:** how each theme *looks* (verified by eye); the
 calculator's exponent-notation formatting for out-of-range results; Minesweeper
 played to a win, Sudoku solved to completion, and Tetris scoring a line clear —
 all reachable only through long scripted play, with the rules that produce them
-covered piecemeal; and click-to-focus promotion of a buried CaveOS window, which
-both folder windows open too perfectly centred for a real mouse to reach past
-(covered against offset windows in `desktop-window-chrome/focus-stacking.spec.js`).
+covered piecemeal; ECHOTRAIL playing an mp4, which has no playback surface yet
+and no fixture to point at; whether any audio is actually *audible*; and
+click-to-focus promotion of a buried CaveOS window, which both folder windows
+open too perfectly centred for a real mouse to reach past (covered against
+offset windows in `desktop-window-chrome/focus-stacking.spec.js`).
 
 ### 4.2 Progress timeline (the corkboard) — 93% (28 behaviours, 26 covered) 🟢 *(new since the last audit)*
 
@@ -350,7 +447,7 @@ Five specs in `localization/`, plus per-area localization tests inside `caveos/`
 `progress-timeline/` and elsewhere — which is the right split: a chrome string
 belongs to the area that owns it.
 
-All 5 languages, all 262 keys parity-checked, 10 window kinds re-titling live on
+All 5 languages, all 282 keys parity-checked, 10 window kinds re-titling live on
 a mid-session switch without closing anything, and expected strings read straight
 out of `localization.json` rather than hand-copied so a translation edit cannot
 silently desync a test from its source of truth.
@@ -467,7 +564,7 @@ server API does.
 
 | | Risk | Detail |
 | --- | --- | --- |
-| 🔴 | **`ui.js` at 9,139 lines** | 60% of the app in one file, up from 5,520 (55%). No line coverage to show which parts execute. Highest-value target for instrumentation, and a standing argument for extraction — the CaveOS app factories alone are ~2,000 lines that have nothing to do with the desk. |
+| 🔴 | **`ui.js` at 9,784 lines** | 61% of the app in one file, up from 5,520 (55%). No line coverage to show which parts execute. Highest-value target for instrumentation, and a standing argument for extraction — the CaveOS app factories alone are ~2,000 lines that have nothing to do with the desk. |
 | 🟡 | **Single browser** | Chromium only. No Firefox or WebKit project configured. Canvas (Paint, Snake, Tetris), `getComputedStyle` assertions and the magnifier's transform maths are all engine-sensitive, and there are now three canvas games where there was one. |
 | 🟡 | **Single viewport** | 1400×900 for everything except one narrow-viewport archives layout test and the CaveOS icon-wrap test. No mobile/tablet, no very large screens. |
 | 🟡 | **Suite stability under parallelism** | At Playwright's default 8 workers the suite produces browser-target crashes and heap-corruption worker exits unrelated to any assertion. Pinned to 4 workers in `playwright.config.js`. Still a *masked* problem, not a solved one. |
@@ -475,6 +572,7 @@ server API does.
 | 🟡 | **No accessibility sweep** | Individual aria-labels are asserted throughout, but there is no axe/a11y scan of any screen. |
 | 🟡 | **No visual regression** | One screenshot is captured as evidence (`tests/artifacts/`) but nothing compares it to a baseline. This is precisely the gap that leaves the ashtray animation and the five themes untestable. |
 | 🟢 | **Content/test desync** | Well handled: specs that assert content read the same JSON the app fetches rather than hand-copying it. |
+| 🔴 | **Web content is mostly untranslated** | New finding, §3.3. `archives.json`, `library.json`, `police.json`, `standalone-pages.json` and `zoomsearch.json` are nearly all still English prose in `es`/`de`/`it`/`fr` — headlines, articles, summaries, everything. `reports_evidences.json` and `photos_evidences.json` show real translation work; these five do not. No test catches this because it is a content-authoring gap, not a code path — there is nothing to assert against except the English text itself. |
 
 ---
 
@@ -501,6 +599,14 @@ Ordered by value per unit of effort.
 7. **Visual regression baselines** for the five CaveOS themes and the ashtray
    animation — the two areas that are untestable any other way.
 8. Delete or keep the 8 orphan localization keys, deliberately.
+
+### Phase 3.5 — translate the web content (scope unestimated)
+8a. **`archives.json`, `library.json`, `police.json`, `standalone-pages.json`,
+    `zoomsearch.json` need genuine translation** into `es`/`de`/`it`/`fr` — see
+    §3.3. This is content authoring, not engineering, and hundreds of strings;
+    called out on its own line because it dwarfs everything else in this plan
+    and should be scoped and staffed separately rather than folded into a
+    phase alongside half-day code fixes.
 
 ### Phase 4 — hardening (≈1.5 days)
 9. Add a Firefox project; triage what breaks. Three canvas games raise the value

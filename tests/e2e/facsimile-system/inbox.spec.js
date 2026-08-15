@@ -3,6 +3,8 @@
 // button, and the open-then-close flow that commits a read fax to evidence
 // exactly once.
 const { test, expect } = require("@playwright/test");
+const localization = require("../../../localization.json");
+const { startNewGameInLanguage } = require("../../support/caveos-helpers");
 const {
   startNewGame,
   openFacsimile,
@@ -164,3 +166,35 @@ test("facsimile next cached message button advances queue and transfers evidence
     .filter((entry) => String(entry?.name || "").startsWith("facsimile-next-"));
   expect(transferred).toHaveLength(2);
 });
+
+// The notification that announces an arriving fax is the app's own chrome, not
+// the fax's contents, so it has to translate. It did not: "Incoming facsimile"
+// was a hardcoded English literal and read that way in every language.
+for (const language of [
+  { code: "es", buttonId: "btnSpanish" },
+  { code: "de", buttonId: "btnGerman" },
+  { code: "fr", buttonId: "btnFrench" },
+]) {
+  test(`the incoming facsimile notification is localized in ${language.code}`, async ({ page }) => {
+    const strings = localization[language.code];
+    await startNewGameInLanguage(page, language.buttonId);
+
+    await page.evaluate(() => window.receiveFacsimileReport({
+      id: "fax-localized-notification-001",
+      title: "CAVERN DISPATCH",
+      reportText: "Body line.",
+      description: "Localization fixture.",
+      paperStyle: "report-parchment",
+    }));
+
+    const notification = page.locator(".notification-host .game-notification").first();
+    await expect(notification).toBeVisible();
+
+    // The chrome half translates...
+    await expect(notification).toContainText(strings.facsimileIncomingNotification);
+    expect(await notification.textContent()).not.toContain("Incoming facsimile");
+    // ...while the fax's own authored title is shown exactly as written, because
+    // that is content rather than chrome.
+    await expect(notification).toContainText("CAVERN DISPATCH");
+  });
+}

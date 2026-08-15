@@ -158,9 +158,9 @@ import {
 } from "./saveLoadGame.js";
 import { createWebContentManager } from "./webContentManager.js";
 import {
-  addEchotrailFileName,
-  getEchotrailAddedFileNames,
-  resetEchotrailAddedFileNames,
+  unlockEchotrailFileName,
+  getEchotrailUnlockedFileNames,
+  resetEchotrailUnlockedFileNames,
 } from "./constantsAndGlobalVars.js";
 import {
   buildEchotrailLibrary,
@@ -652,8 +652,13 @@ function queueFacsimileArrivalNotification(report, options = {}) {
   const notificationType = String(notificationOptions.type || "").trim() || resolveFacsimileNotificationTypeByMessageType(
     notificationOptions.messageType || report?.messageType
   );
-  const notificationTitle = String(report?.title || "Incoming facsimile").trim() || "Incoming facsimile";
-  const notificationText = String(notificationOptions.text || "").trim() || `Incoming facsimile: ${notificationTitle}`;
+  // "Incoming facsimile" is the app's own chrome, not the fax's contents, so it
+  // is localized. The report's *title* is authored content and is shown exactly
+  // as written — a fax that arrives in-fiction says what its author typed.
+  const incomingLabel = resolveLocalizedText("facsimileIncomingNotification", "Incoming facsimile");
+  const notificationTitle = String(report?.title || "").trim();
+  const notificationText = String(notificationOptions.text || "").trim()
+    || (notificationTitle ? `${incomingLabel}: ${notificationTitle}` : incomingLabel);
   const notificationDuration = Number(notificationOptions.durationMs);
   const notificationSound = String(notificationOptions.sound || "").trim() || "fax";
 
@@ -1398,8 +1403,8 @@ function beginNewGame() {
   // the media library back to the six tracks that ship on it.
   resetCaveOsTheme();
   refreshCaveOsTheme();
-  resetEchotrailAddedFileNames();
-  audioManager.refreshGameMusicTracks(getEchotrailAddedFileNames());
+  resetEchotrailUnlockedFileNames();
+  audioManager.refreshGameMusicTracks(getEchotrailUnlockedFileNames());
   audioManager.stopEchotrailPlayback();
   refreshOpenEchotrailWindows();
   resetFacsimileState();
@@ -1510,7 +1515,7 @@ async function restoreStickySaveIntoGame() {
   refreshCaveOsTheme();
   // The loaded save may name files the rotation has never seen, so the eligible
   // track list is re-derived before the background music is started below.
-  audioManager.refreshGameMusicTracks(getEchotrailAddedFileNames());
+  audioManager.refreshGameMusicTracks(getEchotrailUnlockedFileNames());
   refreshOpenEchotrailWindows();
   audioManager.syncFromSavedPreferences();
   refreshAudioControlsDisplay();
@@ -1862,8 +1867,19 @@ function refreshAudioControlsDisplay() {
     getElements().sfxVolumeValue.textContent = `${sfxPercent}%`;
   }
 
+  // ECHOTRAIL carries a music volume slider of its own, driving the same
+  // setting. Whichever one the player moved, the other has to follow.
+  refreshOpenEchotrailVolume();
   refreshMuteButtonLabel();
   refreshMusicTransportControls();
+}
+
+function refreshOpenEchotrailVolume() {
+  activeDesktopWindows.forEach((windowController) => {
+    if (desktopWindowKinds.get(windowController) === "computer-echotrail") {
+      echotrailWindowContentRefs.get(windowController)?.refreshVolume?.();
+    }
+  });
 }
 
 function refreshMuteButtonLabel() {
@@ -3437,7 +3453,44 @@ function createComputerEchotrailWindowContentElements() {
   const nowPlaying = document.createElement("div");
   nowPlaying.classList.add("caveos-echotrail-now-playing");
 
-  transport.append(previousButton, playButton, nextButton, nowPlaying);
+  // The counter. A button rather than a readout because it does something:
+  // clicking it swaps between time elapsed and time remaining, the way a
+  // hi-fi's display does. Which mode it is in is the player's preference and is
+  // deliberately not persisted — it is a glance, not a setting.
+  const clock = document.createElement("button");
+  clock.type = "button";
+  clock.classList.add("caveos-echotrail-clock");
+
+  const clockTime = document.createElement("span");
+  clockTime.classList.add("caveos-echotrail-clock-time");
+
+  clock.appendChild(clockTime);
+
+  // Music volume, mirroring the slider in the sound settings menu. Both drive
+  // the same audioManager.setMusicVolume, and each refreshes the other, so the
+  // two can never drift apart. SFX is deliberately absent: this is a music
+  // player, and the sound menu remains the place for everything else.
+  const volumeWrap = document.createElement("div");
+  volumeWrap.classList.add("caveos-echotrail-volume");
+
+  const volumeIcon = document.createElement("span");
+  volumeIcon.classList.add("caveos-echotrail-volume-icon");
+  volumeIcon.setAttribute("aria-hidden", "true");
+
+  const volumeSlider = document.createElement("input");
+  volumeSlider.type = "range";
+  volumeSlider.min = "0";
+  volumeSlider.max = "100";
+  volumeSlider.step = "1";
+  volumeSlider.classList.add("caveos-echotrail-volume-slider");
+  volumeSlider.setAttribute("aria-label", localize("echotrailMusicVolumeAriaLabel", languageCode));
+
+  const volumeValue = document.createElement("span");
+  volumeValue.classList.add("caveos-echotrail-volume-value");
+
+  volumeWrap.append(volumeIcon, volumeSlider, volumeValue);
+
+  transport.append(previousButton, playButton, nextButton, clock, nowPlaying, volumeWrap);
 
   /* --- the details list ------------------------------------------------ */
 
@@ -3510,6 +3563,10 @@ function createComputerEchotrailWindowContentElements() {
   let selectedFileName = "";
   let rowsByFileName = new Map();
   let unsubscribeFromAudio = null;
+  // The counter's mode. Starts on elapsed, which is what a player glancing at a
+  // track that has just started wants to know.
+  let showsRemaining = false;
+  let clockIntervalId = null;
 
   const currentLanguage = () => getLanguage();
 
@@ -3534,7 +3591,7 @@ function createComputerEchotrailWindowContentElements() {
     return `${minutes}:${String(wholeSeconds % 60).padStart(2, "0")}`;
   };
 
-  const readLibrary = () => buildEchotrailLibrary(getEchotrailAddedFileNames());
+  const readLibrary = () => buildEchotrailLibrary(getEchotrailUnlockedFileNames());
 
   const sortValueFor = (entry, columnId) => {
     if (columnId === "length") {
@@ -3638,6 +3695,62 @@ function createComputerEchotrailWindowContentElements() {
         headerArrow.textContent = "";
       }
     });
+  };
+
+  // A counter is not a length: 0:00 is a real reading at the start of a track,
+  // whereas an unknown *length* has to say so. formatLength() renders the
+  // placeholder for zero, which is right for the column and wrong here.
+  const formatClock = (seconds) => {
+    const wholeSeconds = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+    const minutes = Math.floor(wholeSeconds / 60);
+    return `${minutes}:${String(wholeSeconds % 60).padStart(2, "0")}`;
+  };
+
+  // The counter, redrawn several times a second while something is playing.
+  // Read from the audio element rather than tracked here, so it is the position
+  // the browser is actually at and cannot drift.
+  const renderClock = () => {
+    const language = currentLanguage();
+    const audio = audioManager.echotrailAudio;
+    const duration = Number(audio?.duration);
+    const elapsed = Number(audio?.currentTime);
+
+    clock.classList.toggle("is-remaining", showsRemaining);
+    clock.setAttribute(
+      "aria-label",
+      localize(
+        showsRemaining ? "echotrailClockRemainingAriaLabel" : "echotrailClockElapsedAriaLabel",
+        language
+      )
+    );
+
+    if (!audio || !Number.isFinite(elapsed)) {
+      clockTime.textContent = formatClock(0);
+      return;
+    }
+
+    if (!showsRemaining) {
+      clockTime.textContent = formatClock(elapsed);
+      return;
+    }
+
+    // Remaining needs a duration; until the metadata lands there is nothing
+    // honest to count down from, so the placeholder stands rather than a wrong
+    // number that would tick.
+    if (!Number.isFinite(duration)) {
+      clockTime.textContent = localize("echotrailLengthUnknown", language);
+      return;
+    }
+
+    // Leading minus, the way a hi-fi shows a countdown.
+    clockTime.textContent = `-${formatClock(duration - elapsed)}`;
+  };
+
+  const renderVolume = () => {
+    const percent = Math.round(audioManager.musicVolume * 100);
+    volumeSlider.value = String(percent);
+    volumeValue.textContent = `${percent}%`;
+    volumeSlider.setAttribute("aria-label", localize("echotrailMusicVolumeAriaLabel", currentLanguage()));
   };
 
   const renderTransport = () => {
@@ -3872,30 +3985,65 @@ function createComputerEchotrailWindowContentElements() {
     step(1);
   });
 
+  clock.addEventListener("click", () => {
+    audioManager.onUserGesture();
+    audioManager.playSfx("clickSwitch");
+    showsRemaining = !showsRemaining;
+    renderClock();
+  });
+
+  volumeSlider.addEventListener("input", (event) => {
+    audioManager.onUserGesture();
+    audioManager.setMusicVolume(Number(event.target.value) / 100);
+    renderVolume();
+    // Pushes the same value to the sound settings menu's own slider, so the two
+    // controls always read the same number.
+    refreshAudioControlsDisplay();
+  });
+
   // Playback the window did not initiate still has to show here: a track
   // reaching its end and handing the music back to the game, or the library
   // being reopened while something is already playing.
   unsubscribeFromAudio = audioManager.addEchotrailListener(() => {
     renderTransport();
+    renderClock();
   });
+
+  // The counter needs its own tick: the audio manager only announces state
+  // changes, and a track playing steadily is precisely a period with no state
+  // change at all. Four times a second is smooth enough to read as a running
+  // clock without redrawing more than the seconds digit ever needs.
+  clockIntervalId = setInterval(renderClock, 250);
 
   renderHeaders();
   renderRows();
+  renderClock();
+  renderVolume();
 
   return {
     container,
-    // Called by the window's onClose. Only the subscription is torn down —
-    // the track itself deliberately keeps playing, because closing the library
-    // is not the same as stopping the music.
+    // Called by the window's onClose. The subscription and the counter's tick
+    // are torn down — an interval outliving its window would redraw a detached
+    // element forever — but the track itself deliberately keeps playing,
+    // because closing the library is not the same as stopping the music.
     destroy: () => {
       unsubscribeFromAudio?.();
       unsubscribeFromAudio = null;
+      if (clockIntervalId) {
+        clearInterval(clockIntervalId);
+        clockIntervalId = null;
+      }
     },
+    // Called when the sound settings menu moves the music volume, so this
+    // window's own slider follows it rather than showing a stale number.
+    refreshVolume: renderVolume,
     relocalize: () => {
       table.setAttribute("aria-label", localize("echotrailLibraryAriaLabel", currentLanguage()));
       [previousButton, playButton, nextButton].forEach((button) => {
         button.setAttribute("aria-label", localize(button.dataset.ariaLabelKey, currentLanguage()));
       });
+      renderClock();
+      renderVolume();
       renderHeaders();
       // Re-rendered rather than patched: File Type and the unknown author are
       // localized *and* are sort keys, so a language switch can legitimately
@@ -8290,28 +8438,34 @@ window.activateProgressEvidence = function activateProgressEvidenceFromGame(prog
   return activated;
 };
 
-// Adds a media file to the ECHOTRAIL library — the documented way for a story
-// trigger to put a new track on the machine.
+// Sets a track's unlocked flag — the documented way for a story trigger to
+// reveal a recording in the ECHOTRAIL library.
+//
+// Every track carries that flag. The authored six are permanently true; every
+// other file in audio/music/ starts false and is invisible until this is called
+// for it, which is what lets *all* the music be copied into the folder up front
+// and revealed a piece at a time as the player earns it. Nothing is fetched for
+// a locked track, so its filename never appears in a network log either.
 //
 // Takes a filename ("nightMail.mp3") or a path ending in one; a bare filename is
-// resolved against audio/music/. Returns whether the library actually changed,
-// so a trigger that fires twice, or names one of the six files already on the
-// machine, is a no-op rather than a duplicated row.
+// resolved against audio/music/. Returns whether the flag actually changed, so a
+// trigger that fires twice, or names one of the permanently-unlocked six, is a
+// no-op rather than a duplicated row.
 //
-// What the new file is *called* is not this function's business: a file named
-// backgroundMusic_<number>.mp3 joins the authored library under its invented
-// title and becomes eligible for the in-game music rotation, and anything else
-// is listed under its own filename and stays out of the rotation for good. Both
-// halves of that rule live in echotrailManager.js.
+// What the track is *called* is not this function's business: a file named
+// backgroundMusic_<number>.mp3 is shown under its invented title and is eligible
+// for the in-game music rotation, and anything else is listed under its own
+// filename and stays out of the rotation for good. Both halves of that rule live
+// in echotrailManager.js.
 window.addAudioToEchotrail = function addAudioToEchotrail(fileName) {
-  const added = addEchotrailFileName(fileName);
-  if (!added) {
+  const unlocked = unlockEchotrailFileName(fileName);
+  if (!unlocked) {
     return false;
   }
 
   // The rotation is rebuilt rather than appended to, so it always agrees with
   // the library the player can see.
-  audioManager.refreshGameMusicTracks(getEchotrailAddedFileNames());
+  audioManager.refreshGameMusicTracks(getEchotrailUnlockedFileNames());
   refreshOpenEchotrailWindows();
   return true;
 };

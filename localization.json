@@ -277,7 +277,11 @@
     "echotrailPreviousAriaLabel": "Previous track",
     "echotrailNextAriaLabel": "Next track",
     "echotrailLibraryAriaLabel": "ECHOTRAIL media library",
-    "closeEchotrailWindowAriaLabel": "Close ECHOTRAIL window"
+    "closeEchotrailWindowAriaLabel": "Close ECHOTRAIL window",
+    "facsimileIncomingNotification": "Incoming facsimile",
+    "echotrailClockElapsedAriaLabel": "Time elapsed — click to show time remaining",
+    "echotrailClockRemainingAriaLabel": "Time remaining — click to show time elapsed",
+    "echotrailMusicVolumeAriaLabel": "Music volume"
   },
   "es": {
     "newGame": "Nuevo Juego",
@@ -557,7 +561,11 @@
     "echotrailPreviousAriaLabel": "Pista anterior",
     "echotrailNextAriaLabel": "Pista siguiente",
     "echotrailLibraryAriaLabel": "Biblioteca multimedia ECHOTRAIL",
-    "closeEchotrailWindowAriaLabel": "Cerrar ventana ECHOTRAIL"
+    "closeEchotrailWindowAriaLabel": "Cerrar ventana ECHOTRAIL",
+    "facsimileIncomingNotification": "Fax entrante",
+    "echotrailClockElapsedAriaLabel": "Tiempo transcurrido: haz clic para ver el tiempo restante",
+    "echotrailClockRemainingAriaLabel": "Tiempo restante: haz clic para ver el tiempo transcurrido",
+    "echotrailMusicVolumeAriaLabel": "Volumen de la música"
   },
   "de": {
     "newGame": "Neues Spiel",
@@ -837,7 +845,11 @@
     "echotrailPreviousAriaLabel": "Vorheriger Titel",
     "echotrailNextAriaLabel": "Nächster Titel",
     "echotrailLibraryAriaLabel": "ECHOTRAIL-Medienbibliothek",
-    "closeEchotrailWindowAriaLabel": "ECHOTRAIL-Fenster schließen"
+    "closeEchotrailWindowAriaLabel": "ECHOTRAIL-Fenster schließen",
+    "facsimileIncomingNotification": "Eingehendes Fax",
+    "echotrailClockElapsedAriaLabel": "Verstrichene Zeit — klicken für verbleibende Zeit",
+    "echotrailClockRemainingAriaLabel": "Verbleibende Zeit — klicken für verstrichene Zeit",
+    "echotrailMusicVolumeAriaLabel": "Musiklautstärke"
   },
   "it": {
     "newGame": "Nuovo gioco",
@@ -1117,7 +1129,11 @@
     "echotrailPreviousAriaLabel": "Traccia precedente",
     "echotrailNextAriaLabel": "Traccia successiva",
     "echotrailLibraryAriaLabel": "Libreria multimediale ECHOTRAIL",
-    "closeEchotrailWindowAriaLabel": "Chiudi finestra ECHOTRAIL"
+    "closeEchotrailWindowAriaLabel": "Chiudi finestra ECHOTRAIL",
+    "facsimileIncomingNotification": "Fax in arrivo",
+    "echotrailClockElapsedAriaLabel": "Tempo trascorso: fai clic per il tempo rimanente",
+    "echotrailClockRemainingAriaLabel": "Tempo rimanente: fai clic per il tempo trascorso",
+    "echotrailMusicVolumeAriaLabel": "Volume della musica"
   },
   "fr": {
     "newGame": "Nouveau jeu",
@@ -1397,6 +1413,10 @@
     "echotrailPreviousAriaLabel": "Piste précédente",
     "echotrailNextAriaLabel": "Piste suivante",
     "echotrailLibraryAriaLabel": "Bibliothèque multimédia ECHOTRAIL",
-    "closeEchotrailWindowAriaLabel": "Fermer la fenêtre ECHOTRAIL"
+    "closeEchotrailWindowAriaLabel": "Fermer la fenêtre ECHOTRAIL",
+    "facsimileIncomingNotification": "Fax entrant",
+    "echotrailClockElapsedAriaLabel": "Temps écoulé — cliquez pour le temps restant",
+    "echotrailClockRemainingAriaLabel": "Temps restant — cliquez pour le temps écoulé",
+    "echotrailMusicVolumeAriaLabel": "Volume de la musique"
   }
 }

@@ -611,6 +611,258 @@ test("an added mp4 is listed and typed as video", async ({ page }) => {
 });
 
 /* ---------------------------------------------------------------------------
+   The unlocked flag
+   --------------------------------------------------------------------------- */
+
+test("a declared but locked track is absent from the library entirely", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+
+  // The track has to be *declared* for this to mean anything: with nothing in
+  // ECHOTRAIL_UNLOCKABLE_FILE_NAMES the catalog and the library are the same
+  // six rows either way, and a test written against that would still pass with
+  // the locked filter deleted. Declaring one here is how the game itself
+  // declares its unlockable tracks, and it is put back afterwards.
+  const result = await page.evaluate(async () => {
+    const module = await import("/echotrailManager.js");
+    module.ECHOTRAIL_UNLOCKABLE_FILE_NAMES.push("lockedTake.mp3");
+    try {
+      return {
+        catalog: module.buildEchotrailCatalog([]).map((entry) => [entry.fileName, entry.isUnlocked]),
+        locked: module.getEchotrailLockedFileNames([]),
+        visibleWhileLocked: module.buildEchotrailLibrary([]).map((entry) => entry.fileName),
+        visibleOnceUnlocked: module.buildEchotrailLibrary(["lockedTake.mp3"])
+          .map((entry) => entry.fileName),
+      };
+    } finally {
+      module.ECHOTRAIL_UNLOCKABLE_FILE_NAMES.pop();
+    }
+  });
+
+  // The game knows the file exists and knows its flag is false...
+  expect(result.catalog).toHaveLength(7);
+  expect(result.catalog).toContainEqual(["lockedTake.mp3", false]);
+  expect(result.locked).toEqual(["lockedTake.mp3"]);
+
+  // ...and shows the player nothing at all — no row, no locked placeholder.
+  expect(result.visibleWhileLocked).toHaveLength(6);
+  expect(result.visibleWhileLocked).not.toContain("lockedTake.mp3");
+
+  // Flipping the flag is the only thing that changes, which is what makes the
+  // assertion above about the filter rather than about an empty catalog.
+  expect(result.visibleOnceUnlocked).toHaveLength(7);
+  expect(result.visibleOnceUnlocked).toContain("lockedTake.mp3");
+
+  expect(await readNames(page)).not.toContain("lockedTake.mp3");
+  await expect(page.locator('.caveos-echotrail-row[data-file-name="lockedTake.mp3"]')).toHaveCount(0);
+});
+
+test("the authored six carry their flag permanently and cannot be locked", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+
+  const flags = await page.evaluate(async () => {
+    const { buildEchotrailCatalog } = await import("/echotrailManager.js");
+    // Deliberately passing an empty unlocked list: the six must not depend on it.
+    return buildEchotrailCatalog([]).map((entry) => [entry.fileName, entry.isUnlocked]);
+  });
+
+  expect(flags).toHaveLength(6);
+  flags.forEach(([, isUnlocked]) => expect(isUnlocked).toBe(true));
+});
+
+test("a locked track is inaudible in gameplay as well as invisible in the list", async ({ page }) => {
+  await startNewGame(page);
+
+  // A locked file must not reach the in-game rotation either, or the player
+  // would hear a recording they have not found yet.
+  const tracks = await page.evaluate(async () => {
+    const { getGameSelectableMusicPaths } = await import("/echotrailManager.js");
+    return {
+      locked: getGameSelectableMusicPaths([]),
+      unlocked: getGameSelectableMusicPaths(["backgroundMusic_9.mp3"]),
+    };
+  });
+
+  expect(tracks.locked).toHaveLength(6);
+  expect(tracks.locked.join(" ")).not.toContain("backgroundMusic_9");
+  // And once unlocked it joins, which is what makes the first half meaningful.
+  expect(tracks.unlocked).toHaveLength(7);
+});
+
+test("the trigger flips the flag, and the row appears without reopening the window", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+  await expect(rows(page)).toHaveCount(6);
+
+  expect(await page.evaluate(() => window.addAudioToEchotrail("lockedTake.mp3"))).toBe(true);
+
+  // The open window rebuilds itself rather than waiting to be reopened.
+  await expect(rows(page)).toHaveCount(7);
+  expect(await readNames(page)).toContain("lockedTake.mp3");
+
+  const flag = await page.evaluate(async () => {
+    const { isEchotrailTrackUnlocked } = await import("/echotrailManager.js");
+    const { getEchotrailUnlockedFileNames } = await import("/constantsAndGlobalVars.js");
+    return isEchotrailTrackUnlocked("lockedTake.mp3", getEchotrailUnlockedFileNames());
+  });
+  expect(flag).toBe(true);
+});
+
+/* ---------------------------------------------------------------------------
+   The clock and the volume control
+   --------------------------------------------------------------------------- */
+
+const clock = (page) => page.locator(".caveos-echotrail-clock");
+const clockText = (page) => page.locator(".caveos-echotrail-clock-time");
+
+test("the clock counts up while a track plays", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+
+  // Nothing playing reads zero rather than the unknown-length placeholder: 0:00
+  // is a true statement about a track that has not started.
+  await expect(clockText(page)).toHaveText("0:00");
+
+  await rows(page).nth(0).dblclick();
+
+  // A real count, observed by watching it change rather than by trusting one
+  // reading.
+  await expect.poll(
+    async () => clockText(page).textContent(),
+    { timeout: 8000 }
+  ).not.toBe("0:00");
+
+  const toSeconds = (value) => {
+    const [minutes, seconds] = value.replace("-", "").split(":").map(Number);
+    return minutes * 60 + seconds;
+  };
+
+  const first = toSeconds(await clockText(page).textContent());
+  await expect.poll(
+    async () => toSeconds(await clockText(page).textContent()),
+    { timeout: 8000 }
+  ).toBeGreaterThan(first);
+});
+
+test("clicking the clock toggles to time remaining, and again back to elapsed", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+  await rows(page).nth(0).dblclick();
+
+  await expect.poll(async () => clockText(page).textContent(), { timeout: 8000 }).not.toBe("0:00");
+  await expect(clock(page)).not.toHaveClass(/is-remaining/);
+  const elapsed = await clockText(page).textContent();
+  expect(elapsed).not.toMatch(/^-/);
+
+  await clock(page).click();
+
+  // Remaining is shown with a leading minus, the way a hi-fi counts down.
+  await expect(clock(page)).toHaveClass(/is-remaining/);
+  await expect(clockText(page)).toHaveText(/^-\d+:[0-5]\d$/);
+
+  // And it must be counting *down*, not just wearing a minus sign.
+  const toSeconds = (value) => {
+    const [minutes, seconds] = value.replace("-", "").split(":").map(Number);
+    return minutes * 60 + seconds;
+  };
+  const firstRemaining = toSeconds(await clockText(page).textContent());
+  await expect.poll(
+    async () => toSeconds(await clockText(page).textContent()),
+    { timeout: 8000 }
+  ).toBeLessThan(firstRemaining);
+
+  await clock(page).click();
+  await expect(clock(page)).not.toHaveClass(/is-remaining/);
+  await expect(clockText(page)).toHaveText(/^\d+:[0-5]\d$/);
+});
+
+test("the clock's accessible name says what clicking it will do", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+
+  await expect(clock(page))
+    .toHaveAttribute("aria-label", localization.en.echotrailClockElapsedAriaLabel);
+
+  await clock(page).click();
+  await expect(clock(page))
+    .toHaveAttribute("aria-label", localization.en.echotrailClockRemainingAriaLabel);
+});
+
+test("the clock stops ticking when the library is closed", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+  await rows(page).nth(0).dblclick();
+
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await closeCaveOsWindow(page, "caveos-echotrail-window");
+  // An interval outliving its window would redraw a detached element several
+  // times a second; a quiet page across many tick periods is the evidence.
+  await page.waitForTimeout(1200);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("the volume slider drives the real music volume", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+
+  const slider = page.locator(".caveos-echotrail-volume-slider");
+  await slider.fill("42");
+
+  await expect(page.locator(".caveos-echotrail-volume-value")).toHaveText("42%");
+  expect(await page.evaluate(async () => {
+    const { audioManager } = await import("/audioManager.js");
+    return Math.round(audioManager.musicVolume * 100);
+  })).toBe(42);
+});
+
+// The two sliders drive one setting, so they have to agree. They are never on
+// screen together — the computer window covers the floating settings panel at
+// the top right of the desk, and it cannot be dragged clear of it — so each
+// direction is tested through the journey a player can actually make.
+test("moving ECHOTRAIL's volume moves the sound menu's slider with it", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+
+  await page.locator(".caveos-echotrail-volume-slider").fill("30");
+
+  // Closing the computer is what puts the settings panel back within reach.
+  // Scoped to the computer's own header: app windows are nested inside it, so
+  // a plain descendant selector would match their close buttons too.
+  await page.locator(".computer-window > .desktop-window-header .story-window-close").click();
+  await expect(page.locator(".computer-window")).toHaveCount(0);
+
+  await page.locator("#settingsToggle").click();
+
+  await expect(page.locator("#musicVolumeSlider")).toHaveValue("30");
+  await expect(page.locator("#musicVolumeValue")).toHaveText("30%");
+});
+
+test("a volume set in the sound menu is the one ECHOTRAIL opens showing", async ({ page }) => {
+  await startNewGame(page);
+
+  await page.locator("#settingsToggle").click();
+  await page.locator("#musicVolumeSlider").fill("70");
+
+  await openEchotrail(page);
+
+  await expect(page.locator(".caveos-echotrail-volume-slider")).toHaveValue("70");
+  await expect(page.locator(".caveos-echotrail-volume-value")).toHaveText("70%");
+});
+
+test("the volume slider does not touch the SFX volume", async ({ page }) => {
+  await startAndOpenEchotrail(page);
+
+  const before = await page.evaluate(async () => {
+    const { audioManager } = await import("/audioManager.js");
+    return audioManager.sfxVolume;
+  });
+
+  const slider = page.locator(".caveos-echotrail-volume-slider");
+  await slider.fill("15");
+
+  // This is a music player: the sound menu remains the only place SFX is set.
+  expect(await page.evaluate(async () => {
+    const { audioManager } = await import("/audioManager.js");
+    return audioManager.sfxVolume;
+  })).toBe(before);
+});
+
+/* ---------------------------------------------------------------------------
    Persistence
    --------------------------------------------------------------------------- */
 
