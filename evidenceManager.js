@@ -201,6 +201,18 @@ export function resetEvidenceStore() {
   evidenceStore = createEmptyEvidenceStore();
 }
 
+// Drops every registered trigger. Needed because a `once` trigger deletes
+// itself the moment it fires (see runEvidenceTriggers), which is ephemeral
+// module state shadowing persisted progress: without clearing and re-arming,
+// a New Game — or loading a save from before a trigger fired — inherits the
+// previous playthrough's "already fired" state and the milestone can never
+// happen again. Callers are expected to re-register immediately afterwards;
+// re-arming is safe because the faxes these triggers deliver are themselves
+// de-duplicated against the persisted consumedReportIds list.
+export function clearEvidenceTriggers() {
+  evidenceTriggers.clear();
+}
+
 export function initializeEvidenceStoreForNewGame() {
   resetEvidenceStore();
 

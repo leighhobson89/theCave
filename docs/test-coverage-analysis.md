@@ -1,8 +1,8 @@
 # Test coverage analysis — theCave
 
 **Date:** 2026-08-14 (full re-audit; supersedes the 2026-08-12/13 edition)
-**Suite:** 410 Playwright tests across 54 spec files — **408 passing, 2 skipped,
-0 failing** (3m 44s, 4 workers). Up from 156 tests across 38 files at the
+**Suite:** 414 Playwright tests across 54 spec files — **412 passing, 2 skipped,
+0 failing** (3m 48s, 4 workers). Up from 156 tests across 38 files at the
 2026-08-12 audit. Two changes in this pass: `snake.spec.js` was folded into
 `games.spec.js` (see [§2](#2-organisation-and-naming)), merging its own
 per-language localization loop into the one the other three games already
@@ -11,7 +11,8 @@ shared and dropping 5 redundant invocations with no loss of coverage; and
 `localization/facsimile-content.spec.js` gained 2 tests closing the gap found in
 §3.3; and `facsimile-system/milestone-triggers.spec.js` gained 1, for a third
 record-open fax trigger whose payload unlocks an ECHOTRAIL track rather than
-awarding evidence or credentials. Both skips are conditional and correct: they stand down when
+awarding evidence or credentials, plus 4 more covering a genuine progression
+bug this pass found and fixed (§3.6). Both skips are conditional and correct: they stand down when
 the current content registry has no event without artwork, and none whose
 unlock trigger is permanently unreachable — they will run again the moment
 either case exists.
@@ -42,7 +43,7 @@ One line per `tests/e2e/` folder, plus the API-only content authoring tool under
 | 🟢 | `progress-evidence` | **92%** | New since the last audit. Activation, triggers, generated definitions. |
 | 🟢 | `web-content-authentication` | **91%** | Login/logout, privilege gating, session persistence. |
 | 🟢 | `tooltips` | **90%** | New since the last audit. Real pointer throughout. |
-| 🟢 | `facsimile-system` | **90%** | Queueing, multi-message stepping, milestone triggers. |
+| 🟢 | `facsimile-system` | **92%** | Queueing, stepping, milestone triggers, and trigger re-arming across New Game/load. |
 | 🟢 | *(tools)* content authoring | **92%** | All 4 sites, five-language fan-out, validation, both id generators. |
 | 🟢 | `notifications` | **89%** | Routing, dismissal, keyboard access, the close-button overlap regression. |
 | 🟢 | `evidence-system` | **89%** | All 9 awarding records, carousels, custom names, catalog error paths. |
@@ -98,13 +99,13 @@ Four things are worth flagging above the detail:
 | Progress evidence (milestones) | 12 | 11 | **92%** | High |
 | Web content: authentication | 11 | 10 | **91%** | High |
 | Tooltips | 10 | 9 | **90%** | Low–Medium |
-| Facsimile system | 11 | 10 | **91%** | High |
+| Facsimile system | 12 | 11 | **92%** | High |
 | Content authoring tool (API) | 13 | 12 | **92%** | Medium |
 | Notifications | 9 | 8 | **89%** | Medium |
 | Evidence system | 18 | 16 | **89%** | High |
 | Desktop ashtray | 6 | 5 | **83%** | Low |
 | Audio & settings | 10 | 8 | **80%** | Low–Medium |
-| **Overall** | **265** | **246** | **≈93%** | |
+| **Overall** | **266** | **247** | **≈93%** | |
 
 *(The previous edition counted 155 behaviours. The 89 added here are almost all
 genuinely new surface — the corkboard timeline alone accounts for 28 — rather
@@ -327,6 +328,39 @@ control bypasses `localize()`, which was the last audit's headline finding.
 parity and "nothing is hardcoded" are different claims, and only the first is
 mechanically checked.
 
+### 3.6 🔴 Milestone fax triggers never re-armed — a progression bug
+
+The worst find of this pass, and a genuine soft-lock rather than a cosmetic
+issue.
+
+Both milestone-fax registries — `recordOpenFaxTriggers` in `ui.js` and
+`evidenceTriggers` in `evidenceManager.js` — hold `once` triggers that delete
+themselves the instant they fire. Both live in **module state, not the save**,
+and nothing reset them. The consequence: the "already fired" flag outlived the
+playthrough that set it. A player who finished a run and hit New Game, without
+reloading the page, inherited the previous run's exhausted triggers and could
+never receive those faxes again.
+
+The sharpest form was **loading a save**: rewind to a point before a milestone
+and the trigger for it was already gone, stranding the fax permanently. Since
+one of those faxes carries the Level 3 police credentials, that stranded the
+credentials too — locking the player out of `goldenpendant`, the Fairchild
+insurance record, and the entire pendant thread for the rest of the session.
+
+Fixed by clearing and re-registering both registries at three points: New Game,
+a pasted save load, and a sticky-save resume. Re-arming is safe by
+construction — every fax these triggers queue goes through
+`queueFacsimileReport`, which already refuses a report that is pending or in
+the persisted `consumedReportIds` list, so a re-armed trigger firing against an
+already-read fax simply hits that guard.
+
+**Why the whole suite missed it:** every other spec begins with
+`page.goto("/")`, and a reload rebuilds the exact module state the bug lived
+in. The bug was only reachable across two playthroughs in one page context,
+which nothing did. The new regression tests deliberately reach New Game through
+the pause menu instead of reloading — a version of them written the usual way
+passes against the unfixed code, which was checked rather than assumed.
+
 ---
 
 ## 4. Detailed findings by area
@@ -509,7 +543,7 @@ content.
 Login/logout on both gated sites, privilege-level gating including the Level 3
 police record, and session persistence across save/load.
 
-### 4.12 Facsimile — 91% (11 behaviours, 10 covered) 🟢
+### 4.12 Facsimile — 92% (12 behaviours, 11 covered) 🟢
 
 Alert-light states, queueing, multi-message stepping, award-exactly-once, and
 all three milestone triggers — two following delivered credentials through to
@@ -517,6 +551,11 @@ a working login, and a third (new this pass) whose payload is an ECHOTRAIL
 unlock rather than evidence: confirmed it does not get filed as a Reports
 entry despite arriving through the same fax machine, and confirmed the
 unlocked track never joins the in-game background rotation.
+
+Also new this pass: **both trigger registries re-arming across New Game and
+load**, covering the progression bug in §3.6. Those tests run two playthroughs
+in one page context rather than reloading between them, which is the only way
+to reach the bug at all.
 
 **Gap, carried over unclosed:** the two scripted new-game intro faxes
 (`NEW_GAME_WELCOME_FAX_CONFIG` at 10s, `MISSING_REPORT_FAX_CONFIG` at 40s) are
@@ -573,6 +612,7 @@ server API does.
 | 🟡 | **Single browser** | Chromium only. No Firefox or WebKit project configured. Canvas (Paint, Snake, Tetris), `getComputedStyle` assertions and the magnifier's transform maths are all engine-sensitive, and there are now three canvas games where there was one. |
 | 🟡 | **Single viewport** | 1400×900 for everything except one narrow-viewport archives layout test and the CaveOS icon-wrap test. No mobile/tablet, no very large screens. |
 | 🟡 | **Suite stability under parallelism** | At Playwright's default 8 workers the suite produces browser-target crashes and heap-corruption worker exits unrelated to any assertion. Pinned to 4 workers in `playwright.config.js`. Still a *masked* problem, not a solved one. |
+| 🟡 | **Every spec starts from a fresh page load** | Structural blind spot, and the reason §3.6's soft-lock survived a suite this size. Almost every test opens with `page.goto("/")`, so any module-level state that outlives a playthrough but is never reset is invisible: the reload rebuilds it. Only `facsimile-system/milestone-triggers.spec.js` now drives two playthroughs in one page context. The remaining module-level flags *were* checked in this pass and are not progression gates — `gameplayInteractionsInitialized` and `progressEvidenceEnvelopeDragInitialized` are one-time DOM wiring, the rest are timer ids already cancelled on New Game — so this is a standing shape-of-bug risk for future features rather than a known live defect. Any new feature that gates content on a module-level `Map`/`Set`/flag instead of the save needs the same New Game and load reset the fax triggers now have. |
 | 🟡 | **English-locked selectors** | Locators are written against `localization.json`'s `en` values. Several `game-helpers.js` helpers (`browserAddress`/`visitBrowserUrl`) locate elements by English accessible name and so hang rather than fail when driven in another language. `openPaint()` was fixed to a class selector in this pass; the rest are unchanged. Consider `data-testid` on high-traffic controls. |
 | 🟡 | **No accessibility sweep** | Individual aria-labels are asserted throughout, but there is no axe/a11y scan of any screen. |
 | 🟡 | **No visual regression** | One screenshot is captured as evidence (`tests/artifacts/`) but nothing compares it to a baseline. This is precisely the gap that leaves the ashtray animation and the five themes untestable. |

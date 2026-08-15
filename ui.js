@@ -87,6 +87,7 @@ import {
 } from "./stickySave.js";
 import {
   addEvidenceTrigger,
+  clearEvidenceTriggers,
   createEvidence,
   getCurrentEvidence,
   getEvidenceCollection,
@@ -1047,6 +1048,30 @@ function initializeWebRecordFaxTriggers() {
   setRecordOpenFaxTriggersInitialized(true);
 }
 
+// Puts every milestone fax trigger back the way a fresh page load leaves them.
+//
+// Both registries hold `once` triggers that delete themselves on firing, and
+// both live in module state rather than the save. That combination is a bug on
+// its own: the "already fired" flag outlives the playthrough that set it, so a
+// New Game — or, worse, loading a save from *before* a trigger fired — would
+// inherit it and the milestone could never happen again. The Level 3
+// credentials fax is the sharpest case: lose that trigger and the player is
+// locked out of Level 3 for the rest of the browser session.
+//
+// Re-arming cannot double-deliver anything. Every fax these triggers queue
+// goes through queueFacsimileReport, which refuses a report that is already
+// pending or already in the persisted consumedReportIds list — so a trigger
+// re-armed against a save where its fax has already been read simply fires
+// into that guard and deletes itself again.
+function rearmMilestoneFaxTriggers() {
+  recordOpenFaxTriggers.clear();
+  clearEvidenceTriggers();
+  setRecordOpenFaxTriggersInitialized(false);
+  setEvidenceMilestoneTriggersInitialized(false);
+  initializeEvidenceMilestoneTriggers();
+  initializeWebRecordFaxTriggers();
+}
+
 function commitReadFacsimileReportToEvidence(report) {
   const normalizedReport = sanitizeFacsimileReport(report);
   if (!normalizedReport || isFacsimileReportConsumed(normalizedReport.id)) {
@@ -1402,6 +1427,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         // A loaded save carries its own evidence/facsimile state; don't let a
         // still-pending new-game intro fax timer inject into it.
         cancelScheduledNewGameIntroFacsimiles();
+        // The save may predate a trigger that has already fired this session.
+        // Without re-arming, loading it would inherit the "already fired"
+        // state and the milestone could never happen again in this save.
+        rearmMilestoneFaxTriggers();
         setElements();
         syncAshtrayVisualState();
         syncFacsimileVisualState({ animateFeed: false });
@@ -1441,6 +1470,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Everything New Game resets, in one place so the button and the confirmation
 // dialog cannot drift apart.
 function beginNewGame() {
+  // Before the evidence store is seeded, so the new game starts with every
+  // milestone trigger armed — including for the default evidence that
+  // initializeEvidenceStoreForNewGame() is about to create.
+  rearmMilestoneFaxTriggers();
   initializeEvidenceStoreForNewGame();
   setEvidenceCustomNames({});
   resetNotesPagesState(localize("notesPageDefaultTitlePrefix", getLanguage()));
@@ -1550,6 +1583,10 @@ async function restoreStickySaveIntoGame() {
   }
 
   cancelScheduledNewGameIntroFacsimiles();
+  // As with a pasted save: the resumed state may predate a trigger that has
+  // already fired in this browser session, so the triggers go back to armed
+  // and let the persisted consumedReportIds decide what still gets delivered.
+  rearmMilestoneFaxTriggers();
   setElements();
   await handleLanguageChange(getLanguage());
   syncAshtrayVisualState();

@@ -6,6 +6,7 @@
 const { test, expect } = require("@playwright/test");
 const {
   startNewGame,
+  clickNewGame,
   openComputer,
   openNetscape,
   openPolice,
@@ -21,6 +22,8 @@ const {
   captureConsoleEntries,
   dumpEvidenceStore,
   evidenceEntriesIn,
+  captureSaveStringViaMenu,
+  loadSaveStringViaMenu,
 } = require("../../support/game-helpers");
 
 async function closeNetscapeAndComputer(page) {
@@ -188,4 +191,148 @@ test("opening the Anthony Worthing archive record triggers an unknown-sender fax
     return [...audioManager.musicTracks];
   });
   expect(tracks.join(" ")).not.toContain("boyWentForSilver");
+});
+
+/* ---------------------------------------------------------------------------
+   Trigger re-arming across New Game and load
+   ---------------------------------------------------------------------------
+   Both trigger registries live in module state, not the save, and a `once`
+   trigger deletes itself the moment it fires. That combination was a real bug:
+   the "already fired" flag outlived the playthrough that set it, so a second
+   playthrough in the same browser session inherited it and the milestone could
+   never happen again. For the Level 3 credentials fax that meant being locked
+   out of Level 3 for the rest of the session.
+
+   These drive two full playthroughs in one page context, which is the only way
+   to catch it — a spec that reloads between runs would pass against the bug,
+   because a reload rebuilds the module state the bug lives in. */
+
+// Opens Arthur Whitmore's police record, which is what fires the Level 3 fax.
+async function openArthurWhitmoreRecord(page) {
+  await openNetscape(page);
+  await openPolice(page);
+  await policeLogin(page, "b.whitmore", "ironVeins15");
+  await expect(policeStatus(page)).toHaveText("Logged in as: Mr Brian Whitmore (Level 2)");
+
+  const query = policeQuery(page);
+  await query.fill("arthur whitmore");
+  await query.press("Enter");
+  await page.locator(".browser-results-police tbody .browser-results-row").click();
+  await expect(page.locator(".browser-record-layout-police .browser-record-title"))
+    .toHaveText("The Iron magnate who chose Policing first!");
+}
+
+// New Game lives on the pause menu, so mid-playthrough it has to be reached
+// the way a player reaches it rather than by reloading — a reload would
+// rebuild the very module state these tests exist to check.
+async function startAnotherNewGameMidSession(page) {
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#menu")).toBeVisible();
+  await clickNewGame(page);
+  await expect(page.locator("#gameArea")).toBeVisible();
+}
+
+// captureSaveStringViaMenu leaves the pause menu open behind it, so the desk
+// is unreachable until the game is resumed.
+async function captureSaveAndResume(page) {
+  const saveString = await captureSaveStringViaMenu(page);
+  await page.locator("#resumeFromMenu").click();
+  await expect(page.locator("#gameArea")).toBeVisible();
+  return saveString;
+}
+
+async function readPendingFax(page) {
+  await openFacsimile(page);
+  const facsimile = facsimileWindow(page);
+  await expect(facsimile).toBeVisible();
+  await closeFacsimile(page);
+}
+
+test("a record-open fax trigger re-arms on New Game", async ({ page }) => {
+  await startNewGame(page);
+
+  // First playthrough: the trigger fires and then deletes itself.
+  await openArthurWhitmoreRecord(page);
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+  await closeNetscapeAndComputer(page);
+  await readPendingFax(page);
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  // Second playthrough in the same page context — no reload, which is what
+  // makes this a real test of the module state rather than of a fresh load.
+  await startAnotherNewGameMidSession(page);
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  await openArthurWhitmoreRecord(page);
+  // Against the bug this stayed absent forever, taking Level 3 with it.
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+
+  await closeNetscapeAndComputer(page);
+  await openFacsimile(page);
+  await expect(facsimileWindow(page).getByText("t.fairchild")).toBeVisible();
+});
+
+test("an evidence-milestone fax trigger re-arms on New Game", async ({ page }) => {
+  await startNewGame(page);
+
+  // First playthrough: acquiring the photo fires the trigger, which deletes
+  // itself. This is the other registry (evidenceManager's), so it needs its
+  // own coverage rather than being assumed to behave like the one above.
+  await openNetscape(page);
+  await visitBrowserUrl(page, "http://honeydewcavingclub.com");
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+  await closeNetscapeAndComputer(page);
+  await readPendingFax(page);
+
+  await startAnotherNewGameMidSession(page);
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  await openNetscape(page);
+  await visitBrowserUrl(page, "http://honeydewcavingclub.com");
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+});
+
+test("loading a save from before a trigger fired lets it fire again", async ({ page }) => {
+  await startNewGame(page);
+
+  // A save taken before the milestone. Level 2 credentials are typed in
+  // directly, so this save predates the trigger firing without needing the
+  // first fax to have been read.
+  const earlySave = await captureSaveAndResume(page);
+
+  await openArthurWhitmoreRecord(page);
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+  await closeNetscapeAndComputer(page);
+  await readPendingFax(page);
+
+  // Rewinding to before the milestone must not leave the player locked out of
+  // it — this was the sharpest form of the bug, since the fax it strands
+  // carries the Level 3 credentials.
+  await loadSaveStringViaMenu(page, earlySave);
+  await expect(page.locator("#gameArea")).toBeVisible();
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  await openArthurWhitmoreRecord(page);
+  await expect(page.locator("#desktopFacsimile")).toHaveClass(/has-pending-message/);
+});
+
+test("re-arming cannot re-deliver a fax the loaded save has already consumed", async ({ page }) => {
+  await startNewGame(page);
+
+  await openArthurWhitmoreRecord(page);
+  await closeNetscapeAndComputer(page);
+  await readPendingFax(page);
+
+  // Saved *after* the fax was read, so its id is in the persisted
+  // consumedReportIds list.
+  const lateSave = await captureSaveAndResume(page);
+  await loadSaveStringViaMenu(page, lateSave);
+  await expect(page.locator("#gameArea")).toBeVisible();
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
+
+  // The trigger is armed again, so it will fire — but queueFacsimileReport
+  // refuses an already-consumed report, which is what keeps re-arming safe.
+  await openArthurWhitmoreRecord(page);
+  await page.waitForTimeout(600);
+  await expect(page.locator("#desktopFacsimile")).not.toHaveClass(/has-pending-message/);
 });
